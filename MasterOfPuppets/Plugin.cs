@@ -1,6 +1,7 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 using Dalamud.Game.Command;
 using Dalamud.Interface.ImGuiNotification;
@@ -72,10 +73,31 @@ public class Plugin : IDalamudPlugin
         Ui.Dispose();
     }
 
+    private static List<string> ParseArgs(string args)
+    {
+        var matches = Regex.Matches(args.ToLowerInvariant(), @"[\""].+?[\""]|[^ ]+");
+        var list = new List<string>();
+
+        foreach (Match match in matches)
+        {
+            var value = match.Value;
+
+            if (value.StartsWith("\"") && value.EndsWith("\""))
+            {
+                value = value.Substring(1, value.Length - 2);
+            }
+
+            list.Add(value);
+        }
+
+        return list;
+    }
+
     private void OnCommand(string command, string args)
     {
-        var argsList = args.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-        // DalamudApi.PluginLog.Debug($"command: {command}, {string.Join('|', argsList)}");
+        // var argsList = args.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        var argsList = ParseArgs(args);
+        // DalamudApi.PluginLog.Debug($"command: {command}: {string.Join('|', argsList)}");
 
         if (argsList.Any())
         {
@@ -83,17 +105,21 @@ public class Plugin : IDalamudPlugin
             {
                 case "run":
                     {
-                        if (argsList.Count <= 1 || !int.TryParse(argsList[1], out var macroIndex))
+                        int macroIndexByName = Config.Macros.FindIndex(m => m.Name == argsList[1]);
+
+                        if (argsList.Count <= 1 || (!int.TryParse(argsList[1], out var macroIndexArg) && macroIndexByName == -1))
                         {
-                            DalamudApi.ShowNotification($"Invalid arguments for run command", NotificationType.Error, 5000);
+                            DalamudApi.ShowNotification($"Invalid arguments to run macro", NotificationType.Error, 5000);
                             return;
                         }
 
+                        // user input 1 index based
+                        int macroIndex = macroIndexByName != -1 ? macroIndexByName : macroIndexArg - 1;
                         var isValidMacroIndex = macroIndex >= 0 || macroIndex < Config.Macros.Count;
                         if (!isValidMacroIndex) return;
 
-                        // DalamudApi.PluginLog.Debug($"RunMacro: ({macroIndex - 1})");
-                        IpcProvider.RunMacro(macroIndex - 1);
+                        DalamudApi.PluginLog.Debug($"RunMacro: ({macroIndex})");
+                        IpcProvider.RunMacro(macroIndex);
                     }
                     break;
             }

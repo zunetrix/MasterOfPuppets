@@ -14,7 +14,7 @@ public class SettingsWindow : Window
     private Plugin Plugin { get; }
     private FileDialogManager FileDialogManager { get; }
 
-    public SettingsWindow(Plugin plugin) : base(string.Format(Language.SettingsTitle, Plugin.Name) + "###mop-settings")
+    public SettingsWindow(Plugin plugin) : base($"{Plugin.Name} {Language.SettingsTitle}###SettingsWindow")
     {
         Plugin = plugin;
 
@@ -149,7 +149,7 @@ public class SettingsWindow : Window
         //     ImGui.EndTabItem();
         // }
 
-        if (ImGui.BeginTabItem($"{Language.SettingsWindowOpenOnStartup}###window-tab"))
+        if (ImGui.BeginTabItem($"{Language.SettingsWindowTab}###window-tab"))
         {
             var openOnStartup = Plugin.Config.OpenOnStartup;
             if (ImGui.Checkbox(Language.SettingsWindowOpenOnStartup, ref openOnStartup))

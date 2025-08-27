@@ -682,5 +682,47 @@ internal class Language
             return ResourceManager.GetString("DuplicateMacroBtn", resourceCulture);
         }
     }
+    internal static string StopMacroExecutionBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("StopMacroExecutionBtn", resourceCulture);
+        }
+    }
+    internal static string MacroSearchInputLabel
+    {
+        get
+        {
+            return ResourceManager.GetString("MacroSearchInputLabel", resourceCulture);
+        }
+    }
+    internal static string ShowMacroExecutionQueueBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ShowMacroExecutionQueueBtn", resourceCulture);
+        }
+    }
+    internal static string ShowGameCatalogBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ShowGameCatalogBtn", resourceCulture);
+        }
+    }
+    internal static string GameCatalogTitle
+    {
+        get
+        {
+            return ResourceManager.GetString("GameCatalogTitle", resourceCulture);
+        }
+    }
+    internal static string MacroExecutionQueueTitle
+    {
+        get
+        {
+            return ResourceManager.GetString("MacroExecutionQueueTitle", resourceCulture);
+        }
+    }
 }
 

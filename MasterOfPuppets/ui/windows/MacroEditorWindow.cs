@@ -19,7 +19,7 @@ public class MacroEditorWindow : Window
     private Macro MacroItem = new() { Commands = new List<Command>() };
 
     private int MacroIndex;
-    public MacroEditorWindow(Plugin plugin) : base(string.Format(Language.MacroEditorTitle, Plugin.Name) + "###MacroEditorWindow")
+    public MacroEditorWindow(Plugin plugin) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow")
     {
         Plugin = plugin;
 

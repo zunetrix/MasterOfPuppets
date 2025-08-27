@@ -17,9 +17,11 @@ namespace MasterOfPuppets.Ipc;
 
 internal class IpcProvider : IDisposable
 {
-
     private static readonly ConcurrentQueue<(string[] actions, int delayBetweenActions)> MacroQueue = new();
     private static bool _macroQueueRunning = false;
+    private static CancellationTokenSource _macroQueueCancellationTokenSource = new();
+    public static List<string> CurrentActionsExecutionList { get; private set; } = new();
+    public static int CurrentActionExecutionIndex { get; private set; } = -1;
 
     private readonly bool initFailed;
     private bool _messagesQueueRunning = true;
@@ -108,12 +110,12 @@ internal class IpcProvider : IDisposable
         try
         {
             var sw = Stopwatch.StartNew();
-            DalamudApi.PluginLog.Verbose($"message received");
+            DalamudApi.PluginLog.Verbose($"Message received");
             var bytes = e.Message.ToArray<byte>().Decompress();
             // DalamudApi.PluginLog.Verbose($"message decompressed in {sw.Elapsed.TotalMilliseconds}ms");
             var message = bytes.ProtoDeserialize<IpcMessage>();
             // DalamudApi.PluginLog.Verbose($"proto deserialized in {sw.Elapsed.TotalMilliseconds}ms");
-            DalamudApi.PluginLog.Debug(message.ToString());
+            // DalamudApi.PluginLog.Debug(message.ToString());
             ProcessMessage(message);
         }
         catch (Exception exception)
@@ -161,15 +163,17 @@ internal class IpcProvider : IDisposable
     {
         try
         {
+            StopMacroQueueExecution();
             _messagesQueueRunning = false;
             MessageBus.MessageReceived -= MessageBusMessageReceived;
+
             if (initFailed) return;
             _autoResetEvent?.Set();
             _autoResetEvent?.Dispose();
         }
         finally
         {
-            //RPCResponse = delegate { };
+            // RPCResponse = delegate { };
         }
 
         if (disposing)
@@ -202,6 +206,19 @@ internal class IpcProvider : IDisposable
         Plugin.Config = pluginConfig;
 
         DalamudApi.PluginLog.Debug("SyncConfiguration");
+    }
+
+    public void StopMacroExecution()
+    {
+        var message = IpcMessage.Create(IpcMessageType.StopMacroExecution).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.StopMacroExecution)]
+    private void HandleStopMacroExecution(IpcMessage message)
+    {
+        DalamudApi.PluginLog.Debug("StopMacroExecution");
+        StopMacroQueueExecution();
     }
 
     public void RunMacro(int macroIndex, bool includeSelf = true)
@@ -240,13 +257,18 @@ internal class IpcProvider : IDisposable
         // var chatText = $"{str}";
         // Chat.SendMessage(chatText);
         // DalamudApi.ChatGui.Print(chatText);
-        EnqueueActions(actionList, Plugin.Config.DelayBetweenActions);
+        EnqueueMacroActions(actionList, Plugin.Config.DelayBetweenActions);
     }
 
-    static async Task ExecuteActions(string[] actions, int delayBetweenActions = 1)
+    private static async Task ExecuteActions(string[] actions, CancellationToken token, int delayBetweenActions = 2)
     {
         foreach (var action in actions)
         {
+            CurrentActionExecutionIndex++;
+
+            if (token.IsCancellationRequested)
+                break;
+
             var match = Regex.Match(action, @"^/wait\s*(\d+)$", RegexOptions.IgnoreCase);
             if (match.Success)
             {
@@ -258,38 +280,59 @@ internal class IpcProvider : IDisposable
             }
             else
             {
+                // DalamudApi.Framework.RunOnTick(delegate
+                // {
+                //     Chat.SendMessage($"{action}");
+                // }, default(TimeSpan), 0, default(System.Threading.CancellationToken));
+
                 Chat.SendMessage($"{action}");
                 DalamudApi.PluginLog.Debug($"[ExecuteAction] {action}");
-                DalamudApi.PluginLog.Debug($"[WAIT] {delayBetweenActions}...");
+                DalamudApi.PluginLog.Debug($"[DELAY] {delayBetweenActions}...");
                 await Task.Delay(delayBetweenActions * 1000);
             }
         }
     }
 
-    public static void EnqueueActions(string[] actions, int delayBetweenActions)
+    public static void EnqueueMacroActions(string[] actions, int delayBetweenActions)
     {
         MacroQueue.Enqueue((actions, delayBetweenActions));
-        _ = ProcessQueue();
+        CurrentActionsExecutionList.AddRange(actions);
+        _ = ProcessMacroQueue();
     }
 
-    private static async Task ProcessQueue()
+    private static async Task ProcessMacroQueue()
     {
         if (_macroQueueRunning) return;
 
         _macroQueueRunning = true;
+        var cancellationTokenSource = _macroQueueCancellationTokenSource;
 
         try
         {
             while (MacroQueue.TryDequeue(out var item))
             {
                 var (actions, delayBetweenActions) = item;
-                await ExecuteActions(actions, delayBetweenActions);
+                await ExecuteActions(actions, cancellationTokenSource.Token, delayBetweenActions);
+
+                if (_macroQueueCancellationTokenSource.IsCancellationRequested)
+                    break;
             }
         }
         finally
         {
+            CurrentActionsExecutionList.Clear();
+            CurrentActionExecutionIndex = -1;
             _macroQueueRunning = false;
         }
     }
 
+    private static void StopMacroQueueExecution()
+    {
+        _macroQueueCancellationTokenSource.Cancel();
+        _macroQueueCancellationTokenSource.Dispose();
+        _macroQueueCancellationTokenSource = new CancellationTokenSource();
+
+        MacroQueue.Clear();
+        // while (MacroQueue.TryDequeue(out _)) { }
+    }
 }

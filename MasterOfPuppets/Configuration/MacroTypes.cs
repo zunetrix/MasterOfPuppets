@@ -11,24 +11,6 @@ public class Character
     public string Name;
 }
 
-// public enum ActionType
-// {
-//     Emote,
-//     Delay,
-//     Item,
-//     Movement,
-//     Macro
-// }
-
-// public class Action
-// {
-//     [JsonPropertyName("type")]
-//     public ActionType Type;
-
-//     [JsonPropertyName("content")]
-//     public string Content;
-// }
-
 public class Command
 {
     [JsonPropertyName("characters")]
@@ -67,6 +49,4 @@ public class Macro
             Commands = this.Commands.Select(cmd => cmd.Clone()).ToList(),
         };
     }
-
-
 }

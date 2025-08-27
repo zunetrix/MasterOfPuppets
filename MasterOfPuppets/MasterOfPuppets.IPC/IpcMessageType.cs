@@ -6,5 +6,6 @@ public enum IpcMessageType
     Bye,
     Acknowledge,
     RunMacro,
+    StopMacroExecution,
     SyncConfiguration
 }

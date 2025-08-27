@@ -1,0 +1,58 @@
+﻿using System.Numerics;
+
+using Dalamud.Interface.Windowing;
+using Dalamud.Bindings.ImGui;
+
+using MasterOfPuppets.Resources;
+using MasterOfPuppets.Ipc;
+
+namespace MasterOfPuppets;
+
+public class MacroExecutionQueueWindow : Window
+{
+    private Plugin Plugin { get; }
+
+    public MacroExecutionQueueWindow(Plugin plugin) : base($"{Language.MacroExecutionQueueTitle}###MacroExecutionQueueWindow")
+    {
+        Plugin = plugin;
+
+        Size = new Vector2(310, 250);
+        SizeCondition = ImGuiCond.FirstUseEver;
+        // SizeCondition = ImGuiCond.Always;
+        // Flags = ImGuiWindowFlags.NoResize;
+    }
+
+    public override void PreDraw()
+    {
+        base.PreDraw();
+    }
+
+    public override void Draw()
+    {
+        ImGui.TextUnformatted("Actions in queue");
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        if (ImGui.BeginListBox($"##CurrentActionsExecutionList", new Vector2(300, 200)))
+        {
+            for (int i = 0; i < IpcProvider.CurrentActionsExecutionList.Count; i++)
+            {
+                var isCurrentItemActive = i == IpcProvider.CurrentActionExecutionIndex;
+                if (isCurrentItemActive)
+                {
+                    ImGui.PushStyleColor(ImGuiCol.Text, Style.Colors.Green);
+                }
+                ImGui.Selectable($"[{i:000}] {IpcProvider.CurrentActionsExecutionList[i]}##CurrentActionsExecutionList{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
+
+                if (isCurrentItemActive)
+                {
+                    ImGui.PopStyleColor();
+                }
+            }
+
+            ImGui.EndListBox();
+        }
+    }
+}

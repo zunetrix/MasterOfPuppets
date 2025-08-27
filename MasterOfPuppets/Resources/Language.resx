@@ -161,18 +161,16 @@
 
 
     <data name="SettingsTitle" xml:space="preserve">
-        <value>{0} settings</value>
+        <value>Settings</value>
     </data>
     <data name="MacroEditorTitle" xml:space="preserve">
-        <value>{0} macro editor</value>
+        <value>Macro Editor</value>
     </data>
-
-
     <data name="MacroListTitle" xml:space="preserve">
         <value>Macro List</value>
     </data>
     <data name="AddMacroBtn" xml:space="preserve">
-        <value>Add Macro</value>
+        <value>Add New Macro</value>
     </data>
     <data name="EditMacroBtn" xml:space="preserve">
         <value>Edit Macro</value>
@@ -206,5 +204,23 @@
     </data>
     <data name="DuplicateMacroBtn" xml:space="preserve">
         <value>Duplicate macro</value>
+    </data>
+    <data name="StopMacroExecutionBtn" xml:space="preserve">
+        <value>Stop All Macro Execution</value>
+    </data>
+    <data name="MacroSearchInputLabel" xml:space="preserve">
+        <value>Seach</value>
+    </data>
+    <data name="ShowMacroExecutionQueueBtn" xml:space="preserve">
+        <value>Show Macro Execution Queue</value>
+    </data>
+    <data name="ShowGameCatalogBtn" xml:space="preserve">
+        <value>Show Game Catalog: emotes and usable items</value>
+    </data>
+    <data name="GameCatalogTitle" xml:space="preserve">
+        <value>Game Catalog</value>
+    </data>
+    <data name="MacroExecutionQueueTitle" xml:space="preserve">
+        <value>Macro Execution Queue</value>
     </data>
 </root>

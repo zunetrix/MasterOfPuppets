@@ -45,7 +45,7 @@ internal class IpcMessage
 
     public byte[] Serialize()
     {
-        var sw = Stopwatch.StartNew();
+        // var sw = Stopwatch.StartNew();
         var protoSerialize = this.ProtoSerialize();
         // DalamudApi.PluginLog.Verbose($"proto serialized in {sw.Elapsed.TotalMilliseconds}ms");
 

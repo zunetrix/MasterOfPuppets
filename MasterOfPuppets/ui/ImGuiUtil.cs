@@ -24,13 +24,11 @@ public static class ImGuiUtil
             {
                 return ImGui.Button($"{icon.ToIconString()}##{id}{tooltip}", result);
             }
-            else if (size != null)
-            {
-                return ImGui.Button($"{icon.ToIconString()}##{id}{tooltip}", size.Value);
-            }
             else
             {
-                return ImGui.Button($"{icon.ToIconString()}##{id}{tooltip}");
+                return size != null
+                    ? ImGui.Button($"{icon.ToIconString()}##{id}{tooltip}", size.Value)
+                    : ImGui.Button($"{icon.ToIconString()}##{id}{tooltip}");
             }
         }
         finally
