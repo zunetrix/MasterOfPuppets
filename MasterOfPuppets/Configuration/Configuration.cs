@@ -65,5 +65,19 @@ internal class Configuration : IPluginConfiguration
 
         Macros.RemoveAt(itemIndex);
     }
+
+    public void DuplicateMacroItem(int itemIndex)
+    {
+        var isEmptyList = Macros == null || Macros.Count == 0;
+        var isValidIndex = itemIndex >= 0 && itemIndex < Macros.Count;
+
+
+        if (isEmptyList || !isValidIndex)
+            return;
+
+        var duplicatedMacro = Macros[itemIndex].Clone();
+        duplicatedMacro.Name += " (copy)";
+        Macros.Add(duplicatedMacro);
+    }
 }
 

@@ -95,7 +95,13 @@ internal class MainWindow : Window
         ImGui.TextUnformatted(Language.MacroListTitle);
         ImGuiUtil.HelpMarker("""
         Commands:
-        / mop run number
+        /mop run number
+
+        Special Actions:
+        /wait time
+        /wait 3
+
+        Drag to reorder macro list
         """);
 
         ImGui.SameLine(ImGuiUtil.GetWindowContentRegionWidth() - ImGui.GetFrameHeightWithSpacing());
@@ -185,7 +191,12 @@ internal class MainWindow : Window
                 }
 
                 ImGui.SameLine();
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $" X ##DuplicateMacro_{i}", Language.DuplicateMacroBtn))
+                {
+                    Plugin.Config.DuplicateMacroItem(i);
+                }
 
+                ImGui.SameLine();
                 if (ImGuiUtil.IconButton(FontAwesomeIcon.Edit, $" X ##EditMacro_{i}", Language.EditMacroBtn))
                 {
                     Ui.MacroEditorWindow.EditMacro(i);

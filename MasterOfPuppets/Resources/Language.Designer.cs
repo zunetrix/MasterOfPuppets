@@ -675,5 +675,12 @@ internal class Language
             return ResourceManager.GetString("SettingsGeneralTab", resourceCulture);
         }
     }
+    internal static string DuplicateMacroBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("DuplicateMacroBtn", resourceCulture);
+        }
+    }
 }
 
