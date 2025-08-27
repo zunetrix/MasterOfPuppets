@@ -1,0 +1,14 @@
+{
+    "Author": "Zune",
+    "Name": "MasterOfPuppets",
+    "Punchline": "Plugin to send macro actions",
+    "Description": "Plugin to send macro actions",
+    "RepoUrl": "https://github.com/zunetrix/MasterOfPuppets",
+    "Tags": [
+        "utility"
+    ],
+    "AcceptsFeedback": "False",
+    "IconUrl": "https://i.imgur.com/0hdDvXd.png",
+    "Changelog": "Make it work?",
+    "Apiversion": 13
+}
