@@ -4,8 +4,8 @@
         <TargetFramework>net9-windows</TargetFramework>
         <RootNamespace>MasterOfPuppets</RootNamespace>
         <AssemblyName>MasterOfPuppets</AssemblyName>
-        <Version>1.0.0.3</Version>
-        <AssemblyVersion>1.0.0.3</AssemblyVersion>
+        <Version>1.0.0.5</Version>
+        <AssemblyVersion>1.0.0.5</AssemblyVersion>
         <LangVersion>latest</LangVersion>
         <Nullable>disable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

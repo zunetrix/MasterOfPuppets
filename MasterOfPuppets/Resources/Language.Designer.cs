@@ -696,6 +696,13 @@ internal class Language
             return ResourceManager.GetString("MacroSearchInputLabel", resourceCulture);
         }
     }
+    internal static string EmoteSearchInputLabel
+    {
+        get
+        {
+            return ResourceManager.GetString("EmoteSearchInputLabel", resourceCulture);
+        }
+    }
     internal static string ShowMacroExecutionQueueBtn
     {
         get
@@ -703,18 +710,18 @@ internal class Language
             return ResourceManager.GetString("ShowMacroExecutionQueueBtn", resourceCulture);
         }
     }
-    internal static string ShowGameCatalogBtn
+    internal static string ShowEmotesBtn
     {
         get
         {
-            return ResourceManager.GetString("ShowGameCatalogBtn", resourceCulture);
+            return ResourceManager.GetString("ShowEmotesBtn", resourceCulture);
         }
     }
-    internal static string GameCatalogTitle
+    internal static string EmotesTitle
     {
         get
         {
-            return ResourceManager.GetString("GameCatalogTitle", resourceCulture);
+            return ResourceManager.GetString("EmotesTitle", resourceCulture);
         }
     }
     internal static string MacroExecutionQueueTitle

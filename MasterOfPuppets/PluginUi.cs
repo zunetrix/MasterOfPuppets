@@ -13,7 +13,7 @@ namespace MasterOfPuppets
         public SettingsWindow SettingsWindow { get; }
         public MacroEditorWindow MacroEditorWindow { get; }
         public MacroExecutionQueueWindow MacroExecutionQueueWindow { get; }
-        public GameCatalogWindow GameCatalogWindow { get; }
+        public EmotesWindow EmotesWindow { get; }
 
         public PluginUi(Plugin plugin)
         {
@@ -23,13 +23,13 @@ namespace MasterOfPuppets
             SettingsWindow = new SettingsWindow(Plugin);
             MacroEditorWindow = new MacroEditorWindow(Plugin);
             MacroExecutionQueueWindow = new MacroExecutionQueueWindow(Plugin);
-            GameCatalogWindow = new GameCatalogWindow(Plugin);
+            EmotesWindow = new EmotesWindow(Plugin);
 
             WindowSystem.AddWindow(MainWindow);
             WindowSystem.AddWindow(SettingsWindow);
             WindowSystem.AddWindow(MacroEditorWindow);
             WindowSystem.AddWindow(MacroExecutionQueueWindow);
-            WindowSystem.AddWindow(GameCatalogWindow);
+            WindowSystem.AddWindow(EmotesWindow);
         }
 
         public void Dispose()

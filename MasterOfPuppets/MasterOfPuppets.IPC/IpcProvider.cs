@@ -208,6 +208,25 @@ internal class IpcProvider : IDisposable
         DalamudApi.PluginLog.Debug("SyncConfiguration");
     }
 
+    public void BroadcastTextCommand(string text)
+    {
+        var message = IpcMessage.Create(IpcMessageType.BroadcastTextCommand, text).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.BroadcastTextCommand)]
+    private void HandleBroadcastTextCommand(IpcMessage message)
+    {
+        var textCommand = message.StringData[0];
+
+        DalamudApi.Framework.RunOnTick(delegate
+               {
+                   Chat.SendMessage($"{textCommand}");
+               });
+
+        // Chat.SendMessage($"{textCommand}");
+    }
+
     public void StopMacroExecution()
     {
         var message = IpcMessage.Create(IpcMessageType.StopMacroExecution).Serialize();
@@ -284,6 +303,11 @@ internal class IpcProvider : IDisposable
                 // {
                 //     Chat.SendMessage($"{action}");
                 // }, default(TimeSpan), 0, default(System.Threading.CancellationToken));
+
+                // DalamudApi.Framework.RunOnFrameworkThread(delegate
+                // {
+                //     Chat.SendMessage($"{action}");
+                // });
 
                 Chat.SendMessage($"{action}");
                 DalamudApi.PluginLog.Debug($"[ExecuteAction] {action}");

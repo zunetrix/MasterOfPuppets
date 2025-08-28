@@ -209,16 +209,19 @@
         <value>Stop All Macro Execution</value>
     </data>
     <data name="MacroSearchInputLabel" xml:space="preserve">
-        <value>Seach</value>
+        <value>Seach Macro</value>
+    </data>
+    <data name="EmoteSearchInputLabel" xml:space="preserve">
+        <value>Seach Emote</value>
     </data>
     <data name="ShowMacroExecutionQueueBtn" xml:space="preserve">
         <value>Show Macro Execution Queue</value>
     </data>
-    <data name="ShowGameCatalogBtn" xml:space="preserve">
-        <value>Show Game Catalog: emotes and usable items</value>
+    <data name="ShowEmotesBtn" xml:space="preserve">
+        <value>Show Emotes</value>
     </data>
-    <data name="GameCatalogTitle" xml:space="preserve">
-        <value>Game Catalog</value>
+    <data name="EmotesTitle" xml:space="preserve">
+        <value>Emotes</value>
     </data>
     <data name="MacroExecutionQueueTitle" xml:space="preserve">
         <value>Macro Execution Queue</value>

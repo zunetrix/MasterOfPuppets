@@ -16,6 +16,8 @@ internal class MainWindow : Window
     private PluginUi Ui { get; }
     private Plugin Plugin { get; }
     public bool IsVisible { get; private set; }
+    // private static readonly Version Version = typeof(MainWindow).Assembly.GetName().Version;
+    // private static readonly string VersionString = Version?.ToString();
     private string MacroSearchString = "";
     private readonly List<int> MacroListSearchedIndexs = new();
 
@@ -102,9 +104,9 @@ internal class MainWindow : Window
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.ListAlt, $"##ShowGameCatalogBtn", Language.ShowGameCatalogBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Smile, $"##ShowEmotesBtn", Language.ShowEmotesBtn))
         {
-            Ui.GameCatalogWindow.Toggle();
+            Ui.EmotesWindow.Toggle();
         }
 
         ImGui.SameLine();
@@ -123,10 +125,6 @@ internal class MainWindow : Window
             /mop run number
             /mop run name
             /mop run "name with spaces"
-
-        Special Actions:
-            /wait time
-            /wait 3
 
         Drag to reorder macro list
         """);
@@ -214,7 +212,7 @@ internal class MainWindow : Window
         ImGui.PopStyleColor();
 
         ImGui.TableNextColumn();
-        ImGuiUtil.IconButton(FontAwesomeIcon.TrashAlt, $" X ##DeleteMacro_{macroIdx}", Language.DeleteMacroBtn);
+        ImGuiUtil.IconButton(FontAwesomeIcon.TrashAlt, $"##DeleteMacro_{macroIdx}", Language.DeleteMacroBtn);
         if (ImGui.IsItemHovered())
         {
             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
@@ -226,20 +224,20 @@ internal class MainWindow : Window
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $" X ##DuplicateMacro_{macroIdx}", Language.DuplicateMacroBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##DuplicateMacro_{macroIdx}", Language.DuplicateMacroBtn))
         {
             Plugin.Config.DuplicateMacroItem(macroIdx);
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Edit, $" X ##EditMacro_{macroIdx}", Language.EditMacroBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Edit, $"##EditMacro_{macroIdx}", Language.EditMacroBtn))
         {
             Ui.MacroEditorWindow.EditMacro(macroIdx);
         }
 
         ImGui.SameLine();
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, $" X ##RunMacro_{macroIdx}", Language.RunMacroBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, $"##RunMacro_{macroIdx}", Language.RunMacroBtn))
         {
             Plugin.IpcProvider.RunMacro(macroIdx);
         }
@@ -287,9 +285,8 @@ internal class MainWindow : Window
             // {
             //     DrawMacroEntry(i, macros[i]);
             // }
-
+            clipper.End();
             ImGui.EndTable();
-            ImGui.Unindent();
         }
     }
 

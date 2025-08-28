@@ -81,9 +81,20 @@ public class MacroEditorWindow : Window
     {
         ImGui.Text(Language.MacroNameLabel);
         ImGui.InputText("##InputMacroName", ref MacroItem.Name);
-        ImGui.SameLine();
 
-        // if (ImGui.Button($"{Language.SaveMacroBtn}##SaveMacroBtn", new Vector2(40)))
+        ImGuiUtil.HelpMarker("""
+        Special Actions:
+            /wait time
+            /wait 3
+
+        Combine other plugin action
+            /btb item 12042
+
+        Call it recursively
+        /mop run macro-name
+        """);
+
+        ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Save, $"##SaveMacroBtn", Language.SaveMacroBtn))
         {
             SaveMacro();
