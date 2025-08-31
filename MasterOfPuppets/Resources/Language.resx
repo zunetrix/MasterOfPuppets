@@ -253,4 +253,7 @@
     <data name="ShowMountBtn" xml:space="preserve">
         <value>Mounts</value>
     </data>
+    <data name="GroupsLabel" xml:space="preserve">
+        <value>Groups</value>
+    </data>
 </root>

@@ -11,6 +11,15 @@ public class Character
     public string Name;
 }
 
+public class CidGroup
+{
+    [JsonPropertyName("name")]
+    public string Name;
+
+    [JsonPropertyName("cids")]
+    public List<ulong> Cids;
+}
+
 public class Command
 {
     // [JsonPropertyName("characters")]

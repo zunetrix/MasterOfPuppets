@@ -8,12 +8,17 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 
 using MasterOfPuppets.Resources;
+using Dalamud.Utility;
+using Dalamud.Interface.Utility;
 
 namespace MasterOfPuppets;
 
 public class CharactersWindow : Window
 {
     private Plugin Plugin { get; }
+
+    private string _tmpGroupName = "";
+    private int _selectedCidGroupIndex { get; set; } = 0;
 
     public CharactersWindow(Plugin plugin) : base($"{Plugin.Name} Characters###CharactersWindow")
     {
@@ -28,7 +33,53 @@ public class CharactersWindow : Window
         base.PreDraw();
     }
 
+    private bool IsValidGroup()
+    {
+        var isValidGroup = Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex) && Plugin.Config.CidsGroups.Count > 0;
+        return isValidGroup;
+    }
+
     public override void Draw()
+    {
+        if (!ImGui.BeginTabBar("##CharactersManagerTabs")) return;
+
+        if (ImGui.BeginTabItem($"Characters List###CharactersTab"))
+        {
+            DrawPartyMemberSelector();
+            DrawCharactersTable();
+
+            ImGui.EndTabItem();
+        }
+
+        if (ImGui.BeginTabItem($"Characters Groups###CidsGroupsTab"))
+        {
+            DrawCidsGroupsHeader();
+            DrawCidsGroupsSelector();
+            DrawGroupAvailableCharacterSelector();
+            DrawCidGroupCharactersList();
+
+            ImGui.EndTabItem();
+        }
+
+        ImGui.EndTabBar();
+    }
+
+    private List<Character> GetAvailablePartyMembers()
+    {
+        var usedCids = Plugin.Config.Characters
+       .Select(c => c.Cid)
+       .ToHashSet() ?? new HashSet<ulong>();
+
+        var availablePartyMembers = DalamudApi.PartyList
+       .Select((partyMember) => partyMember.GetPartyMemberData())
+       .Where(partyMember => !usedCids.Contains(partyMember.Cid))
+       .Select(partyMember => new Character { Cid = partyMember.Cid, Name = $"{partyMember.Name}@{partyMember.World}" })
+       .ToList();
+
+        return availablePartyMembers;
+    }
+
+    private void DrawPartyMemberSelector()
     {
         var availablePartyMembers = GetAvailablePartyMembers();
 
@@ -59,7 +110,10 @@ public class CharactersWindow : Window
         ImGui.Spacing();
         ImGui.Spacing();
         ImGui.Spacing();
+    }
 
+    private void DrawCharactersTable()
+    {
         var characters = Plugin.Config.Characters;
         if (ImGui.BeginTable("##CharactersTable", 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
         ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV))
@@ -144,18 +198,134 @@ public class CharactersWindow : Window
         }
     }
 
-    private List<Character> GetAvailablePartyMembers()
+    private void DrawCidsGroupsHeader()
     {
-        var usedCids = Plugin.Config.Characters
-       .Select(c => c.Cid)
-       .ToHashSet() ?? new HashSet<ulong>();
+        ImGui.InputTextWithHint("##GroupNameInput", "Group name", ref _tmpGroupName, 255, ImGuiInputTextFlags.AutoSelectAll);
 
-        var availablePartyMembers = DalamudApi.PartyList
-       .Select((partyMember) => partyMember.GetPartyMemberData())
-       .Where(partyMember => !usedCids.Contains(partyMember.Cid))
-       .Select(partyMember => new Character { Cid = partyMember.Cid, Name = $"{partyMember.Name}@{partyMember.World}" })
-       .ToList();
+        ImGui.SameLine();
+        ImGui.Dummy(new Vector2(0, 20 * ImGuiHelpers.GlobalScale));
+        ImGui.SameLine();
 
-        return availablePartyMembers;
+        if (ImGui.Button($"Add new group"))
+        {
+            if (_tmpGroupName.IsNullOrEmpty()) return;
+
+            var newGroup = new CidGroup { Name = _tmpGroupName, Cids = new() };
+            Plugin.Config.CidsGroups.Add(newGroup);
+            _selectedCidGroupIndex = Plugin.Config.CidsGroups.Count - 1;
+            _tmpGroupName = string.Empty;
+            Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
+        }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+    }
+
+    private void DrawCidsGroupsSelector()
+    {
+        if (Plugin.Config.CidsGroups.Count == 0) return;
+
+        var cidsGroups = Plugin.Config.CidsGroups;
+
+        ImGui.TextUnformatted(Language.GroupsLabel);
+
+        string previewGroupValue = cidsGroups.Count > 0
+        && Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex)
+        ? cidsGroups[_selectedCidGroupIndex].Name
+        : "Select a group";
+
+        if (ImGui.BeginCombo($"##CidsGroupsSelectList", previewGroupValue))
+        {
+            for (var groupIndex = 0; groupIndex < cidsGroups.Count; groupIndex++)
+            {
+                bool isGroupSelected = _selectedCidGroupIndex == groupIndex;
+                if (ImGui.Selectable($"{cidsGroups[groupIndex].Name}##group_{groupIndex}", isGroupSelected))
+                {
+                    _selectedCidGroupIndex = groupIndex;
+
+                    if (isGroupSelected)
+                        ImGui.SetItemDefaultFocus();
+                }
+            }
+            ImGui.EndCombo();
+        }
+
+        ImGui.SameLine();
+        ImGui.Dummy(new Vector2(0, 20 * ImGuiHelpers.GlobalScale));
+        ImGui.SameLine();
+
+        ImGui.BeginDisabled(!Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex));
+        if (ImGui.Button($"Delete group"))
+        {
+            Plugin.Config.CidsGroups.RemoveAt(_selectedCidGroupIndex);
+            Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
+        }
+        ImGui.EndDisabled();
+    }
+
+    private void DrawGroupAvailableCharacterSelector()
+    {
+        if (!IsValidGroup()) return;
+
+        var characters = Plugin.Config.Characters;
+        var cidGroup = Plugin.Config.CidsGroups[_selectedCidGroupIndex];
+
+        var availableCharacters = Plugin.Config.Characters
+                .Where(character => !cidGroup.Cids.Contains(character.Cid))
+                .ToList();
+
+        ImGui.BeginDisabled(availableCharacters.Count == 0);
+        ImGui.TextUnformatted(Language.CharactersLabel);
+
+        if (ImGui.BeginCombo($"##CidGroupCharactersSelectList_cidGroup_{_selectedCidGroupIndex}", "Select a character to add to the group"))
+        {
+            foreach (var character in availableCharacters)
+            {
+                if (ImGui.Selectable($"{character.Name}##{character.Cid}", false))
+                {
+                    cidGroup.Cids.Add(character.Cid);
+                    Plugin.Config.Save();
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+            }
+            ImGui.EndCombo();
+        }
+        ImGui.EndDisabled();
+    }
+
+    private void DrawCidGroupCharactersList()
+    {
+        if (!IsValidGroup()) return;
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        if (ImGui.BeginListBox($"##CidsGroupsCharactersList_group{_selectedCidGroupIndex}", new Vector2(-1, 200)))
+        {
+            for (var characterIndex = 0; characterIndex < Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids.Count; characterIndex++)
+            {
+                var targetCid = Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids[characterIndex];
+                // find cid name
+                var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
+                    ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
+
+                if (ImGui.Selectable($"{character.Name}##CidsGroups{_selectedCidGroupIndex}_character{characterIndex}", false, ImGuiSelectableFlags.AllowDoubleClick))
+                {
+                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                    {
+                        Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids.RemoveAll(cid => cid == targetCid);
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+
+                }
+                ImGuiUtil.ToolTip("Doubleclick to remove");
+            }
+            ImGui.EndListBox();
+        }
     }
 }

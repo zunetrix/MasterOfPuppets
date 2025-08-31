@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Numerics;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -22,6 +21,7 @@ internal class Configuration : IPluginConfiguration
     public List<Macro> Macros = new();
     public int DelayBetweenActions { get; set; } = 2;
     public List<Character> Characters = new();
+    public List<CidGroup> CidsGroups = new();
 
     // Interface
     public bool OpenOnStartup { get; set; } = false;
@@ -45,18 +45,7 @@ internal class Configuration : IPluginConfiguration
 
     public void MoveMacroToIndex(int itemIndex, int targetIndex)
     {
-        var isEmptyList = Macros == null || Macros.Count == 0;
-        var isValidIndex = itemIndex >= 0 && itemIndex < Macros.Count;
-
-        if (isEmptyList || !isValidIndex)
-            return;
-
-        targetIndex = Math.Clamp(targetIndex, 0, Macros.Count);
-
-        var item = Macros[itemIndex];
-        Macros.RemoveAt(itemIndex);
-        Macros.Insert(targetIndex, item);
-
+        Macros.MoveItemToIndex(itemIndex, targetIndex);
         this.Save();
     }
 
@@ -107,19 +96,7 @@ internal class Configuration : IPluginConfiguration
 
     public void MoveCharacterToIndex(int itemIndex, int targetIndex)
     {
-        var isEmptyList = Characters == null || Characters.Count == 0;
-        var isInvalidIndex = itemIndex < 0 || itemIndex >= Characters.Count;
-        var isInvalidTargetIndex = targetIndex < 0 || targetIndex >= Characters.Count;
-
-        if (isEmptyList || isInvalidIndex || isInvalidTargetIndex)
-            return;
-
-        targetIndex = Math.Clamp(targetIndex, 0, Characters.Count);
-
-        var item = Characters[itemIndex];
-        Characters.RemoveAt(itemIndex);
-        Characters.Insert(targetIndex, item);
-
+        Characters.MoveItemToIndex(itemIndex, targetIndex);
         this.Save();
     }
 

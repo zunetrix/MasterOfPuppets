@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiNotification;
-using Lumina.Excel.Sheets;
 
 using MasterOfPuppets.Resources;
 using Dalamud.Interface.Utility;

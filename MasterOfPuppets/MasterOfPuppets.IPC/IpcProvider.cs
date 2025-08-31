@@ -245,7 +245,7 @@ internal class IpcProvider : IDisposable
     private void HandleBroadcastActionCommand(IpcMessage message)
     {
         var actionId = message.DataStruct<uint>();
-        GameActionManager.UseAction(actionId);
+        GameActionManager.UseActionById(actionId);
     }
 
     public void StopMacroExecution()
@@ -325,10 +325,54 @@ internal class IpcProvider : IDisposable
                 return;
             }
 
-            GameActionManager.UseAction(actionId);
+            GameActionManager.UseActionById(actionId);
             DalamudApi.PluginLog.Debug($"[ACTION] {args}");
             await Task.CompletedTask;
-        }
+        },
+
+        ["item"] = async (args, token) =>
+        {
+            args = args.Trim().Trim('"');
+
+            if (string.IsNullOrWhiteSpace(args))
+            {
+                DalamudApi.PluginLog.Warning($"[ITEM] invalid argument: \"{args}\"");
+                return;
+            }
+
+            if (uint.TryParse(args, out uint actionId))
+            {
+                GameActionManager.UseItemById(actionId);
+                DalamudApi.PluginLog.Debug($"[ITEM] (by Id) {actionId}");
+            }
+            else
+            {
+                GameActionManager.UseItemByName(args);
+                DalamudApi.PluginLog.Debug($"[ITEM] (by Name) {args}");
+            }
+
+            await Task.CompletedTask;
+        },
+
+        ["petbarslot"] = async (args, token) =>
+        {
+            if (string.IsNullOrWhiteSpace(args) || !int.TryParse(args, out int slotIndex))
+            {
+                DalamudApi.PluginLog.Warning($"[PETBARSLOT] invalid argument: \"{args}\"");
+                return;
+            }
+
+            var maxHotBarSlots = 15;
+            var realSlotIndex = slotIndex - 1;
+            if (realSlotIndex < 0 || realSlotIndex > maxHotBarSlots)
+            {
+                return;
+            }
+
+            HotbarManager.ExecutePetHotbarActionBySlotIndex((uint)realSlotIndex);
+            DalamudApi.PluginLog.Debug($"[PETBARSLOT] {args}");
+            await Task.CompletedTask;
+        },
     };
 
     private static async Task ExecuteActions(string[] actions, CancellationToken token, int delayBetweenActions = 2)
@@ -352,6 +396,12 @@ internal class IpcProvider : IDisposable
                 {
                     await handler(args, token);
                     handled = true;
+
+                    if (handled)
+                    {
+                        DalamudApi.PluginLog.Debug($"[DELAY BETWEEN ACTIONS] {delayBetweenActions}...");
+                        await Task.Delay(delayBetweenActions * 1000, token);
+                    }
                 }
             }
 
@@ -367,10 +417,9 @@ internal class IpcProvider : IDisposable
                 //     Chat.SendMessage($"{action}");
                 // });
 
-                Chat.SendMessage(action);
-                Chat.SendMessage($"{action}");
                 DalamudApi.PluginLog.Debug($"[ExecuteAction] {action}");
-                DalamudApi.PluginLog.Debug($"[DELAY] {delayBetweenActions}...");
+                Chat.SendMessage($"{action}");
+                DalamudApi.PluginLog.Debug($"[DELAY BETWEEN ACTIONS] {delayBetweenActions}...");
                 await Task.Delay(delayBetweenActions * 1000, token);
             }
         }

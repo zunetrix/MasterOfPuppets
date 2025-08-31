@@ -19,7 +19,7 @@ internal class MainWindow : Window
     public bool IsVisible { get; private set; }
     // private static readonly Version Version = typeof(MainWindow).Assembly.GetName().Version;
     // private static readonly string VersionString = Version?.ToString();
-    private string MacroSearchString = "";
+    private string _macroSearchString = "";
     private readonly List<int> MacroListSearchedIndexs = new();
 
     internal MainWindow(Plugin plugin, PluginUi ui) : base(Plugin.Name)
@@ -116,7 +116,7 @@ internal class MainWindow : Window
         }
 
         // ImGui.Text(Language.MacroSearchInputLabel);
-        if (ImGui.InputTextWithHint("##MacroSearchInput", Language.MacroSearchInputLabel, ref MacroSearchString, 255, ImGuiInputTextFlags.AutoSelectAll))
+        if (ImGui.InputTextWithHint("##MacroSearchInput", Language.MacroSearchInputLabel, ref _macroSearchString, 255, ImGuiInputTextFlags.AutoSelectAll))
         {
             SearchMacro();
         }
@@ -157,7 +157,7 @@ internal class MainWindow : Window
             Ui.MacroExecutionQueueWindow.Toggle();
         }
 
-        var isFiltered = !string.IsNullOrEmpty(MacroSearchString);
+        var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
         var noSearchResults = MacroListSearchedIndexs.Count == 0;
         if (isFiltered && noSearchResults)
         {
@@ -178,7 +178,7 @@ internal class MainWindow : Window
         MacroListSearchedIndexs.AddRange(
             Plugin.Config.Macros
             .Select((item, index) => new { item, index })
-            .Where(x => x.item.Name.Contains(MacroSearchString, StringComparison.OrdinalIgnoreCase))
+            .Where(x => x.item.Name.Contains(_macroSearchString, StringComparison.OrdinalIgnoreCase))
             .Select(x => x.index)
             .ToList()
         );
@@ -276,7 +276,7 @@ internal class MainWindow : Window
                 ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 3;
         var macros = Plugin.Config.Macros;
-        var isFiltered = !string.IsNullOrEmpty(MacroSearchString);
+        var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
         var itemCount = isFiltered ? MacroListSearchedIndexs.Count : macros.Count;
 
         if (ImGui.BeginTable("##MacrosTable", tableColumnCount, tableFlags))

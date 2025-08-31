@@ -794,5 +794,12 @@ internal class Language
             return ResourceManager.GetString("ShowMountBtn", resourceCulture);
         }
     }
+    internal static string GroupsLabel
+    {
+        get
+        {
+            return ResourceManager.GetString("GroupsLabel", resourceCulture);
+        }
+    }
 }
 

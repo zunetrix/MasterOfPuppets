@@ -9,7 +9,6 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Bindings.ImGui;
 
 using MasterOfPuppets.Resources;
-using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 

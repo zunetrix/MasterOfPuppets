@@ -3,6 +3,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.ImGuiNotification;
 
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Ipc;
@@ -36,7 +37,7 @@ public class MacroExecutionQueueWindow : Window
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionQueueBtn", Language.StopMacroExecutionBtn))
         {
             Plugin.IpcProvider.StopMacroExecution();
-            DalamudApi.ShowNotification($"Macro execution queue stoped", Dalamud.Interface.ImGuiNotification.NotificationType.Info, 3000);
+            DalamudApi.ShowNotification($"Macro execution queue stoped", NotificationType.Info, 3000);
         }
 
         ImGui.Spacing();

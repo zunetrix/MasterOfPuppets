@@ -1,12 +1,12 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Numerics;
 using System.Collections.Generic;
 
 using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
-using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Bindings.ImGui;
 
 using MasterOfPuppets.Resources;
 
@@ -15,10 +15,10 @@ namespace MasterOfPuppets;
 public class MacroEditorWindow : Window
 {
     private Plugin Plugin { get; }
-
     private Macro MacroItem = new() { Commands = new List<Command>() };
-
     private int MacroIndex;
+    private bool EditingExistingMacro = false;
+
     public MacroEditorWindow(Plugin plugin) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow")
     {
         Plugin = plugin;
@@ -35,13 +35,18 @@ public class MacroEditorWindow : Window
 
     public override void OnClose()
     {
-        SaveMacro();
+        if (EditingExistingMacro)
+        {
+            SaveMacro();
+        }
+
         base.OnClose();
     }
 
     private void RessetState()
     {
         MacroItem = new() { Commands = new List<Command>() };
+        EditingExistingMacro = false;
         MacroIndex = Plugin.Config.Macros.Count;
     }
 
@@ -55,6 +60,7 @@ public class MacroEditorWindow : Window
 
         MacroIndex = macroIndex;
         MacroItem = Plugin.Config.Macros[MacroIndex];
+        EditingExistingMacro = true;
         // MacroText = Plugin.Config.Macros[macroIndex].Commands.JsonSerialize();
         this.Toggle();
     }
@@ -101,6 +107,50 @@ public class MacroEditorWindow : Window
         DrawCommands();
     }
 
+    private void DrawCommandsHeader()
+    {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddCommandBtn", "Add Command"))
+        {
+            var newCommand = new Command { Cids = new(), Actions = "" };
+            MacroItem.Commands.Add(newCommand);
+        }
+
+        ImGui.SameLine();
+        ImGui.TextUnformatted("Commands");
+        ImGuiUtil.HelpMarker("""
+        ===========================
+            Special Actions
+        ===========================
+
+        /wait <time>
+            Ex: /wait 3
+                /wait 10
+
+        /petbarslot <slot_number>
+            Umbrella Dance:
+            /petbarslot 2
+
+        /action <action_id>
+            Heavenscracker:
+            /item 12042
+
+        /item <item_id> | "Action Name"
+            Peloton:
+            /action 7557
+            /action "Peloton"
+
+        ---------------------------
+        Call it recursively
+        ---------------------------
+
+        /mop run "macro name"
+        """);
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+    }
+
     private void DrawCommands()
     {
         var usedCids = MacroItem.Commands?
@@ -111,43 +161,24 @@ public class MacroEditorWindow : Window
         .Where(character => !usedCids.Contains(character.Cid))
         .ToList();
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddCommandBtn", "Add Command"))
-        {
-            MacroItem.Commands.Add(new Command { Cids = new(), Actions = "" });
-        }
-
-        ImGui.SameLine();
-        ImGui.TextUnformatted("Commands");
-        ImGuiUtil.HelpMarker("""
-        Special Actions:
-            /wait time
-            /wait 3
-
-        Combine other plugin action
-            /btb item 12042
-
-        Call it recursively
-        /mop run macro-name
-        """);
-
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
+        DrawCommandsHeader();
 
         // new macro dont have any command
         if (MacroItem.Commands == null || MacroItem.Commands.Count == 0) return;
+
+        float halfWidth = ImGui.GetContentRegionAvail().X / 2f - ImGui.GetStyle().ItemSpacing.X - 20 * ImGuiHelpers.GlobalScale;
 
         for (var commandIndex = 0; commandIndex < MacroItem.Commands.Count; commandIndex++)
         {
             if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowUp, $"##MoveCommandUpBtn_command{commandIndex}", "Move Up"))
             {
-                ChangeCommmandOrder(commandIndex, -1);
+                MacroItem.Commands.MoveItemToIndex(commandIndex, commandIndex - 1);
             }
 
             ImGui.SameLine();
             if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowDown, $"##MoveCommandDownBtn_command{commandIndex}", "Move Down"))
             {
-                ChangeCommmandOrder(commandIndex, 1);
+                MacroItem.Commands.MoveItemToIndex(commandIndex, commandIndex + 1);
             }
 
             ImGui.SameLine();
@@ -160,6 +191,9 @@ public class MacroEditorWindow : Window
                 }
             }
 
+            //prevent render if all commands deleted
+            if (!MacroItem.Commands.IndexExists(commandIndex)) return;
+
             ImGui.SameLine();
 
             if (ImGui.CollapsingHeader($"Command ({commandIndex + 1})"))
@@ -167,18 +201,44 @@ public class MacroEditorWindow : Window
                 ImGui.Indent();
                 ImGui.BeginDisabled(availableCharacters.Count == 0);
                 ImGui.TextUnformatted(Language.CharactersLabel);
-
-                if (ImGui.BeginCombo($"##partyMemberSelectList_command{commandIndex}", "Select party character to add"))
+                ImGui.PushItemWidth(halfWidth);
+                if (ImGui.BeginCombo($"##CharacterSelectList_command{commandIndex}", "Select character to add"))
                 {
                     foreach (var character in availableCharacters)
                     {
-                        if (ImGui.Selectable($"{character.Name}##{character.Cid}", false))
+                        if (ImGui.Selectable($"{character.Name}##cid_{character.Cid}", false))
                         {
-                            MacroItem.Commands[commandIndex].Cids.Add(character.Cid);
+                            MacroItem.Commands[commandIndex].Cids.AddUnique(character.Cid);
                         }
                     }
                     ImGui.EndCombo();
                 }
+                ImGui.PopItemWidth();
+
+                ImGui.SameLine();
+                ImGui.Dummy(new Vector2(0, 20 * ImGuiHelpers.GlobalScale));
+                ImGui.SameLine();
+
+                ImGui.PushItemWidth(halfWidth);
+                if (ImGui.BeginCombo($"##CidsGroupSelectList_command{commandIndex}", "Select group to add"))
+                {
+                    for (var groupIndex = 0; groupIndex < Plugin.Config.CidsGroups.Count; groupIndex++)
+                    {
+                        if (ImGui.Selectable($"{Plugin.Config.CidsGroups[groupIndex].Name}##cidGroup_{groupIndex}", false))
+                        {
+                            var availableCidsToAdd = Plugin.Config.CidsGroups[groupIndex].Cids.Where(cid => !usedCids.Contains(cid)).ToList();
+
+                            if (availableCidsToAdd.Count == 0)
+                            {
+                                DalamudApi.ShowNotification($"No available characters to add", NotificationType.Info, 3000);
+                            }
+
+                            MacroItem.Commands[commandIndex].Cids.AddRangeUnique(availableCidsToAdd);
+                        }
+                    }
+                    ImGui.EndCombo();
+                }
+                ImGui.PopItemWidth();
                 ImGui.EndDisabled();
 
                 ImGui.Spacing();
@@ -188,13 +248,14 @@ public class MacroEditorWindow : Window
                     for (var characterIndex = 0; characterIndex < MacroItem.Commands[commandIndex].Cids.Count; characterIndex++)
                     {
                         var targetCid = MacroItem.Commands[commandIndex].Cids[characterIndex];
+                        // find cid name
                         var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
                             ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
 
                         if (ImGui.Selectable($"{character.Name}##command{commandIndex}_character{characterIndex}", false, ImGuiSelectableFlags.AllowDoubleClick))
                         {
                             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                                MacroItem.Commands[commandIndex].Cids.RemoveAll(cid => cid == MacroItem.Commands[commandIndex].Cids[characterIndex]);
+                                MacroItem.Commands[commandIndex].Cids.RemoveAll(cid => cid == targetCid);
                         }
                         ImGuiUtil.ToolTip("Doubleclick to remove");
                     }
@@ -204,7 +265,7 @@ public class MacroEditorWindow : Window
                 ImGui.Spacing();
                 ImGui.Spacing();
                 ImGui.TextUnformatted("Actions");
-                if (ImGui.InputTextMultiline($"Action##InputAction_command{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 100)))
+                if (ImGui.InputTextMultiline($"##InputAction_command{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 100)))
                 {
                     // Plugin.Config.MarkTargeted = macroText;
                 }
@@ -215,33 +276,11 @@ public class MacroEditorWindow : Window
                 ImGui.Separator();
                 ImGui.Unindent();
             }
-
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Spacing();
         }
-    }
 
-    public void ChangeCommmandOrder(int itemIndex, int moveBy)
-    {
-        var isEmptyList = MacroItem.Commands == null || MacroItem.Commands.Count == 0;
-        var isValidIndex = itemIndex >= 0 && itemIndex < MacroItem.Commands.Count;
-
-        if (isEmptyList || !isValidIndex)
-            return;
-
-        int targetIndex = itemIndex + moveBy;
-        targetIndex = Math.Clamp(targetIndex, 0, MacroItem.Commands.Count);
-
-        if (targetIndex == itemIndex)
-            return;
-
-        var item = MacroItem.Commands[itemIndex];
-        MacroItem.Commands.RemoveAt(itemIndex);
-
-        targetIndex = Math.Clamp(targetIndex, 0, MacroItem.Commands.Count);
-
-        MacroItem.Commands.Insert(targetIndex, item);
+        ImGui.Spacing();
+        ImGui.Spacing();
+        ImGui.Spacing();
+        ImGui.Spacing();
     }
 }
