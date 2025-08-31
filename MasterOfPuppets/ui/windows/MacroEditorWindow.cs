@@ -121,7 +121,6 @@ public class MacroEditorWindow : Window
         ===========================
             Special Actions
         ===========================
-
         /wait <time>
             Ex: /wait 3
                 /wait 10
@@ -130,14 +129,22 @@ public class MacroEditorWindow : Window
             Umbrella Dance:
             /petbarslot 2
 
-        /action <action_id>
-            Heavenscracker:
-            /item 12042
+        /action <action_id> | "Action Name"
+            Ex: /action 7557
+                /action "Peloton"
 
-        /item <item_id> | "Action Name"
-            Peloton:
-            /action 7557
-            /action "Peloton"
+        /item <item_id> | "Item Name"
+            Ex: /item 12042
+                /item "Heavenscracker"
+
+        /fashion "Item Name"
+            Ex: /fashion "Fat Cat Parasol"
+
+        /facewear "Item Name"
+            Ex: /facewear "Groovy Glasses"
+
+        /mount "Mount Name"
+            Ex: /mount "company chocobo"
 
         ---------------------------
         Call it recursively

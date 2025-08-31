@@ -9,6 +9,7 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Bindings.ImGui;
 
 using MasterOfPuppets.Resources;
+using Dalamud.Interface.Utility;
 
 namespace MasterOfPuppets;
 
@@ -89,7 +90,7 @@ internal class MainWindow : Window
         float spacing = ImGui.GetStyle().ItemSpacing.X;
         float buttonWidth = ImGui.GetFrameHeight();
         int buttonCount = 4;
-        float marginRight = 10f;
+        float marginRight = 15f * ImGuiHelpers.GlobalScale;
         float totalButtonsWidth = (buttonWidth * buttonCount) + (spacing * (buttonCount - 1)) + marginRight;
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
