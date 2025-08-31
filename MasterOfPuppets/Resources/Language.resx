@@ -184,6 +184,9 @@
     <data name="RunMacroBtn" xml:space="preserve">
         <value>Run Macro</value>
     </data>
+    <data name="ShowCharactersBtn" xml:space="preserve">
+        <value>Characters List</value>
+    </data>
     <data name="MacroTextInputLabel" xml:space="preserve">
         <value>Macro</value>
     </data>
@@ -202,8 +205,8 @@
     <data name="SettingsWindowOpenOnStartup" xml:space="preserve">
         <value>Open on startup</value>
     </data>
-    <data name="DuplicateMacroBtn" xml:space="preserve">
-        <value>Duplicate macro</value>
+    <data name="CloneMacroBtn" xml:space="preserve">
+        <value>Clone macro</value>
     </data>
     <data name="StopMacroExecutionBtn" xml:space="preserve">
         <value>Stop All Macro Execution</value>
@@ -212,18 +215,42 @@
         <value>Seach Macro</value>
     </data>
     <data name="EmoteSearchInputLabel" xml:space="preserve">
-        <value>Seach Emote</value>
+        <value>Seach</value>
     </data>
     <data name="ShowMacroExecutionQueueBtn" xml:space="preserve">
-        <value>Show Macro Execution Queue</value>
+        <value>Macro Execution Queue</value>
     </data>
     <data name="ShowEmotesBtn" xml:space="preserve">
-        <value>Show Emotes</value>
+        <value>Emotes</value>
     </data>
     <data name="EmotesTitle" xml:space="preserve">
         <value>Emotes</value>
     </data>
     <data name="MacroExecutionQueueTitle" xml:space="preserve">
         <value>Macro Execution Queue</value>
+    </data>
+    <data name="SettingsWindowSaveConfigAfterSync" xml:space="preserve">
+        <value>Save config after sync</value>
+    </data>
+    <data name="SettingsWindowSyncClients" xml:space="preserve">
+        <value>Sync clients</value>
+    </data>
+    <data name="FashionAccessoriesTitle" xml:space="preserve">
+        <value>Fashion Accessories</value>
+    </data>
+    <data name="ShowFashionAccessoriesBtn" xml:space="preserve">
+        <value>Fashion Accessories</value>
+    </data>
+    <data name="FacewearTitle" xml:space="preserve">
+        <value>Facewear</value>
+    </data>
+    <data name="ShowFacewearBtn" xml:space="preserve">
+        <value>Facewear</value>
+    </data>
+    <data name="MountTitle" xml:space="preserve">
+        <value>Mounts</value>
+    </data>
+    <data name="ShowMountBtn" xml:space="preserve">
+        <value>Mounts</value>
     </data>
 </root>

@@ -23,7 +23,7 @@ internal class IpcProvider : IDisposable
     public static List<string> CurrentActionsExecutionList { get; private set; } = new();
     public static int CurrentActionExecutionIndex { get; private set; } = -1;
 
-    private readonly bool initFailed;
+    private readonly bool _initFailed;
     private bool _messagesQueueRunning = true;
     private readonly TinyMessageBus MessageBus;
     private readonly ConcurrentQueue<(byte[] serialized, bool includeSelf)> MessageQueue = new();
@@ -95,18 +95,18 @@ internal class IpcProvider : IDisposable
         catch (PlatformNotSupportedException e)
         {
             DalamudApi.PluginLog.Error(e, $"TinyIpc init failed. Unfortunately TinyIpc is not available on Linux. local ensemble sync will not function properly.");
-            initFailed = true;
+            _initFailed = true;
         }
         catch (Exception e)
         {
             DalamudApi.PluginLog.Error(e, $"TinyIpc init failed. local ensemble sync will not function properly.");
-            initFailed = true;
+            _initFailed = true;
         }
     }
 
     private void MessageBusMessageReceived(object sender, TinyMessageReceivedEventArgs e)
     {
-        if (initFailed) return;
+        if (_initFailed) return;
         try
         {
             var sw = Stopwatch.StartNew();
@@ -126,6 +126,8 @@ internal class IpcProvider : IDisposable
 
     private void ProcessMessage(IpcMessage message)
     {
+        if (!Plugin.Config.SyncClients) return;
+
         if (_ipcHandlers.TryGetValue(message.MessageType, out var handler))
             handler(message);
         else
@@ -145,8 +147,9 @@ internal class IpcProvider : IDisposable
 
     public void BroadCast(byte[] serialized, bool includeSelf = false)
     {
-        if (initFailed) return;
-        // if (!Plugin.Config.SyncClients) return;
+        if (_initFailed) return;
+        if (!Plugin.Config.SyncClients) return;
+
         try
         {
             // DalamudApi.PluginLog.Verbose($"queuing message. length: {Dalamud.Utility.Util.FormatBytes(serialized.Length)}" + (includeSelf ? " includeSelf" : null));
@@ -167,7 +170,7 @@ internal class IpcProvider : IDisposable
             _messagesQueueRunning = false;
             MessageBus.MessageReceived -= MessageBusMessageReceived;
 
-            if (initFailed) return;
+            if (_initFailed) return;
             _autoResetEvent?.Set();
             _autoResetEvent?.Dispose();
         }
@@ -194,16 +197,23 @@ internal class IpcProvider : IDisposable
 
     public void SyncConfiguration()
     {
-        var message = IpcMessage.Create(IpcMessageType.SyncConfiguration, Plugin.Config.JsonSerialize()).Serialize();
+        // Plugin.Config.Save();
+        var message = IpcMessage.Create(IpcMessageType.SyncConfiguration, Plugin.Config.JsonSerialize(), Plugin.Config.SaveConfigAfterSync.ToString()).Serialize();
         BroadCast(message, includeSelf: false);
     }
 
     [IpcHandle(IpcMessageType.SyncConfiguration)]
     private void HandleSyncConfiguration(IpcMessage message)
     {
-        var str = message.StringData[0];
-        var pluginConfig = str.JsonDeserialize<Configuration>();
+        var cofigurationString = message.StringData[0];
+        bool saveConfigAfterSync = bool.TryParse(message.StringData[1], out var temp) ? temp : false;
+        var pluginConfig = cofigurationString.JsonDeserialize<Configuration>();
         Plugin.Config = pluginConfig;
+
+        if (saveConfigAfterSync)
+        {
+            Plugin.Config.Save();
+        }
 
         DalamudApi.PluginLog.Debug("SyncConfiguration");
     }
@@ -220,11 +230,22 @@ internal class IpcProvider : IDisposable
         var textCommand = message.StringData[0];
 
         DalamudApi.Framework.RunOnTick(delegate
-               {
-                   Chat.SendMessage($"{textCommand}");
-               });
+        {
+            Chat.SendMessage($"{textCommand}");
+        });
+    }
 
-        // Chat.SendMessage($"{textCommand}");
+    public void BroadcastActionCommand(uint actionId)
+    {
+        var message = IpcMessage.Create(IpcMessageType.BroadcastActionCommand, actionId).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.BroadcastActionCommand)]
+    private void HandleBroadcastActionCommand(IpcMessage message)
+    {
+        var actionId = message.DataStruct<uint>();
+        GameActionManager.UseAction(actionId);
     }
 
     public void StopMacroExecution()
@@ -242,6 +263,7 @@ internal class IpcProvider : IDisposable
 
     public void RunMacro(int macroIndex, bool includeSelf = true)
     {
+        DalamudApi.PluginLog.Debug($"RunMacro {macroIndex}");
         // var macroJson = macroData.JsonSerialize();
         var message = IpcMessage.Create(IpcMessageType.RunMacro, macroIndex).Serialize();
         BroadCast(message, includeSelf);
@@ -252,10 +274,11 @@ internal class IpcProvider : IDisposable
     {
         var macroIndex = message.DataStruct<int>();
         var isValidMacroIndex = macroIndex >= 0 && macroIndex < Plugin.Config.Macros.Count;
+
         if (!isValidMacroIndex)
         {
             DalamudApi.PluginLog.Debug("Invalid Macro index");
-            DalamudApi.ShowNotification($"Invalid Macro number", NotificationType.Error, 5000);
+            DalamudApi.ShowNotification($"Invalid Macro index", NotificationType.Error, 5000);
             return;
         }
 
@@ -264,10 +287,10 @@ internal class IpcProvider : IDisposable
 
 
         if (macro.Commands == null || macro.Commands.Count == 0) return;
-        var playerActions = macro.Commands.FirstOrDefault(c => c.Characters.Any(ch => ch.Cid == playerCid))?.Actions;
+        var playerActions = macro.Commands.FirstOrDefault(command => command.Cids.Any(cid => cid == playerCid))?.Actions;
         if (playerActions == null)
         {
-            DalamudApi.PluginLog.Debug($"No Actions for CID ({playerCid})");
+            DalamudApi.PluginLog.Debug($"No actions for character");
             return;
         }
 
@@ -279,6 +302,35 @@ internal class IpcProvider : IDisposable
         EnqueueMacroActions(actionList, Plugin.Config.DelayBetweenActions);
     }
 
+    private static readonly Dictionary<string, Func<string, CancellationToken, Task>> CustomMacroActionsHandlers =
+    new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["wait"] = async (args, token) =>
+        {
+            if (string.IsNullOrWhiteSpace(args) || !int.TryParse(args, out int seconds))
+            {
+                DalamudApi.PluginLog.Warning($"[WAIT] invalid argument: \"{args}\"");
+                return;
+            }
+
+            DalamudApi.PluginLog.Debug($"[WAIT] {seconds}...");
+            await Task.Delay(seconds * 1000, token);
+        },
+
+        ["action"] = async (args, token) =>
+        {
+            if (string.IsNullOrWhiteSpace(args) || !uint.TryParse(args, out uint actionId))
+            {
+                DalamudApi.PluginLog.Warning($"[ACTION] invalid argument: \"{args}\"");
+                return;
+            }
+
+            GameActionManager.UseAction(actionId);
+            DalamudApi.PluginLog.Debug($"[ACTION] {args}");
+            await Task.CompletedTask;
+        }
+    };
+
     private static async Task ExecuteActions(string[] actions, CancellationToken token, int delayBetweenActions = 2)
     {
         foreach (var action in actions)
@@ -288,16 +340,22 @@ internal class IpcProvider : IDisposable
             if (token.IsCancellationRequested)
                 break;
 
-            var match = Regex.Match(action, @"^/wait\s*(\d+)$", RegexOptions.IgnoreCase);
+            var match = Regex.Match(action, @"^\/(\w+)\s*(.*)$");
+            bool handled = false;
+
             if (match.Success)
             {
-                if (int.TryParse(match.Groups[1].Value, out int seconds))
+                var command = match.Groups[1].Value;
+                var args = match.Groups[2].Value.Trim();
+
+                if (CustomMacroActionsHandlers.TryGetValue(command, out var handler))
                 {
-                    DalamudApi.PluginLog.Debug($"[WAIT] {seconds}...");
-                    await Task.Delay(seconds * 1000);
+                    await handler(args, token);
+                    handled = true;
                 }
             }
-            else
+
+            if (!handled)
             {
                 // DalamudApi.Framework.RunOnTick(delegate
                 // {
@@ -309,10 +367,11 @@ internal class IpcProvider : IDisposable
                 //     Chat.SendMessage($"{action}");
                 // });
 
+                Chat.SendMessage(action);
                 Chat.SendMessage($"{action}");
                 DalamudApi.PluginLog.Debug($"[ExecuteAction] {action}");
                 DalamudApi.PluginLog.Debug($"[DELAY] {delayBetweenActions}...");
-                await Task.Delay(delayBetweenActions * 1000);
+                await Task.Delay(delayBetweenActions * 1000, token);
             }
         }
     }

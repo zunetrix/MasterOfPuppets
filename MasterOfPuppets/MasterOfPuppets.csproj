@@ -4,8 +4,8 @@
         <TargetFramework>net9-windows</TargetFramework>
         <RootNamespace>MasterOfPuppets</RootNamespace>
         <AssemblyName>MasterOfPuppets</AssemblyName>
-        <Version>1.0.0.5</Version>
-        <AssemblyVersion>1.0.0.5</AssemblyVersion>
+        <Version>1.0.0.6</Version>
+        <!-- <AssemblyVersion>1.0.0.6</AssemblyVersion> -->
         <LangVersion>latest</LangVersion>
         <Nullable>disable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -13,6 +13,11 @@
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
         <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
         <!-- <UseWpf>true</UseWpf> -->
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
+        <Version>1.0.0.6</Version>
+        <DefineConstants>DEBUG</DefineConstants>
+        <AssemblyName>MasterOfPuppets</AssemblyName>
     </PropertyGroup>
     <PropertyGroup>
         <DalamudLibPath>$(AppData)\XIVLauncher\addon\Hooks\dev</DalamudLibPath>

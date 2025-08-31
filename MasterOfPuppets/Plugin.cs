@@ -24,20 +24,15 @@ public class Plugin : IDalamudPlugin
     public Plugin(IDalamudPluginInterface pluginInterface)
     {
         pluginInterface.Create<DalamudApi>();
-
         Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-
         Config.Initialize(DalamudApi.PluginInterface);
-
         Ui = new PluginUi(this);
-
         IpcProvider = new IpcProvider(this);
 
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
-
         DalamudApi.PluginInterface.LanguageChanged += OnLanguageChange;
 
-        DalamudApi.CommandManager.AddHandler("/mastertofpuppets", new CommandInfo(OnCommand)
+        DalamudApi.CommandManager.AddHandler("/masterofpuppets", new CommandInfo(OnCommand)
         {
             HelpMessage = "Use with no arguments to show plugin window. Use with \"run\" X to run macro number",
         });
@@ -66,7 +61,7 @@ public class Plugin : IDalamudPlugin
         DalamudApi.PluginInterface.UiBuilder.Draw -= Ui.Draw;
         DalamudApi.ClientState.Logout -= OnLogout;
         DalamudApi.ClientState.Login -= OnLogin;
-        DalamudApi.CommandManager.RemoveHandler("/mastertofpuppets");
+        DalamudApi.CommandManager.RemoveHandler("/masterofpuppets");
         DalamudApi.CommandManager.RemoveHandler("/mop");
         DalamudApi.PluginInterface.LanguageChanged -= OnLanguageChange;
         IpcProvider.Dispose();

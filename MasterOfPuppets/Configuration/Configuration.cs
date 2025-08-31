@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using System.Linq;
 using System.Collections.Generic;
 
 using Dalamud.Configuration;
@@ -11,15 +12,18 @@ namespace MasterOfPuppets;
 internal class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 1;
-
     private IDalamudPluginInterface Interface { get; set; } = null!;
 
-    public bool SyncClients { get; set; } = false;
+    public bool SyncClients { get; set; } = true;
+    // for individual Config file accounts
+    public bool SaveConfigAfterSync { get; set; } = false;
 
+    // Macros
     public List<Macro> Macros = new();
-
     public int DelayBetweenActions { get; set; } = 2;
+    public List<Character> Characters = new();
 
+    // Interface
     public bool OpenOnStartup { get; set; } = false;
 
     // public Vector4 ThemeColour { get; set; } = new(0f, 1f, 0f, 1f);
@@ -47,12 +51,13 @@ internal class Configuration : IPluginConfiguration
         if (isEmptyList || !isValidIndex)
             return;
 
-        // clamp index
         targetIndex = Math.Clamp(targetIndex, 0, Macros.Count);
 
         var item = Macros[itemIndex];
         Macros.RemoveAt(itemIndex);
         Macros.Insert(targetIndex, item);
+
+        this.Save();
     }
 
     public void RemoveMacroItem(int itemIndex)
@@ -64,9 +69,11 @@ internal class Configuration : IPluginConfiguration
             return;
 
         Macros.RemoveAt(itemIndex);
+
+        this.Save();
     }
 
-    public void DuplicateMacroItem(int itemIndex)
+    public void CloneMacroItem(int itemIndex)
     {
         var isEmptyList = Macros == null || Macros.Count == 0;
         var isValidIndex = itemIndex >= 0 && itemIndex < Macros.Count;
@@ -75,9 +82,55 @@ internal class Configuration : IPluginConfiguration
         if (isEmptyList || !isValidIndex)
             return;
 
-        var duplicatedMacro = Macros[itemIndex].Clone();
-        duplicatedMacro.Name += " (copy)";
-        Macros.Add(duplicatedMacro);
+        var cloenedMacro = Macros[itemIndex].Clone();
+        cloenedMacro.Name += " (copy)";
+        Macros.Add(cloenedMacro);
+
+        this.Save();
+    }
+
+    public void RemoveCharacter(ulong cid)
+    {
+        var isEmptyList = Characters == null || Characters.Count == 0;
+
+        if (isEmptyList)
+            return;
+
+        var existingIndex = Characters.FindIndex(character => character.Cid == cid);
+        if (existingIndex != -1)
+        {
+            Characters.RemoveAt(existingIndex);
+        }
+
+        this.Save();
+    }
+
+    public void MoveCharacterToIndex(int itemIndex, int targetIndex)
+    {
+        var isEmptyList = Characters == null || Characters.Count == 0;
+        var isInvalidIndex = itemIndex < 0 || itemIndex >= Characters.Count;
+        var isInvalidTargetIndex = targetIndex < 0 || targetIndex >= Characters.Count;
+
+        if (isEmptyList || isInvalidIndex || isInvalidTargetIndex)
+            return;
+
+        targetIndex = Math.Clamp(targetIndex, 0, Characters.Count);
+
+        var item = Characters[itemIndex];
+        Characters.RemoveAt(itemIndex);
+        Characters.Insert(targetIndex, item);
+
+        this.Save();
+    }
+
+    public void AddCharacter(Character character)
+    {
+        if (!Characters.Any(c => c.Cid == character.Cid))
+        {
+            Characters.Add(new Character { Cid = character.Cid, Name = character.Name });
+        }
+
+        this.Save();
     }
 }
 

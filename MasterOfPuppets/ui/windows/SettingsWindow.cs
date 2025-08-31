@@ -33,10 +33,32 @@ public class SettingsWindow : Window
 
     public override void Draw()
     {
-        if (!ImGui.BeginTabBar("##settings-tabs")) return;
+        if (!ImGui.BeginTabBar("##SettingsTabs")) return;
 
-        if (ImGui.BeginTabItem($"{Language.SettingsGeneralTab}###general-tab"))
+        if (ImGui.BeginTabItem($"{Language.SettingsGeneralTab}###GeneralTab"))
         {
+            var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
+            if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync))
+            {
+                Plugin.Config.SaveConfigAfterSync = saveConfigAfterSync;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("Enable for accounts with individual config file");
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+
+            var syncClients = Plugin.Config.SyncClients;
+            if (ImGui.Checkbox(Language.SettingsWindowSyncClients, ref syncClients))
+            {
+                Plugin.Config.SyncClients = syncClients;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.Spacing();
+
             var delayBetweenActions = Plugin.Config.DelayBetweenActions;
             ImGui.TextUnformatted("Delay between actions");
             if (ImGui.InputInt("###delay-between-actions", ref delayBetweenActions))
@@ -46,6 +68,11 @@ public class SettingsWindow : Window
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
+
+
+
+
+
 
             // ImGui.Spacing();
             // var targetedColour = Plugin.Config.TargetedColour;
@@ -149,7 +176,7 @@ public class SettingsWindow : Window
         //     ImGui.EndTabItem();
         // }
 
-        if (ImGui.BeginTabItem($"{Language.SettingsWindowTab}###window-tab"))
+        if (ImGui.BeginTabItem($"{Language.SettingsWindowTab}###WindowTab"))
         {
             var openOnStartup = Plugin.Config.OpenOnStartup;
             if (ImGui.Checkbox(Language.SettingsWindowOpenOnStartup, ref openOnStartup))

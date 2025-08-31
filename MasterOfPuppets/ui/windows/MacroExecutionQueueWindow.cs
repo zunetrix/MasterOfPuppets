@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 
+using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 
@@ -29,7 +30,14 @@ public class MacroExecutionQueueWindow : Window
 
     public override void Draw()
     {
-        ImGui.TextUnformatted("Actions in queue");
+        ImGui.TextUnformatted("Queu Actions");
+        ImGui.SameLine();
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionQueueBtn", Language.StopMacroExecutionBtn))
+        {
+            Plugin.IpcProvider.StopMacroExecution();
+            DalamudApi.ShowNotification($"Macro execution queue stoped", Dalamud.Interface.ImGuiNotification.NotificationType.Info, 3000);
+        }
 
         ImGui.Spacing();
         ImGui.Separator();

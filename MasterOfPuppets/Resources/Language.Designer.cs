@@ -675,11 +675,11 @@ internal class Language
             return ResourceManager.GetString("SettingsGeneralTab", resourceCulture);
         }
     }
-    internal static string DuplicateMacroBtn
+    internal static string CloneMacroBtn
     {
         get
         {
-            return ResourceManager.GetString("DuplicateMacroBtn", resourceCulture);
+            return ResourceManager.GetString("CloneMacroBtn", resourceCulture);
         }
     }
     internal static string StopMacroExecutionBtn
@@ -696,11 +696,11 @@ internal class Language
             return ResourceManager.GetString("MacroSearchInputLabel", resourceCulture);
         }
     }
-    internal static string EmoteSearchInputLabel
+    internal static string SearchInputLabel
     {
         get
         {
-            return ResourceManager.GetString("EmoteSearchInputLabel", resourceCulture);
+            return ResourceManager.GetString("SearchInputLabel", resourceCulture);
         }
     }
     internal static string ShowMacroExecutionQueueBtn
@@ -729,6 +729,69 @@ internal class Language
         get
         {
             return ResourceManager.GetString("MacroExecutionQueueTitle", resourceCulture);
+        }
+    }
+    internal static string ShowCharactersBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ShowCharactersBtn", resourceCulture);
+        }
+    }
+    internal static string SettingsWindowSaveConfigAfterSync
+    {
+        get
+        {
+            return ResourceManager.GetString("SettingsWindowSaveConfigAfterSync", resourceCulture);
+        }
+    }
+    internal static string SettingsWindowSyncClients
+    {
+        get
+        {
+            return ResourceManager.GetString("SettingsWindowSyncClients", resourceCulture);
+        }
+    }
+    internal static string FashionAccessoriesTitle
+    {
+        get
+        {
+            return ResourceManager.GetString("FashionAccessoriesTitle", resourceCulture);
+        }
+    }
+    internal static string FacewearTitle
+    {
+        get
+        {
+            return ResourceManager.GetString("FacewearTitle", resourceCulture);
+        }
+    }
+    internal static string MountTitle
+    {
+        get
+        {
+            return ResourceManager.GetString("MountTitle", resourceCulture);
+        }
+    }
+    internal static string ShowFashionAccessoriesBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ShowFashionAccessoriesBtn", resourceCulture);
+        }
+    }
+    internal static string ShowFacewearBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ShowFacewearBtn", resourceCulture);
+        }
+    }
+    internal static string ShowMountBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ShowMountBtn", resourceCulture);
         }
     }
 }

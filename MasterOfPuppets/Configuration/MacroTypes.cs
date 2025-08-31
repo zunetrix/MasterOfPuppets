@@ -13,11 +13,11 @@ public class Character
 
 public class Command
 {
-    [JsonPropertyName("characters")]
-    public List<Character> Characters;
+    // [JsonPropertyName("characters")]
+    // public List<Character> Characters;
+    [JsonPropertyName("cids")]
+    public List<ulong> Cids;
 
-    // [JsonPropertyName("actions")]
-    // public List<Action> Actions;
     [JsonPropertyName("actions")]
     public string Actions;
 
@@ -25,9 +25,9 @@ public class Command
     {
         return new Command
         {
-            Characters = this.Characters != null
-                ? this.Characters.Select(c => new Character { Cid = c.Cid, Name = c.Name }).ToList()
-                : new List<Character>(),
+            Cids = this.Cids != null
+                ? this.Cids.ToList()
+                : new List<ulong>(),
             Actions = this.Actions
         };
     }

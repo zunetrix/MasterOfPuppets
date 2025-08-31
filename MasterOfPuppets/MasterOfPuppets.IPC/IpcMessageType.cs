@@ -8,5 +8,6 @@ public enum IpcMessageType
     RunMacro,
     StopMacroExecution,
     SyncConfiguration,
-    BroadcastTextCommand
+    BroadcastTextCommand,
+    BroadcastActionCommand
 }

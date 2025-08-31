@@ -13,7 +13,12 @@ namespace MasterOfPuppets
         public SettingsWindow SettingsWindow { get; }
         public MacroEditorWindow MacroEditorWindow { get; }
         public MacroExecutionQueueWindow MacroExecutionQueueWindow { get; }
+        public CharactersWindow CharactersWindow { get; }
         public EmotesWindow EmotesWindow { get; }
+        public MountWindow MountWindow { get; }
+        public FacewearWindow FacewearWindow { get; }
+        public FashionAccessoriesWindow FashionAccessoriesWindow { get; }
+        public DebugWindow DebugWindow { get; }
 
         public PluginUi(Plugin plugin)
         {
@@ -23,13 +28,23 @@ namespace MasterOfPuppets
             SettingsWindow = new SettingsWindow(Plugin);
             MacroEditorWindow = new MacroEditorWindow(Plugin);
             MacroExecutionQueueWindow = new MacroExecutionQueueWindow(Plugin);
+            CharactersWindow = new CharactersWindow(Plugin);
             EmotesWindow = new EmotesWindow(Plugin);
+            MountWindow = new MountWindow(Plugin);
+            FacewearWindow = new FacewearWindow(Plugin);
+            FashionAccessoriesWindow = new FashionAccessoriesWindow(Plugin);
+            DebugWindow = new DebugWindow(Plugin);
 
             WindowSystem.AddWindow(MainWindow);
             WindowSystem.AddWindow(SettingsWindow);
             WindowSystem.AddWindow(MacroEditorWindow);
             WindowSystem.AddWindow(MacroExecutionQueueWindow);
+            WindowSystem.AddWindow(CharactersWindow);
             WindowSystem.AddWindow(EmotesWindow);
+            WindowSystem.AddWindow(MountWindow);
+            WindowSystem.AddWindow(FacewearWindow);
+            WindowSystem.AddWindow(FashionAccessoriesWindow);
+            WindowSystem.AddWindow(DebugWindow);
         }
 
         public void Dispose()
@@ -39,10 +54,10 @@ namespace MasterOfPuppets
 
         public void Draw()
         {
-            WindowSystem.Draw();
-
             var player = DalamudApi.ClientState.LocalPlayer;
             if (player == null) return;
+
+            WindowSystem.Draw();
         }
     }
 }

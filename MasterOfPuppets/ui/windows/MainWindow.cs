@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Bindings.ImGui;
 
 using MasterOfPuppets.Resources;
@@ -28,7 +29,7 @@ internal class MainWindow : Window
 
         Size = new Vector2(290, 195);
         SizeCondition = ImGuiCond.FirstUseEver;
-        UpdateConfig();
+        UpdateWindowConfig();
     }
 
     public override void Update()
@@ -92,27 +93,26 @@ internal class MainWindow : Window
         float totalButtonsWidth = (buttonWidth * buttonCount) + (spacing * (buttonCount - 1)) + marginRight;
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddMacroBtn", Language.AddMacroBtn))
-        {
-            Ui.MacroEditorWindow.AddNewMacro();
-        }
-
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionBtn", Language.StopMacroExecutionBtn))
-        {
-            Plugin.IpcProvider.StopMacroExecution();
-        }
-
-        ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Smile, $"##ShowEmotesBtn", Language.ShowEmotesBtn))
         {
             Ui.EmotesWindow.Toggle();
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.List, $"##ShowMacroExecutionQueueBtn", Language.ShowMacroExecutionQueueBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Umbrella, $"##ShowFashionAccessoriesBtn", Language.ShowFashionAccessoriesBtn))
         {
-            Ui.MacroExecutionQueueWindow.Toggle();
+            Ui.FashionAccessoriesWindow.Toggle();
+        }
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Glasses, $"##ShowFacewearBtn", Language.ShowFacewearBtn))
+        {
+            Ui.FacewearWindow.Toggle();
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Horse, $"##ShowMountBtn", Language.ShowMountBtn))
+        {
+            Ui.MountWindow.Toggle();
         }
 
         // ImGui.Text(Language.MacroSearchInputLabel);
@@ -128,6 +128,34 @@ internal class MainWindow : Window
 
         Drag to reorder macro list
         """);
+
+        int buttonMacroCount = 4;
+        float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
+
+        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddMacroBtn", Language.AddMacroBtn))
+        {
+            Ui.MacroEditorWindow.AddNewMacro();
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionBtn", Language.StopMacroExecutionBtn))
+        {
+            Plugin.IpcProvider.StopMacroExecution();
+            DalamudApi.ShowNotification($"Macro execution queue stoped", NotificationType.Info, 3000);
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
+        {
+            Ui.CharactersWindow.Toggle();
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.List, $"##ShowMacroExecutionQueueBtn", Language.ShowMacroExecutionQueueBtn))
+        {
+            Ui.MacroExecutionQueueWindow.Toggle();
+        }
 
         var isFiltered = !string.IsNullOrEmpty(MacroSearchString);
         var noSearchResults = MacroListSearchedIndexs.Count == 0;
@@ -202,7 +230,6 @@ internal class MainWindow : Window
                         int targetIndex = originalIndex + offset;
                         // PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
                         Plugin.Config.MoveMacroToIndex(originalIndex, targetIndex);
-                        Plugin.Config.Save();
                         Plugin.IpcProvider.SyncConfiguration();
                     }
                 }
@@ -212,21 +239,20 @@ internal class MainWindow : Window
         ImGui.PopStyleColor();
 
         ImGui.TableNextColumn();
-        ImGuiUtil.IconButton(FontAwesomeIcon.TrashAlt, $"##DeleteMacro_{macroIdx}", Language.DeleteMacroBtn);
+        ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteMacro_{macroIdx}", Language.DeleteMacroBtn);
         if (ImGui.IsItemHovered())
         {
             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
                 Plugin.Config.RemoveMacroItem(macroIdx);
-                Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##DuplicateMacro_{macroIdx}", Language.DuplicateMacroBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CloneMacro_{macroIdx}", Language.CloneMacroBtn))
         {
-            Plugin.Config.DuplicateMacroItem(macroIdx);
+            Plugin.Config.CloneMacroItem(macroIdx);
         }
 
         ImGui.SameLine();
@@ -290,7 +316,7 @@ internal class MainWindow : Window
         }
     }
 
-    internal void UpdateConfig()
+    internal void UpdateWindowConfig()
     {
         RespectCloseHotkey = Plugin.Config.AllowCloseWithEscape;
 
@@ -310,6 +336,15 @@ internal class MainWindow : Window
                 // Click = _ => Ui.SettingsWindow.Toggle(),
                 Icon = FontAwesomeIcon.Heart
             });
+
+#if DEBUG
+            TitleBarButtons.Add(new TitleBarButton()
+            {
+                AvailableClickthrough = false,
+                Click = _ => Ui.DebugWindow.Toggle(),
+                Icon = FontAwesomeIcon.Bug
+            });
+#endif
         }
     }
 }

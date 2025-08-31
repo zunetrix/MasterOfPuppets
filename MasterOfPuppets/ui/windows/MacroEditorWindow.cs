@@ -33,6 +33,12 @@ public class MacroEditorWindow : Window
         base.PreDraw();
     }
 
+    public override void OnClose()
+    {
+        SaveMacro();
+        base.OnClose();
+    }
+
     private void RessetState()
     {
         MacroItem = new() { Commands = new List<Command>() };
@@ -82,18 +88,6 @@ public class MacroEditorWindow : Window
         ImGui.Text(Language.MacroNameLabel);
         ImGui.InputText("##InputMacroName", ref MacroItem.Name);
 
-        ImGuiUtil.HelpMarker("""
-        Special Actions:
-            /wait time
-            /wait 3
-
-        Combine other plugin action
-            /btb item 12042
-
-        Call it recursively
-        /mop run macro-name
-        """);
-
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Save, $"##SaveMacroBtn", Language.SaveMacroBtn))
         {
@@ -110,22 +104,31 @@ public class MacroEditorWindow : Window
     private void DrawCommands()
     {
         var usedCids = MacroItem.Commands?
-        .SelectMany(cmd => cmd.Characters)
-        .Select(c => c.Cid)
+        .SelectMany(c => c.Cids)
         .ToHashSet() ?? new HashSet<ulong>();
 
-        var availablePartyMembers = DalamudApi.PartyList
-        .Select((partyMember) => partyMember.GetPartyMemberData())
-        .Where(pm => !usedCids.Contains(pm.Cid))
+        var availableCharacters = Plugin.Config.Characters
+        .Where(character => !usedCids.Contains(character.Cid))
         .ToList();
 
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddCommandBtn", "Add Command"))
         {
-            MacroItem.Commands.Add(new Command { Characters = new(), Actions = "" });
+            MacroItem.Commands.Add(new Command { Cids = new(), Actions = "" });
         }
 
         ImGui.SameLine();
         ImGui.TextUnformatted("Commands");
+        ImGuiUtil.HelpMarker("""
+        Special Actions:
+            /wait time
+            /wait 3
+
+        Combine other plugin action
+            /btb item 12042
+
+        Call it recursively
+        /mop run macro-name
+        """);
 
         ImGui.Spacing();
         ImGui.Separator();
@@ -148,7 +151,7 @@ public class MacroEditorWindow : Window
             }
 
             ImGui.SameLine();
-            ImGuiUtil.IconButton(FontAwesomeIcon.TrashAlt, $"##RemoveCommandBtn_command{commandIndex}", "Remove Command (double click)");
+            ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCommandBtn_command{commandIndex}", "Remove Command (double click)");
             if (ImGui.IsItemHovered())
             {
                 if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
@@ -162,17 +165,16 @@ public class MacroEditorWindow : Window
             if (ImGui.CollapsingHeader($"Command ({commandIndex + 1})"))
             {
                 ImGui.Indent();
-                ImGui.BeginDisabled(availablePartyMembers.Count == 0);
+                ImGui.BeginDisabled(availableCharacters.Count == 0);
                 ImGui.TextUnformatted(Language.CharactersLabel);
 
                 if (ImGui.BeginCombo($"##partyMemberSelectList_command{commandIndex}", "Select party character to add"))
                 {
-                    foreach (var partyMember in availablePartyMembers)
+                    foreach (var character in availableCharacters)
                     {
-                        var playerInfo = $"{partyMember.Name}@{partyMember.World}";
-                        if (ImGui.Selectable($"{playerInfo}##{partyMember.Cid}", false))
+                        if (ImGui.Selectable($"{character.Name}##{character.Cid}", false))
                         {
-                            MacroItem.Commands[commandIndex].Characters.Add(new Character { Cid = partyMember.Cid, Name = playerInfo });
+                            MacroItem.Commands[commandIndex].Cids.Add(character.Cid);
                         }
                     }
                     ImGui.EndCombo();
@@ -183,12 +185,16 @@ public class MacroEditorWindow : Window
 
                 if (ImGui.BeginListBox($"##CharactersList_command{commandIndex}", new Vector2(-1, 100)))
                 {
-                    for (var characterIndex = 0; characterIndex < MacroItem.Commands[commandIndex].Characters.Count; characterIndex++)
+                    for (var characterIndex = 0; characterIndex < MacroItem.Commands[commandIndex].Cids.Count; characterIndex++)
                     {
-                        if (ImGui.Selectable($"{MacroItem.Commands[commandIndex].Characters[characterIndex].Name}##command{commandIndex}_character{characterIndex}", false, ImGuiSelectableFlags.AllowDoubleClick))
+                        var targetCid = MacroItem.Commands[commandIndex].Cids[characterIndex];
+                        var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
+                            ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
+
+                        if (ImGui.Selectable($"{character.Name}##command{commandIndex}_character{characterIndex}", false, ImGuiSelectableFlags.AllowDoubleClick))
                         {
                             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                                MacroItem.Commands[commandIndex].Characters.RemoveAll(c => c.Cid == MacroItem.Commands[commandIndex].Characters[characterIndex].Cid);
+                                MacroItem.Commands[commandIndex].Cids.RemoveAll(cid => cid == MacroItem.Commands[commandIndex].Cids[characterIndex]);
                         }
                         ImGuiUtil.ToolTip("Doubleclick to remove");
                     }
