@@ -54,7 +54,8 @@ public class ItemWindow : Window
         ImGuiUtil.ToolTip("Click to execute");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{item.ActionName}\n({item.IconId}) {item.Category}");
+        ImGui.TextUnformatted($"{item.ActionName}\n({item.IconId})");
+        // ImGui.TextUnformatted($"{item.ActionName}\n({item.IconId}) {item.Category}");
         if (ImGui.IsItemClicked())
         {
             ImGui.SetClipboardText($"{item.IconId}");
