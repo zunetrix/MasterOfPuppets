@@ -93,6 +93,7 @@ public class CharactersWindow : Window
                 if (ImGui.Selectable($"{partyMember.Name}##{partyMember.Cid}", false))
                 {
                     Plugin.Config.AddCharacter(partyMember);
+                    Plugin.IpcProvider.SyncConfiguration();
                 }
             }
             ImGui.EndCombo();
@@ -167,6 +168,7 @@ public class CharactersWindow : Window
                                 int targetIndex = originalIndex + offset;
                                 // PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
                                 Plugin.Config.MoveCharacterToIndex(originalIndex, targetIndex);
+                                Plugin.IpcProvider.SyncConfiguration();
                             }
                         }
                     }
@@ -177,19 +179,28 @@ public class CharactersWindow : Window
                 ImGui.TableNextColumn();
                 ImGui.BeginDisabled(i == 0);
                 if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowUp, $"##MoveUpCharacter_{i}", "Move Up"))
+                {
                     Plugin.Config.MoveCharacterToIndex(i, i - 1);
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
                 ImGui.EndDisabled();
 
 
                 ImGui.SameLine();
                 ImGui.BeginDisabled(i == characters.Count - 1);
                 if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowDown, $"##MoveDownCharacter_{i}", "Move Down"))
+                {
                     Plugin.Config.MoveCharacterToIndex(i, i + 1);
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
                 ImGui.EndDisabled();
 
                 ImGui.SameLine();
                 if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{i}", "Remove"))
+                {
                     Plugin.Config.RemoveCharacter(characters[i].Cid);
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
 
                 ImGui.PopID();
             }

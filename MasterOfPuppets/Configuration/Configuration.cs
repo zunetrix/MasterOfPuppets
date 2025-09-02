@@ -5,6 +5,11 @@ using System.Collections.Generic;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Reflection;
+using MasterOfPuppets.Ipc;
+
 namespace MasterOfPuppets;
 
 [Serializable]
@@ -18,10 +23,10 @@ internal class Configuration : IPluginConfiguration
     public bool SaveConfigAfterSync { get; set; } = false;
 
     // Macros
-    public List<Macro> Macros = new();
+    public List<Macro> Macros { get; set; } = new();
     public int DelayBetweenActions { get; set; } = 2;
-    public List<Character> Characters = new();
-    public List<CidGroup> CidsGroups = new();
+    public List<Character> Characters { get; set; } = new();
+    public List<CidGroup> CidsGroups { get; set; } = new();
 
     // Interface
     public bool OpenOnStartup { get; set; } = false;
@@ -42,6 +47,23 @@ internal class Configuration : IPluginConfiguration
     {
         Interface.SavePluginConfig(this);
     }
+
+    public void UpdateFromJson(string cofigurationJson)
+    {
+        if (string.IsNullOrWhiteSpace(cofigurationJson)) return;
+
+        var newPluginConfig = cofigurationJson.JsonDeserialize<Configuration>();
+
+        SyncClients = newPluginConfig.SyncClients;
+        SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;
+        Macros = newPluginConfig.Macros;
+        DelayBetweenActions = newPluginConfig.DelayBetweenActions;
+        Characters = newPluginConfig.Characters;
+        CidsGroups = newPluginConfig.CidsGroups;
+        OpenOnStartup = newPluginConfig.OpenOnStartup;
+        OpenOnLogin = newPluginConfig.OpenOnLogin;
+    }
+
 
     public void MoveMacroToIndex(int itemIndex, int targetIndex)
     {

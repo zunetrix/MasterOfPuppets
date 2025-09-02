@@ -102,41 +102,22 @@ internal static class HotbarManager
 
     public static void ExecuteEmote(uint actionId)
     {
-        ExecuteHotbarAction(HotbarSlotType.Emote, actionId);
+        DalamudApi.Framework.RunOnFrameworkThread(delegate
+        {
+            ExecuteHotbarAction(HotbarSlotType.Emote, actionId);
+        });
     }
 
     public static void ExecuteOrnament(uint actionId)
     {
-        ExecuteHotbarAction(HotbarSlotType.Ornament, actionId);
+        DalamudApi.Framework.RunOnFrameworkThread(delegate
+        {
+            ExecuteHotbarAction(HotbarSlotType.Ornament, actionId);
+        });
     }
 
     private static Emote? GetEmoteById(uint id)
     {
         return DalamudApi.DataManager.Excel.GetSheet<Emote>().GetRowOrDefault(id);
     }
-
-    public static unsafe void CalcBForSlot(HotbarSlot* slot, out HotbarSlotType actionType, out uint actionId)
-    {
-        // short circuit, just a micro-optimization.
-        if (slot->CommandType == 0 && slot->CommandId == 0)
-        {
-            actionType = HotbarSlotType.Empty;
-            actionId = 0;
-
-            return;
-        }
-
-        var hotbarModule = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule();
-
-        // Take in default values, just in case GetSlotAppearance fails for some reason
-        var acType = slot->ApparentSlotType;
-        var acId = slot->ApparentActionId;
-        ushort actionCost = slot->CostType;
-
-        RaptureHotbarModule.GetSlotAppearance(&acType, &acId, &actionCost, hotbarModule, slot);
-
-        actionType = acType;
-        actionId = acId;
-    }
-
 }

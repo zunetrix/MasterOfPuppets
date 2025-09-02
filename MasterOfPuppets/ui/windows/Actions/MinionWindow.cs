@@ -4,15 +4,15 @@ using System.Linq;
 using System.Collections.Generic;
 
 using Dalamud.Interface.Windowing;
-using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Bindings.ImGui;
 
 using MasterOfPuppets.Resources;
-using Dalamud.Interface.Utility;
 
 namespace MasterOfPuppets;
 
-public class EmotesWindow : Window
+public class MinionWindow : Window
 {
     private Plugin Plugin { get; }
 
@@ -20,7 +20,7 @@ public class EmotesWindow : Window
     private string SearchString = "";
     private readonly List<int> ListSearchedIndexs = new();
 
-    public EmotesWindow(Plugin plugin) : base($"{Language.EmotesTitle}###EmotesWindow")
+    public MinionWindow(Plugin plugin) : base($"{Language.MinionTitle}###MinionWindow")
     {
         Plugin = plugin;
 
@@ -35,53 +35,49 @@ public class EmotesWindow : Window
         base.PreDraw();
     }
 
-    private void DrawEmoteEntry(int actionIndex, ExecutableAction emote)
+    private void DrawMinionEntry(int actionIndex, ExecutableAction minion)
     {
         ImGui.PushID(actionIndex);
         ImGui.TableNextRow();
-        // ImGui.TableSetColumnIndex(0);
         ImGui.TableNextColumn();
         ImGui.TextUnformatted($"{actionIndex + 1:000}");
 
         ImGui.TableNextColumn();
-        var icon = DalamudApi.TextureProvider.GetFromGameIcon(emote.IconId).GetWrapOrEmpty().Handle;
+        var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId).GetWrapOrEmpty().Handle;
         var iconSize = new Vector2(50 * ImGuiHelpers.GlobalScale, 50 * ImGuiHelpers.GlobalScale);
 
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.BroadcastTextCommand(emote.TextCommand);
+            Plugin.IpcProvider.BroadcastTextCommand(minion.TextCommand);
         }
         ImGuiUtil.ToolTip("Click to execute");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{emote.ActionName}\n({emote.IconId})");
+        ImGui.TextUnformatted($"{minion.ActionName}\n({minion.IconId})");
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText($"{emote.IconId}");
+            ImGui.SetClipboardText($"{minion.IconId}");
             DalamudApi.ShowNotification($"ID copied to clipboard", NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted(emote.TextCommand);
+        ImGui.TextUnformatted(minion.TextCommand);
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText(emote.TextCommand);
+            ImGui.SetClipboardText(minion.TextCommand);
             DalamudApi.ShowNotification($"Command copied to clipboard", NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 
-        // ImGui.TableNextColumn();
-        // ImGui.TextUnformatted(emote.Category);
-
         ImGui.PopID();
     }
 
-    private unsafe void DrawEmoteTable()
+    private unsafe void DrawMinionTable()
     {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(EmoteHelper.GetAllowedItems());
+        UnlockedActions.AddRange(MinionHelper.GetAllowedItems());
 
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
@@ -90,13 +86,12 @@ public class EmotesWindow : Window
         var isFiltered = !string.IsNullOrEmpty(SearchString);
         var itemCount = isFiltered ? ListSearchedIndexs.Count : UnlockedActions.Count;
 
-        if (ImGui.BeginTable("##EmotesTable", tableColumnCount, tableFlags))
+        if (ImGui.BeginTable("##MountTable", tableColumnCount, tableFlags))
         {
             ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 1.0f);
-            ImGui.TableSetupColumn("Text Commands", ImGuiTableColumnFlags.WidthStretch, 1.0f);
-            // ImGui.TableSetupColumn("Category", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("Text Commands", ImGuiTableColumnFlags.WidthStretch);
 
             ImGuiListClipperPtr clipper;
             unsafe
@@ -114,7 +109,7 @@ public class EmotesWindow : Window
                     int realIndex = isFiltered ? ListSearchedIndexs[i] : i;
                     if (realIndex >= UnlockedActions.Count) continue;
 
-                    DrawEmoteEntry(realIndex, UnlockedActions[realIndex]);
+                    DrawMinionEntry(realIndex, UnlockedActions[realIndex]);
                 }
             }
 
@@ -130,7 +125,7 @@ public class EmotesWindow : Window
         ListSearchedIndexs.AddRange(
             UnlockedActions
             .Select((item, index) => new { item, index })
-            .Where(x => x.item.ActionName.ToString().Contains(SearchString, StringComparison.OrdinalIgnoreCase))
+            .Where(x => x.item.ActionName.Contains(SearchString, StringComparison.OrdinalIgnoreCase))
             .Select(x => x.index)
             .ToList()
         );
@@ -138,7 +133,7 @@ public class EmotesWindow : Window
 
     public void DrawHeader()
     {
-        ImGui.TextUnformatted($"{Language.EmotesTitle} (unlocked)");
+        ImGui.TextUnformatted($"{Language.MinionTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute
@@ -147,7 +142,7 @@ public class EmotesWindow : Window
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##EmoteSearchInput", Language.SearchInputLabel, ref SearchString, 255, ImGuiInputTextFlags.AutoSelectAll))
+        if (ImGui.InputTextWithHint("##MinionSearchInput", Language.SearchInputLabel, ref SearchString, 255, ImGuiInputTextFlags.AutoSelectAll))
         {
             Search();
         }
@@ -159,12 +154,12 @@ public class EmotesWindow : Window
 
     public override void Draw()
     {
-        ImGui.BeginChild("##EmotesHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginChild("##MinionHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         DrawHeader();
         ImGui.EndChild();
 
-        ImGui.BeginChild("##EmotesListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawEmoteTable();
+        ImGui.BeginChild("##MinionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        DrawMinionTable();
         ImGui.EndChild();
     }
 }

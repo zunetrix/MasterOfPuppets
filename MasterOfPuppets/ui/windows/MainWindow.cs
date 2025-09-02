@@ -87,14 +87,15 @@ internal class MainWindow : Window
     {
         ImGui.TextUnformatted(Language.MacroListTitle);
 
+        // align right
         float spacing = ImGui.GetStyle().ItemSpacing.X;
         float buttonWidth = ImGui.GetFrameHeight();
-        int buttonCount = 4;
+        int buttonCount = 6;
         float marginRight = 15f * ImGuiHelpers.GlobalScale;
         float totalButtonsWidth = (buttonWidth * buttonCount) + (spacing * (buttonCount - 1)) + marginRight;
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Smile, $"##ShowEmotesBtn", Language.ShowEmotesBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowEmotesBtn", Language.ShowEmotesBtn))
         {
             Ui.EmotesWindow.Toggle();
         }
@@ -114,6 +115,18 @@ internal class MainWindow : Window
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Horse, $"##ShowMountBtn", Language.ShowMountBtn))
         {
             Ui.MountWindow.Toggle();
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Cat, $"##ShowMinionBtn", Language.ShowMinionBtn))
+        {
+            Ui.MinionWindow.Toggle();
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##ShowItemBtn", Language.ShowItemBtn))
+        {
+            Ui.ItemWindow.Toggle();
         }
 
         // ImGui.Text(Language.MacroSearchInputLabel);
@@ -254,6 +267,7 @@ internal class MainWindow : Window
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CloneMacro_{macroIdx}", Language.CloneMacroBtn))
         {
             Plugin.Config.CloneMacroItem(macroIdx);
+            Plugin.IpcProvider.SyncConfiguration();
         }
 
         ImGui.SameLine();

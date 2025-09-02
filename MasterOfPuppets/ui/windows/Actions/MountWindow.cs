@@ -77,7 +77,7 @@ public class MountWindow : Window
     private unsafe void DrawMountTable()
     {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(MountManager.GetAllowedItems());
+        UnlockedActions.AddRange(MountHelper.GetAllowedItems());
 
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
@@ -133,7 +133,7 @@ public class MountWindow : Window
 
     public void DrawHeader()
     {
-        ImGui.TextUnformatted("Mount (unlocked)");
+        ImGui.TextUnformatted($"{Language.MountTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute

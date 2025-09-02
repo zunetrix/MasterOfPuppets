@@ -77,7 +77,7 @@ public class FashionAccessoriesWindow : Window
     private unsafe void DrawFashionTable()
     {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(FashionAccessoriesManager.GetAllowedItems());
+        UnlockedActions.AddRange(FashionAccessoriesHelper.GetAllowedItems());
 
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
@@ -132,7 +132,7 @@ public class FashionAccessoriesWindow : Window
 
     public void DrawHeader()
     {
-        ImGui.TextUnformatted("Fashion Accessories (unlocked)");
+        ImGui.TextUnformatted($"{Language.FashionAccessoriesTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute

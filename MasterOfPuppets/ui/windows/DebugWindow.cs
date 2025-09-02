@@ -1,4 +1,8 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Linq;
+using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
+using System.Collections.Generic;
 
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
@@ -17,6 +21,12 @@ public class DebugWindow : Window
 {
     private Plugin Plugin { get; }
     private FileDialogManager FileDialogManager { get; }
+
+    private static string _search = string.Empty;
+    private static HashSet<object>? _filtered;
+    private static int _hoveredItem;
+    private static readonly Dictionary<string, (bool toogle, bool wasEnterClickedLastTime)> _comboDic = [];
+
 
     public DebugWindow(Plugin plugin) : base($"{Plugin.Name} Debug###DebugWindow")
     {
@@ -43,6 +53,7 @@ public class DebugWindow : Window
         DrawHotbarDebugTab();
         DrawPetHotbarDebugTab();
         DrawItemsDebugTab();
+        DrawElementsDebugTab();
 
         ImGui.EndTabBar();
     }
@@ -57,7 +68,21 @@ public class DebugWindow : Window
             ImGui.Separator();
             ImGui.Spacing();
 
-            if (ImGui.Button("BroadcastActionCommand UmbrellaDance"))
+            ImGui.SameLine();
+            ImGui.Button("Resset all Config data (2x)");
+            if (ImGui.IsItemHovered())
+            {
+                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                {
+                    Plugin.Config.Macros = new();
+                    Plugin.Config.Characters = new();
+                    Plugin.Config.CidsGroups = new();
+
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+            }
+
+            if (ImGui.Button("ExecuteActionCommand Umbrella Dance"))
             {
                 Plugin.IpcProvider.BroadcastActionCommand(GameActionManager.CustomActions["UmbrellaDance"].ActionId);
                 // GameActionManager.UseAction(30868);
@@ -86,6 +111,33 @@ public class DebugWindow : Window
             {
                 GameActionManager.UseItemByName("Heavenscracker");
                 DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
+            }
+            if (ImGui.Button("UseActionByName(Peloton)"))
+            {
+                GameActionManager.UseActionByName("Peloton");
+                DalamudApi.ShowNotification($"UseActionByName", NotificationType.Info, 5000);
+            }
+
+            if (ImGui.Button("UseItemByName(Lominsan Sparkler Flare)"))
+            {
+                GameActionManager.UseItemByName("Lominsan Sparkler");
+                DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
+            }
+
+            if (ImGui.Button("Invalid Item name"))
+            {
+                var item = ItemHelper.GetExecutableActionByName("Lominsan Sparkler Flare");
+                DalamudApi.PluginLog.Warning($"item: {item?.ActionName}");
+
+                GameActionManager.UseItemByName("Lominsan Sparkler Flare");
+                DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
+            }
+
+            if (ImGui.Button("UseItemById(5893)"))
+            {
+                uint lominsanSparklerFlare = 5893;
+                GameActionManager.UseItemById(lominsanSparklerFlare);
+                DalamudApi.ShowNotification($"UseItemById", NotificationType.Info, 5000);
             }
 
             ImGui.EndTabItem();
@@ -180,8 +232,7 @@ public class DebugWindow : Window
 
     private unsafe void DrawPetHotbarDebugTab()
     {
-        var petHotbar = RaptureHotbarModule.Instance()->PetHotbar;
-        if (petHotbar.Slots.IsEmpty)
+        if (RaptureHotbarModule.Instance()->PetHotbar.Slots.IsEmpty)
         {
             DalamudApi.PluginLog.Warning($"petHotbar.Slots");
             return;
@@ -203,9 +254,9 @@ public class DebugWindow : Window
                     ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
                     ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
 
-                    for (var slotIndex = 0; slotIndex < petHotbar.Slots.Length; slotIndex++)
+                    for (var slotIndex = 0; slotIndex < RaptureHotbarModule.Instance()->PetHotbar.Slots.Length; slotIndex++)
                     {
-                        var slot = petHotbar.Slots[slotIndex];
+                        var slot = RaptureHotbarModule.Instance()->PetHotbar.Slots[slotIndex];
 
                         ImGui.PushID(slotIndex);
                         ImGui.TableNextRow();
@@ -252,7 +303,7 @@ public class DebugWindow : Window
     {
         if (ImGui.BeginTabItem($"Items###ItemsDebugTab"))
         {
-            var items = ItemsManager.GetAllowedItems();
+            var items = ItemHelper.GetAllowedItems();
             foreach (var item in items)
             {
                 ImGui.TextUnformatted($"{item.ActionId}");
@@ -265,6 +316,74 @@ public class DebugWindow : Window
 
             ImGui.EndTabItem();
         }
+    }
 
+    public static bool SearchableCombo<T>(string id, [NotNullWhen(true)] out T? selected, string preview, IEnumerable<T> possibilities, Func<T, string> toName, Func<T, string, bool> searchPredicate, Func<T, bool> preFilter, ImGuiComboFlags flags = ImGuiComboFlags.None) where T : notnull
+    {
+        _comboDic.TryAdd(id, (false, false));
+        (var toggle, var wasEnterClickedLastTime) = _comboDic[id];
+        selected = default;
+        if (!ImGui.BeginCombo(id + (toggle ? "##x" : ""), preview, flags)) return false;
+
+        if (wasEnterClickedLastTime || ImGui.IsKeyPressed(ImGuiKey.Escape))
+        {
+            toggle = !toggle;
+            _search = string.Empty;
+            _filtered = null;
+        }
+        var enterClicked = ImGui.IsKeyPressed(ImGuiKey.Enter) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter);
+        wasEnterClickedLastTime = enterClicked;
+        _comboDic[id] = (toggle, wasEnterClickedLastTime);
+        if (ImGui.IsKeyPressed(ImGuiKey.UpArrow))
+            _hoveredItem--;
+        if (ImGui.IsKeyPressed(ImGuiKey.DownArrow))
+            _hoveredItem++;
+        _hoveredItem = Math.Clamp(_hoveredItem, 0, Math.Max(_filtered?.Count - 1 ?? 0, 0));
+        if (ImGui.IsWindowAppearing() && ImGui.IsWindowFocused() && !ImGui.IsAnyItemActive())
+        {
+            _search = string.Empty;
+            _filtered = null;
+            ImGui.SetKeyboardFocusHere(0);
+        }
+
+        if (ImGui.InputText("##ExcelSheetComboSearch", ref _search, 128))
+            _filtered = null;
+
+        if (_filtered == null)
+        {
+            _filtered = possibilities.Where(preFilter).Where(s => searchPredicate(s, _search)).Cast<object>().ToHashSet();
+            _hoveredItem = 0;
+        }
+
+        var i = 0;
+        foreach (var row in _filtered.Cast<T>())
+        {
+            var hovered = _hoveredItem == i;
+            ImGui.PushID(i);
+            if (ImGui.Selectable(toName(row), hovered) || (enterClicked && hovered))
+            {
+                selected = row;
+                ImGui.PopID();
+                ImGui.EndCombo();
+                return true;
+            }
+            ImGui.PopID();
+            i++;
+        }
+
+        ImGui.EndCombo();
+        return false;
+    }
+
+    private void DrawElementsDebugTab()
+    {
+        if (ImGui.BeginTabItem($"Gui Elements###GuiElementsDebugTab"))
+        {
+            ImGui.TextUnformatted("ImGui Elements");
+
+            // SearchableCombo();
+
+            ImGui.EndTabItem();
+        }
     }
 }

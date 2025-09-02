@@ -91,6 +91,17 @@ public class MacroEditorWindow : Window
 
     public override void Draw()
     {
+        ImGui.BeginChild("##MacroEditorHeaderFixedHeight", new Vector2(-1, 90 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        DrawHeader();
+        ImGui.EndChild();
+
+        ImGui.BeginChild("##MacroeditorListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        DrawCommandsList();
+        ImGui.EndChild();
+    }
+
+    private void DrawHeader()
+    {
         ImGui.Text(Language.MacroNameLabel);
         ImGui.InputText("##InputMacroName", ref MacroItem.Name);
 
@@ -104,11 +115,6 @@ public class MacroEditorWindow : Window
         ImGui.Separator();
         ImGui.Spacing();
 
-        DrawCommands();
-    }
-
-    private void DrawCommandsHeader()
-    {
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddCommandBtn", "Add Command"))
         {
             var newCommand = new Command { Cids = new(), Actions = "" };
@@ -118,7 +124,6 @@ public class MacroEditorWindow : Window
         ImGui.SameLine();
         ImGui.TextUnformatted("Commands");
         ImGuiUtil.HelpMarker("""
-        ===========================
             Special Actions
         ===========================
         /wait <time>
@@ -126,12 +131,14 @@ public class MacroEditorWindow : Window
                 /wait 10
 
         /petbarslot <slot_number>
+            Rain Check:
+            /petbarslot 1
             Umbrella Dance:
             /petbarslot 2
 
-        /action <action_id> | "Action Name"
-            Ex: /action 7557
-                /action "Peloton"
+        /mopaction <action_id> | "Action Name"
+            Ex: /mopaction 7557
+                /mopaction "Peloton"
 
         /item <item_id> | "Item Name"
             Ex: /item 12042
@@ -153,12 +160,28 @@ public class MacroEditorWindow : Window
         /mop run "macro name"
         """);
 
+
+        // align right
+        float spacing = ImGui.GetStyle().ItemSpacing.X;
+        float buttonWidth = ImGui.GetFrameHeight();
+        int buttonCount = 1;
+        float marginRight = 15f * ImGuiHelpers.GlobalScale;
+        float totalButtonsWidth = (buttonWidth * buttonCount) + (spacing * (buttonCount - 1)) + marginRight;
+
+        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
+        {
+            Plugin.Ui.CharactersWindow.Toggle();
+        }
+
+        ImGui.Spacing();
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+        ImGui.Spacing();
     }
 
-    private void DrawCommands()
+    private void DrawCommandsList()
     {
         var usedCids = MacroItem.Commands?
         .SelectMany(c => c.Cids)
@@ -167,8 +190,6 @@ public class MacroEditorWindow : Window
         var availableCharacters = Plugin.Config.Characters
         .Where(character => !usedCids.Contains(character.Cid))
         .ToList();
-
-        DrawCommandsHeader();
 
         // new macro dont have any command
         if (MacroItem.Commands == null || MacroItem.Commands.Count == 0) return;
@@ -209,7 +230,8 @@ public class MacroEditorWindow : Window
                 ImGui.BeginDisabled(availableCharacters.Count == 0);
                 ImGui.TextUnformatted(Language.CharactersLabel);
                 ImGui.PushItemWidth(halfWidth);
-                if (ImGui.BeginCombo($"##CharacterSelectList_command{commandIndex}", "Select character to add"))
+                var charactersListPreviewLabel = Plugin.Config.Characters.Count == 0 ? "Set up the characters first" : "Select character to add";
+                if (ImGui.BeginCombo($"##CharacterSelectList_command{commandIndex}", charactersListPreviewLabel))
                 {
                     foreach (var character in availableCharacters)
                     {
@@ -283,11 +305,9 @@ public class MacroEditorWindow : Window
                 ImGui.Separator();
                 ImGui.Unindent();
             }
-        }
 
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Spacing();
+        }
     }
 }

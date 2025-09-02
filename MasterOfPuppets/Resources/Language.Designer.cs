@@ -801,5 +801,33 @@ internal class Language
             return ResourceManager.GetString("GroupsLabel", resourceCulture);
         }
     }
+    internal static string MinionTitle
+    {
+        get
+        {
+            return ResourceManager.GetString("MinionTitle", resourceCulture);
+        }
+    }
+    internal static string ShowMinionBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ShowMinionBtn", resourceCulture);
+        }
+    }
+    internal static string ShowItemBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ShowItemBtn", resourceCulture);
+        }
+    }
+    internal static string ItemTitle
+    {
+        get
+        {
+            return ResourceManager.GetString("ItemTitle", resourceCulture);
+        }
+    }
 }
 

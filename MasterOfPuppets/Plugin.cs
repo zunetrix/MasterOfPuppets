@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -17,7 +18,7 @@ public class Plugin : IDalamudPlugin
     internal static string Name => "Master Of Puppets";
 
     // added Configuration override
-    internal Configuration Config { get; set; }
+    internal Configuration Config { get; }
     internal PluginUi Ui { get; }
     internal IpcProvider IpcProvider { get; }
 
@@ -100,7 +101,7 @@ public class Plugin : IDalamudPlugin
             {
                 case "run":
                     {
-                        int macroIndexByName = Config.Macros.FindIndex(m => m.Name == argsList[1]);
+                        int macroIndexByName = Config.Macros.FindIndex(m => string.Equals(m.Name, argsList[1], StringComparison.OrdinalIgnoreCase));
 
                         if (argsList.Count <= 1 || (!int.TryParse(argsList[1], out var macroIndexArg) && macroIndexByName == -1))
                         {

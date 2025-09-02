@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 
 using TinyIpc.IO;
 using TinyIpc.Messaging;
+using Newtonsoft.Json;
 
 using Dalamud.Interface.ImGuiNotification;
 
@@ -197,7 +198,7 @@ internal class IpcProvider : IDisposable
 
     public void SyncConfiguration()
     {
-        // Plugin.Config.Save();
+        Plugin.Config.Save();
         var message = IpcMessage.Create(IpcMessageType.SyncConfiguration, Plugin.Config.JsonSerialize(), Plugin.Config.SaveConfigAfterSync.ToString()).Serialize();
         BroadCast(message, includeSelf: false);
     }
@@ -207,8 +208,8 @@ internal class IpcProvider : IDisposable
     {
         var cofigurationString = message.StringData[0];
         bool saveConfigAfterSync = bool.TryParse(message.StringData[1], out var temp) ? temp : false;
-        var pluginConfig = cofigurationString.JsonDeserialize<Configuration>();
-        Plugin.Config = pluginConfig;
+        // Plugin.Config = pluginConfig;
+        Plugin.Config.UpdateFromJson(cofigurationString);
 
         if (saveConfigAfterSync)
         {
@@ -220,12 +221,12 @@ internal class IpcProvider : IDisposable
 
     public void BroadcastTextCommand(string text)
     {
-        var message = IpcMessage.Create(IpcMessageType.BroadcastTextCommand, text).Serialize();
+        var message = IpcMessage.Create(IpcMessageType.ExecuteTextCommand, text).Serialize();
         BroadCast(message, includeSelf: true);
     }
 
-    [IpcHandle(IpcMessageType.BroadcastTextCommand)]
-    private void HandleBroadcastTextCommand(IpcMessage message)
+    [IpcHandle(IpcMessageType.ExecuteTextCommand)]
+    private void HandleExecuteTextCommand(IpcMessage message)
     {
         var textCommand = message.StringData[0];
 
@@ -237,15 +238,28 @@ internal class IpcProvider : IDisposable
 
     public void BroadcastActionCommand(uint actionId)
     {
-        var message = IpcMessage.Create(IpcMessageType.BroadcastActionCommand, actionId).Serialize();
+        var message = IpcMessage.Create(IpcMessageType.ExecuteActionCommand, actionId).Serialize();
         BroadCast(message, includeSelf: true);
     }
 
-    [IpcHandle(IpcMessageType.BroadcastActionCommand)]
-    private void HandleBroadcastActionCommand(IpcMessage message)
+    [IpcHandle(IpcMessageType.ExecuteActionCommand)]
+    private void HandleExecuteActionCommand(IpcMessage message)
     {
         var actionId = message.DataStruct<uint>();
         GameActionManager.UseActionById(actionId);
+    }
+
+    public void BroadcastItemCommand(uint itemId)
+    {
+        var message = IpcMessage.Create(IpcMessageType.ExecuteItemCommand, itemId).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.ExecuteItemCommand)]
+    private void HandleExecuteItemCommand(IpcMessage message)
+    {
+        var actionId = message.DataStruct<uint>();
+        GameActionManager.UseItemById(actionId);
     }
 
     public void StopMacroExecution()
@@ -257,7 +271,7 @@ internal class IpcProvider : IDisposable
     [IpcHandle(IpcMessageType.StopMacroExecution)]
     private void HandleStopMacroExecution(IpcMessage message)
     {
-        DalamudApi.PluginLog.Debug("StopMacroExecution");
+        DalamudApi.PluginLog.Debug("Stop Macro Execution");
         StopMacroQueueExecution();
     }
 
@@ -317,16 +331,27 @@ internal class IpcProvider : IDisposable
             await Task.Delay(seconds * 1000, token);
         },
 
-        ["action"] = async (args, token) =>
+        ["mopaction"] = async (args, token) =>
         {
-            if (string.IsNullOrWhiteSpace(args) || !uint.TryParse(args, out uint actionId))
+            args = args.Trim().Trim('"');
+
+            if (string.IsNullOrWhiteSpace(args))
             {
-                DalamudApi.PluginLog.Warning($"[ACTION] invalid argument: \"{args}\"");
+                DalamudApi.PluginLog.Warning($"[MOPACTION] invalid argument: \"{args}\"");
                 return;
             }
 
-            GameActionManager.UseActionById(actionId);
-            DalamudApi.PluginLog.Debug($"[ACTION] {args}");
+            if (uint.TryParse(args, out uint actionId))
+            {
+                GameActionManager.UseActionById(actionId);
+                DalamudApi.PluginLog.Debug($"[MOPACTION] (by Id) {actionId}");
+            }
+            else
+            {
+                GameActionManager.UseActionByName(args);
+                DalamudApi.PluginLog.Debug($"[MOPACTION] (by Name) {args}");
+            }
+
             await Task.CompletedTask;
         },
 
@@ -417,7 +442,7 @@ internal class IpcProvider : IDisposable
                 //     Chat.SendMessage($"{action}");
                 // });
 
-                DalamudApi.PluginLog.Debug($"[ExecuteAction] {action}");
+                DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
                 Chat.SendMessage($"{action}");
                 DalamudApi.PluginLog.Debug($"[DELAY BETWEEN ACTIONS] {delayBetweenActions}...");
                 await Task.Delay(delayBetweenActions * 1000, token);

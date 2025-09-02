@@ -16,6 +16,8 @@ namespace MasterOfPuppets
         public CharactersWindow CharactersWindow { get; }
         public EmotesWindow EmotesWindow { get; }
         public MountWindow MountWindow { get; }
+        public MinionWindow MinionWindow { get; }
+        public ItemWindow ItemWindow { get; }
         public FacewearWindow FacewearWindow { get; }
         public FashionAccessoriesWindow FashionAccessoriesWindow { get; }
         public DebugWindow DebugWindow { get; }
@@ -31,6 +33,8 @@ namespace MasterOfPuppets
             CharactersWindow = new CharactersWindow(Plugin);
             EmotesWindow = new EmotesWindow(Plugin);
             MountWindow = new MountWindow(Plugin);
+            MinionWindow = new MinionWindow(Plugin);
+            ItemWindow = new ItemWindow(Plugin);
             FacewearWindow = new FacewearWindow(Plugin);
             FashionAccessoriesWindow = new FashionAccessoriesWindow(Plugin);
             DebugWindow = new DebugWindow(Plugin);
@@ -42,6 +46,8 @@ namespace MasterOfPuppets
             WindowSystem.AddWindow(CharactersWindow);
             WindowSystem.AddWindow(EmotesWindow);
             WindowSystem.AddWindow(MountWindow);
+            WindowSystem.AddWindow(MinionWindow);
+            WindowSystem.AddWindow(ItemWindow);
             WindowSystem.AddWindow(FacewearWindow);
             WindowSystem.AddWindow(FashionAccessoriesWindow);
             WindowSystem.AddWindow(DebugWindow);

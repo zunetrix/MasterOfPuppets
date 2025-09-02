@@ -1,4 +1,5 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game.UI;
+﻿using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 
 using Lumina.Excel.Sheets;
@@ -51,6 +52,14 @@ public static unsafe class UnlockState
     internal static bool IsUnlocked(this McGuffin mcGuffin)
     {
         return PlayerState.Instance()->IsMcGuffinUnlocked(mcGuffin.RowId);
+    }
+
+    internal static bool IsUnlocked(this Action action)
+    {
+        // TODO
+        return true;
+        // var unavailableActionStatus = 639;
+        // return ActionManager.Instance()->GetActionStatus(ActionType.Action, action.RowId) == unavailableActionStatus;
     }
 
     internal static bool IsUnlocked(this MainCommand mainCommand)

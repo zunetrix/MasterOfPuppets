@@ -5,7 +5,7 @@ using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 
-public static class FacewearManager
+public static class FacewearHelper
 {
     private static ExecutableAction GetExecutableAction(Glasses facewear)
     {

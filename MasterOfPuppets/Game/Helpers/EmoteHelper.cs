@@ -5,7 +5,7 @@ using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 
-public static class EmotesManager
+public static class EmoteHelper
 {
     private static ExecutableAction GetExecutableAction(Emote emote)
     {

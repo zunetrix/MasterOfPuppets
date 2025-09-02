@@ -77,7 +77,7 @@ public class FacewearWindow : Window
     private unsafe void DrawFacewearTable()
     {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(FacewearManager.GetAllowedItems());
+        UnlockedActions.AddRange(FacewearHelper.GetAllowedItems());
 
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
@@ -133,7 +133,7 @@ public class FacewearWindow : Window
 
     public void DrawHeader()
     {
-        ImGui.TextUnformatted("Facewear (unlocked)");
+        ImGui.TextUnformatted($"{Language.FacewearTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute

@@ -256,4 +256,16 @@
     <data name="GroupsLabel" xml:space="preserve">
         <value>Groups</value>
     </data>
+    <data name="MinionTitle" xml:space="preserve">
+        <value>Minions</value>
+    </data>
+    <data name="ShowMinionBtn" xml:space="preserve">
+        <value>Minions</value>
+    </data>
+    <data name="ItemTitle" xml:space="preserve">
+        <value>Items</value>
+    </data>
+    <data name="ShowItemBtn" xml:space="preserve">
+        <value>Items</value>
+    </data>
 </root>

@@ -5,7 +5,7 @@ using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 
-public static class MountManager
+public static class MountHelper
 {
     private static ExecutableAction GetExecutableAction(Mount mount)
     {
@@ -44,5 +44,4 @@ public static class MountManager
         return GetMountById(item)?.Icon ?? undefinedIcon;
 
     }
-
 }

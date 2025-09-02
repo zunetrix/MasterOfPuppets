@@ -5,7 +5,7 @@ using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 
-public static class FashionAccessoriesManager
+public static class FashionAccessoriesHelper
 {
     private static ExecutableAction GetExecutableAction(Ornament ornament)
     {
