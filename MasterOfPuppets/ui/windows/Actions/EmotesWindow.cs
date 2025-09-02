@@ -50,16 +50,16 @@ public class EmotesWindow : Window
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.BroadcastTextCommand(emote.TextCommand);
+            Plugin.IpcProvider.ExecuteTextCommand(emote.TextCommand);
         }
         ImGuiUtil.ToolTip("Click to execute");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{emote.ActionName}\n({emote.IconId})");
+        ImGui.TextUnformatted($"{emote.ActionName}");
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText($"{emote.IconId}");
-            DalamudApi.ShowNotification($"ID copied to clipboard", NotificationType.Info, 5000);
+            ImGui.SetClipboardText($"{emote.ActionName}");
+            DalamudApi.ShowNotification($"Name copied to clipboard", NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 

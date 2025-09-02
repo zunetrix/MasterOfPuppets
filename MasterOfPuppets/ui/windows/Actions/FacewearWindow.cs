@@ -49,16 +49,16 @@ public class FacewearWindow : Window
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.BroadcastTextCommand(facewear.TextCommand);
+            Plugin.IpcProvider.ExecuteTextCommand(facewear.TextCommand);
         }
         ImGuiUtil.ToolTip("Click to execute");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{facewear.ActionName}\n({facewear.IconId})");
+        ImGui.TextUnformatted($"{facewear.ActionName}");
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText($"{facewear.IconId}");
-            DalamudApi.ShowNotification($"ID copied to clipboard", NotificationType.Info, 5000);
+            ImGui.SetClipboardText($"{facewear.ActionName}");
+            DalamudApi.ShowNotification($"Name copied to clipboard", NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 

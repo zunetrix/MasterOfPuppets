@@ -43,30 +43,25 @@ internal static class HotbarManager
         {
             // var hotbarModulePtr = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule();
             // var hotbars = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule()->Hotbars;
-            var hotbars = RaptureHotbarModule.Instance()->Hotbars;
-            if (hotbars.IsEmpty || hotbars.Length <= 0)
+            if (RaptureHotbarModule.Instance()->Hotbars.IsEmpty)
             {
                 DalamudApi.PluginLog.Debug($"Invalid Hotbars");
                 return;
             }
 
-            var hotbar = hotbars[(int)hotbarId];
-            if (hotbar.Slots.IsEmpty)
+            if (RaptureHotbarModule.Instance()->Hotbars[(int)hotbarId].Slots.IsEmpty)
             {
                 DalamudApi.PluginLog.Debug($"Invalid Hotbar Slots");
                 return;
             }
 
-            var slot = hotbar.GetHotbarSlot(slotIndex);
-            if (slot == null)
+            if (RaptureHotbarModule.Instance()->Hotbars[(int)hotbarId].GetHotbarSlot(slotIndex) == null)
             {
                 DalamudApi.PluginLog.Debug($"Invalid hotbar slot {slotIndex}");
                 return;
             }
 
-            RaptureHotbarModule.Instance()->ExecuteSlot(slot);
-            // RaptureHotbarModule.Instance()->ExecuteSlotById(hotbarId, slotIndex);
-            // hotbarModulePtr->ExecuteSlotById(hotbarId, slotIndex);
+            RaptureHotbarModule.Instance()->ExecuteSlot(RaptureHotbarModule.Instance()->Hotbars[(int)hotbarId].GetHotbarSlot(slotIndex));
         }
         catch (Exception e)
         {
@@ -78,21 +73,19 @@ internal static class HotbarManager
     {
         try
         {
-            var petHotbar = RaptureHotbarModule.Instance()->PetHotbar;
-            if (petHotbar.Slots.IsEmpty)
+            if (RaptureHotbarModule.Instance()->PetHotbar.Slots.IsEmpty)
             {
                 DalamudApi.PluginLog.Debug($"Invalid Pet Hotbars Slots");
                 return;
             }
 
-            var slot = petHotbar.GetHotbarSlot(slotIndex);
-            if (slot == null)
+            if (RaptureHotbarModule.Instance()->PetHotbar.GetHotbarSlot(slotIndex) == null)
             {
                 DalamudApi.PluginLog.Debug($"Invalid pet hotbar slot {slotIndex}");
                 return;
             }
 
-            RaptureHotbarModule.Instance()->ExecuteSlot(slot);
+            RaptureHotbarModule.Instance()->ExecuteSlot(RaptureHotbarModule.Instance()->PetHotbar.GetHotbarSlot(slotIndex));
         }
         catch (Exception e)
         {

@@ -10,9 +10,9 @@ using System.Text.RegularExpressions;
 
 using TinyIpc.IO;
 using TinyIpc.Messaging;
-using Newtonsoft.Json;
 
 using Dalamud.Interface.ImGuiNotification;
+using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace MasterOfPuppets.Ipc;
 
@@ -32,7 +32,7 @@ internal class IpcProvider : IDisposable
     private readonly Dictionary<IpcMessageType, Action<IpcMessage>> _ipcHandlers = new();
     private Plugin Plugin { get; }
 
-    internal IpcProvider(Plugin plugin)
+    public IpcProvider(Plugin plugin)
     {
         Plugin = plugin;
 
@@ -219,7 +219,7 @@ internal class IpcProvider : IDisposable
         DalamudApi.PluginLog.Debug("SyncConfiguration");
     }
 
-    public void BroadcastTextCommand(string text)
+    public void ExecuteTextCommand(string text)
     {
         var message = IpcMessage.Create(IpcMessageType.ExecuteTextCommand, text).Serialize();
         BroadCast(message, includeSelf: true);
@@ -236,7 +236,7 @@ internal class IpcProvider : IDisposable
         });
     }
 
-    public void BroadcastActionCommand(uint actionId)
+    public void ExecuteActionCommand(uint actionId)
     {
         var message = IpcMessage.Create(IpcMessageType.ExecuteActionCommand, actionId).Serialize();
         BroadCast(message, includeSelf: true);
@@ -249,7 +249,7 @@ internal class IpcProvider : IDisposable
         GameActionManager.UseActionById(actionId);
     }
 
-    public void BroadcastItemCommand(uint itemId)
+    public void ExecuteItemCommand(uint itemId)
     {
         var message = IpcMessage.Create(IpcMessageType.ExecuteItemCommand, itemId).Serialize();
         BroadCast(message, includeSelf: true);
@@ -391,6 +391,7 @@ internal class IpcProvider : IDisposable
             var realSlotIndex = slotIndex - 1;
             if (realSlotIndex < 0 || realSlotIndex > maxHotBarSlots)
             {
+                DalamudApi.PluginLog.Debug($"[PETBARSLOT] invalid slot number {args}");
                 return;
             }
 

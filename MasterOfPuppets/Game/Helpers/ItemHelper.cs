@@ -13,8 +13,8 @@ public static class ItemHelper
         return new ExecutableAction
         {
             ActionId = item.RowId,
-            // ActionName = item.Name.ToString(),
-            ActionName = item.Singular.ToString(),
+            ActionName = item.Name.ToString(),
+            // ActionName = item.Singular.ToString(),
             IconId = item.Icon,
             TextCommand = $"/item {item.RowId}",
             // item.ItemSearchCategory.Value.Category // category ID
@@ -41,7 +41,7 @@ public static class ItemHelper
     {
         // returns RowId = 0 for invalid names
         var item = DalamudApi.DataManager.Excel.GetSheet<Item>()
-        .FirstOrDefault(i => string.Equals(i.Singular.ToString(), itemName, StringComparison.OrdinalIgnoreCase));
+        .FirstOrDefault(i => string.Equals(i.Name.ToString(), itemName, StringComparison.OrdinalIgnoreCase));
 
         var isItemFound = item.RowId > 0;
         return isItemFound ? item : null;

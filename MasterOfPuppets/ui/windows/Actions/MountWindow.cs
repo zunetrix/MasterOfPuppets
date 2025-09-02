@@ -49,16 +49,16 @@ public class MountWindow : Window
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.BroadcastTextCommand(mount.TextCommand);
+            Plugin.IpcProvider.ExecuteTextCommand(mount.TextCommand);
         }
         ImGuiUtil.ToolTip("Click to execute");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{mount.ActionName}\n({mount.IconId})");
+        ImGui.TextUnformatted($"{mount.ActionName}");
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText($"{mount.IconId}");
-            DalamudApi.ShowNotification($"ID copied to clipboard", NotificationType.Info, 5000);
+            ImGui.SetClipboardText($"{mount.ActionName}");
+            DalamudApi.ShowNotification($"Name copied to clipboard", NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 

@@ -37,6 +37,17 @@ public class SettingsWindow : Window
 
         if (ImGui.BeginTabItem($"{Language.SettingsGeneralTab}###GeneralTab"))
         {
+            var syncClients = Plugin.Config.SyncClients;
+            if (ImGui.Checkbox(Language.SettingsWindowSyncClients, ref syncClients))
+            {
+                Plugin.Config.SyncClients = syncClients;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+
             var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
             if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync))
             {
@@ -49,29 +60,16 @@ public class SettingsWindow : Window
             ImGui.Spacing();
             ImGui.Spacing();
 
-            var syncClients = Plugin.Config.SyncClients;
-            if (ImGui.Checkbox(Language.SettingsWindowSyncClients, ref syncClients))
-            {
-                Plugin.Config.SyncClients = syncClients;
-                Plugin.Config.Save();
-                Plugin.IpcProvider.SyncConfiguration();
-            }
-
-            ImGui.Spacing();
-
-            var delayBetweenActions = Plugin.Config.DelayBetweenActions;
             ImGui.TextUnformatted("Delay between actions");
-            if (ImGui.InputInt("###delay-between-actions", ref delayBetweenActions))
+            ImGui.SetNextItemWidth(150);
+            var delayBetweenActions = Plugin.Config.DelayBetweenActions;
+            if (ImGui.InputInt("##DelayBetrweenActions", ref delayBetweenActions, 1, 10, default, ImGuiInputTextFlags.AutoSelectAll))
             {
-                delayBetweenActions = Math.Clamp(delayBetweenActions, 1, 20);
+                delayBetweenActions = Math.Clamp(delayBetweenActions, 1, 10);
                 Plugin.Config.DelayBetweenActions = delayBetweenActions;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
-
-
-
-
 
 
             // ImGui.Spacing();

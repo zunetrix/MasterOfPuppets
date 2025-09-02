@@ -60,5 +60,22 @@ public static class ActionHelper
         uint undefinedIcon = 60042;
         return GetActionById(item)?.Icon ?? undefinedIcon;
     }
+    public static class FavoriteActions
+    {
+        public static ExecutableAction RainCheck { get; } = new ExecutableAction
+        {
+            ActionId = 30869,
+            ActionName = "Rain Check",
+            IconId = 64276,
+            TextCommand = "",
+        };
 
+        public static ExecutableAction UmbrellaDance { get; } = new ExecutableAction
+        {
+            ActionId = 30868,
+            ActionName = "Umbrella Dance",
+            IconId = 64277,
+            TextCommand = "",
+        };
+    }
 }

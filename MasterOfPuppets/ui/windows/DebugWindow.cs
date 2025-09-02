@@ -14,6 +14,7 @@ using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureHotbarModule;
 using Lumina.Excel.Sheets;
+using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace MasterOfPuppets;
 
@@ -68,7 +69,6 @@ public class DebugWindow : Window
             ImGui.Separator();
             ImGui.Spacing();
 
-            ImGui.SameLine();
             ImGui.Button("Resset all Config data (2x)");
             if (ImGui.IsItemHovered())
             {
@@ -84,9 +84,9 @@ public class DebugWindow : Window
 
             if (ImGui.Button("ExecuteActionCommand Umbrella Dance"))
             {
-                Plugin.IpcProvider.BroadcastActionCommand(GameActionManager.CustomActions["UmbrellaDance"].ActionId);
+                Plugin.IpcProvider.ExecuteActionCommand(ActionHelper.FavoriteActions.RainCheck.ActionId);
                 // GameActionManager.UseAction(30868);
-                DalamudApi.ShowNotification($"BroadcastActionCommand", NotificationType.Info, 5000);
+                DalamudApi.ShowNotification($"ExecuteActionCommand", NotificationType.Info, 5000);
             }
 
             if (ImGui.Button("ExecuteHotbarActionBySlotIndex(1, 5)"))
@@ -118,13 +118,30 @@ public class DebugWindow : Window
                 DalamudApi.ShowNotification($"UseActionByName", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("UseItemByName(Lominsan Sparkler Flare)"))
+            if (ImGui.Button("UseItemByName(Lominsan Sparkler)"))
             {
                 GameActionManager.UseItemByName("Lominsan Sparkler");
                 DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("Invalid Item name"))
+            if (ImGui.Button("UseItemById(5893)"))
+            {
+                uint lominsanSparklere = 5893;
+                GameActionManager.UseItemById(lominsanSparklere);
+                DalamudApi.ShowNotification($"UseItemById", NotificationType.Info, 5000);
+            }
+            if (ImGui.Button("Broadcast UseItemById(5893)"))
+            {
+                uint lominsanSparklere = 5893;
+                Plugin.IpcProvider.ExecuteItemCommand(lominsanSparklere);
+                DalamudApi.ShowNotification($"Broadcast UseItemById(5893)", NotificationType.Info, 5000);
+            }
+            unsafe
+            {
+                ImGui.TextUnformatted($"{ActionManager.Instance()->QueuedActionId}");
+            }
+
+            if (ImGui.Button("Use Invalid Item name"))
             {
                 var item = ItemHelper.GetExecutableActionByName("Lominsan Sparkler Flare");
                 DalamudApi.PluginLog.Warning($"item: {item?.ActionName}");
@@ -133,12 +150,7 @@ public class DebugWindow : Window
                 DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("UseItemById(5893)"))
-            {
-                uint lominsanSparklerFlare = 5893;
-                GameActionManager.UseItemById(lominsanSparklerFlare);
-                DalamudApi.ShowNotification($"UseItemById", NotificationType.Info, 5000);
-            }
+
 
             ImGui.EndTabItem();
         }

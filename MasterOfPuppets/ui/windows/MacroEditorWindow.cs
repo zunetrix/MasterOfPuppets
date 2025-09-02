@@ -127,8 +127,8 @@ public class MacroEditorWindow : Window
             Special Actions
         ===========================
         /wait <time>
-            Ex: /wait 3
-                /wait 10
+            /wait 3
+            /wait 10
 
         /petbarslot <slot_number>
             Rain Check:
@@ -137,21 +137,21 @@ public class MacroEditorWindow : Window
             /petbarslot 2
 
         /mopaction <action_id> | "Action Name"
-            Ex: /mopaction 7557
-                /mopaction "Peloton"
+            /mopaction 7557
+            /mopaction "Peloton"
 
         /item <item_id> | "Item Name"
-            Ex: /item 12042
-                /item "Heavenscracker"
+            /item 12042
+            /item "Heavenscracker"
 
         /fashion "Item Name"
-            Ex: /fashion "Fat Cat Parasol"
+            /fashion "Fat Cat Parasol"
 
         /facewear "Item Name"
-            Ex: /facewear "Groovy Glasses"
+            /facewear "Groovy Glasses"
 
         /mount "Mount Name"
-            Ex: /mount "company chocobo"
+            /mount "company chocobo"
 
         ---------------------------
         Call it recursively
@@ -159,7 +159,6 @@ public class MacroEditorWindow : Window
 
         /mop run "macro name"
         """);
-
 
         // align right
         float spacing = ImGui.GetStyle().ItemSpacing.X;

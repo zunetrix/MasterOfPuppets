@@ -49,16 +49,16 @@ public class FashionAccessoriesWindow : Window
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.BroadcastTextCommand(fashionAccessorie.TextCommand);
+            Plugin.IpcProvider.ExecuteTextCommand(fashionAccessorie.TextCommand);
         }
         ImGuiUtil.ToolTip("Click to execute");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{fashionAccessorie.ActionName}\n({fashionAccessorie.IconId})");
+        ImGui.TextUnformatted($"{fashionAccessorie.ActionName}");
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText($"{fashionAccessorie.IconId}");
-            DalamudApi.ShowNotification($"ID copied to clipboard", NotificationType.Info, 5000);
+            ImGui.SetClipboardText($"{fashionAccessorie.ActionName}");
+            DalamudApi.ShowNotification($"Name copied to clipboard", NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 
@@ -147,14 +147,14 @@ public class FashionAccessoriesWindow : Window
         }
 
         ImGui.SameLine();
-        var rainCheckIcon = DalamudApi.TextureProvider.GetFromGameIcon(GameActionManager.CustomActions["RainCheck"].IconId).GetWrapOrEmpty().Handle;
-        var umbrellaDanceIcon = DalamudApi.TextureProvider.GetFromGameIcon(GameActionManager.CustomActions["UmbrellaDance"].IconId).GetWrapOrEmpty().Handle;
+        var rainCheckIcon = DalamudApi.TextureProvider.GetFromGameIcon(ActionHelper.FavoriteActions.RainCheck.IconId).GetWrapOrEmpty().Handle;
+        var umbrellaDanceIcon = DalamudApi.TextureProvider.GetFromGameIcon(ActionHelper.FavoriteActions.UmbrellaDance.IconId).GetWrapOrEmpty().Handle;
         var iconSize = new Vector2(30 * ImGuiHelpers.GlobalScale, 30 * ImGuiHelpers.GlobalScale);
 
         ImGui.Image(rainCheckIcon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.BroadcastActionCommand(GameActionManager.CustomActions["RainCheck"].ActionId);
+            Plugin.IpcProvider.ExecuteActionCommand(ActionHelper.FavoriteActions.RainCheck.ActionId);
         }
         ImGuiUtil.ToolTip("Click to execute");
 
@@ -162,7 +162,7 @@ public class FashionAccessoriesWindow : Window
         ImGui.Image(umbrellaDanceIcon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.BroadcastActionCommand(GameActionManager.CustomActions["UmbrellaDance"].ActionId);
+            Plugin.IpcProvider.ExecuteActionCommand(ActionHelper.FavoriteActions.UmbrellaDance.ActionId);
         }
         ImGuiUtil.ToolTip("Click to execute");
 

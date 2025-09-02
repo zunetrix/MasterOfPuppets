@@ -85,16 +85,15 @@ internal class MainWindow : Window
 
     private void DrawMacroHeader()
     {
-        ImGui.TextUnformatted(Language.MacroListTitle);
-
         // align right
         float spacing = ImGui.GetStyle().ItemSpacing.X;
         float buttonWidth = ImGui.GetFrameHeight();
-        int buttonCount = 6;
+        // int buttonCount = 6;
         float marginRight = 15f * ImGuiHelpers.GlobalScale;
-        float totalButtonsWidth = (buttonWidth * buttonCount) + (spacing * (buttonCount - 1)) + marginRight;
+        // float totalButtonsWidth = (buttonWidth * buttonCount) + (spacing * (buttonCount - 1)) + marginRight;
 
-        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
+        // ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
+        // ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
         if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowEmotesBtn", Language.ShowEmotesBtn))
         {
             Ui.EmotesWindow.Toggle();
@@ -128,6 +127,12 @@ internal class MainWindow : Window
         {
             Ui.ItemWindow.Toggle();
         }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        ImGui.TextUnformatted(Language.MacroListTitle);
 
         // ImGui.Text(Language.MacroSearchInputLabel);
         if (ImGui.InputTextWithHint("##MacroSearchInput", Language.MacroSearchInputLabel, ref _macroSearchString, 255, ImGuiInputTextFlags.AutoSelectAll))

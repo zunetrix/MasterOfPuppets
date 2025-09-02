@@ -49,17 +49,17 @@ public class ItemWindow : Window
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.BroadcastItemCommand(item.ActionId);
+            Plugin.IpcProvider.ExecuteItemCommand(item.ActionId);
         }
         ImGuiUtil.ToolTip("Click to execute");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{item.ActionName}\n({item.IconId})");
+        ImGui.TextUnformatted($"{item.ActionName}");
         // ImGui.TextUnformatted($"{item.ActionName}\n({item.IconId}) {item.Category}");
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText($"{item.IconId}");
-            DalamudApi.ShowNotification($"ID copied to clipboard", NotificationType.Info, 5000);
+            ImGui.SetClipboardText($"{item.ActionName}");
+            DalamudApi.ShowNotification($"Name copied to clipboard", NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 
