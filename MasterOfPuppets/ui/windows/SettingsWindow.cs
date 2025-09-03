@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Numerics;
 
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility;
 
 using MasterOfPuppets.Resources;
 
@@ -18,7 +18,7 @@ public class SettingsWindow : Window
     {
         Plugin = plugin;
 
-        Size = new Vector2(500, 300);
+        Size = ImGuiHelpers.ScaledVector2(500, 300);
         SizeCondition = ImGuiCond.Always;
         Flags = ImGuiWindowFlags.NoResize;
 

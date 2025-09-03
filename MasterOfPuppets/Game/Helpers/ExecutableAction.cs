@@ -1,6 +1,9 @@
 ﻿using System;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureHotbarModule;
 
 namespace MasterOfPuppets;
 
@@ -13,4 +16,6 @@ public class ExecutableAction
     [JsonProperty("textCommand")] public string TextCommand;
     [JsonProperty("category")] public string? Category;
     // [JsonProperty("sortOrder")] public int? SortOrder;
+    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonProperty("type")] public HotbarSlotType? HotbarSlotType;
 }

@@ -5,9 +5,6 @@ using System.Collections.Generic;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Reflection;
 using MasterOfPuppets.Ipc;
 
 namespace MasterOfPuppets;
@@ -48,6 +45,13 @@ internal class Configuration : IPluginConfiguration
         Interface.SavePluginConfig(this);
     }
 
+    public void ResetData()
+    {
+        Macros = new();
+        Characters = new();
+        CidsGroups = new();
+    }
+
     public void UpdateFromJson(string cofigurationJson)
     {
         if (string.IsNullOrWhiteSpace(cofigurationJson)) return;
@@ -63,7 +67,6 @@ internal class Configuration : IPluginConfiguration
         OpenOnStartup = newPluginConfig.OpenOnStartup;
         OpenOnLogin = newPluginConfig.OpenOnLogin;
     }
-
 
     public void MoveMacroToIndex(int itemIndex, int targetIndex)
     {

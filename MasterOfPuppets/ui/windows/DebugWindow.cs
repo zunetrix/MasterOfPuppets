@@ -23,6 +23,7 @@ public class DebugWindow : Window
     private Plugin Plugin { get; }
     private FileDialogManager FileDialogManager { get; }
 
+    private static string _targetName = string.Empty;
     private static string _search = string.Empty;
     private static HashSet<object>? _filtered;
     private static int _hoveredItem;
@@ -33,9 +34,14 @@ public class DebugWindow : Window
     {
         Plugin = plugin;
 
-        Size = new Vector2(500, 300);
+        Size = ImGuiHelpers.ScaledVector2(500, 300);
         SizeCondition = ImGuiCond.FirstUseEver;
         // Flags = ImGuiWindowFlags.NoResize;
+        // SizeConstraints = new WindowSizeConstraints()
+        // {
+        //     MinimumSize = ImGuiHelpers.ScaledVector2(350),
+        //     MaximumSize = ImGuiHelpers.ScaledVector2(2000)
+        // };
 
         FileDialogManager = new FileDialogManager();
     }
@@ -69,15 +75,20 @@ public class DebugWindow : Window
             ImGui.Separator();
             ImGui.Spacing();
 
-            ImGui.Button("Resset all Config data (2x)");
+
+            ImGui.InputTextWithHint("##TargetNameDebugInput", "Target name", ref _targetName, 255, ImGuiInputTextFlags.AutoSelectAll);
+            ImGui.SameLine();
+            if (ImGui.Button("Target"))
+            {
+                TargetManager.TargetByName(_targetName);
+            }
+
+            ImGui.Button("Resset all Config data (double click)");
             if (ImGui.IsItemHovered())
             {
                 if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 {
-                    Plugin.Config.Macros = new();
-                    Plugin.Config.Characters = new();
-                    Plugin.Config.CidsGroups = new();
-
+                    Plugin.Config.ResetData();
                     Plugin.IpcProvider.SyncConfiguration();
                 }
             }
@@ -150,8 +161,6 @@ public class DebugWindow : Window
                 DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
             }
 
-
-
             ImGui.EndTabItem();
         }
     }
@@ -217,7 +226,7 @@ public class DebugWindow : Window
 
                             ImGui.TableNextColumn();
                             var icon = DalamudApi.TextureProvider.GetFromGameIcon(slot.IconId).GetWrapOrEmpty().Handle;
-                            var iconSize = new Vector2(30 * ImGuiHelpers.GlobalScale, 30 * ImGuiHelpers.GlobalScale);
+                            var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
                             ImGui.TextUnformatted($"{slot.IconId}");
                             ImGui.Image(icon, iconSize);
                             if (ImGui.IsItemClicked())
@@ -289,7 +298,7 @@ public class DebugWindow : Window
 
                         ImGui.TableNextColumn();
                         var icon = DalamudApi.TextureProvider.GetFromGameIcon(slot.IconId).GetWrapOrEmpty().Handle;
-                        var iconSize = new Vector2(30 * ImGuiHelpers.GlobalScale, 30 * ImGuiHelpers.GlobalScale);
+                        var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
                         ImGui.TextUnformatted($"{slot.IconId}");
                         ImGui.Image(icon, iconSize);
                         if (ImGui.IsItemClicked())

@@ -4,6 +4,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Interface.Utility;
 
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Ipc;
@@ -18,7 +19,7 @@ public class MacroExecutionQueueWindow : Window
     {
         Plugin = plugin;
 
-        Size = new Vector2(310, 250);
+        Size = ImGuiHelpers.ScaledVector2(310, 250);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;

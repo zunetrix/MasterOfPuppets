@@ -1,9 +1,11 @@
-﻿using Dalamud.Game;
+﻿using System;
+
+using Dalamud.Game;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Dalamud.Interface.ImGuiNotification;
-using System;
+using Dalamud.Game.ClientState.Objects;
 
 namespace MasterOfPuppets;
 
@@ -18,6 +20,9 @@ public class DalamudApi
     [PluginService] public static IFramework Framework { get; private set; } = null!;
     [PluginService] public static IDataManager DataManager { get; private set; } = null!;
     [PluginService] public static ITextureProvider TextureProvider { get; private set; } = null!;
+
+    [PluginService] public static IObjectTable Objects { get; private set; }
+    [PluginService] public static ITargetManager Targets { get; private set; }
     // [PluginService] public static ICondition Condition { get; private set; } = null!;
     // [PluginService] public static IGameConfig GameConfig { get; private set; } = null!;
     // [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;

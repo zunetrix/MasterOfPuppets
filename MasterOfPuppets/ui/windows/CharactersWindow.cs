@@ -24,7 +24,7 @@ public class CharactersWindow : Window
     {
         Plugin = plugin;
 
-        Size = new Vector2(500, 300);
+        Size = ImGuiHelpers.ScaledVector2(500, 300);
         SizeCondition = ImGuiCond.FirstUseEver;
     }
 
@@ -214,7 +214,7 @@ public class CharactersWindow : Window
         ImGui.InputTextWithHint("##GroupNameInput", "Group name", ref _tmpGroupName, 255, ImGuiInputTextFlags.AutoSelectAll);
 
         ImGui.SameLine();
-        ImGui.Dummy(new Vector2(0, 20 * ImGuiHelpers.GlobalScale));
+        ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
         ImGui.SameLine();
 
         if (ImGui.Button($"Add new group"))
@@ -264,7 +264,7 @@ public class CharactersWindow : Window
         }
 
         ImGui.SameLine();
-        ImGui.Dummy(new Vector2(0, 20 * ImGuiHelpers.GlobalScale));
+        ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
         ImGui.SameLine();
 
         ImGui.BeginDisabled(!Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex));

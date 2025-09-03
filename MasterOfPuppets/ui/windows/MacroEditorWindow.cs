@@ -23,7 +23,7 @@ public class MacroEditorWindow : Window
     {
         Plugin = plugin;
 
-        Size = new Vector2(700, 500);
+        Size = ImGuiHelpers.ScaledVector2(700, 500);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
     }
@@ -136,11 +136,14 @@ public class MacroEditorWindow : Window
             Umbrella Dance:
             /petbarslot 2
 
-        /mopaction <action_id> | "Action Name"
+        /mopaction <action id> | "Action Name"
             /mopaction 7557
             /mopaction "Peloton"
 
-        /item <item_id> | "Item Name"
+        /moptarget "Target Name"
+            /moptarget "John Doe"
+
+        /item <item id> | "Item Name"
             /item 12042
             /item "Heavenscracker"
 
@@ -244,7 +247,7 @@ public class MacroEditorWindow : Window
                 ImGui.PopItemWidth();
 
                 ImGui.SameLine();
-                ImGui.Dummy(new Vector2(0, 20 * ImGuiHelpers.GlobalScale));
+                ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
                 ImGui.SameLine();
 
                 ImGui.PushItemWidth(halfWidth);

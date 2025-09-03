@@ -24,7 +24,7 @@ public class MinionWindow : Window
     {
         Plugin = plugin;
 
-        Size = new Vector2(500, 300);
+        Size = ImGuiHelpers.ScaledVector2(500, 300);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
@@ -44,7 +44,7 @@ public class MinionWindow : Window
 
         ImGui.TableNextColumn();
         var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId).GetWrapOrEmpty().Handle;
-        var iconSize = new Vector2(50 * ImGuiHelpers.GlobalScale, 50 * ImGuiHelpers.GlobalScale);
+        var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
 
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())

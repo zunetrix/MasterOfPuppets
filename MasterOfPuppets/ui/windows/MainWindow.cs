@@ -28,7 +28,7 @@ internal class MainWindow : Window
         Ui = ui;
         Plugin = plugin;
 
-        Size = new Vector2(290, 195);
+        Size = ImGuiHelpers.ScaledVector2(300, 250);
         SizeCondition = ImGuiCond.FirstUseEver;
         UpdateWindowConfig();
     }
@@ -61,8 +61,15 @@ internal class MainWindow : Window
 
         // prevent change macro index while editing
         ImGui.BeginDisabled(Ui.MacroEditorWindow.IsOpen);
+
+        ImGui.BeginChild("##MopHeaderFixedHeight", new Vector2(-1, 100 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         DrawMacroHeader();
+        ImGui.EndChild();
+
+        ImGui.BeginChild("##MopMacroListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
         DrawMacrosTable();
+        ImGui.EndChild();
+
         ImGui.EndDisabled();
     }
 
@@ -304,8 +311,6 @@ internal class MainWindow : Window
             ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Macro", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("Options", ImGuiTableColumnFlags.WidthFixed);
-
-
 
             ImGuiListClipperPtr clipper;
             unsafe

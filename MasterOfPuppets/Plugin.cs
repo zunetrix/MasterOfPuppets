@@ -17,7 +17,6 @@ public class Plugin : IDalamudPlugin
 {
     internal static string Name => "Master Of Puppets";
 
-    // added Configuration override
     internal Configuration Config { get; }
     internal PluginUi Ui { get; }
     internal IpcProvider IpcProvider { get; }
@@ -91,7 +90,6 @@ public class Plugin : IDalamudPlugin
 
     private void OnCommand(string command, string args)
     {
-        // var argsList = args.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
         var argsList = ParseArgs(args);
         // DalamudApi.PluginLog.Debug($"command: {command}: {string.Join('|', argsList)}");
 

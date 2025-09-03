@@ -12,7 +12,6 @@ using TinyIpc.IO;
 using TinyIpc.Messaging;
 
 using Dalamud.Interface.ImGuiNotification;
-using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace MasterOfPuppets.Ipc;
 
@@ -351,6 +350,14 @@ internal class IpcProvider : IDisposable
                 GameActionManager.UseActionByName(args);
                 DalamudApi.PluginLog.Debug($"[MOPACTION] (by Name) {args}");
             }
+
+            await Task.CompletedTask;
+        },
+
+        ["moptarget"] = async (args, token) =>
+        {
+            string targetName = args.Trim().Trim('"');
+            TargetManager.TargetByName(targetName);
 
             await Task.CompletedTask;
         },

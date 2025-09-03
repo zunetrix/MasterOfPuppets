@@ -24,7 +24,7 @@ public class FashionAccessoriesWindow : Window
     {
         Plugin = plugin;
 
-        Size = new Vector2(500, 300);
+        Size = ImGuiHelpers.ScaledVector2(500, 300);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
@@ -44,7 +44,7 @@ public class FashionAccessoriesWindow : Window
 
         ImGui.TableNextColumn();
         var icon = DalamudApi.TextureProvider.GetFromGameIcon(fashionAccessorie.IconId).GetWrapOrEmpty().Handle;
-        var iconSize = new Vector2(50 * ImGuiHelpers.GlobalScale, 50 * ImGuiHelpers.GlobalScale);
+        var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
 
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())
@@ -149,7 +149,7 @@ public class FashionAccessoriesWindow : Window
         ImGui.SameLine();
         var rainCheckIcon = DalamudApi.TextureProvider.GetFromGameIcon(ActionHelper.FavoriteActions.RainCheck.IconId).GetWrapOrEmpty().Handle;
         var umbrellaDanceIcon = DalamudApi.TextureProvider.GetFromGameIcon(ActionHelper.FavoriteActions.UmbrellaDance.IconId).GetWrapOrEmpty().Handle;
-        var iconSize = new Vector2(30 * ImGuiHelpers.GlobalScale, 30 * ImGuiHelpers.GlobalScale);
+        var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
 
         ImGui.Image(rainCheckIcon, iconSize);
         if (ImGui.IsItemClicked())
