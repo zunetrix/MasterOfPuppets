@@ -214,7 +214,7 @@
     <data name="MacroSearchInputLabel" xml:space="preserve">
         <value>Seach Macro</value>
     </data>
-    <data name="EmoteSearchInputLabel" xml:space="preserve">
+    <data name="SearchInputLabel" xml:space="preserve">
         <value>Seach</value>
     </data>
     <data name="ShowMacroExecutionQueueBtn" xml:space="preserve">
@@ -267,5 +267,11 @@
     </data>
     <data name="ShowItemBtn" xml:space="preserve">
         <value>Items</value>
+    </data>
+    <data name="ShowMacroHelpBtn" xml:space="preserve">
+        <value>Actions Help</value>
+    </data>
+    <data name="ActionsTitle" xml:space="preserve">
+        <value>Actions</value>
     </data>
 </root>

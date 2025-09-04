@@ -17,7 +17,7 @@ public class ItemWindow : Window
     private Plugin Plugin { get; }
 
     private readonly List<ExecutableAction> UnlockedActions = new();
-    private string SearchString = "";
+    private string _searchString = "";
     private readonly List<int> ListSearchedIndexs = new();
 
     public ItemWindow(Plugin plugin) : base($"{Language.ItemTitle}###ItemWindow")
@@ -84,7 +84,7 @@ public class ItemWindow : Window
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 4;
 
-        var isFiltered = !string.IsNullOrEmpty(SearchString);
+        var isFiltered = !string.IsNullOrEmpty(_searchString);
         var itemCount = isFiltered ? ListSearchedIndexs.Count : UnlockedActions.Count;
 
         if (ImGui.BeginTable("##ItemTable", tableColumnCount, tableFlags))
@@ -126,13 +126,13 @@ public class ItemWindow : Window
         ListSearchedIndexs.AddRange(
             UnlockedActions
             .Select((item, index) => new { item, index })
-            .Where(x => x.item.ActionName.Contains(SearchString, StringComparison.OrdinalIgnoreCase))
+            .Where(x => x.item.ActionName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             .Select(x => x.index)
             .ToList()
         );
     }
 
-    public void DrawHeader()
+    private void DrawHeader()
     {
         ImGui.TextUnformatted($"{Language.ItemTitle} (unlocked)");
         ImGui.SameLine();
@@ -143,7 +143,7 @@ public class ItemWindow : Window
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##ItemSearchInput", Language.SearchInputLabel, ref SearchString, 255, ImGuiInputTextFlags.AutoSelectAll))
+        if (ImGui.InputTextWithHint("##ItemSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
         {
             Search();
         }

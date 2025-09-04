@@ -56,4 +56,19 @@ public static class TargetManager
             DalamudApi.PluginLog.Error(e, $"Error while targeting \"{targetName}\"");
         }
     }
+
+    public static unsafe void ClearTarget()
+    {
+        try
+        {
+            DalamudApi.Framework.RunOnFrameworkThread(delegate
+            {
+                DalamudApi.Targets.Target = null;
+            });
+        }
+        catch (Exception e)
+        {
+            DalamudApi.PluginLog.Error(e, $"Error while cleaning target");
+        }
+    }
 }

@@ -124,53 +124,23 @@ public class MacroEditorWindow : Window
         ImGui.SameLine();
         ImGui.TextUnformatted("Commands");
         ImGuiUtil.HelpMarker("""
-            Special Actions
-        ===========================
-        /wait <time>
-            /wait 3
-            /wait 10
-
-        /petbarslot <slot_number>
-            Rain Check:
-            /petbarslot 1
-            Umbrella Dance:
-            /petbarslot 2
-
-        /mopaction <action id> | "Action Name"
-            /mopaction 7557
-            /mopaction "Peloton"
-
-        /moptarget "Target Name"
-            /moptarget "John Doe"
-
-        /item <item id> | "Item Name"
-            /item 12042
-            /item "Heavenscracker"
-
-        /fashion "Item Name"
-            /fashion "Fat Cat Parasol"
-
-        /facewear "Item Name"
-            /facewear "Groovy Glasses"
-
-        /mount "Mount Name"
-            /mount "company chocobo"
-
-        ---------------------------
-        Call it recursively
-        ---------------------------
-
-        /mop run "macro name"
+        Start by adding characters to the list, then add commands and assign them to the characters or groups.
+        After that, set the actions they should perform
         """);
 
         // align right
         float spacing = ImGui.GetStyle().ItemSpacing.X;
         float buttonWidth = ImGui.GetFrameHeight();
-        int buttonCount = 1;
+        int buttonCount = 2;
         float marginRight = 15f * ImGuiHelpers.GlobalScale;
         float totalButtonsWidth = (buttonWidth * buttonCount) + (spacing * (buttonCount - 1)) + marginRight;
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Question, $"##ShowMacroHelpBtn", Language.ShowMacroHelpBtn))
+        {
+            Plugin.Ui.MacroHelpWindow.Toggle();
+        }
+        ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
         {
             Plugin.Ui.CharactersWindow.Toggle();

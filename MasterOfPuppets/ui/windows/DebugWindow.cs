@@ -82,6 +82,11 @@ public class DebugWindow : Window
             {
                 TargetManager.TargetByName(_targetName);
             }
+            ImGui.SameLine();
+            if (ImGui.Button("Target Clear"))
+            {
+                TargetManager.ClearTarget();
+            }
 
             ImGui.Button("Resset all Config data (double click)");
             if (ImGui.IsItemHovered())

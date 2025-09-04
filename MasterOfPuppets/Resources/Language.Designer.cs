@@ -829,5 +829,19 @@ internal class Language
             return ResourceManager.GetString("ItemTitle", resourceCulture);
         }
     }
+    internal static string ShowMacroHelpBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ShowMacroHelpBtn", resourceCulture);
+        }
+    }
+    internal static string ActionsTitle
+    {
+        get
+        {
+            return ResourceManager.GetString("ActionsTitle", resourceCulture);
+        }
+    }
 }
 

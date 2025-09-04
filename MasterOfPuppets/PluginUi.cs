@@ -20,6 +20,7 @@ namespace MasterOfPuppets
         public ItemWindow ItemWindow { get; }
         public FacewearWindow FacewearWindow { get; }
         public FashionAccessoriesWindow FashionAccessoriesWindow { get; }
+        public MacroHelpWindow MacroHelpWindow { get; }
         public DebugWindow DebugWindow { get; }
 
         public PluginUi(Plugin plugin)
@@ -37,6 +38,7 @@ namespace MasterOfPuppets
             ItemWindow = new ItemWindow(Plugin);
             FacewearWindow = new FacewearWindow(Plugin);
             FashionAccessoriesWindow = new FashionAccessoriesWindow(Plugin);
+            MacroHelpWindow = new MacroHelpWindow(Plugin);
             DebugWindow = new DebugWindow(Plugin);
 
             WindowSystem.AddWindow(MainWindow);
@@ -50,6 +52,7 @@ namespace MasterOfPuppets
             WindowSystem.AddWindow(ItemWindow);
             WindowSystem.AddWindow(FacewearWindow);
             WindowSystem.AddWindow(FashionAccessoriesWindow);
+            WindowSystem.AddWindow(MacroHelpWindow);
             WindowSystem.AddWindow(DebugWindow);
         }
 

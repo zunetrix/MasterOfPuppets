@@ -362,6 +362,13 @@ internal class IpcProvider : IDisposable
             await Task.CompletedTask;
         },
 
+        ["moptargetclear"] = async (args, token) =>
+        {
+            TargetManager.ClearTarget();
+
+            await Task.CompletedTask;
+        },
+
         ["item"] = async (args, token) =>
         {
             args = args.Trim().Trim('"');
@@ -375,7 +382,7 @@ internal class IpcProvider : IDisposable
             if (uint.TryParse(args, out uint actionId))
             {
                 GameActionManager.UseItemById(actionId);
-                DalamudApi.PluginLog.Debug($"[ITEM] (by Id) {actionId}");
+                DalamudApi.PluginLog.Debug($"[ITEM] (by ID) {actionId}");
             }
             else
             {
