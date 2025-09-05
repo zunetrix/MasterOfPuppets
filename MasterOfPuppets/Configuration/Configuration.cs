@@ -25,6 +25,7 @@ internal class Configuration : IPluginConfiguration
     public List<Character> Characters { get; set; } = new();
     public List<CidGroup> CidsGroups { get; set; } = new();
 
+    public bool UseChatSync { get; set; } = false;
     // Interface
     public bool OpenOnStartup { get; set; } = false;
 

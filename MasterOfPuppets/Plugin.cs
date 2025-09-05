@@ -20,14 +20,17 @@ public class Plugin : IDalamudPlugin
     internal Configuration Config { get; }
     internal PluginUi Ui { get; }
     internal IpcProvider IpcProvider { get; }
+    internal ChatWatcher ChatWatcher { get; }
 
     public Plugin(IDalamudPluginInterface pluginInterface)
     {
         pluginInterface.Create<DalamudApi>();
         Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(DalamudApi.PluginInterface);
+
         Ui = new PluginUi(this);
         IpcProvider = new IpcProvider(this);
+        ChatWatcher = new ChatWatcher(this);
 
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
         DalamudApi.PluginInterface.LanguageChanged += OnLanguageChange;
@@ -61,10 +64,12 @@ public class Plugin : IDalamudPlugin
         DalamudApi.PluginInterface.UiBuilder.Draw -= Ui.Draw;
         DalamudApi.ClientState.Logout -= OnLogout;
         DalamudApi.ClientState.Login -= OnLogin;
+        DalamudApi.PluginInterface.LanguageChanged -= OnLanguageChange;
+
         DalamudApi.CommandManager.RemoveHandler("/masterofpuppets");
         DalamudApi.CommandManager.RemoveHandler("/mop");
-        DalamudApi.PluginInterface.LanguageChanged -= OnLanguageChange;
         IpcProvider.Dispose();
+        ChatWatcher.Dispose();
         Ui.Dispose();
     }
 
@@ -88,20 +93,20 @@ public class Plugin : IDalamudPlugin
         return list;
     }
 
-    private void OnCommand(string command, string args)
+    private void OnCommand(string command, string argsRaw)
     {
-        var argsList = ParseArgs(args);
-        // DalamudApi.PluginLog.Debug($"command: {command}: {string.Join('|', argsList)}");
+        var args = ParseArgs(argsRaw);
+        // DalamudApi.PluginLog.Debug($"command: {command}: {string.Join('|', args)}");
 
-        if (argsList.Any())
+        if (args.Any())
         {
-            switch (argsList[0])
+            switch (args[0])
             {
                 case "run":
                     {
-                        int macroIndexByName = Config.Macros.FindIndex(m => string.Equals(m.Name, argsList[1], StringComparison.OrdinalIgnoreCase));
+                        int macroIndexByName = Config.Macros.FindIndex(m => string.Equals(m.Name, args[1], StringComparison.OrdinalIgnoreCase));
 
-                        if (argsList.Count <= 1 || (!int.TryParse(argsList[1], out var macroIndexArg) && macroIndexByName == -1))
+                        if (args.Count <= 1 || (!int.TryParse(args[1], out var macroIndexArg) && macroIndexByName == -1))
                         {
                             DalamudApi.ShowNotification($"Invalid arguments to run macro", NotificationType.Error, 5000);
                             return;
@@ -109,10 +114,9 @@ public class Plugin : IDalamudPlugin
 
                         // user input 1 index based
                         int macroIndex = macroIndexByName != -1 ? macroIndexByName : macroIndexArg - 1;
-                        var isValidMacroIndex = macroIndex >= 0 || macroIndex < Config.Macros.Count;
+                        var isValidMacroIndex = Config.Macros.IndexExists(macroIndex);
                         if (!isValidMacroIndex) return;
 
-                        DalamudApi.PluginLog.Debug($"RunMacro: ({macroIndex})");
                         IpcProvider.RunMacro(macroIndex);
                     }
                     break;

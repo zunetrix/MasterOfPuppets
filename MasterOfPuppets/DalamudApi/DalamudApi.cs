@@ -20,6 +20,7 @@ public class DalamudApi
     [PluginService] public static IFramework Framework { get; private set; } = null!;
     [PluginService] public static IDataManager DataManager { get; private set; } = null!;
     [PluginService] public static ITextureProvider TextureProvider { get; private set; } = null!;
+    [PluginService] public static IChatGui ChatGui { get; private set; } = null!;
 
     [PluginService] public static IObjectTable Objects { get; private set; }
     [PluginService] public static ITargetManager Targets { get; private set; }
@@ -27,7 +28,6 @@ public class DalamudApi
     // [PluginService] public static IGameConfig GameConfig { get; private set; } = null!;
     // [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
     // [PluginService] public static IGameGui GameGui { get; private set; } = null!;
-    // [PluginService] public static IChatGui ChatGui { get; private set; } = null!;
     // [PluginService] public static IToastGui ToastGui { get; private set; } = null!;
     // Chat
     [PluginService] public static ISigScanner SigScanner { get; private set; } = null!;

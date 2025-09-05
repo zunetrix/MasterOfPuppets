@@ -47,7 +47,6 @@ public class SettingsWindow : Window
 
             ImGui.Spacing();
             ImGui.Spacing();
-
             var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
             if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync))
             {
@@ -59,7 +58,17 @@ public class SettingsWindow : Window
 
             ImGui.Spacing();
             ImGui.Spacing();
+            var useChatSync = Plugin.Config.UseChatSync;
+            if (ImGui.Checkbox(Language.SettingsWindowUseChatSync, ref useChatSync))
+            {
+                Plugin.Config.UseChatSync = useChatSync;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("Enable chat synchronization to run actions on multiple devices");
 
+            ImGui.Spacing();
+            ImGui.Spacing();
             ImGui.TextUnformatted("Delay between actions");
             ImGui.SetNextItemWidth(150);
             var delayBetweenActions = Plugin.Config.DelayBetweenActions;
@@ -69,6 +78,26 @@ public class SettingsWindow : Window
                 Plugin.Config.DelayBetweenActions = delayBetweenActions;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+            ImGui.Spacing();
+
+            if (ImGui.Button(Language.OpenPluginFolder))
+            {
+                WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
+            }
+
+            ImGui.SameLine();
+            ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
+            ImGui.SameLine();
+
+            if (ImGui.Button(Language.OpenPluginConfigFile))
+            {
+                WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
             }
 
 

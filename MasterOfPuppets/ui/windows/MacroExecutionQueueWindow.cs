@@ -47,14 +47,14 @@ public class MacroExecutionQueueWindow : Window
 
         if (ImGui.BeginListBox($"##CurrentActionsExecutionList", new Vector2(300, 200)))
         {
-            for (int i = 0; i < IpcProvider.CurrentActionsExecutionList.Count; i++)
+            for (int i = 0; i < MacroQueueExecutor.CurrentActionsExecutionList.Count; i++)
             {
-                var isCurrentItemActive = i == IpcProvider.CurrentActionExecutionIndex;
+                var isCurrentItemActive = i == MacroQueueExecutor.CurrentActionExecutionIndex;
                 if (isCurrentItemActive)
                 {
                     ImGui.PushStyleColor(ImGuiCol.Text, Style.Colors.Green);
                 }
-                ImGui.Selectable($"[{i:000}] {IpcProvider.CurrentActionsExecutionList[i]}##CurrentActionsExecutionList{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
+                ImGui.Selectable($"[{i:000}] {MacroQueueExecutor.CurrentActionsExecutionList[i]}##CurrentActionsExecutionList{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
 
                 if (isCurrentItemActive)
                 {

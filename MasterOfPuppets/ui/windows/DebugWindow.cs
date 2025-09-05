@@ -82,10 +82,31 @@ public class DebugWindow : Window
             {
                 TargetManager.TargetByName(_targetName);
             }
+
             ImGui.SameLine();
             if (ImGui.Button("Target Clear"))
             {
                 TargetManager.ClearTarget();
+            }
+
+            if (ImGui.Button("Print Game Chat Error"))
+            {
+                DalamudApi.ChatGui.PrintError($"Test error message");
+            }
+
+            if (ImGui.Button("Chat SendChatRunMacro(2)"))
+            {
+                Plugin.ChatWatcher.SendChatRunMacro("2");
+            }
+
+            if (ImGui.Button("Chat SendChatRunMacro(Parasol action 1)"))
+            {
+                Plugin.ChatWatcher.SendChatRunMacro("\"Parasol action 1\"");
+            }
+
+            if (ImGui.Button("Chat SendChatStopMacroExecution"))
+            {
+                Plugin.ChatWatcher.SendChatStopMacroExecution();
             }
 
             ImGui.Button("Resset all Config data (double click)");
@@ -152,10 +173,10 @@ public class DebugWindow : Window
                 Plugin.IpcProvider.ExecuteItemCommand(lominsanSparklere);
                 DalamudApi.ShowNotification($"Broadcast UseItemById(5893)", NotificationType.Info, 5000);
             }
-            unsafe
-            {
-                ImGui.TextUnformatted($"{ActionManager.Instance()->QueuedActionId}");
-            }
+            // unsafe
+            // {
+            //     ImGui.TextUnformatted($"{ActionManager.Instance()->QueuedActionId}");
+            // }
 
             if (ImGui.Button("Use Invalid Item name"))
             {

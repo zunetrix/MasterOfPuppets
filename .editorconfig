@@ -178,6 +178,10 @@ csharp_remove_unused_usings = true
 csharp_remove_blank_lines_between_consecutive_braces = true
 
 #### Naming styles ####
+
+# CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+dotnet_diagnostic.CS8632.severity = none
+
 [*.{cs,vb}]
 
 # Naming rules

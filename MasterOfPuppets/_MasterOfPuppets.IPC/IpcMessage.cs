@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 using ProtoBuf;
 
-namespace MasterOfPuppets.Ipc;
+namespace MasterOfPuppets.IPC;
 
 [ProtoContract]
 internal class IpcMessage
@@ -51,7 +51,6 @@ internal class IpcMessage
 
         var serialized = protoSerialize.Compress();
         // DalamudApi.PluginLog.Verbose($"data compressed in {sw.Elapsed.TotalMilliseconds}ms");
-        // sw.Stop();
         return serialized;
     }
 

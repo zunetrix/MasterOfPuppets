@@ -274,4 +274,13 @@
     <data name="ActionsTitle" xml:space="preserve">
         <value>Actions</value>
     </data>
+    <data name="OpenPluginFolder" xml:space="preserve">
+        <value>Open Plugin Folder</value>
+    </data>
+    <data name="OpenPluginConfigFile" xml:space="preserve">
+        <value>Open Plugin Config File</value>
+    </data>
+    <data name="SettingsWindowUseChatSync" xml:space="preserve">
+        <value>Use Chat Sync</value>
+    </data>
 </root>

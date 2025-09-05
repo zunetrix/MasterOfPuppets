@@ -843,5 +843,26 @@ internal class Language
             return ResourceManager.GetString("ActionsTitle", resourceCulture);
         }
     }
+    internal static string OpenPluginFolder
+    {
+        get
+        {
+            return ResourceManager.GetString("OpenPluginFolder", resourceCulture);
+        }
+    }
+    internal static string OpenPluginConfigFile
+    {
+        get
+        {
+            return ResourceManager.GetString("OpenPluginConfigFile", resourceCulture);
+        }
+    }
+    internal static string SettingsWindowUseChatSync
+    {
+        get
+        {
+            return ResourceManager.GetString("SettingsWindowUseChatSync", resourceCulture);
+        }
+    }
 }
 
