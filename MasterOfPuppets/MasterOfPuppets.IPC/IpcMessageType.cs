@@ -10,5 +10,6 @@ public enum IpcMessageType
     SyncConfiguration,
     ExecuteTextCommand,
     ExecuteActionCommand,
-    ExecuteItemCommand
+    ExecuteItemCommand,
+    ExecuteTargetMyTargetCommand
 }

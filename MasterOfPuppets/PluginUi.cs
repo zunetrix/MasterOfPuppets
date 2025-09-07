@@ -12,7 +12,7 @@ namespace MasterOfPuppets
         public MainWindow MainWindow { get; }
         public SettingsWindow SettingsWindow { get; }
         public MacroEditorWindow MacroEditorWindow { get; }
-        public MacroExecutionQueueWindow MacroExecutionQueueWindow { get; }
+        public MacroQueueExecutorWindow MacroQueueExecutorWindow { get; }
         public CharactersWindow CharactersWindow { get; }
         public EmotesWindow EmotesWindow { get; }
         public MountWindow MountWindow { get; }
@@ -30,7 +30,7 @@ namespace MasterOfPuppets
             MainWindow = new MainWindow(Plugin, this);
             SettingsWindow = new SettingsWindow(Plugin);
             MacroEditorWindow = new MacroEditorWindow(Plugin);
-            MacroExecutionQueueWindow = new MacroExecutionQueueWindow(Plugin);
+            MacroQueueExecutorWindow = new MacroQueueExecutorWindow(Plugin);
             CharactersWindow = new CharactersWindow(Plugin);
             EmotesWindow = new EmotesWindow(Plugin);
             MountWindow = new MountWindow(Plugin);
@@ -44,7 +44,7 @@ namespace MasterOfPuppets
             WindowSystem.AddWindow(MainWindow);
             WindowSystem.AddWindow(SettingsWindow);
             WindowSystem.AddWindow(MacroEditorWindow);
-            WindowSystem.AddWindow(MacroExecutionQueueWindow);
+            WindowSystem.AddWindow(MacroQueueExecutorWindow);
             WindowSystem.AddWindow(CharactersWindow);
             WindowSystem.AddWindow(EmotesWindow);
             WindowSystem.AddWindow(MountWindow);

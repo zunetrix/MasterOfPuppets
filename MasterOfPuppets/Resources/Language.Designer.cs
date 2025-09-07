@@ -703,11 +703,11 @@ internal class Language
             return ResourceManager.GetString("SearchInputLabel", resourceCulture);
         }
     }
-    internal static string ShowMacroExecutionQueueBtn
+    internal static string ShowMacroQueueExecutorBtn
     {
         get
         {
-            return ResourceManager.GetString("ShowMacroExecutionQueueBtn", resourceCulture);
+            return ResourceManager.GetString("ShowMacroQueueExecutorBtn", resourceCulture);
         }
     }
     internal static string ShowEmotesBtn
@@ -862,6 +862,27 @@ internal class Language
         get
         {
             return ResourceManager.GetString("SettingsWindowUseChatSync", resourceCulture);
+        }
+    }
+    internal static string SettingsChatSyncTab
+    {
+        get
+        {
+            return ResourceManager.GetString("SettingsChatSyncTab", resourceCulture);
+        }
+    }
+    internal static string ExportMacroBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ExportMacroBtn", resourceCulture);
+        }
+    }
+    internal static string ImportMacroBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("ImportMacroBtn", resourceCulture);
         }
     }
 }

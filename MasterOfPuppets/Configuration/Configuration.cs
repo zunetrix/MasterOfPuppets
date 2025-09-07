@@ -4,8 +4,9 @@ using System.Collections.Generic;
 
 using Dalamud.Configuration;
 using Dalamud.Plugin;
+using Dalamud.Game.Text;
 
-using MasterOfPuppets.Ipc;
+using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
 
@@ -25,7 +26,10 @@ internal class Configuration : IPluginConfiguration
     public List<Character> Characters { get; set; } = new();
     public List<CidGroup> CidsGroups { get; set; } = new();
 
+    public HashSet<XivChatType> ListenedChatTypes { get; set; } = new();
+
     public bool UseChatSync { get; set; } = false;
+
     // Interface
     public bool OpenOnStartup { get; set; } = false;
 
@@ -51,6 +55,7 @@ internal class Configuration : IPluginConfiguration
         Macros = new();
         Characters = new();
         CidsGroups = new();
+        ListenedChatTypes = new();
     }
 
     public void UpdateFromJson(string cofigurationJson)
@@ -59,14 +64,21 @@ internal class Configuration : IPluginConfiguration
 
         var newPluginConfig = cofigurationJson.JsonDeserialize<Configuration>();
 
-        SyncClients = newPluginConfig.SyncClients;
-        SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;
         Macros = newPluginConfig.Macros;
-        DelayBetweenActions = newPluginConfig.DelayBetweenActions;
         Characters = newPluginConfig.Characters;
         CidsGroups = newPluginConfig.CidsGroups;
+        ListenedChatTypes = newPluginConfig.ListenedChatTypes;
+
+        SyncClients = newPluginConfig.SyncClients;
+        DelayBetweenActions = newPluginConfig.DelayBetweenActions;
+        SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;
         OpenOnStartup = newPluginConfig.OpenOnStartup;
         OpenOnLogin = newPluginConfig.OpenOnLogin;
+    }
+
+    public void ImportMacro(Macro macro)
+    {
+        Macros.Add(macro);
     }
 
     public void MoveMacroToIndex(int itemIndex, int targetIndex)
@@ -75,7 +87,7 @@ internal class Configuration : IPluginConfiguration
         this.Save();
     }
 
-    public void RemoveMacroItem(int itemIndex)
+    public void RemoveMacro(int itemIndex)
     {
         var isEmptyList = Macros == null || Macros.Count == 0;
         var isValidIndex = itemIndex >= 0 && itemIndex < Macros.Count;
@@ -88,7 +100,7 @@ internal class Configuration : IPluginConfiguration
         this.Save();
     }
 
-    public void CloneMacroItem(int itemIndex)
+    public void CloneMacro(int itemIndex)
     {
         var isEmptyList = Macros == null || Macros.Count == 0;
         var isValidIndex = itemIndex >= 0 && itemIndex < Macros.Count;

@@ -59,6 +59,18 @@ public static class MopMacroActionsHelper
         },
         new MopAction
         {
+            TextCommand = "/moptargetof \"Target Name\"",
+            Example = """
+                /moptargetof "John Doe"
+            """,
+            Notes = """
+            Useful for targetable emotes, target someone with main char then for the others use
+                /moptargetof "Main Char Name"
+                /dote
+            """
+        },
+        new MopAction
+        {
             TextCommand = "/moptargetclear",
             Example = """
             /moptargetclear

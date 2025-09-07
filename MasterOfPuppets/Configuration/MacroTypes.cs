@@ -22,8 +22,6 @@ public class CidGroup
 
 public class Command
 {
-    // [JsonPropertyName("characters")]
-    // public List<Character> Characters;
     [JsonPropertyName("cids")]
     public List<ulong> Cids;
 
@@ -37,6 +35,15 @@ public class Command
             Cids = this.Cids != null
                 ? this.Cids.ToList()
                 : new List<ulong>(),
+            Actions = this.Actions
+        };
+    }
+
+    public Command CloneWithoutCharacters()
+    {
+        return new Command
+        {
+            Cids = new List<ulong>(),
             Actions = this.Actions
         };
     }
@@ -56,6 +63,15 @@ public class Macro
         {
             Name = this.Name,
             Commands = this.Commands.Select(cmd => cmd.Clone()).ToList(),
+        };
+    }
+
+    public Macro CloneWithoutCharacters()
+    {
+        return new Macro
+        {
+            Name = this.Name,
+            Commands = this.Commands.Select(cmd => cmd.CloneWithoutCharacters()).ToList(),
         };
     }
 }

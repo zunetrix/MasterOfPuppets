@@ -1,20 +1,16 @@
 ﻿using System;
 using System.Linq;
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 using System.Collections.Generic;
 
+using Dalamud.Interface;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Bindings.ImGui;
 
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureHotbarModule;
-using Lumina.Excel.Sheets;
-using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace MasterOfPuppets;
 
@@ -87,6 +83,11 @@ public class DebugWindow : Window
             if (ImGui.Button("Target Clear"))
             {
                 TargetManager.ClearTarget();
+            }
+
+            if (ImGui.Button("Target My Target"))
+            {
+                Plugin.IpcProvider.ExecuteTargetMyTarget();
             }
 
             if (ImGui.Button("Print Game Chat Error"))

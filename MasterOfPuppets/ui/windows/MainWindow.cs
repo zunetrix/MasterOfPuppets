@@ -141,7 +141,6 @@ internal class MainWindow : Window
 
         ImGui.TextUnformatted(Language.MacroListTitle);
 
-        // ImGui.Text(Language.MacroSearchInputLabel);
         if (ImGui.InputTextWithHint("##MacroSearchInput", Language.MacroSearchInputLabel, ref _macroSearchString, 255, ImGuiInputTextFlags.AutoSelectAll))
         {
             SearchMacro();
@@ -149,19 +148,48 @@ internal class MainWindow : Window
         ImGuiUtil.HelpMarker("""
         Commands:
             /mop run number
-            /mop run name
-            /mop run "name with spaces"
+            /mop run macro_name
+            /mop run "macro name with spaces"
+
+        Chat commands
+            moprun number
+            moprun macro_name
+            moprun "macro name with spaces"
+            mopstop
 
         Drag to reorder macro list
         """);
 
-        int buttonMacroCount = 4;
+        int buttonMacroCount = 5;
         float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddMacroBtn", Language.AddMacroBtn))
         {
             Ui.MacroEditorWindow.AddNewMacro();
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportMacroBtn", Language.ImportMacroBtn))
+        {
+            try
+            {
+                string macroImportString = ImGui.GetClipboardText();
+                var macro = MacroManager.MacroExportStringToMacro(macroImportString);
+                Plugin.Config.ImportMacro(macro);
+                Plugin.IpcProvider.SyncConfiguration();
+                DalamudApi.ShowNotification($"Macro imported", NotificationType.Success, 5000);
+            }
+            catch (Exception e)
+            {
+                DalamudApi.ShowNotification($"Unable to import invalid macro", NotificationType.Error, 5000);
+            }
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
+        {
+            Ui.CharactersWindow.Toggle();
         }
 
         ImGui.SameLine();
@@ -172,15 +200,9 @@ internal class MainWindow : Window
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.List, $"##ShowMacroQueueExecutorBtn", Language.ShowMacroQueueExecutorBtn))
         {
-            Ui.CharactersWindow.Toggle();
-        }
-
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.List, $"##ShowMacroExecutionQueueBtn", Language.ShowMacroExecutionQueueBtn))
-        {
-            Ui.MacroExecutionQueueWindow.Toggle();
+            Ui.MacroQueueExecutorWindow.Toggle();
         }
 
         var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
@@ -270,15 +292,24 @@ internal class MainWindow : Window
         {
             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
-                Plugin.Config.RemoveMacroItem(macroIdx);
+                Plugin.Config.RemoveMacro(macroIdx);
                 Plugin.IpcProvider.SyncConfiguration();
             }
         }
 
         ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.FileExport, $"##ExportMacro_{macroIdx}", Language.ExportMacroBtn))
+        {
+            var macroExportData = MacroManager.MacroToExportString(Plugin.Config.Macros[macroIdx].CloneWithoutCharacters());
+            ImGui.SetClipboardText(macroExportData);
+            DalamudApi.ShowNotification($"Copied to clipboard", NotificationType.Info, 5000);
+
+        }
+
+        ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CloneMacro_{macroIdx}", Language.CloneMacroBtn))
         {
-            Plugin.Config.CloneMacroItem(macroIdx);
+            Plugin.Config.CloneMacro(macroIdx);
             Plugin.IpcProvider.SyncConfiguration();
         }
 

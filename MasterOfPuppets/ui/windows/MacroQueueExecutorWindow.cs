@@ -11,11 +11,11 @@ using MasterOfPuppets.Ipc;
 
 namespace MasterOfPuppets;
 
-public class MacroExecutionQueueWindow : Window
+public class MacroQueueExecutorWindow : Window
 {
     private Plugin Plugin { get; }
 
-    public MacroExecutionQueueWindow(Plugin plugin) : base($"{Language.MacroExecutionQueueTitle}###MacroExecutionQueueWindow")
+    public MacroQueueExecutorWindow(Plugin plugin) : base($"{Language.MacroExecutionQueueTitle}###MacroQueueExecutorWindow")
     {
         Plugin = plugin;
 

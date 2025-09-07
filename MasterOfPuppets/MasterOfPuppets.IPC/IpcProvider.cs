@@ -8,6 +8,8 @@ using System.Threading;
 using TinyIpc.IO;
 using TinyIpc.Messaging;
 
+using MasterOfPuppets.Util;
+
 namespace MasterOfPuppets.Ipc;
 
 internal class IpcProvider : IDisposable
@@ -132,6 +134,17 @@ internal class IpcProvider : IDisposable
     {
         var message = IpcMessage.Create(IpcMessageType.ExecuteItemCommand, itemId).Serialize();
         BroadCast(message, includeSelf: true);
+    }
+
+    public void ExecuteTargetMyTarget()
+    {
+        if (DalamudApi.ClientState.LocalPlayer == null) return;
+        // string asssistCharacterName = DalamudApi.ClientState.LocalPlayer.Name.TextValue;
+        var assitTargetObjectId = DalamudApi.ClientState.LocalPlayer.TargetObjectId;
+        if (assitTargetObjectId == 0) return;
+
+        var message = IpcMessage.Create(IpcMessageType.ExecuteTargetMyTargetCommand, assitTargetObjectId).Serialize();
+        BroadCast(message, includeSelf: false);
     }
 
     public void StopMacroExecution()

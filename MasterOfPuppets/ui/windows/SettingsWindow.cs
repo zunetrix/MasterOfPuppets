@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Linq;
+using System.Numerics;
+using System.Collections.Generic;
 
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
+using Dalamud.Game.Text;
 
 using MasterOfPuppets.Resources;
 
@@ -34,92 +38,9 @@ public class SettingsWindow : Window
     public override void Draw()
     {
         if (!ImGui.BeginTabBar("##SettingsTabs")) return;
-
-        if (ImGui.BeginTabItem($"{Language.SettingsGeneralTab}###GeneralTab"))
-        {
-            var syncClients = Plugin.Config.SyncClients;
-            if (ImGui.Checkbox(Language.SettingsWindowSyncClients, ref syncClients))
-            {
-                Plugin.Config.SyncClients = syncClients;
-                Plugin.Config.Save();
-                Plugin.IpcProvider.SyncConfiguration();
-            }
-
-            ImGui.Spacing();
-            ImGui.Spacing();
-            var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
-            if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync))
-            {
-                Plugin.Config.SaveConfigAfterSync = saveConfigAfterSync;
-                Plugin.Config.Save();
-                Plugin.IpcProvider.SyncConfiguration();
-            }
-            ImGuiUtil.HelpMarker("Enable for accounts with individual config file");
-
-            ImGui.Spacing();
-            ImGui.Spacing();
-            var useChatSync = Plugin.Config.UseChatSync;
-            if (ImGui.Checkbox(Language.SettingsWindowUseChatSync, ref useChatSync))
-            {
-                Plugin.Config.UseChatSync = useChatSync;
-                Plugin.Config.Save();
-                Plugin.IpcProvider.SyncConfiguration();
-            }
-            ImGuiUtil.HelpMarker("Enable chat synchronization to run actions on multiple devices");
-
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.TextUnformatted("Delay between actions");
-            ImGui.SetNextItemWidth(150);
-            var delayBetweenActions = Plugin.Config.DelayBetweenActions;
-            if (ImGui.InputInt("##DelayBetrweenActions", ref delayBetweenActions, 1, 10, default, ImGuiInputTextFlags.AutoSelectAll))
-            {
-                delayBetweenActions = Math.Clamp(delayBetweenActions, 1, 10);
-                Plugin.Config.DelayBetweenActions = delayBetweenActions;
-                Plugin.Config.Save();
-                Plugin.IpcProvider.SyncConfiguration();
-            }
-
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Separator();
-            ImGui.Spacing();
-            ImGui.Spacing();
-
-            if (ImGui.Button(Language.OpenPluginFolder))
-            {
-                WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
-            }
-
-            ImGui.SameLine();
-            ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
-            ImGui.SameLine();
-
-            if (ImGui.Button(Language.OpenPluginConfigFile))
-            {
-                WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
-            }
-
-
-            // ImGui.Spacing();
-            // var targetedColour = Plugin.Config.TargetedColour;
-            // if (ImGui.ColorEdit4(Language.SettingsMarkersMarkTargetColour, ref targetedColour))
-            // {
-            //     Plugin.Config.TargetedColour = targetedColour;
-            //     Plugin.Config.Save();
-            // }
-
-            // var targetedSize = Plugin.Config.TargetedSize;
-            // if (ImGui.DragFloat(Language.SettingsMarkersMarkTargetSize, ref targetedSize, 0.01f, 0f, 15f))
-            // {
-            //     targetedSize = Math.Max(0f, targetedSize);
-            //     Plugin.Config.TargetedSize = targetedSize;
-            //     Plugin.Config.Save();
-            // }
-
-            ImGui.EndTabItem();
-        }
-
+        DrawGeneralTab();
+        DrawWindowTab();
+        DrawChatSyncTab();
 
         // if (ImGui.BeginTabItem($"{Language.SettingsSoundTab}###sound-tab"))
         // {
@@ -203,6 +124,88 @@ public class SettingsWindow : Window
         //     ImGui.EndTabItem();
         // }
 
+        ImGui.EndTabBar();
+    }
+
+    private void DrawGeneralTab()
+    {
+        if (ImGui.BeginTabItem($"{Language.SettingsGeneralTab}###GeneralTab"))
+        {
+            var syncClients = Plugin.Config.SyncClients;
+            if (ImGui.Checkbox(Language.SettingsWindowSyncClients, ref syncClients))
+            {
+                Plugin.Config.SyncClients = syncClients;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.Spacing();
+            var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
+            if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync))
+            {
+                Plugin.Config.SaveConfigAfterSync = saveConfigAfterSync;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("Enable for accounts with individual config file");
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.TextUnformatted("Delay between actions");
+            ImGui.SetNextItemWidth(150);
+            var delayBetweenActions = Plugin.Config.DelayBetweenActions;
+            if (ImGui.InputInt("##DelayBetrweenActions", ref delayBetweenActions, 1, 10, default, ImGuiInputTextFlags.AutoSelectAll))
+            {
+                delayBetweenActions = Math.Clamp(delayBetweenActions, 1, 10);
+                Plugin.Config.DelayBetweenActions = delayBetweenActions;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+            ImGui.Spacing();
+
+            if (ImGui.Button(Language.OpenPluginFolder))
+            {
+                WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
+            }
+
+            ImGui.SameLine();
+            ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
+            ImGui.SameLine();
+
+            if (ImGui.Button(Language.OpenPluginConfigFile))
+            {
+                WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
+            }
+
+
+            // ImGui.Spacing();
+            // var targetedColour = Plugin.Config.TargetedColour;
+            // if (ImGui.ColorEdit4(Language.SettingsMarkersMarkTargetColour, ref targetedColour))
+            // {
+            //     Plugin.Config.TargetedColour = targetedColour;
+            //     Plugin.Config.Save();
+            // }
+
+            // var targetedSize = Plugin.Config.TargetedSize;
+            // if (ImGui.DragFloat(Language.SettingsMarkersMarkTargetSize, ref targetedSize, 0.01f, 0f, 15f))
+            // {
+            //     targetedSize = Math.Max(0f, targetedSize);
+            //     Plugin.Config.TargetedSize = targetedSize;
+            //     Plugin.Config.Save();
+            // }
+
+            ImGui.EndTabItem();
+        }
+    }
+
+    private void DrawWindowTab()
+    {
+
         if (ImGui.BeginTabItem($"{Language.SettingsWindowTab}###WindowTab"))
         {
             var openOnStartup = Plugin.Config.OpenOnStartup;
@@ -252,7 +255,71 @@ public class SettingsWindow : Window
             // }
             ImGui.EndTabItem();
         }
-
-        ImGui.EndTabBar();
     }
+
+    private void DrawChatSyncTab()
+    {
+
+        if (ImGui.BeginTabItem($"{Language.SettingsChatSyncTab}###ChatSyncTabTab"))
+        {
+            var useChatSync = Plugin.Config.UseChatSync;
+            if (ImGui.Checkbox(Language.SettingsWindowUseChatSync, ref useChatSync))
+            {
+                Plugin.Config.UseChatSync = useChatSync;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("""
+            Enable chat synchronization to run actions across multiple devices.
+            This turns on the chat watcher for the moprun and mopstop commands.
+            Set the same macro on both devices and trigger it via chat (party / linkshell).
+            """);
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+            ImGui.Spacing();
+
+            if (ImGui.BeginCombo("##ListenedChatTypesSelectList", "Select Chat to Listen"))
+            {
+                // foreach (XivChatType chatType in Enum.GetValues(typeof(XivChatType)))
+                foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes.Except(Plugin.Config.ListenedChatTypes))
+                {
+                    // var displayName = $"{chatType} ({(int)chatType})";
+                    var displayName = $"{chatType}";
+                    if (ImGui.Selectable(displayName, false))
+                    {
+                        Plugin.Config.ListenedChatTypes.Add(chatType);
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+                }
+                ImGui.EndCombo();
+            }
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            if (ImGui.BeginListBox("##ListenedChatTypes", new Vector2(-1, 100)))
+            {
+                foreach (var chatType in Plugin.Config.ListenedChatTypes.ToList())
+                {
+                    var displayName = $"{chatType}";
+                    if (ImGui.Selectable(displayName, false, ImGuiSelectableFlags.AllowDoubleClick))
+                    {
+                        if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                        {
+                            Plugin.Config.ListenedChatTypes.Remove(chatType);
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+                    }
+                    ImGuiUtil.ToolTip("Doubleclick to remove");
+                }
+                ImGui.EndListBox();
+            }
+        }
+    }
+
 }

@@ -86,7 +86,7 @@ public class CharactersWindow : Window
         ImGui.BeginDisabled(availablePartyMembers.Count == 0);
         ImGui.TextUnformatted(Language.CharactersLabel);
 
-        if (ImGui.BeginCombo($"##partyMemberSelectList", "Select a party character to add"))
+        if (ImGui.BeginCombo($"##PartyMemberSelectList", "Select a party character to add"))
         {
             foreach (var partyMember in availablePartyMembers)
             {

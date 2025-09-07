@@ -217,7 +217,7 @@
     <data name="SearchInputLabel" xml:space="preserve">
         <value>Seach</value>
     </data>
-    <data name="ShowMacroExecutionQueueBtn" xml:space="preserve">
+    <data name="ShowMacroQueueExecutorBtn" xml:space="preserve">
         <value>Macro Execution Queue</value>
     </data>
     <data name="ShowEmotesBtn" xml:space="preserve">
@@ -282,5 +282,14 @@
     </data>
     <data name="SettingsWindowUseChatSync" xml:space="preserve">
         <value>Use Chat Sync</value>
+    </data>
+    <data name="SettingsChatSyncTab" xml:space="preserve">
+        <value>Chat Sync</value>
+    </data>
+    <data name="ExportMacroBtn" xml:space="preserve">
+        <value>Export Macro</value>
+    </data>
+    <data name="ImportMacroBtn" xml:space="preserve">
+        <value>Import Macro From  Clipboard</value>
     </data>
 </root>

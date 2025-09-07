@@ -7,13 +7,38 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 
-using MasterOfPuppets.Ipc
-;
+using MasterOfPuppets.Ipc;
+
 namespace MasterOfPuppets;
 
 internal class ChatWatcher : IDisposable
 {
     private Plugin Plugin { get; }
+
+    public HashSet<XivChatType> AllowedChatTypes = new()
+    {
+        XivChatType.Say,
+        XivChatType.Party,
+        XivChatType.CrossParty,
+        XivChatType.FreeCompany,
+        XivChatType.Alliance,
+        XivChatType.Ls1,
+        XivChatType.Ls2,
+        XivChatType.Ls3,
+        XivChatType.Ls4,
+        XivChatType.Ls5,
+        XivChatType.Ls6,
+        XivChatType.Ls7,
+        XivChatType.Ls8,
+        XivChatType.CrossLinkShell1,
+        XivChatType.CrossLinkShell2,
+        XivChatType.CrossLinkShell3,
+        XivChatType.CrossLinkShell4,
+        XivChatType.CrossLinkShell5,
+        XivChatType.CrossLinkShell6,
+        XivChatType.CrossLinkShell7,
+        XivChatType.CrossLinkShell8,
+    };
 
     private readonly Dictionary<string, Action<string[]>> CommandHandlers;
 
@@ -57,16 +82,9 @@ internal class ChatWatcher : IDisposable
     private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {
         if (!Plugin.Config.UseChatSync) return;
+        if (!Plugin.Config.ListenedChatTypes.Contains(type) || !AllowedChatTypes.Contains(type)) return;
 
-        // TODO: create settings to select chats to watch
-        var allowedChatTypes = new HashSet<XivChatType>
-        {
-            XivChatType.Party,
-            XivChatType.CrossLinkShell1,
-            XivChatType.Ls1,
-        };
-
-        if (isHandled || !allowedChatTypes.Contains(type)) return;
+        if (isHandled) return;
 
         var parsedArgs = ParseArgs(message.ToString());
         if (!parsedArgs.Any()) return;

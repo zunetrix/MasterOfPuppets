@@ -60,6 +60,13 @@ internal static class MacroQueueExecutor
                 await Task.CompletedTask;
             },
 
+            ["moptargetof"] = async (args, token) =>
+            {
+                string targetName = args.Trim().Trim('"');
+                TargetManager.TargetOf(targetName);
+                await Task.CompletedTask;
+            },
+
             ["moptargetclear"] = async (_, token) =>
             {
                 TargetManager.ClearTarget();
@@ -162,7 +169,8 @@ internal static class MacroQueueExecutor
                     var noDelayActions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                     {
                         "moptarget",
-                        "moptargetclear"
+                        "moptargetof",
+                        "moptargetclear",
                     };
 
                     if (!noDelayActions.Contains(action))
