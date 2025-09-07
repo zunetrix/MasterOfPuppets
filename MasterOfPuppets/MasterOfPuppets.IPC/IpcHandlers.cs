@@ -45,11 +45,18 @@ internal class IpcHandlers
     {
         MacroQueueExecutor.StopMacroQueueExecution();
     }
-    [IpcHandle(IpcMessageType.ExecuteTargetMyTargetCommand)]
-    private void HandleExecuteTargetMyTargetCommand(IpcMessage message)
+
+    [IpcHandle(IpcMessageType.ExecuteTargetMyTarget)]
+    private void HandleExecuteTargetMyTarget(IpcMessage message)
     {
         ulong targetObjectId = message.DataStruct<ulong>();
         TargetManager.TargetByObjectId(targetObjectId);
+    }
+
+    [IpcHandle(IpcMessageType.ExecuteTargetClear)]
+    private void HandleExecuteTargetClear(IpcMessage message)
+    {
+        TargetManager.TargetClear();
     }
 
     [IpcHandle(IpcMessageType.RunMacro)]

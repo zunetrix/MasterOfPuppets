@@ -361,7 +361,7 @@ internal class IpcProvider : IDisposable
 
         ["moptargetclear"] = async (args, token) =>
         {
-            TargetManager.ClearTarget();
+            TargetManager.TargetClear();
 
             await Task.CompletedTask;
         },

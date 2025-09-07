@@ -11,6 +11,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Bindings.ImGui;
 
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using MasterOfPuppets.Ipc;
 
 namespace MasterOfPuppets;
 
@@ -82,7 +83,12 @@ public class DebugWindow : Window
             ImGui.SameLine();
             if (ImGui.Button("Target Clear"))
             {
-                TargetManager.ClearTarget();
+                TargetManager.TargetClear();
+            }
+
+            if (ImGui.Button("Target Clear Broadcast"))
+            {
+                Plugin.IpcProvider.ExecuteTargetClear();
             }
 
             if (ImGui.Button("Target My Target"))

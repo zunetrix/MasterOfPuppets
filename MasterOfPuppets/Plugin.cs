@@ -120,8 +120,12 @@ public class Plugin : IDalamudPlugin
                         IpcProvider.RunMacro(macroIndex);
                     }
                     break;
-                case "tmt":
+                case "targetmytarget":
                     IpcProvider.ExecuteTargetMyTarget();
+                    break;
+
+                case "targetclear":
+                    IpcProvider.ExecuteTargetClear();
                     break;
             }
         }

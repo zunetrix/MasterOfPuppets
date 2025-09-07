@@ -165,8 +165,7 @@ public static class TargetManager
         }
     }
 
-
-    public static unsafe void ClearTarget()
+    public static unsafe void TargetClear()
     {
         try
         {
@@ -180,4 +179,5 @@ public static class TargetManager
             DalamudApi.PluginLog.Error(e, $"Error while cleaning target");
         }
     }
+
 }

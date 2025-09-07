@@ -290,6 +290,6 @@
         <value>Export Macro</value>
     </data>
     <data name="ImportMacroBtn" xml:space="preserve">
-        <value>Import Macro From  Clipboard</value>
+        <value>Import Macro From Clipboard</value>
     </data>
 </root>

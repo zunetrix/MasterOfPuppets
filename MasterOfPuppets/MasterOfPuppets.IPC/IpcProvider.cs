@@ -143,8 +143,14 @@ internal class IpcProvider : IDisposable
         var assitTargetObjectId = DalamudApi.ClientState.LocalPlayer.TargetObjectId;
         if (assitTargetObjectId == 0) return;
 
-        var message = IpcMessage.Create(IpcMessageType.ExecuteTargetMyTargetCommand, assitTargetObjectId).Serialize();
+        var message = IpcMessage.Create(IpcMessageType.ExecuteTargetMyTarget, assitTargetObjectId).Serialize();
         BroadCast(message, includeSelf: false);
+    }
+
+    public void ExecuteTargetClear()
+    {
+        var message = IpcMessage.Create(IpcMessageType.ExecuteTargetClear).Serialize();
+        BroadCast(message, includeSelf: true);
     }
 
     public void StopMacroExecution()

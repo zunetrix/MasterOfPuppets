@@ -69,7 +69,7 @@ internal static class MacroQueueExecutor
 
             ["moptargetclear"] = async (_, token) =>
             {
-                TargetManager.ClearTarget();
+                TargetManager.TargetClear();
                 await Task.CompletedTask;
             },
 

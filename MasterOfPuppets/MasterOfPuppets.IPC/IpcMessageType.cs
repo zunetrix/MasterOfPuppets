@@ -11,5 +11,6 @@ public enum IpcMessageType
     ExecuteTextCommand,
     ExecuteActionCommand,
     ExecuteItemCommand,
-    ExecuteTargetMyTargetCommand
+    ExecuteTargetMyTarget,
+    ExecuteTargetClear
 }
