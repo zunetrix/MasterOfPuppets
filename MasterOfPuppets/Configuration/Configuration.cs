@@ -70,6 +70,7 @@ internal class Configuration : IPluginConfiguration
         ListenedChatTypes = newPluginConfig.ListenedChatTypes;
 
         SyncClients = newPluginConfig.SyncClients;
+        UseChatSync = newPluginConfig.UseChatSync;
         DelayBetweenActions = newPluginConfig.DelayBetweenActions;
         SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;
         OpenOnStartup = newPluginConfig.OpenOnStartup;

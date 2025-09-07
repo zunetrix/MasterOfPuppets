@@ -23,8 +23,9 @@ public class SettingsWindow : Window
         Plugin = plugin;
 
         Size = ImGuiHelpers.ScaledVector2(500, 300);
-        SizeCondition = ImGuiCond.Always;
-        Flags = ImGuiWindowFlags.NoResize;
+        SizeCondition = ImGuiCond.FirstUseEver;
+        // SizeCondition = ImGuiCond.Always;
+        // Flags = ImGuiWindowFlags.NoResize;
 
         FileDialogManager = new FileDialogManager();
     }
