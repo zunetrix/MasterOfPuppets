@@ -35,9 +35,10 @@ internal class IpcHandlers
     }
 
     [IpcHandle(IpcMessageType.ExecuteItemCommand)]
-    private void HandleExecuteItemCommand(IpcMessage message)
+    private unsafe void HandleExecuteItemCommand(IpcMessage message)
     {
-        GameActionManager.UseItemById(message.DataStruct<uint>());
+        uint itemId = message.DataStruct<uint>();
+        GameActionManager.UseItemById(itemId);
     }
 
     [IpcHandle(IpcMessageType.StopMacroExecution)]

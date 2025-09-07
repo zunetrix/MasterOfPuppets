@@ -32,7 +32,7 @@ public class MacroQueueExecutorWindow : Window
 
     public override void Draw()
     {
-        ImGui.TextUnformatted("Queu Actions");
+        ImGui.TextUnformatted("Action Queue");
         ImGui.SameLine();
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionQueueBtn", Language.StopMacroExecutionBtn))

@@ -140,6 +140,7 @@ public class MacroEditorWindow : Window
         {
             Plugin.Ui.MacroHelpWindow.Toggle();
         }
+
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
         {

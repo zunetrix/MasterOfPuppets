@@ -37,7 +37,12 @@ public class Plugin : IDalamudPlugin
 
         DalamudApi.CommandManager.AddHandler("/masterofpuppets", new CommandInfo(OnCommand)
         {
-            HelpMessage = "Use with no arguments to show plugin window. Use with \"run\" X to run macro number",
+            HelpMessage = """
+            Use with no arguments to show plugin window.
+            /mop run macro_number
+            /mop run "Macro name"
+            /mop stop
+            """,
         });
 
         DalamudApi.CommandManager.AddHandler("/mop", new CommandInfo(OnCommand)
@@ -119,6 +124,9 @@ public class Plugin : IDalamudPlugin
 
                         IpcProvider.RunMacro(macroIndex);
                     }
+                    break;
+                case "stop":
+                    IpcProvider.StopMacroExecution();
                     break;
                 case "targetmytarget":
                     IpcProvider.ExecuteTargetMyTarget();

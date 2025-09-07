@@ -26,9 +26,11 @@ internal class Configuration : IPluginConfiguration
     public List<Character> Characters { get; set; } = new();
     public List<CidGroup> CidsGroups { get; set; } = new();
 
-    public HashSet<XivChatType> ListenedChatTypes { get; set; } = new();
-
+    // chat commands
     public bool UseChatSync { get; set; } = false;
+    public HashSet<XivChatType> ListenedChatTypes { get; set; } = new();
+    public List<string> ChatCommandSenderWhitelist { get; set; } = new();
+
 
     // Interface
     public bool OpenOnStartup { get; set; } = false;
@@ -67,10 +69,13 @@ internal class Configuration : IPluginConfiguration
         Macros = newPluginConfig.Macros;
         Characters = newPluginConfig.Characters;
         CidsGroups = newPluginConfig.CidsGroups;
-        ListenedChatTypes = newPluginConfig.ListenedChatTypes;
 
         SyncClients = newPluginConfig.SyncClients;
+
         UseChatSync = newPluginConfig.UseChatSync;
+        ListenedChatTypes = newPluginConfig.ListenedChatTypes;
+        ChatCommandSenderWhitelist = newPluginConfig.ChatCommandSenderWhitelist;
+
         DelayBetweenActions = newPluginConfig.DelayBetweenActions;
         SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;
         OpenOnStartup = newPluginConfig.OpenOnStartup;

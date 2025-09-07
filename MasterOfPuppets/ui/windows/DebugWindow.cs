@@ -162,6 +162,12 @@ public class DebugWindow : Window
                 DalamudApi.ShowNotification($"UseActionByName", NotificationType.Info, 5000);
             }
 
+            if (ImGui.Button("Broadcast ExecuteItemCommand"))
+            {
+                Plugin.IpcProvider.ExecuteItemCommand(5893);
+                DalamudApi.ShowNotification($"ExecuteItemCommand", NotificationType.Info, 5000);
+            }
+
             if (ImGui.Button("UseItemByName(Lominsan Sparkler)"))
             {
                 GameActionManager.UseItemByName("Lominsan Sparkler");

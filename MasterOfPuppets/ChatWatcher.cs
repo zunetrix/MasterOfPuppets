@@ -15,9 +15,9 @@ internal class ChatWatcher : IDisposable
 {
     private Plugin Plugin { get; }
 
-    public HashSet<XivChatType> AllowedChatTypes = new()
+    public readonly HashSet<XivChatType> AllowedChatTypes = new()
     {
-        XivChatType.Say,
+        // XivChatType.Say,
         XivChatType.Party,
         XivChatType.CrossParty,
         XivChatType.FreeCompany,
@@ -82,7 +82,12 @@ internal class ChatWatcher : IDisposable
     private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {
         if (!Plugin.Config.UseChatSync) return;
-        if (!Plugin.Config.ListenedChatTypes.Contains(type) || !AllowedChatTypes.Contains(type)) return;
+        if (!AllowedChatTypes.Contains(type)
+            || !Plugin.Config.ListenedChatTypes.Contains(type)
+            || !Plugin.Config.ChatCommandSenderWhitelist.Contains(sender.ToString()))
+        {
+            return;
+        }
 
         if (isHandled) return;
 

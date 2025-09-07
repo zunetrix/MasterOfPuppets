@@ -217,7 +217,7 @@ public class CharactersWindow : Window
         ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
         ImGui.SameLine();
 
-        if (ImGui.Button($"Add new group"))
+        if (ImGui.Button($"Add new group#AddNewGroupBtn"))
         {
             if (_tmpGroupName.IsNullOrEmpty()) return;
 

@@ -180,7 +180,7 @@ internal class MainWindow : Window
                 Plugin.IpcProvider.SyncConfiguration();
                 DalamudApi.ShowNotification($"Macro imported", NotificationType.Success, 5000);
             }
-            catch (Exception e)
+            catch
             {
                 DalamudApi.ShowNotification($"Unable to import invalid macro", NotificationType.Error, 5000);
             }

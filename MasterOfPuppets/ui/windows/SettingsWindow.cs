@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Numerics;
-using System.Collections.Generic;
 
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
-using Dalamud.Game.Text;
 
 using MasterOfPuppets.Resources;
 
@@ -17,6 +15,7 @@ public class SettingsWindow : Window
 {
     private Plugin Plugin { get; }
     private FileDialogManager FileDialogManager { get; }
+    private string _characterName = string.Empty;
 
     public SettingsWindow(Plugin plugin) : base($"{Plugin.Name} {Language.SettingsTitle}###SettingsWindow")
     {
@@ -260,7 +259,6 @@ public class SettingsWindow : Window
 
     private void DrawChatSyncTab()
     {
-
         if (ImGui.BeginTabItem($"{Language.SettingsChatSyncTab}###ChatSyncTabTab"))
         {
             var useChatSync = Plugin.Config.UseChatSync;
@@ -273,7 +271,14 @@ public class SettingsWindow : Window
             ImGuiUtil.HelpMarker("""
             Enable chat synchronization to run actions across multiple devices.
             This turns on the chat watcher for the moprun and mopstop commands.
-            Set the same macro on both devices and trigger it via chat (party / linkshell).
+            Set the same macro on both devices and trigger it via chat (party / linkshell etc).
+            You can define which chats are listened to and limit yourself to responding only to commands from certain senders
+
+            Chat commands
+                moprun number
+                moprun macro_name
+                moprun "macro name with spaces"
+                mopstop
             """);
 
             ImGui.Spacing();
@@ -282,45 +287,95 @@ public class SettingsWindow : Window
             ImGui.Spacing();
             ImGui.Spacing();
 
-            if (ImGui.BeginCombo("##ListenedChatTypesSelectList", "Select Chat to Listen"))
+            if (ImGui.CollapsingHeader($"Allowed Chats"))
             {
-                // foreach (XivChatType chatType in Enum.GetValues(typeof(XivChatType)))
-                foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes.Except(Plugin.Config.ListenedChatTypes))
+                ImGui.Indent();
+                if (ImGui.BeginCombo("##ListenedChatTypesSelectList", "Select Chat to Listen"))
                 {
-                    // var displayName = $"{chatType} ({(int)chatType})";
-                    var displayName = $"{chatType}";
-                    if (ImGui.Selectable(displayName, false))
+                    // foreach (XivChatType chatType in Enum.GetValues(typeof(XivChatType)))
+                    foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes.Except(Plugin.Config.ListenedChatTypes))
                     {
-                        Plugin.Config.ListenedChatTypes.Add(chatType);
-                        Plugin.IpcProvider.SyncConfiguration();
-                    }
-                }
-                ImGui.EndCombo();
-            }
-
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Separator();
-            ImGui.Spacing();
-
-            if (ImGui.BeginListBox("##ListenedChatTypes", new Vector2(-1, 100)))
-            {
-                foreach (var chatType in Plugin.Config.ListenedChatTypes.ToList())
-                {
-                    var displayName = $"{chatType}";
-                    if (ImGui.Selectable(displayName, false, ImGuiSelectableFlags.AllowDoubleClick))
-                    {
-                        if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                        // var displayName = $"{chatType} ({(int)chatType})";
+                        var displayName = $"{chatType}";
+                        if (ImGui.Selectable(displayName, false))
                         {
-                            Plugin.Config.ListenedChatTypes.Remove(chatType);
+                            Plugin.Config.ListenedChatTypes.Add(chatType);
                             Plugin.IpcProvider.SyncConfiguration();
                         }
                     }
-                    ImGuiUtil.ToolTip("Doubleclick to remove");
+                    ImGui.EndCombo();
                 }
-                ImGui.EndListBox();
+
+                ImGui.Spacing();
+                ImGui.Spacing();
+
+                ImGui.TextUnformatted("Listened Chats");
+                if (ImGui.BeginListBox("##ListenedChatTypes", new Vector2(-1, 100)))
+                {
+                    foreach (var chatType in Plugin.Config.ListenedChatTypes.ToList())
+                    {
+                        var displayName = $"{chatType}";
+                        if (ImGui.Selectable(displayName, false, ImGuiSelectableFlags.AllowDoubleClick))
+                        {
+                            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                            {
+                                Plugin.Config.ListenedChatTypes.Remove(chatType);
+                                Plugin.IpcProvider.SyncConfiguration();
+                            }
+                        }
+                        ImGuiUtil.ToolTip("Doubleclick to remove");
+                    }
+                    ImGui.EndListBox();
+                }
+
+                ImGui.Unindent();
+            }
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+
+            if (ImGui.CollapsingHeader($"Allowed Chat Command Senders"))
+            {
+                ImGui.Indent();
+                ImGui.TextUnformatted("Sender Name");
+                ImGui.InputTextWithHint("##CommandSenderNameInput", "Sender name", ref _characterName, 255, ImGuiInputTextFlags.AutoSelectAll);
+
+                ImGui.SameLine();
+                ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
+                ImGui.SameLine();
+
+                if (ImGui.Button($"Add##AddCommandSenderBtn"))
+                {
+                    if (string.IsNullOrEmpty(_characterName.Trim())) return;
+
+                    Plugin.Config.ChatCommandSenderWhitelist.AddUnique(_characterName.Trim());
+                    _characterName = string.Empty;
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                ImGui.Spacing();
+                ImGui.Spacing();
+
+                ImGui.TextUnformatted("Chat Command Sender Whitelist");
+                if (ImGui.BeginListBox("##ChatCommandSenderWhitelist", new Vector2(-1, 100)))
+                {
+                    foreach (var senderName in Plugin.Config.ChatCommandSenderWhitelist)
+                    {
+                        if (ImGui.Selectable(senderName, false, ImGuiSelectableFlags.AllowDoubleClick))
+                        {
+                            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                            {
+                                Plugin.Config.ChatCommandSenderWhitelist.Remove(senderName);
+                                Plugin.IpcProvider.SyncConfiguration();
+                            }
+                        }
+                        ImGuiUtil.ToolTip("Doubleclick to remove");
+                    }
+                    ImGui.EndListBox();
+                }
+
+                ImGui.Unindent();
             }
         }
     }
-
 }

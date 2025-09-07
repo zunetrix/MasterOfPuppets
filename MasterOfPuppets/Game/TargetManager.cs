@@ -58,6 +58,7 @@ public static class TargetManager
             DalamudApi.PluginLog.Error(e, $"Error while targeting \"{targetName}\"");
         }
     }
+
     public static unsafe void TargetByObjectId(ulong targetObjectId)
     {
         try

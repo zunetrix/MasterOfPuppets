@@ -184,7 +184,14 @@ internal static class MacroQueueExecutor
             if (!handled)
             {
                 DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
+
                 Chat.SendMessage(action);
+
+                // DalamudApi.Framework.RunOnFrameworkThread(delegate
+                // {
+                //     Chat.SendMessage(action);
+                // });
+
                 DalamudApi.PluginLog.Debug($"[DELAY BETWEEN ACTIONS] {delayBetweenActions}...");
                 await Task.Delay(delayBetweenActions * 1000, token);
             }

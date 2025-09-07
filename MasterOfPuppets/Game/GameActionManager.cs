@@ -75,6 +75,8 @@ public static class GameActionManager
             return;
         }
 
+        // if (ActionManager.Instance()->GetActionStatus(ActionType.Item, item.ActionId) == 0) return;
+
         DalamudApi.Framework.RunOnFrameworkThread(delegate
         {
             ActionManager.Instance()->UseAction(ActionType.Item, item.ActionId);
