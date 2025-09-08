@@ -75,24 +75,24 @@ internal static class MacroQueueExecutor
                 await Task.CompletedTask;
             },
 
-            ["item"] = async (args, token) =>
+            ["mopitem"] = async (args, token) =>
             {
                 args = args.Trim().Trim('"');
                 if (string.IsNullOrWhiteSpace(args))
                 {
-                    DalamudApi.PluginLog.Warning($"[ITEM] invalid argument: \"{args}\"");
+                    DalamudApi.PluginLog.Warning($"[MOPITEM] invalid argument: \"{args}\"");
                     return;
                 }
 
                 if (uint.TryParse(args, out uint itemId))
                 {
                     GameActionManager.UseItemById(itemId);
-                    DalamudApi.PluginLog.Debug($"[ITEM] (by Id) {itemId}");
+                    DalamudApi.PluginLog.Debug($"[MOPITEM] (by Id) {itemId}");
                 }
                 else
                 {
                     GameActionManager.UseItemByName(args);
-                    DalamudApi.PluginLog.Debug($"[ITEM] (by Name) {args}");
+                    DalamudApi.PluginLog.Debug($"[MOPITEM] (by Name) {args}");
                 }
 
                 await Task.CompletedTask;

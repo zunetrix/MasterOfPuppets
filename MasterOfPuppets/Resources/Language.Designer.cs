@@ -892,5 +892,12 @@ internal class Language
             return ResourceManager.GetString("SettingsWindowUseChatCommandSenderWhitelist", resourceCulture);
         }
     }
+    internal static string ClipboardCopyMessage
+    {
+        get
+        {
+            return ResourceManager.GetString("ClipboardCopyMessage", resourceCulture);
+        }
+    }
 }
 

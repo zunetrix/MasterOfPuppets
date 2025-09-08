@@ -3,7 +3,6 @@ using System.Linq;
 using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 
-using Dalamud.Interface;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.ImGuiNotification;
@@ -11,7 +10,8 @@ using Dalamud.Interface.Utility;
 using Dalamud.Bindings.ImGui;
 
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using MasterOfPuppets.Ipc;
+
+using MasterOfPuppets.Resources;
 
 namespace MasterOfPuppets;
 
@@ -259,7 +259,7 @@ public class DebugWindow : Window
                             if (ImGui.IsItemClicked())
                             {
                                 ImGui.SetClipboardText($"{slot.ApparentActionId}");
-                                DalamudApi.ShowNotification($"ID copied to clipboard", NotificationType.Info, 5000);
+                                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
                             }
                             ImGuiUtil.ToolTip("Click to copy");
 
@@ -331,7 +331,7 @@ public class DebugWindow : Window
                         if (ImGui.IsItemClicked())
                         {
                             ImGui.SetClipboardText($"{slot.ApparentActionId}");
-                            DalamudApi.ShowNotification($"ID copied to clipboard", NotificationType.Info, 5000);
+                            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
                         }
                         ImGuiUtil.ToolTip("Click to copy");
 

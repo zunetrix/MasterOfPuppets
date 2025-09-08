@@ -59,7 +59,7 @@ public class EmotesWindow : Window
         if (ImGui.IsItemClicked())
         {
             ImGui.SetClipboardText($"{emote.ActionName}");
-            DalamudApi.ShowNotification($"Name copied to clipboard", NotificationType.Info, 5000);
+            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 
@@ -68,7 +68,7 @@ public class EmotesWindow : Window
         if (ImGui.IsItemClicked())
         {
             ImGui.SetClipboardText(emote.TextCommand);
-            DalamudApi.ShowNotification($"Command copied to clipboard", NotificationType.Info, 5000);
+            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 

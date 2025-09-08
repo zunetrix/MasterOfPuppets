@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 
 namespace MasterOfPuppets;
@@ -9,12 +10,14 @@ public static class MopMacroActionsHelper
         new MopAction
         {
             TextCommand = "/wait <time>",
+            SuggestionCommand = "/wait ",
             Example = "/wait 3",
             Notes = "Use to wait a certain amount of time"
         },
         new MopAction
         {
             TextCommand = "/petbarslot <slot number>",
+            SuggestionCommand = "/petbarslot ",
             Example = """
             Rain Check:
                 /petbarslot 1
@@ -35,6 +38,7 @@ public static class MopMacroActionsHelper
         new MopAction
         {
             TextCommand = "/mopaction <action id> | \"Action Name\"",
+            SuggestionCommand = "/mopaction ",
             Example = """
             Peloton:
                 /mopaction "Peloton"
@@ -48,6 +52,7 @@ public static class MopMacroActionsHelper
         new MopAction
         {
             TextCommand = "/moptarget \"Target Name\"",
+            SuggestionCommand = "/moptarget ",
             Example = """
                 /moptarget "John Doe"
             """,
@@ -60,6 +65,7 @@ public static class MopMacroActionsHelper
         new MopAction
         {
             TextCommand = "/moptargetof \"Target Name\"",
+            SuggestionCommand = "/moptargetof ",
             Example = """
                 /moptargetof "John Doe"
             """,
@@ -72,6 +78,7 @@ public static class MopMacroActionsHelper
         new MopAction
         {
             TextCommand = "/moptargetclear",
+            SuggestionCommand = "/moptargetclear",
             Example = """
             /moptargetclear
             """,
@@ -84,7 +91,8 @@ public static class MopMacroActionsHelper
         },
         new MopAction
         {
-            TextCommand = "/item <item id> | \"Item Name\"",
+            TextCommand = "/mopitem <item id> | \"Item Name\"",
+            SuggestionCommand = "/mopitem ",
             Example = """
             /item "Heavenscracker"
             /item 12042
@@ -96,6 +104,7 @@ public static class MopMacroActionsHelper
         new MopAction
         {
             TextCommand = "/fashion \"Item Name\"",
+            SuggestionCommand = "/fashion ",
             Example = """
             /fashion "Fat Cat Parasol"
             /fashion "Archangel Wings"
@@ -107,6 +116,7 @@ public static class MopMacroActionsHelper
         new MopAction
         {
             TextCommand = "/facewear \"Item Name\"",
+            SuggestionCommand = "/facewear ",
             Example = """
             /facewear "Groovy Glasses"
             /facewear "Pince-nez"
@@ -118,6 +128,7 @@ public static class MopMacroActionsHelper
         new MopAction
         {
             TextCommand = "/mount \"Mount Name\"",
+            SuggestionCommand = "/mount ",
             Example = """
             /mount "company chocobo"
             /mount "behemoth"
@@ -129,6 +140,7 @@ public static class MopMacroActionsHelper
         new MopAction
         {
             TextCommand = "/mop run <macro number> \"Macro Name\"",
+            SuggestionCommand = "/mop run ",
             Example = """
             /mount "My macro"
             /mount 3
@@ -140,11 +152,21 @@ public static class MopMacroActionsHelper
             """
         }
     };
+
+    public static List<string> GetSuggestionCommands()
+    {
+        return Actions
+            .Select(a => a.SuggestionCommand)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct()
+            .ToList();
+    }
 }
 
 public class MopAction
 {
     public string TextCommand { get; set; } = string.Empty;
+    public string SuggestionCommand { get; set; } = string.Empty;
     public string Example { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
 }

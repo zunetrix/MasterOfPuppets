@@ -182,7 +182,8 @@
         <value>Save Macro</value>
     </data>
     <data name="RunMacroBtn" xml:space="preserve">
-        <value>Run Macro</value>
+        <value>Run Macro
+Right-Click to copy command</value>
     </data>
     <data name="ShowCharactersBtn" xml:space="preserve">
         <value>Character List</value>
@@ -294,5 +295,8 @@
     </data>
     <data name="SettingsWindowUseChatCommandSenderWhitelist" xml:space="preserve">
         <value>Use Chat Command Sender Whitelist</value>
+    </data>
+    <data name="ClipboardCopyMessage" xml:space="preserve">
+        <value>Copied to clipboard</value>
     </data>
 </root>

@@ -59,7 +59,7 @@ public class MacroHelpWindow : Window
         if (ImGui.IsItemClicked())
         {
             ImGui.SetClipboardText($"{mopAction.TextCommand}");
-            DalamudApi.ShowNotification($"Copied to clipboard", NotificationType.Info, 5000);
+            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
         ImGui.TextUnformatted("");
@@ -69,7 +69,7 @@ public class MacroHelpWindow : Window
         if (ImGui.IsItemClicked())
         {
             ImGui.SetClipboardText(mopAction.Example);
-            DalamudApi.ShowNotification($"Copied to clipboard", NotificationType.Info, 5000);
+            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
         ImGui.TextUnformatted("");
@@ -129,7 +129,7 @@ public class MacroHelpWindow : Window
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CopyMopActionTextCommand_{itemIndex}", "Copy Text Command"))
         {
             ImGui.SetClipboardText($"{mopAction.TextCommand}");
-            DalamudApi.ShowNotification($"Copied to clipboard", NotificationType.Info, 5000);
+            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
 
         ImGui.SameLine();
@@ -142,7 +142,7 @@ public class MacroHelpWindow : Window
             if (ImGui.IsItemClicked())
             {
                 ImGui.SetClipboardText(mopAction.Example);
-                DalamudApi.ShowNotification($"Copied to clipboard", NotificationType.Info, 5000);
+                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             }
             ImGuiUtil.ToolTip("Click to copy");
 

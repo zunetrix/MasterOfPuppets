@@ -7,9 +7,9 @@ using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility;
 
 using MasterOfPuppets.Resources;
-using Dalamud.Interface.Utility;
 
 namespace MasterOfPuppets;
 
@@ -206,13 +206,6 @@ internal class MainWindow : Window
             Ui.MacroQueueExecutorWindow.Toggle();
         }
 
-        var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
-        var noSearchResults = MacroListSearchedIndexs.Count == 0;
-        if (isFiltered && noSearchResults)
-        {
-            ImGuiUtil.DrawColoredBanner(Style.Colors.Red, "Nothing found");
-        }
-
         ImGui.Spacing();
         ImGui.Spacing();
         ImGui.Separator();
@@ -283,6 +276,7 @@ internal class MainWindow : Window
                     }
                 }
             }
+
             ImGui.EndDragDropTarget();
         }
         ImGui.PopStyleColor();
@@ -303,7 +297,7 @@ internal class MainWindow : Window
         {
             var macroExportData = MacroManager.MacroToExportString(Plugin.Config.Macros[macroIdx].CloneWithoutCharacters());
             ImGui.SetClipboardText(macroExportData);
-            DalamudApi.ShowNotification($"Copied to clipboard", NotificationType.Info, 5000);
+            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
 
         }
 
@@ -326,16 +320,39 @@ internal class MainWindow : Window
         {
             Plugin.IpcProvider.RunMacro(macroIdx);
         }
+        ImGui.OpenPopupOnItemClick("ContextMenuRunMacro", ImGuiPopupFlags.MouseButtonRight);
+
+        if (ImGui.BeginPopup("ContextMenuRunMacro"))
+        {
+            if (ImGui.MenuItem("Copy Run Command"))
+            {
+                ImGui.SetClipboardText($"/mop run \"{macro.Name}\"");
+                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+            }
+            if (ImGui.MenuItem("Copy Chat Sync Command"))
+            {
+                ImGui.SetClipboardText($"moprun \"{macro.Name}\"");
+                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+            }
+            ImGui.EndPopup();
+        }
+
         ImGui.PopID();
     }
 
     private void DrawMacrosTable()
     {
+        var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
+        var noSearchResults = MacroListSearchedIndexs.Count == 0;
+        if (isFiltered && noSearchResults)
+        {
+            ImGuiUtil.DrawColoredBanner(Style.Colors.Red, "Nothing found");
+        }
+
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                 ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 3;
         var macros = Plugin.Config.Macros;
-        var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
         var itemCount = isFiltered ? MacroListSearchedIndexs.Count : macros.Count;
 
         if (ImGui.BeginTable("##MacrosTable", tableColumnCount, tableFlags))

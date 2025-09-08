@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Numerics;
 using System.Collections.Generic;
 
@@ -18,6 +19,9 @@ public class MacroEditorWindow : Window
     private Macro MacroItem = new() { Commands = new List<Command>() };
     private int MacroIndex;
     private bool EditingExistingMacro = false;
+    private List<string> _suggestions = [];
+    private string _currentWord = string.Empty;
+    private string _lastWord = string.Empty;
 
     public MacroEditorWindow(Plugin plugin) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow")
     {
@@ -74,6 +78,8 @@ public class MacroEditorWindow : Window
     private void SaveMacro()
     {
         var isNewMacro = MacroIndex == Plugin.Config.Macros.Count;
+        MacroItem.SanitizeAllActions();
+
         if (isNewMacro)
         {
             Plugin.Config.Macros.Add(MacroItem);
@@ -204,11 +210,11 @@ public class MacroEditorWindow : Window
                 ImGui.TextUnformatted(Language.CharactersLabel);
                 ImGui.PushItemWidth(halfWidth);
                 var charactersListPreviewLabel = Plugin.Config.Characters.Count == 0 ? "Set up the characters first" : "Select character to add";
-                if (ImGui.BeginCombo($"##CharacterSelectList_command{commandIndex}", charactersListPreviewLabel))
+                if (ImGui.BeginCombo($"##CharacterSelectList_command_{commandIndex}", charactersListPreviewLabel))
                 {
                     foreach (var character in availableCharacters)
                     {
-                        if (ImGui.Selectable($"{character.Name}##cid_{character.Cid}", false))
+                        if (ImGui.Selectable($"{character.Name}##Cid_{character.Cid}", false))
                         {
                             MacroItem.Commands[commandIndex].Cids.AddUnique(character.Cid);
                         }
@@ -222,11 +228,11 @@ public class MacroEditorWindow : Window
                 ImGui.SameLine();
 
                 ImGui.PushItemWidth(halfWidth);
-                if (ImGui.BeginCombo($"##CidsGroupSelectList_command{commandIndex}", "Select group to add"))
+                if (ImGui.BeginCombo($"##CidsGroupSelectList_command_{commandIndex}", "Select group to add"))
                 {
                     for (var groupIndex = 0; groupIndex < Plugin.Config.CidsGroups.Count; groupIndex++)
                     {
-                        if (ImGui.Selectable($"{Plugin.Config.CidsGroups[groupIndex].Name}##cidGroup_{groupIndex}", false))
+                        if (ImGui.Selectable($"{Plugin.Config.CidsGroups[groupIndex].Name}##CidGroup_{groupIndex}", false))
                         {
                             var availableCidsToAdd = Plugin.Config.CidsGroups[groupIndex].Cids.Where(cid => !usedCids.Contains(cid)).ToList();
 
@@ -245,7 +251,7 @@ public class MacroEditorWindow : Window
 
                 ImGui.Spacing();
 
-                if (ImGui.BeginListBox($"##CharactersList_command{commandIndex}", new Vector2(-1, 100)))
+                if (ImGui.BeginListBox($"##CharactersList_command_{commandIndex}", new Vector2(-1, 100)))
                 {
                     for (var characterIndex = 0; characterIndex < MacroItem.Commands[commandIndex].Cids.Count; characterIndex++)
                     {
@@ -254,7 +260,7 @@ public class MacroEditorWindow : Window
                         var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
                             ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
 
-                        if (ImGui.Selectable($"{character.Name}##command{commandIndex}_character{characterIndex}", false, ImGuiSelectableFlags.AllowDoubleClick))
+                        if (ImGui.Selectable($"{character.Name}##command_{commandIndex}_character_{characterIndex}", false, ImGuiSelectableFlags.AllowDoubleClick))
                         {
                             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                                 MacroItem.Commands[commandIndex].Cids.RemoveAll(cid => cid == targetCid);
@@ -267,10 +273,92 @@ public class MacroEditorWindow : Window
                 ImGui.Spacing();
                 ImGui.Spacing();
                 ImGui.TextUnformatted("Actions");
-                if (ImGui.InputTextMultiline($"##InputAction_command{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 100)))
+                if (ImGui.InputTextMultiline($"##InputAction_command_{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 150)))
                 {
-                    // Plugin.Config.MarkTargeted = macroText;
+                    _currentWord = GetCurrentWord(MacroItem.Commands[commandIndex].Actions);
+
+                    // prevent suggestions for new line
+                    if (string.IsNullOrWhiteSpace(_currentWord))
+                    {
+                        _suggestions.Clear();
+                        _lastWord = string.Empty;
+                    }
                 }
+
+                if (!string.IsNullOrWhiteSpace(_currentWord) && _currentWord != _lastWord)
+                {
+                    _suggestions = MopMacroActionsHelper.Actions
+                        .Select(a => a.SuggestionCommand)
+                        .Concat(EmoteHelper.GetAllowedItems().Select(a => a.TextCommand))
+                        .Where(s => s.Contains(_currentWord, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    _lastWord = _currentWord;
+                }
+
+                if (_suggestions.Any())
+                {
+                    ImGui.BeginChild($"##AutoCompleteChild_{commandIndex}", new Vector2(-1, 150), true);
+                    int? selectedIndex = null;
+                    for (int i = 0; i < _suggestions.Count; i++)
+                    {
+                        if (ImGui.Selectable(_suggestions[i]))
+                            selectedIndex = i;
+                    }
+
+                    if (selectedIndex.HasValue)
+                    {
+                        ReplaceCurrentWord(ref MacroItem.Commands[commandIndex].Actions, _currentWord, _suggestions[selectedIndex.Value]);
+                        _suggestions.Clear();
+                        _lastWord = string.Empty;
+                    }
+                    ImGui.EndChild();
+                }
+
+
+                // if (ImGui.BeginPopup($"AutoCompletePopup_{commandIndex}",
+                //         ImGuiWindowFlags.NoFocusOnAppearing |
+                //         ImGuiWindowFlags.NoNavFocus |
+                //         // ImGuiWindowFlags.AlwaysAutoResize |
+                //         ImGuiWindowFlags.NoMove))
+                // {
+                //     foreach (var suggestion in _suggestions)
+                //     {
+                //         if (ImGui.Selectable(suggestion))
+                //         {
+                //             ReplaceCurrentWord(ref MacroItem.Commands[commandIndex].Actions, _currentWord, suggestion);
+                //             ImGui.CloseCurrentPopup();
+                //         }
+                //     }
+                //     ImGui.EndPopup();
+                // }
+
+                // // Trigger (Ctrl+Space)
+                // if (ImGui.IsKeyDown(ImGuiKey.ModCtrl) && ImGui.IsKeyPressed(ImGuiKey.Space))
+                // {
+                //     ImGui.OpenPopup($"AutoCompletePopup_{commandIndex}");
+                // }
+
+                // // autocomplete
+                // if (ImGui.BeginPopup($"AutoCompletePopup_{commandIndex}"))
+                // {
+                //     foreach (var suggestion in MopMacroActionsHelper.GetSuggestionCommands())
+                //     {
+                //         if (ImGui.Selectable(suggestion))
+                //         {
+                //             // if (!string.IsNullOrWhiteSpace(MacroItem.Commands[commandIndex].Actions) &&
+                //             //     !MacroItem.Commands[commandIndex].Actions.EndsWith(" "))
+                //             // {
+                //             //     MacroItem.Commands[commandIndex].Actions += " ";
+                //             // }
+
+                //             MacroItem.Commands[commandIndex].Actions += "\n" + suggestion;
+                //             ImGui.CloseCurrentPopup();
+                //         }
+                //     }
+
+                //     ImGui.EndPopup();
+                // }
 
                 ImGui.Spacing();
                 ImGui.Spacing();
@@ -281,6 +369,31 @@ public class MacroEditorWindow : Window
 
             ImGui.Spacing();
             ImGui.Spacing();
+        }
+    }
+
+    private string GetCurrentWord(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return "";
+
+        var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        var lastLine = lines.Length > 0 ? lines[^1] : "";
+
+        if (string.IsNullOrWhiteSpace(lastLine))
+            return "";
+
+        var tokens = lastLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        return tokens.Length > 0 ? tokens[^1] : "";
+    }
+
+    private void ReplaceCurrentWord(ref string text, string oldWord, string newWord)
+    {
+        if (string.IsNullOrEmpty(oldWord)) return;
+        int index = text.LastIndexOf(oldWord, StringComparison.OrdinalIgnoreCase);
+        if (index >= 0)
+        {
+            text = text.Substring(0, index) + newWord + text.Substring(index + oldWord.Length);
         }
     }
 }

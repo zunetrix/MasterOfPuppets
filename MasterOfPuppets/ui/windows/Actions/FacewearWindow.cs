@@ -58,7 +58,7 @@ public class FacewearWindow : Window
         if (ImGui.IsItemClicked())
         {
             ImGui.SetClipboardText($"{facewear.ActionName}");
-            DalamudApi.ShowNotification($"Name copied to clipboard", NotificationType.Info, 5000);
+            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 
@@ -67,7 +67,7 @@ public class FacewearWindow : Window
         if (ImGui.IsItemClicked())
         {
             ImGui.SetClipboardText(facewear.TextCommand);
-            DalamudApi.ShowNotification($"Command copied to clipboard", NotificationType.Info, 5000);
+            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 

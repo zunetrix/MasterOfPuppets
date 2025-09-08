@@ -1,5 +1,6 @@
-using System.Collections.Generic;
+using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 public class Character
@@ -73,5 +74,26 @@ public class Macro
             Name = this.Name,
             Commands = this.Commands.Select(cmd => cmd.CloneWithoutCharacters()).ToList(),
         };
+    }
+
+    public void SanitizeAllActions()
+    {
+        if (Commands == null) return;
+
+        foreach (var command in Commands)
+        {
+            if (string.IsNullOrWhiteSpace(command.Actions)) continue;
+
+            var cleaned = string.Join(
+                "\n",
+                command.Actions
+                    .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(line => line.Trim())
+                    .Where(line => !string.IsNullOrWhiteSpace(line))
+                    .Select(line => System.Text.RegularExpressions.Regex.Replace(line, @"\s+", " "))
+            );
+
+            command.Actions = cleaned;
+        }
     }
 }

@@ -55,6 +55,8 @@ public class MacroQueueExecutorWindow : Window
                     ImGui.PushStyleColor(ImGuiCol.Text, Style.Colors.Green);
                 }
                 ImGui.Selectable($"[{i:000}] {MacroQueueExecutor.CurrentActionsExecutionList[i]}##CurrentActionsExecutionList{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
+                // var windowWidth = ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
+                // ImGui.SameLine(windowWidth - ImGui.CalcTextSize(time).X);
 
                 if (isCurrentItemActive)
                 {
