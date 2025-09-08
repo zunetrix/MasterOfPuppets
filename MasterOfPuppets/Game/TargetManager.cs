@@ -1,8 +1,6 @@
 using System;
-using System.Linq;
 using System.Numerics;
 
-using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 
 using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;

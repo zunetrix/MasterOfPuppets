@@ -9,7 +9,7 @@ namespace MasterOfPuppets.Ipc;
 
 internal static class MacroQueueExecutor
 {
-    private static readonly ConcurrentQueue<(string[] actions, int delay)> MacroQueue = new();
+    private static readonly ConcurrentQueue<(string[] actions, double delay)> MacroQueue = new();
     private static bool _running = false;
     private static CancellationTokenSource _cts = new();
 
@@ -21,13 +21,15 @@ internal static class MacroQueueExecutor
         {
             ["wait"] = async (args, token) =>
             {
-                if (string.IsNullOrWhiteSpace(args) || !int.TryParse(args, out int seconds))
+                if (string.IsNullOrWhiteSpace(args) || !double.TryParse(args, out double seconds))
                 {
                     DalamudApi.PluginLog.Warning($"[WAIT] invalid argument: \"{args}\"");
                     return;
                 }
-                DalamudApi.PluginLog.Debug($"[WAIT] {seconds}...");
-                await Task.Delay(seconds * 1000, token);
+
+                int delayMs = (int)(seconds * 1000);
+                DalamudApi.PluginLog.Debug($"[WAIT] {delayMs}...");
+                await Task.Delay(delayMs, token);
             },
 
             ["mopaction"] = async (args, token) =>
@@ -118,7 +120,7 @@ internal static class MacroQueueExecutor
             },
         };
 
-    public static void EnqueueMacroActions(string[] actions, int delayBetweenActions)
+    public static void EnqueueMacroActions(string[] actions, double delayBetweenActions)
     {
         MacroQueue.Enqueue((actions, delayBetweenActions));
         CurrentActionsExecutionList.AddRange(actions);
@@ -146,7 +148,7 @@ internal static class MacroQueueExecutor
         }
     }
 
-    private static async Task ExecuteActions(string[] actions, CancellationToken token, int delayBetweenActions)
+    private static async Task ExecuteActions(string[] actions, CancellationToken token, double delayBetweenActions)
     {
         foreach (var action in actions)
         {
@@ -175,8 +177,9 @@ internal static class MacroQueueExecutor
 
                     if (!noDelayActions.Contains(action))
                     {
-                        DalamudApi.PluginLog.Debug($"[DELAY BETWEEN ACTIONS] {delayBetweenActions}...");
-                        await Task.Delay(delayBetweenActions * 1000, token);
+                        int delayMs = (int)(delayBetweenActions * 1000);
+                        DalamudApi.PluginLog.Debug($"[DELAY BETWEEN ACTIONS] {delayMs}...");
+                        await Task.Delay(delayMs, token);
                     }
                 }
             }
@@ -192,8 +195,9 @@ internal static class MacroQueueExecutor
                 //     Chat.SendMessage(action);
                 // });
 
-                DalamudApi.PluginLog.Debug($"[DELAY BETWEEN ACTIONS] {delayBetweenActions}...");
-                await Task.Delay(delayBetweenActions * 1000, token);
+                int delayMs = (int)(delayBetweenActions * 1000);
+                DalamudApi.PluginLog.Debug($"[DELAY BETWEEN ACTIONS] {delayMs}...");
+                await Task.Delay(delayMs, token);
             }
         }
     }

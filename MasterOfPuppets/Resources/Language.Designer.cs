@@ -885,5 +885,12 @@ internal class Language
             return ResourceManager.GetString("ImportMacroBtn", resourceCulture);
         }
     }
+    internal static string SettingsWindowUseChatCommandSenderWhitelist
+    {
+        get
+        {
+            return ResourceManager.GetString("SettingsWindowUseChatCommandSenderWhitelist", resourceCulture);
+        }
+    }
 }
 

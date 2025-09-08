@@ -60,9 +60,11 @@ public static class GameActionManager
         // DalamudApi.Framework.RunOnTick(() => ActionManager.Instance()->UseAction(ActionType.Item, actionId));
         // ActionManager.Instance()->UseAction(ActionType.Item, actionId);
 
+        var adjustedActionId = ActionManager.Instance()->GetAdjustedActionId(actionId);
+
         DalamudApi.Framework.RunOnFrameworkThread(delegate
         {
-            ActionManager.Instance()->UseAction(ActionType.Item, actionId);
+            ActionManager.Instance()->UseAction(ActionType.Item, adjustedActionId);
         });
     }
 

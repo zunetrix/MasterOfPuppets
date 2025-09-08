@@ -150,6 +150,7 @@ internal class MainWindow : Window
             /mop run number
             /mop run macro_name
             /mop run "macro name with spaces"
+            /mop stop
 
         Chat commands
             moprun number

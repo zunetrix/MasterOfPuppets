@@ -84,7 +84,8 @@ internal class ChatWatcher : IDisposable
         if (!Plugin.Config.UseChatSync) return;
         if (!AllowedChatTypes.Contains(type)
             || !Plugin.Config.ListenedChatTypes.Contains(type)
-            || !Plugin.Config.ChatCommandSenderWhitelist.Contains(sender.ToString()))
+            || (Plugin.Config.UseChatCommandSenderWhitelist && !Plugin.Config.ChatCommandSenderWhitelist.Contains(sender.ToString()))
+        )
         {
             return;
         }

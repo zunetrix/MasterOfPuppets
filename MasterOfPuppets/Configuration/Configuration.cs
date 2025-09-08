@@ -22,13 +22,14 @@ internal class Configuration : IPluginConfiguration
 
     // Macros
     public List<Macro> Macros { get; set; } = new();
-    public int DelayBetweenActions { get; set; } = 2;
+    public double DelayBetweenActions { get; set; } = 1;
     public List<Character> Characters { get; set; } = new();
     public List<CidGroup> CidsGroups { get; set; } = new();
 
     // chat commands
     public bool UseChatSync { get; set; } = false;
     public HashSet<XivChatType> ListenedChatTypes { get; set; } = new();
+    public bool UseChatCommandSenderWhitelist { get; set; } = false;
     public List<string> ChatCommandSenderWhitelist { get; set; } = new();
 
 
@@ -74,6 +75,8 @@ internal class Configuration : IPluginConfiguration
 
         UseChatSync = newPluginConfig.UseChatSync;
         ListenedChatTypes = newPluginConfig.ListenedChatTypes;
+
+        UseChatCommandSenderWhitelist = newPluginConfig.UseChatCommandSenderWhitelist;
         ChatCommandSenderWhitelist = newPluginConfig.ChatCommandSenderWhitelist;
 
         DelayBetweenActions = newPluginConfig.DelayBetweenActions;

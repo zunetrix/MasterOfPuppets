@@ -37,17 +37,20 @@ public class Plugin : IDalamudPlugin
 
         DalamudApi.CommandManager.AddHandler("/masterofpuppets", new CommandInfo(OnCommand)
         {
-            HelpMessage = """
-            Use with no arguments to show plugin window.
-            /mop run macro_number
-            /mop run "Macro name"
-            /mop stop
-            """,
+            HelpMessage = "Use with no arguments to show plugin window.",
         });
 
         DalamudApi.CommandManager.AddHandler("/mop", new CommandInfo(OnCommand)
         {
-            HelpMessage = "Alias command",
+            HelpMessage = """
+            Alias command
+                /mop run macro_number
+                /mop run "Macro name"
+                /mop stop
+
+                /mop targetmytarget
+                /mop targetclear
+            """,
         });
 
         DalamudApi.ClientState.Login += OnLogin;

@@ -154,9 +154,9 @@ public class SettingsWindow : Window
             ImGui.TextUnformatted("Delay between actions");
             ImGui.SetNextItemWidth(150);
             var delayBetweenActions = Plugin.Config.DelayBetweenActions;
-            if (ImGui.InputInt("##DelayBetrweenActions", ref delayBetweenActions, 1, 10, default, ImGuiInputTextFlags.AutoSelectAll))
+            if (ImGui.InputDouble("##DelayBetrweenActions", ref delayBetweenActions, 0.1, 1, default, ImGuiInputTextFlags.AutoSelectAll))
             {
-                delayBetweenActions = Math.Clamp(delayBetweenActions, 1, 10);
+                delayBetweenActions = Math.Clamp(delayBetweenActions, 0.1, 60);
                 Plugin.Config.DelayBetweenActions = delayBetweenActions;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
@@ -280,6 +280,17 @@ public class SettingsWindow : Window
                 moprun "macro name with spaces"
                 mopstop
             """);
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+
+            var useChatCommandSenderWhitelist = Plugin.Config.UseChatCommandSenderWhitelist;
+            if (ImGui.Checkbox(Language.SettingsWindowUseChatCommandSenderWhitelist, ref useChatCommandSenderWhitelist))
+            {
+                Plugin.Config.UseChatCommandSenderWhitelist = useChatCommandSenderWhitelist;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
 
             ImGui.Spacing();
             ImGui.Spacing();

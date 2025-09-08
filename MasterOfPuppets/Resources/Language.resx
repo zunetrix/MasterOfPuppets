@@ -185,7 +185,7 @@
         <value>Run Macro</value>
     </data>
     <data name="ShowCharactersBtn" xml:space="preserve">
-        <value>Characters List</value>
+        <value>Character List</value>
     </data>
     <data name="MacroTextInputLabel" xml:space="preserve">
         <value>Macro</value>
@@ -291,5 +291,8 @@
     </data>
     <data name="ImportMacroBtn" xml:space="preserve">
         <value>Import Macro From Clipboard</value>
+    </data>
+    <data name="SettingsWindowUseChatCommandSenderWhitelist" xml:space="preserve">
+        <value>Use Chat Command Sender Whitelist</value>
     </data>
 </root>
