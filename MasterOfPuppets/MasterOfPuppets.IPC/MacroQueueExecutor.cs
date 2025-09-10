@@ -70,14 +70,14 @@ internal static class MacroQueueExecutor
 
                 if (uint.TryParse(args, out uint itemId))
                 {
-                    // GameActionManager.UseItemById(itemId);
-                    GameActionManager.UseInventoryItemById(itemId);
+                    GameActionManager.UseItemById(itemId);
+                    // GameActionManager.UseInventoryItemById(itemId);
                     DalamudApi.PluginLog.Debug($"[mopitem id] {itemId}");
                 }
                 else
                 {
-                    // GameActionManager.UseItemByName(args);
-                    GameActionManager.UseInventoryItemByName(args);
+                    GameActionManager.UseItemByName(args);
+                    // GameActionManager.UseInventoryItemByName(args);
                     DalamudApi.PluginLog.Debug($"[mopitem name] {args}");
                 }
 

@@ -58,11 +58,16 @@ public static class GameActionManager
         // var adjustedActionId = ActionManager.Instance()->GetAdjustedActionId(actionId);
         // AgentInventoryContext.Instance()->UseItem(actionId);
 
-        DalamudApi.Framework.RunOnFrameworkThread(delegate
+        // DalamudApi.Framework.RunOnFrameworkThread(delegate
+        // {
+        //     // ActionManager.Instance()->UseAction(ActionType.Item, actionId, 0xE0000000, 65535);
+        //     ActionManager.Instance()->UseAction(ActionType.Item, actionId, extraParam: 65535);
+        // });
+
+        DalamudApi.Framework.RunOnTick(delegate
         {
-            // ActionManager.Instance()->UseAction(ActionType.Item, actionId, 0xE0000000, 65535);
             ActionManager.Instance()->UseAction(ActionType.Item, actionId, extraParam: 65535);
-        });
+        }, delayTicks: 3);
 
         // DalamudApi.PluginLog.Debug($"[USE ITEM] {actionId}");
     }
@@ -76,10 +81,15 @@ public static class GameActionManager
             return;
         }
 
-        DalamudApi.Framework.RunOnFrameworkThread(delegate
+        // DalamudApi.Framework.RunOnFrameworkThread(delegate
+        // {
+        //     ActionManager.Instance()->UseAction(ActionType.Item, item.ActionId, extraParam: 65535);
+        // });
+
+        DalamudApi.Framework.RunOnTick(delegate
         {
             ActionManager.Instance()->UseAction(ActionType.Item, item.ActionId, extraParam: 65535);
-        });
+        }, delayTicks: 3);
 
         // DalamudApi.PluginLog.Debug($"[USE ITEM NAME] {itemName}");
     }
@@ -94,7 +104,7 @@ public static class GameActionManager
         DalamudApi.Framework.RunOnTick(delegate
         {
             AgentInventoryContext.Instance()->UseItem(itemId);
-        }, delayTicks: 2);
+        }, delayTicks: 3);
 
         // DalamudApi.PluginLog.Debug($"[USE INVENTORY ITEM] {itemId}");
     }
@@ -115,7 +125,7 @@ public static class GameActionManager
         DalamudApi.Framework.RunOnTick(delegate
         {
             AgentInventoryContext.Instance()->UseItem(item.ActionId);
-        }, delayTicks: 2);
+        }, delayTicks: 3);
 
         // DalamudApi.PluginLog.Debug($"[USE INVENTORY ITEM NAME] {itemName}");
     }

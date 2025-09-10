@@ -4,7 +4,7 @@
         <TargetFramework>net9-windows</TargetFramework>
         <RootNamespace>MasterOfPuppets</RootNamespace>
         <AssemblyName>MasterOfPuppets</AssemblyName>
-        <Version>1.0.0.29</Version>
+        <Version>1.0.0.32</Version>
         <LangVersion>latest</LangVersion>
         <Nullable>disable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -14,7 +14,7 @@
         <!-- <UseWpf>true</UseWpf> -->
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
-        <Version>1.0.0.29</Version>
+        <Version>1.0.0.32</Version>
         <DefineConstants>DEBUG</DefineConstants>
         <AssemblyName>MasterOfPuppets</AssemblyName>
     </PropertyGroup>

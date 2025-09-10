@@ -16,7 +16,8 @@ public static class ItemHelper
             ActionName = item.Name.ToString(),
             // ActionName = item.Singular.ToString(),
             IconId = item.Icon,
-            TextCommand = $"/mopitem {item.RowId} \n/mopitem \"{item.Name}\"",
+            // TextCommand = $"/mopitem {item.RowId}",
+            TextCommand = $"/mopitem \"{item.Name}\"",
             // item.ItemSearchCategory.Value.Category // category ID
             Category = $"{item.ItemUICategory.Value.Name} ({item.ItemUICategory.Value.RowId})",
             // SortOrder = emote.Order

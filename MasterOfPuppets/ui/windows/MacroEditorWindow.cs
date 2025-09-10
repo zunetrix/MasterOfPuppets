@@ -292,8 +292,9 @@ public class MacroEditorWindow : Window
                 if (!string.IsNullOrWhiteSpace(_currentWord) && _currentWord != _lastWord)
                 {
                     _suggestions = MopMacroActionsHelper.Actions
-                        .Select(a => a.SuggestionCommand)
-                        .Concat(EmoteHelper.GetAllowedItems().Select(a => a.TextCommand))
+                        .Select(x => x.SuggestionCommand)
+                        .Concat(EmoteHelper.GetAllowedItems().Select(x => x.TextCommand))
+                        .Concat(ItemHelper.GetAllowedItems().Select(x => x.TextCommand))
                         .Where(s => s.Contains(_currentWord, StringComparison.OrdinalIgnoreCase))
                         .ToList();
 
