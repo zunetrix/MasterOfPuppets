@@ -400,23 +400,23 @@ internal class MainWindow : Window
             TitleBarButtons.Add(new TitleBarButton()
             {
                 AvailableClickthrough = false,
-                Click = _ => Ui.SettingsWindow.Toggle(),
-                Icon = FontAwesomeIcon.Cog
+                Icon = FontAwesomeIcon.Cog,
+                Click = _ => Ui.SettingsWindow.Toggle()
             });
 
             TitleBarButtons.Add(new TitleBarButton()
             {
                 AvailableClickthrough = false,
-                // Click = _ => Ui.SettingsWindow.Toggle(),
-                Icon = FontAwesomeIcon.Heart
+                Icon = FontAwesomeIcon.Heart,
+                // Click = _ => Ui.SettingsWindow.Toggle()
             });
 
 #if DEBUG
             TitleBarButtons.Add(new TitleBarButton()
             {
                 AvailableClickthrough = false,
-                Click = _ => Ui.DebugWindow.Toggle(),
-                Icon = FontAwesomeIcon.Bug
+                Icon = FontAwesomeIcon.Bug,
+                Click = _ => Ui.DebugWindow.Toggle()
             });
 #endif
         }

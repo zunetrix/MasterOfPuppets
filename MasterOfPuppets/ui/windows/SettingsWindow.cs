@@ -154,9 +154,9 @@ public class SettingsWindow : Window
             ImGui.TextUnformatted("Delay between actions");
             ImGui.SetNextItemWidth(150);
             var delayBetweenActions = Plugin.Config.DelayBetweenActions;
-            if (ImGui.InputDouble("##DelayBetrweenActions", ref delayBetweenActions, 0.1, 1, default, ImGuiInputTextFlags.AutoSelectAll))
+            if (ImGui.InputDouble("##DelayBetrweenActions", ref delayBetweenActions, 0.1, 1, "%.2f", ImGuiInputTextFlags.AutoSelectAll))
             {
-                delayBetweenActions = Math.Clamp(delayBetweenActions, 0.1, 60);
+                delayBetweenActions = Math.Clamp(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero), 0, 60);
                 Plugin.Config.DelayBetweenActions = delayBetweenActions;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();

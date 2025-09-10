@@ -22,7 +22,8 @@ internal class Configuration : IPluginConfiguration
 
     // Macros
     public List<Macro> Macros { get; set; } = new();
-    public double DelayBetweenActions { get; set; } = 1;
+    public double DelayBetweenActions { get; set; } = 1.00;
+
     public List<Character> Characters { get; set; } = new();
     public List<CidGroup> CidsGroups { get; set; } = new();
 

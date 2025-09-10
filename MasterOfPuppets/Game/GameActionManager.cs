@@ -1,6 +1,7 @@
 using System;
 
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace MasterOfPuppets;
 
@@ -47,25 +48,23 @@ public static class GameActionManager
         {
             ActionManager.Instance()->UseAction(ActionType.Action, action.ActionId);
         });
+
+        // DalamudApi.PluginLog.Debug($"[USE ACTION] {action.ActionId}");
     }
 
     public static unsafe void UseItemById(uint actionId)
     {
-        // ActionManager.Instance()->UseAction(ActionType.Item, actionId);
-
-        // ActionManager.Instance()->UseAction(ActionType.Item, actionId, DalamudApi.ClientState.LocalContentId);
-        // ActionManager.Instance()->UseAction(ActionType.Item, actionId, DalamudApi.Client.LocalPlayer.TargetObjectId);
         // bool isActionOffCooldown = ActionManager.Instance()->IsActionOffCooldown(ActionType.Item, actionId);
-
-        // DalamudApi.Framework.RunOnTick(() => ActionManager.Instance()->UseAction(ActionType.Item, actionId));
-        // ActionManager.Instance()->UseAction(ActionType.Item, actionId);
-
-        var adjustedActionId = ActionManager.Instance()->GetAdjustedActionId(actionId);
+        // var adjustedActionId = ActionManager.Instance()->GetAdjustedActionId(actionId);
+        // AgentInventoryContext.Instance()->UseItem(actionId);
 
         DalamudApi.Framework.RunOnFrameworkThread(delegate
         {
-            ActionManager.Instance()->UseAction(ActionType.Item, adjustedActionId);
+            // ActionManager.Instance()->UseAction(ActionType.Item, actionId, 0xE0000000, 65535);
+            ActionManager.Instance()->UseAction(ActionType.Item, actionId, extraParam: 65535);
         });
+
+        // DalamudApi.PluginLog.Debug($"[USE ITEM] {actionId}");
     }
 
     public static unsafe void UseItemByName(string itemName)
@@ -77,11 +76,47 @@ public static class GameActionManager
             return;
         }
 
-        // if (ActionManager.Instance()->GetActionStatus(ActionType.Item, item.ActionId) == 0) return;
-
         DalamudApi.Framework.RunOnFrameworkThread(delegate
         {
-            ActionManager.Instance()->UseAction(ActionType.Item, item.ActionId);
+            ActionManager.Instance()->UseAction(ActionType.Item, item.ActionId, extraParam: 65535);
         });
+
+        // DalamudApi.PluginLog.Debug($"[USE ITEM NAME] {itemName}");
+    }
+
+    public static unsafe void UseInventoryItemById(uint itemId)
+    {
+        // DalamudApi.Framework.RunOnFrameworkThread(delegate
+        // {
+        //     AgentInventoryContext.Instance()->UseItem(itemId);
+        // });
+
+        DalamudApi.Framework.RunOnTick(delegate
+        {
+            AgentInventoryContext.Instance()->UseItem(itemId);
+        }, delayTicks: 2);
+
+        // DalamudApi.PluginLog.Debug($"[USE INVENTORY ITEM] {itemId}");
+    }
+
+    public static unsafe void UseInventoryItemByName(string itemName)
+    {
+        var item = ItemHelper.GetExecutableActionByName(itemName);
+        if (item == null)
+        {
+            DalamudApi.PluginLog.Debug("Invalid item name");
+            return;
+        }
+
+        // DalamudApi.Framework.RunOnFrameworkThread(delegate
+        // {
+        //     AgentInventoryContext.Instance()->UseItem(item.ActionId);
+        // });
+        DalamudApi.Framework.RunOnTick(delegate
+        {
+            AgentInventoryContext.Instance()->UseItem(item.ActionId);
+        }, delayTicks: 2);
+
+        // DalamudApi.PluginLog.Debug($"[USE INVENTORY ITEM NAME] {itemName}");
     }
 }

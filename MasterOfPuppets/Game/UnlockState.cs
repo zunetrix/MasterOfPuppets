@@ -62,6 +62,12 @@ public static unsafe class UnlockState
         // return ActionManager.Instance()->GetActionStatus(ActionType.Action, action.RowId) == unavailableActionStatus;
     }
 
+    internal static bool IsUnlocked(this Item item)
+    {
+        var itemCount = InventoryManager.Instance()->GetInventoryItemCount(item.RowId, checkArmory: false, checkEquipped: false);
+        return itemCount > 0;
+    }
+
     internal static bool IsUnlocked(this MainCommand mainCommand)
     {
         return Framework.Instance()->GetUIModule()->IsMainCommandUnlocked(mainCommand.RowId);

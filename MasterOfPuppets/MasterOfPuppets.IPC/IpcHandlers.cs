@@ -3,6 +3,18 @@ using System.Linq;
 
 namespace MasterOfPuppets.Ipc;
 
+[AttributeUsage(AttributeTargets.Method)]
+internal class IpcHandleAttribute : Attribute
+{
+    public IpcMessageType MessageType { get; }
+
+    public IpcHandleAttribute(IpcMessageType messageType)
+    {
+        MessageType = messageType;
+    }
+}
+
+
 internal class IpcHandlers
 {
     private readonly Plugin Plugin;
@@ -74,7 +86,10 @@ internal class IpcHandlers
 
         if (string.IsNullOrWhiteSpace(playerActions)) return;
 
-        string[] actions = playerActions.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        var actions = playerActions
+        .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+        .Where(line => line.Length > 0 && !line.StartsWith("#")).ToArray();
+
         MacroQueueExecutor.EnqueueMacroActions(actions, Plugin.Config.DelayBetweenActions);
     }
 }

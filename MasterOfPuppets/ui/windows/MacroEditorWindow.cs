@@ -44,6 +44,10 @@ public class MacroEditorWindow : Window
             SaveMacro();
         }
 
+        _suggestions = [];
+        _currentWord = string.Empty;
+        _lastWord = string.Empty;
+
         base.OnClose();
     }
 

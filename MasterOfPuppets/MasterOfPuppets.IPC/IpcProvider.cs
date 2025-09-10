@@ -161,7 +161,7 @@ internal class IpcProvider : IDisposable
 
     public void RunMacro(int macroIndex, bool includeSelf = true)
     {
-        DalamudApi.PluginLog.Debug($"IPC RunMacro {macroIndex}");
+        DalamudApi.PluginLog.Debug($"[Run Macro] {macroIndex}");
         // var macroJson = macroData.JsonSerialize();
         var message = IpcMessage.Create(IpcMessageType.RunMacro, macroIndex).Serialize();
         BroadCast(message, includeSelf);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,14 +22,17 @@ internal static class MacroQueueExecutor
         {
             ["wait"] = async (args, token) =>
             {
-                if (string.IsNullOrWhiteSpace(args) || !double.TryParse(args, out double seconds))
+                if (string.IsNullOrWhiteSpace(args) ||
+                !double.TryParse(args, NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds))
                 {
                     DalamudApi.PluginLog.Warning($"[WAIT] invalid argument: \"{args}\"");
                     return;
                 }
 
-                int delayMs = (int)(seconds * 1000);
-                DalamudApi.PluginLog.Debug($"[WAIT] {delayMs}...");
+                var secondsRound = Math.Round(seconds, 2, MidpointRounding.AwayFromZero);
+                var delayMs = TimeSpan.FromSeconds(secondsRound);
+
+                DalamudApi.PluginLog.Debug($"[WAIT] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}...");
                 await Task.Delay(delayMs, token);
             },
 
@@ -37,19 +41,44 @@ internal static class MacroQueueExecutor
                 args = args.Trim().Trim('"');
                 if (string.IsNullOrWhiteSpace(args))
                 {
-                    DalamudApi.PluginLog.Warning($"[MOPACTION] invalid argument: \"{args}\"");
+                    DalamudApi.PluginLog.Warning($"[mopaction] invalid argument: \"{args}\"");
                     return;
                 }
 
                 if (uint.TryParse(args, out uint actionId))
                 {
                     GameActionManager.UseActionById(actionId);
-                    DalamudApi.PluginLog.Debug($"[MOPACTION] (by Id) {actionId}");
+                    DalamudApi.PluginLog.Debug($"[mopaction id] {actionId}");
                 }
                 else
                 {
                     GameActionManager.UseActionByName(args);
-                    DalamudApi.PluginLog.Debug($"[MOPACTION] (by Name) {args}");
+                    DalamudApi.PluginLog.Debug($"[mopaction name] {args}");
+                }
+
+                await Task.CompletedTask;
+            },
+
+            ["mopitem"] = async (args, token) =>
+            {
+                args = args.Trim().Trim('"');
+                if (string.IsNullOrWhiteSpace(args))
+                {
+                    DalamudApi.PluginLog.Warning($"[mopitem] invalid argument: \"{args}\"");
+                    return;
+                }
+
+                if (uint.TryParse(args, out uint itemId))
+                {
+                    // GameActionManager.UseItemById(itemId);
+                    GameActionManager.UseInventoryItemById(itemId);
+                    DalamudApi.PluginLog.Debug($"[mopitem id] {itemId}");
+                }
+                else
+                {
+                    // GameActionManager.UseItemByName(args);
+                    GameActionManager.UseInventoryItemByName(args);
+                    DalamudApi.PluginLog.Debug($"[mopitem name] {args}");
                 }
 
                 await Task.CompletedTask;
@@ -59,6 +88,7 @@ internal static class MacroQueueExecutor
             {
                 string targetName = args.Trim().Trim('"');
                 TargetManager.TargetByName(targetName);
+                DalamudApi.PluginLog.Debug($"[moptarget] {targetName}");
                 await Task.CompletedTask;
             },
 
@@ -66,35 +96,14 @@ internal static class MacroQueueExecutor
             {
                 string targetName = args.Trim().Trim('"');
                 TargetManager.TargetOf(targetName);
+                DalamudApi.PluginLog.Debug($"[moptargetof] {targetName}");
                 await Task.CompletedTask;
             },
 
             ["moptargetclear"] = async (_, token) =>
             {
                 TargetManager.TargetClear();
-                await Task.CompletedTask;
-            },
-
-            ["mopitem"] = async (args, token) =>
-            {
-                args = args.Trim().Trim('"');
-                if (string.IsNullOrWhiteSpace(args))
-                {
-                    DalamudApi.PluginLog.Warning($"[MOPITEM] invalid argument: \"{args}\"");
-                    return;
-                }
-
-                if (uint.TryParse(args, out uint itemId))
-                {
-                    GameActionManager.UseItemById(itemId);
-                    DalamudApi.PluginLog.Debug($"[MOPITEM] (by Id) {itemId}");
-                }
-                else
-                {
-                    GameActionManager.UseItemByName(args);
-                    DalamudApi.PluginLog.Debug($"[MOPITEM] (by Name) {args}");
-                }
-
+                DalamudApi.PluginLog.Debug($"[moptargetclear]");
                 await Task.CompletedTask;
             },
 
@@ -102,7 +111,7 @@ internal static class MacroQueueExecutor
             {
                 if (string.IsNullOrWhiteSpace(args) || !int.TryParse(args, out int slotIndex))
                 {
-                    DalamudApi.PluginLog.Warning($"[PETBARSLOT] invalid argument: \"{args}\"");
+                    DalamudApi.PluginLog.Warning($"[petbarslot] invalid argument: \"{args}\"");
                     return;
                 }
 
@@ -110,12 +119,12 @@ internal static class MacroQueueExecutor
                 var maxHotBarSlots = 15;
                 if (realSlotIndex < 0 || realSlotIndex > maxHotBarSlots)
                 {
-                    DalamudApi.PluginLog.Warning($"[PETBARSLOT] invalid slot {slotIndex}");
+                    DalamudApi.PluginLog.Warning($"[petbarslot] invalid slot {slotIndex}");
                     return;
                 }
 
                 HotbarManager.ExecutePetHotbarActionBySlotIndex((uint)realSlotIndex);
-                DalamudApi.PluginLog.Debug($"[PETBARSLOT] {slotIndex}");
+                DalamudApi.PluginLog.Debug($"[petbarslot] {slotIndex}");
                 await Task.CompletedTask;
             },
         };
@@ -173,12 +182,14 @@ internal static class MacroQueueExecutor
                         "moptarget",
                         "moptargetof",
                         "moptargetclear",
+                        "wait"
                     };
 
-                    if (!noDelayActions.Contains(action))
+                    if (!noDelayActions.Contains(action) || (delayBetweenActions > 0.0))
                     {
-                        int delayMs = (int)(delayBetweenActions * 1000);
-                        DalamudApi.PluginLog.Debug($"[DELAY BETWEEN ACTIONS] {delayMs}...");
+                        var secondsRound = Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero);
+                        var delayMs = TimeSpan.FromSeconds(secondsRound);
+                        DalamudApi.PluginLog.Debug($"[Delay Between Actions] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}");
                         await Task.Delay(delayMs, token);
                     }
                 }
@@ -189,14 +200,13 @@ internal static class MacroQueueExecutor
                 DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
 
                 Chat.SendMessage(action);
-
                 // DalamudApi.Framework.RunOnFrameworkThread(delegate
                 // {
                 //     Chat.SendMessage(action);
                 // });
 
                 int delayMs = (int)(delayBetweenActions * 1000);
-                DalamudApi.PluginLog.Debug($"[DELAY BETWEEN ACTIONS] {delayMs}...");
+                DalamudApi.PluginLog.Debug($"[Delay Between Actions] {delayMs}...");
                 await Task.Delay(delayMs, token);
             }
         }

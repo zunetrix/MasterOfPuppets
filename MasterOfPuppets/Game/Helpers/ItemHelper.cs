@@ -16,7 +16,7 @@ public static class ItemHelper
             ActionName = item.Name.ToString(),
             // ActionName = item.Singular.ToString(),
             IconId = item.Icon,
-            TextCommand = $"/item {item.RowId}",
+            TextCommand = $"/mopitem {item.RowId} \n/mopitem \"{item.Name}\"",
             // item.ItemSearchCategory.Value.Category // category ID
             Category = $"{item.ItemUICategory.Value.Name} ({item.ItemUICategory.Value.RowId})",
             // SortOrder = emote.Order
@@ -31,8 +31,7 @@ public static class ItemHelper
         ];
 
         return DalamudApi.DataManager.GetExcelSheet<Item>()
-        .Where(i => allowedCategories.Contains(i.ItemUICategory.Value.RowId) && i.Cooldowns > 0)
-        // .Where(i => i.RowId == 5893)
+        .Where(i => i.IsUnlocked() && allowedCategories.Contains(i.ItemUICategory.Value.RowId) && i.Cooldowns > 0)
         .Select(GetExecutableAction)
         .ToList();
     }
