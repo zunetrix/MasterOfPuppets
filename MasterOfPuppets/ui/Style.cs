@@ -69,25 +69,34 @@ public class ComponentsPalette
     public Vector4 ModalWindowDimBg = new Vector4(0.8f, 0.8f, 0.8f, 0.35f);                      // #CCCCCC59
 
     // custom
-    public Vector4 ButtonSuccessNormal = new Vector4(0.10f, 0.53f, 0.33f, 1.00f);     // #198754
-    public Vector4 ButtonSuccessHovered = new Vector4(0.08f, 0.45f, 0.28f, 1.00f);    // #157347
-    public Vector4 ButtonSuccessActive = new Vector4(0.06f, 0.32f, 0.20f, 1.00f);     // #0F5132
+    public Vector4 ButtonSuccessnNormal = new Vector4(0.342857f, 0.6f, 0.24f, 1f);   // #57CC3D
+    public Vector4 ButtonSuccessHovered = new Vector4(0.35f, 0.7f, 0.21f, 1f);       // #59B335
+    public Vector4 ButtonSuccessActive = new Vector4(0.342857f, 0.8f, 0.16f, 1f);    // #57CC29
 
-    public Vector4 ButtonDangerNormal = new Vector4(0.86f, 0.21f, 0.27f, 1.00f);      // #DC3545
-    public Vector4 ButtonDangerHovered = new Vector4(0.73f, 0.18f, 0.23f, 1.00f);     // #BB2D3B
-    public Vector4 ButtonDangerActive = new Vector4(0.65f, 0.11f, 0.16f, 1.00f);      // #A71D2A
+    public Vector4 ButtonDangerNormal = new Vector4(0.6f, 0.24f, 0.24f, 1f);          // #993D3D
+    public Vector4 ButtonDangerHovered = new Vector4(0.7f, 0.21f, 0.21f, 1f);        // #B33535
+    public Vector4 ButtonDangerActive = new Vector4(0.8f, 0.16f, 0.16f, 1f);         // #CC2929
 
-    public Vector4 ButtonInfoNormal = new Vector4(0.26f, 0.59f, 0.98f, 0.40f);            // #4296F966
-    public Vector4 ButtonInfoHovered = new Vector4(0.26f, 0.59f, 0.98f, 1.00f);           // #4296F9
-    public Vector4 ButtonInfoActive = new Vector4(0.06f, 0.53f, 0.98f, 1.00f);            // #0F87F9
+    public Vector4 ButtonInfoNormal = new Vector4(0.26f, 0.59f, 0.98f, 0.40f);       // #4296F966
+    public Vector4 ButtonInfoHovered = new Vector4(0.26f, 0.59f, 0.98f, 1.00f);      // #4296F9
+    public Vector4 ButtonInfoActive = new Vector4(0.06f, 0.53f, 0.98f, 1.00f);       // #0F87F9
+
+    public Vector4 ButtonBlueNormal = new Vector4(0.24f, 0.445714f, 0.6f, 1f);       // #3D7299
+    public Vector4 ButtonBlueHovered = new Vector4(0.21f, 0.49f, 0.7f, 1f);          // #356FB3
+    public Vector4 ButtonBlueActive = new Vector4(0.16f, 0.525714f, 0.8f, 1f);       // #2999CC
+
+    public Vector4 ButtonPurpleNormal = new Vector4(0.36f, 0.36f, 0.6f, 1f);  // #5C5CCC
+    public Vector4 ButtonPurpleHovered = new Vector4(0.42f, 0.42f, 0.7f, 1f);  // #6B6BCC
+    public Vector4 ButtonPurpleActive = new Vector4(0.48f, 0.48f, 0.8f, 1f);  // #7A7ACC
+
+    public Vector4 ButtonPinkNormal = new Vector4(0.6f, 0.24f, 0.6f, 1f);          // #993D99
+    public Vector4 ButtonPinkHovered = new Vector4(0.7f, 0.21f, 0.7f, 1f);        // #B335B3
+    public Vector4 ButtonPinkActive = new Vector4(0.8f, 0.16f, 0.8f, 1f);         // #CC29CC
+
 
     public Vector4 ButtonDiscordNormal = new Vector4(0.34509805f, 0.39607847f, 0.9490197f, 1f);     // #5865F2
     public Vector4 ButtonDiscordActive = new Vector4(0.34509805f, 0.39607847f, 0.9490197f, 0.86666673f); // #5865F2DD
     public Vector4 ButtonDiscordHovered = new Vector4(0.34509805f, 0.39607847f, 0.9490197f, 0.6666667f); // #5865F2AA
-
-    public Vector4 ButtonKofiNormal = new Vector4(1f, 0.35686275f, 0.36862746f, 1f);               // #FF5B5E
-    public Vector4 ButtonKofiActive = new Vector4(1f, 0.35686275f, 0.36862746f, 0.86666673f);      // #FF5B5EDD
-    public Vector4 ButtonKofiHovered = new Vector4(1f, 0.35686275f, 0.36862746f, 0.6666667f);      // #FF5B5EAA
 
     public Vector4 ButtonWebsiteNormal = new Vector4(0.08627451f, 0.6431373f, 0.7803922f, 1f);               // #16A4C7
     public Vector4 ButtonWebsiteActive = new Vector4(0.08627451f, 0.6431373f, 0.7803922f, 0.86666673f);      // #16A4C7DD
@@ -123,10 +132,7 @@ public class ColorPalette
     public Vector4 GrassGreen = new Vector4(0.5568628f, 1f, 0.37647063f, 0.6117647f);
     public Vector4 GrassGreen50 = new Vector4(0.5568628f, 1f, 0.37647063f, 0.23529413f);
     public Vector4 DarkGreen = new Vector4(0.1254902f, 0.2509804f, 0.0627451f, 0.6745098f);
-
-    // opacity
-    public Vector4 Red50 => Red with { W = 0.3f };
-    public Vector4 Blue30 => Blue with { W = 0.3f };
+    public Vector4 DarkGray = new Vector4(0.18f, 0.21f, 0.25f, 1f);
 }
 
 public static class ColorUtil

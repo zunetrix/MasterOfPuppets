@@ -140,6 +140,7 @@ public class SettingsWindow : Window
             }
 
             ImGui.Spacing();
+
             var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
             if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync))
             {
@@ -151,7 +152,18 @@ public class SettingsWindow : Window
 
             ImGui.Spacing();
             ImGui.Spacing();
-            ImGui.TextUnformatted("Delay between actions");
+
+            var autoSaveMacro = Plugin.Config.AutoSaveMacro;
+            if (ImGui.Checkbox(Language.SettingsWindowAutoSaveMacro, ref autoSaveMacro))
+            {
+                Plugin.Config.AutoSaveMacro = autoSaveMacro;
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("Auto save macro on close editor");
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.TextUnformatted("Global delay between actions");
             ImGui.SetNextItemWidth(150);
             var delayBetweenActions = Plugin.Config.DelayBetweenActions;
             if (ImGui.InputDouble("##DelayBetrweenActions", ref delayBetweenActions, 0.1, 1, "%.2f", ImGuiInputTextFlags.AutoSelectAll))
@@ -168,6 +180,9 @@ public class SettingsWindow : Window
             ImGui.Spacing();
             ImGui.Spacing();
 
+            ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonPurpleNormal);
+            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonPurpleHovered);
+            ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonPurpleActive);
             if (ImGui.Button(Language.OpenPluginFolder))
             {
                 WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
@@ -181,6 +196,7 @@ public class SettingsWindow : Window
             {
                 WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
             }
+            ImGui.PopStyleColor(3);
 
 
             // ImGui.Spacing();

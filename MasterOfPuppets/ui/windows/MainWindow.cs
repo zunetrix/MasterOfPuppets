@@ -41,7 +41,8 @@ internal class MainWindow : Window
 
     public override void PreDraw()
     {
-        Flags = ImGuiWindowFlags.None;
+        // Flags = ImGuiWindowFlags.None;
+        Flags = ImGuiWindowFlags.MenuBar;
         if (!Plugin.Config.AllowMovement)
         {
             Flags |= ImGuiWindowFlags.NoMove;
@@ -53,24 +54,6 @@ internal class MainWindow : Window
         }
 
         base.PreDraw();
-    }
-
-    public override void Draw()
-    {
-        IsVisible = true;
-
-        // prevent change macro index while editing
-        ImGui.BeginDisabled(Ui.MacroEditorWindow.IsOpen);
-
-        ImGui.BeginChild("##MopHeaderFixedHeight", new Vector2(-1, 100 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-        DrawMacroHeader();
-        ImGui.EndChild();
-
-        ImGui.BeginChild("##MopMacroListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawMacrosTable();
-        ImGui.EndChild();
-
-        ImGui.EndDisabled();
     }
 
     public override bool DrawConditions()
@@ -90,6 +73,177 @@ internal class MainWindow : Window
         return true;
     }
 
+    public override void Draw()
+    {
+        IsVisible = true;
+
+        // prevent change macro index while editing
+        ImGui.BeginDisabled(Ui.MacroEditorWindow.IsOpen);
+        DrawMenuBar();
+
+        ImGui.BeginChild("##MopHeaderFixedHeight", new Vector2(-1, 60 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        DrawMacroHeader();
+        ImGui.EndChild();
+
+        ImGui.BeginChild("##MopMacroListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        DrawMacrosTable();
+        ImGui.EndChild();
+
+        ImGui.EndDisabled();
+    }
+
+    private void ImportMacroFromClipboard()
+    {
+        try
+        {
+            string macroImportString = ImGui.GetClipboardText();
+            var macro = MacroManager.MacroExportStringToMacro(macroImportString);
+            Plugin.Config.ImportMacro(macro);
+            Plugin.IpcProvider.SyncConfiguration();
+            DalamudApi.ShowNotification($"Macro imported", NotificationType.Success, 5000);
+        }
+        catch
+        {
+            DalamudApi.ShowNotification($"Unable to import invalid macro", NotificationType.Error, 5000);
+        }
+    }
+
+    private void DrawMenuBar()
+    {
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
+
+        if (ImGui.BeginMenuBar())
+        {
+            if (ImGui.BeginMenu("Macro"))
+            {
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddMacroMenu"))
+                {
+                    Ui.MacroEditorWindow.AddNewMacro();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.AddMacroBtn))
+                {
+                    Ui.MacroEditorWindow.AddNewMacro();
+                }
+
+                // -----------------------
+
+                ImGui.BeginDisabled(true);
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.FileExport, $"##ExportAllMacroMenu"))
+                {
+                    // Ui.MacroExportWindow..Toggle();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable("Export All Macros"))
+                {
+                    // Ui.MacroExportWindow..Toggle();
+                }
+
+                // if (ImGui.MenuItem("Export All Macros", enabled: false))
+                // {
+                //     //TODO
+                // }
+                ImGui.EndDisabled();
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportMacroMenu"))
+                {
+                    ImportMacroFromClipboard();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.ImportMacroBtn))
+                {
+                    ImportMacroFromClipboard();
+                }
+
+                ImGui.EndMenu();
+            }
+
+            if (ImGui.BeginMenu("Actions"))
+            {
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowEmotesMenu"))
+                {
+                    Ui.EmotesWindow.Toggle();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.ShowEmotesBtn))
+                {
+                    Ui.EmotesWindow.Toggle();
+                }
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Umbrella, $"##ShowFashionAccessoriesMenu"))
+                {
+                    Ui.FashionAccessoriesWindow.Toggle();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.ShowFashionAccessoriesBtn))
+                {
+                    Ui.FashionAccessoriesWindow.Toggle();
+                }
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Glasses, $"##ShowFacewearMenu"))
+                {
+                    Ui.FacewearWindow.Toggle();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.ShowFacewearBtn))
+                {
+                    Ui.FacewearWindow.Toggle();
+                }
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Horse, $"##ShowMountMenu"))
+                {
+                    Ui.MountWindow.Toggle();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.ShowMountBtn))
+                {
+                    Ui.MountWindow.Toggle();
+                }
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Cat, $"##ShowMinionMenu"))
+                {
+                    Ui.MinionWindow.Toggle();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.ShowMinionBtn))
+                {
+                    Ui.MinionWindow.Toggle();
+                }
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##ShowItemMenu"))
+                {
+                    Ui.ItemWindow.Toggle();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.ShowItemBtn))
+                {
+                    Ui.ItemWindow.Toggle();
+                }
+
+                ImGui.EndMenu();
+            }
+
+            ImGui.EndMenuBar();
+
+            ImGui.PopStyleVar();
+            ImGui.PopStyleColor();
+        }
+    }
+
     private void DrawMacroHeader()
     {
         // align right
@@ -101,43 +255,44 @@ internal class MainWindow : Window
 
         // ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
         // ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowEmotesBtn", Language.ShowEmotesBtn))
-        {
-            Ui.EmotesWindow.Toggle();
-        }
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowEmotesBtn", Language.ShowEmotesBtn))
+        // {
+        //     Ui.EmotesWindow.Toggle();
+        // }
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Umbrella, $"##ShowFashionAccessoriesBtn", Language.ShowFashionAccessoriesBtn))
-        {
-            Ui.FashionAccessoriesWindow.Toggle();
-        }
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Glasses, $"##ShowFacewearBtn", Language.ShowFacewearBtn))
-        {
-            Ui.FacewearWindow.Toggle();
-        }
+        // ImGui.SameLine();
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Umbrella, $"##ShowFashionAccessoriesBtn", Language.ShowFashionAccessoriesBtn))
+        // {
+        //     Ui.FashionAccessoriesWindow.Toggle();
+        // }
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Horse, $"##ShowMountBtn", Language.ShowMountBtn))
-        {
-            Ui.MountWindow.Toggle();
-        }
+        // ImGui.SameLine();
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Glasses, $"##ShowFacewearBtn", Language.ShowFacewearBtn))
+        // {
+        //     Ui.FacewearWindow.Toggle();
+        // }
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Cat, $"##ShowMinionBtn", Language.ShowMinionBtn))
-        {
-            Ui.MinionWindow.Toggle();
-        }
+        // ImGui.SameLine();
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Horse, $"##ShowMountBtn", Language.ShowMountBtn))
+        // {
+        //     Ui.MountWindow.Toggle();
+        // }
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##ShowItemBtn", Language.ShowItemBtn))
-        {
-            Ui.ItemWindow.Toggle();
-        }
+        // ImGui.SameLine();
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Cat, $"##ShowMinionBtn", Language.ShowMinionBtn))
+        // {
+        //     Ui.MinionWindow.Toggle();
+        // }
 
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
+        // ImGui.SameLine();
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##ShowItemBtn", Language.ShowItemBtn))
+        // {
+        //     Ui.ItemWindow.Toggle();
+        // }
+
+        // ImGui.Spacing();
+        // ImGui.Separator();
+        // ImGui.Spacing();
 
         ImGui.TextUnformatted(Language.MacroListTitle);
 
@@ -161,7 +316,7 @@ internal class MainWindow : Window
         Drag to reorder macro list
         """);
 
-        int buttonMacroCount = 5;
+        int buttonMacroCount = 4;
         float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
@@ -170,22 +325,22 @@ internal class MainWindow : Window
             Ui.MacroEditorWindow.AddNewMacro();
         }
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportMacroBtn", Language.ImportMacroBtn))
-        {
-            try
-            {
-                string macroImportString = ImGui.GetClipboardText();
-                var macro = MacroManager.MacroExportStringToMacro(macroImportString);
-                Plugin.Config.ImportMacro(macro);
-                Plugin.IpcProvider.SyncConfiguration();
-                DalamudApi.ShowNotification($"Macro imported", NotificationType.Success, 5000);
-            }
-            catch
-            {
-                DalamudApi.ShowNotification($"Unable to import invalid macro", NotificationType.Error, 5000);
-            }
-        }
+        // ImGui.SameLine();
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportMacroBtn", Language.ImportMacroBtn))
+        // {
+        //     try
+        //     {
+        //         string macroImportString = ImGui.GetClipboardText();
+        //         var macro = MacroManager.MacroExportStringToMacro(macroImportString);
+        //         Plugin.Config.ImportMacro(macro);
+        //         Plugin.IpcProvider.SyncConfiguration();
+        //         DalamudApi.ShowNotification($"Macro imported", NotificationType.Success, 5000);
+        //     }
+        //     catch
+        //     {
+        //         DalamudApi.ShowNotification($"Unable to import invalid macro", NotificationType.Error, 5000);
+        //     }
+        // }
 
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
@@ -194,11 +349,15 @@ internal class MainWindow : Window
         }
 
         ImGui.SameLine();
+        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);
+        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive);
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionBtn", Language.StopMacroExecutionBtn))
         {
             Plugin.IpcProvider.StopMacroExecution();
             DalamudApi.ShowNotification($"Macro execution queue stoped", NotificationType.Info, 3000);
         }
+        ImGui.PopStyleColor(3);
 
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.List, $"##ShowMacroQueueExecutorBtn", Language.ShowMacroQueueExecutorBtn))
@@ -298,7 +457,18 @@ internal class MainWindow : Window
             var macroExportData = MacroManager.MacroToExportString(Plugin.Config.Macros[macroIdx].CloneWithoutCharacters());
             ImGui.SetClipboardText(macroExportData);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+        }
+        ImGui.OpenPopupOnItemClick("ContextMenuExportMacro", ImGuiPopupFlags.MouseButtonRight);
 
+        if (ImGui.BeginPopup("ContextMenuExportMacro"))
+        {
+            if (ImGui.MenuItem("Export with characters"))
+            {
+                var macroExportData = MacroManager.MacroToExportString(Plugin.Config.Macros[macroIdx].Clone());
+                ImGui.SetClipboardText(macroExportData);
+                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+            }
+            ImGui.EndPopup();
         }
 
         ImGui.SameLine();
@@ -346,7 +516,7 @@ internal class MainWindow : Window
         var noSearchResults = MacroListSearchedIndexs.Count == 0;
         if (isFiltered && noSearchResults)
         {
-            ImGuiUtil.DrawColoredBanner(Style.Colors.Red, "Nothing found");
+            ImGuiUtil.DrawColoredBanner("Nothing found", Style.Colors.Red);
         }
 
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |

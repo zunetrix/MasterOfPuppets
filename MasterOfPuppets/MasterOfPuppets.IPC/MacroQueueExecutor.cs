@@ -25,7 +25,7 @@ internal static class MacroQueueExecutor
                 if (string.IsNullOrWhiteSpace(args) ||
                 !double.TryParse(args, NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds))
                 {
-                    DalamudApi.PluginLog.Warning($"[WAIT] invalid argument: \"{args}\"");
+                    DalamudApi.PluginLog.Warning($"[wait] invalid argument: \"{args}\"");
                     return;
                 }
 
@@ -189,7 +189,7 @@ internal static class MacroQueueExecutor
                     {
                         var secondsRound = Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero);
                         var delayMs = TimeSpan.FromSeconds(secondsRound);
-                        DalamudApi.PluginLog.Debug($"[Delay Between Actions] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}");
+                        DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}");
                         await Task.Delay(delayMs, token);
                     }
                 }
@@ -199,15 +199,19 @@ internal static class MacroQueueExecutor
             {
                 DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
 
-                Chat.SendMessage(action);
-                // DalamudApi.Framework.RunOnFrameworkThread(delegate
-                // {
-                //     Chat.SendMessage(action);
-                // });
+                // Chat.SendMessage(action);
+                DalamudApi.Framework.RunOnFrameworkThread(delegate
+                {
+                    Chat.SendMessage(action);
+                });
 
-                int delayMs = (int)(delayBetweenActions * 1000);
-                DalamudApi.PluginLog.Debug($"[Delay Between Actions] {delayMs}...");
-                await Task.Delay(delayMs, token);
+                if (delayBetweenActions > 0.0)
+                {
+                    var secondsRound = Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero);
+                    var delayMs = TimeSpan.FromSeconds(secondsRound);
+                    DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}");
+                    await Task.Delay(delayMs, token);
+                }
             }
         }
     }

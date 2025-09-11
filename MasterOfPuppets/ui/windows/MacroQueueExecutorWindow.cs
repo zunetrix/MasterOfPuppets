@@ -35,11 +35,15 @@ public class MacroQueueExecutorWindow : Window
         ImGui.TextUnformatted("Action Queue");
         ImGui.SameLine();
         ImGui.SameLine();
+        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);
+        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive);
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionQueueBtn", Language.StopMacroExecutionBtn))
         {
             Plugin.IpcProvider.StopMacroExecution();
             DalamudApi.ShowNotification($"Macro execution queue stoped", NotificationType.Info, 3000);
         }
+        ImGui.PopStyleColor(3);
 
         ImGui.Spacing();
         ImGui.Separator();

@@ -302,4 +302,7 @@ Right-Click to copy command</value>
     <data name="RemoveAllBtn" xml:space="preserve">
         <value>Remove All</value>
     </data>
+    <data name="SettingsWindowAutoSaveMacro" xml:space="preserve">
+        <value>Auto Save Macro</value>
+    </data>
 </root>

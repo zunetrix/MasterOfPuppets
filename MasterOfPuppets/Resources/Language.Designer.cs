@@ -906,5 +906,12 @@ internal class Language
             return ResourceManager.GetString("RemoveAllBtn", resourceCulture);
         }
     }
+    internal static string SettingsWindowAutoSaveMacro
+    {
+        get
+        {
+            return ResourceManager.GetString("SettingsWindowAutoSaveMacro", resourceCulture);
+        }
+    }
 }
 

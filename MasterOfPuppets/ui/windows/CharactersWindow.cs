@@ -137,18 +137,18 @@ public class CharactersWindow : Window
                 {
                     unsafe
                     {
-                        ImGui.SetDragDropPayload("DND_CHARACTERS_LIST", new ReadOnlySpan<byte>(&i, sizeof(int)), ImGuiCond.None);
+                        ImGui.SetDragDropPayload("DND_CHARACTER_LIST", new ReadOnlySpan<byte>(&i, sizeof(int)), ImGuiCond.None);
                         ImGui.Button($"({i + 1}) {characters[i].Name}");
                     }
 
-                    // PluginLog.Warning($"Drag start [{i}]: {characters[i].Name}");
+                    // DalamudApi.PluginLog.Warning($"Drag start [{i}]: {characters[i].Name}");
                     ImGui.EndDragDropSource();
                 }
 
                 ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
                 if (ImGui.BeginDragDropTarget())
                 {
-                    ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_CHARACTERS_LIST");
+                    ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_CHARACTER_LIST");
 
                     bool isDropping = false;
                     unsafe
@@ -166,7 +166,7 @@ public class CharactersWindow : Window
                             if (offset != 0 && originalIndex + offset >= 0)
                             {
                                 int targetIndex = originalIndex + offset;
-                                // PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
+                                // DalamudApi.PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
                                 Plugin.Config.MoveCharacterToIndex(originalIndex, targetIndex);
                                 Plugin.IpcProvider.SyncConfiguration();
                             }

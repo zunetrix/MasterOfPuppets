@@ -22,10 +22,10 @@ internal class Configuration : IPluginConfiguration
 
     // Macros
     public List<Macro> Macros { get; set; } = new();
-    public double DelayBetweenActions { get; set; } = 1.00;
-
     public List<Character> Characters { get; set; } = new();
     public List<CidGroup> CidsGroups { get; set; } = new();
+    public double DelayBetweenActions { get; set; } = 1.00;
+    public bool AutoSaveMacro { get; set; } = false;
 
     // chat commands
     public bool UseChatSync { get; set; } = false;
@@ -71,6 +71,7 @@ internal class Configuration : IPluginConfiguration
         Macros = newPluginConfig.Macros;
         Characters = newPluginConfig.Characters;
         CidsGroups = newPluginConfig.CidsGroups;
+        AutoSaveMacro = newPluginConfig.AutoSaveMacro;
 
         SyncClients = newPluginConfig.SyncClients;
 

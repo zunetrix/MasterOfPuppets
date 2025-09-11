@@ -197,12 +197,8 @@ public static class ImGuiUtil
         ImGuiComponents.IconButtonWithText(icon, text, size);
     }
 
-    public static unsafe void DrawColoredBanner(uint color, string content)
-    {
-        DrawColoredBanner(ImGui.ColorConvertU32ToFloat4(color), content);
-    }
 
-    public static unsafe void DrawColoredBanner(Vector4 color, string content)
+    public static void DrawColoredBanner(string content, Vector4 color)
     {
         ImGui.PushStyleColor(ImGuiCol.Button, color);
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, color);
