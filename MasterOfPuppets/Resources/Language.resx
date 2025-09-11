@@ -299,4 +299,7 @@ Right-Click to copy command</value>
     <data name="ClipboardCopyMessage" xml:space="preserve">
         <value>Copied to clipboard</value>
     </data>
+    <data name="RemoveAllBtn" xml:space="preserve">
+        <value>Remove All</value>
+    </data>
 </root>

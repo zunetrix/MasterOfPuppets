@@ -899,5 +899,12 @@ internal class Language
             return ResourceManager.GetString("ClipboardCopyMessage", resourceCulture);
         }
     }
+    internal static string RemoveAllBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("RemoveAllBtn", resourceCulture);
+        }
+    }
 }
 
