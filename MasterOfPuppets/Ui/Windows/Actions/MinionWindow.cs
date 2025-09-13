@@ -165,7 +165,7 @@ public class MinionWindow : Window
         }
 
         ImGui.SameLine();
-        if (ImGui.Button("Dismiss"))
+        if (ImGui.Button(Language.DismissBtn))
         {
             Plugin.IpcProvider.ExecuteTextCommand("/minion");
         }
