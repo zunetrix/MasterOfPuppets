@@ -20,8 +20,8 @@ internal class MainWindow : Window
     public bool IsVisible { get; private set; }
     // private static readonly Version Version = typeof(MainWindow).Assembly.GetName().Version;
     // private static readonly string VersionString = Version?.ToString();
-    private string _macroSearchString = "";
-    private readonly List<int> MacroListSearchedIndexs = new();
+    private string _macroSearchString = string.Empty;
+    private readonly List<int> MacroListSearchedIndexes = new();
 
     internal MainWindow(Plugin plugin, PluginUi ui) : base(Plugin.Name)
     {
@@ -374,9 +374,9 @@ internal class MainWindow : Window
 
     private void SearchMacro()
     {
-        MacroListSearchedIndexs.Clear();
+        MacroListSearchedIndexes.Clear();
 
-        MacroListSearchedIndexs.AddRange(
+        MacroListSearchedIndexes.AddRange(
             Plugin.Config.Macros
             .Select((item, index) => new { item, index })
             .Where(x => x.item.Name.Contains(_macroSearchString, StringComparison.OrdinalIgnoreCase))
@@ -513,7 +513,7 @@ internal class MainWindow : Window
     private void DrawMacrosTable()
     {
         var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
-        var noSearchResults = MacroListSearchedIndexs.Count == 0;
+        var noSearchResults = MacroListSearchedIndexes.Count == 0;
         if (isFiltered && noSearchResults)
         {
             ImGuiUtil.DrawColoredBanner("Nothing found", Style.Colors.Red);
@@ -523,7 +523,7 @@ internal class MainWindow : Window
                 ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 3;
         var macros = Plugin.Config.Macros;
-        var itemCount = isFiltered ? MacroListSearchedIndexs.Count : macros.Count;
+        var itemCount = isFiltered ? MacroListSearchedIndexes.Count : macros.Count;
 
         if (ImGui.BeginTable("##MacrosTable", tableColumnCount, tableFlags))
         {
@@ -544,7 +544,7 @@ internal class MainWindow : Window
                 for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
                 {
                     if (i >= itemCount) break;
-                    int realIndex = isFiltered ? MacroListSearchedIndexs[i] : i;
+                    int realIndex = isFiltered ? MacroListSearchedIndexes[i] : i;
                     if (realIndex >= macros.Count) continue;
 
                     DrawMacroEntry(realIndex);

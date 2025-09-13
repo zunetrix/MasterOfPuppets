@@ -12,15 +12,15 @@ using MasterOfPuppets.Resources;
 
 namespace MasterOfPuppets;
 
-public class MountWindow : Window
+public class MinionWindow : Window
 {
     private Plugin Plugin { get; }
 
     private readonly List<ExecutableAction> UnlockedActions = new();
-    private string _searchString = "";
-    private readonly List<int> ListSearchedIndexs = new();
+    private string _searchString = string.Empty;
+    private readonly List<int> ListSearchedIndexes = new();
 
-    public MountWindow(Plugin plugin) : base($"{Language.MountTitle}###MountWindow")
+    public MinionWindow(Plugin plugin) : base($"{Language.MinionTitle}###MinionWindow")
     {
         Plugin = plugin;
 
@@ -30,12 +30,32 @@ public class MountWindow : Window
         // Flags = ImGuiWindowFlags.NoResize;
     }
 
-    public override void PreDraw()
+    public override void OnOpen()
     {
-        base.PreDraw();
+        UnlockedActions.Clear();
+        UnlockedActions.AddRange(MinionHelper.GetAllowedItems());
+        base.OnOpen();
     }
 
-    private void DrawMountEntry(int actionIndex, ExecutableAction mount)
+    public override void OnClose()
+    {
+        ListSearchedIndexes.Clear();
+        _searchString = string.Empty;
+        base.OnClose();
+    }
+
+    public override void Draw()
+    {
+        ImGui.BeginChild("##MinionHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        DrawHeader();
+        ImGui.EndChild();
+
+        ImGui.BeginChild("##MinionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        DrawMinionTable();
+        ImGui.EndChild();
+    }
+
+    private void DrawMinionEntry(int actionIndex, ExecutableAction minion)
     {
         ImGui.PushID(actionIndex);
         ImGui.TableNextRow();
@@ -43,30 +63,30 @@ public class MountWindow : Window
         ImGui.TextUnformatted($"{actionIndex + 1:000}");
 
         ImGui.TableNextColumn();
-        var icon = DalamudApi.TextureProvider.GetFromGameIcon(mount.IconId).GetWrapOrEmpty().Handle;
+        var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId).GetWrapOrEmpty().Handle;
         var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
 
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.ExecuteTextCommand(mount.TextCommand);
+            Plugin.IpcProvider.ExecuteTextCommand(minion.TextCommand);
         }
         ImGuiUtil.ToolTip("Click to execute");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{mount.ActionName}");
+        ImGui.TextUnformatted($"{minion.ActionName}");
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText($"{mount.ActionName}");
+            ImGui.SetClipboardText($"{minion.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted(mount.TextCommand);
+        ImGui.TextUnformatted(minion.TextCommand);
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText(mount.TextCommand);
+            ImGui.SetClipboardText(minion.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
@@ -74,17 +94,14 @@ public class MountWindow : Window
         ImGui.PopID();
     }
 
-    private unsafe void DrawMountTable()
+    private unsafe void DrawMinionTable()
     {
-        UnlockedActions.Clear();
-        UnlockedActions.AddRange(MountHelper.GetAllowedItems());
-
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 4;
 
         var isFiltered = !string.IsNullOrEmpty(_searchString);
-        var itemCount = isFiltered ? ListSearchedIndexs.Count : UnlockedActions.Count;
+        var itemCount = isFiltered ? ListSearchedIndexes.Count : UnlockedActions.Count;
 
         if (ImGui.BeginTable("##MountTable", tableColumnCount, tableFlags))
         {
@@ -106,10 +123,10 @@ public class MountWindow : Window
                 for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
                 {
                     if (i >= itemCount) break;
-                    int realIndex = isFiltered ? ListSearchedIndexs[i] : i;
+                    int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
                     if (realIndex >= UnlockedActions.Count) continue;
 
-                    DrawMountEntry(realIndex, UnlockedActions[realIndex]);
+                    DrawMinionEntry(realIndex, UnlockedActions[realIndex]);
                 }
             }
 
@@ -120,9 +137,9 @@ public class MountWindow : Window
 
     private void Search()
     {
-        ListSearchedIndexs.Clear();
+        ListSearchedIndexes.Clear();
 
-        ListSearchedIndexs.AddRange(
+        ListSearchedIndexes.AddRange(
             UnlockedActions
             .Select((item, index) => new { item, index })
             .Where(x => x.item.ActionName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
@@ -133,7 +150,7 @@ public class MountWindow : Window
 
     private void DrawHeader()
     {
-        ImGui.TextUnformatted($"{Language.MountTitle} (unlocked)");
+        ImGui.TextUnformatted($"{Language.MinionTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute
@@ -142,24 +159,19 @@ public class MountWindow : Window
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##MountSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
+        if (ImGui.InputTextWithHint("##MinionSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
         {
             Search();
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button("Dismiss"))
+        {
+            Plugin.IpcProvider.ExecuteTextCommand("/minion");
         }
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
-    }
-
-    public override void Draw()
-    {
-        ImGui.BeginChild("##MountHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-        DrawHeader();
-        ImGui.EndChild();
-
-        ImGui.BeginChild("##MountListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawMountTable();
-        ImGui.EndChild();
     }
 }

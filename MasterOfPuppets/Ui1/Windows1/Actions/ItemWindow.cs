@@ -12,15 +12,15 @@ using MasterOfPuppets.Resources;
 
 namespace MasterOfPuppets;
 
-public class MinionWindow : Window
+public class ItemWindow : Window
 {
     private Plugin Plugin { get; }
 
     private readonly List<ExecutableAction> UnlockedActions = new();
-    private string _searchString = "";
-    private readonly List<int> ListSearchedIndexs = new();
+    private string _searchString = string.Empty;
+    private readonly List<int> ListSearchedIndexes = new();
 
-    public MinionWindow(Plugin plugin) : base($"{Language.MinionTitle}###MinionWindow")
+    public ItemWindow(Plugin plugin) : base($"{Language.ItemTitle}###ItemWindow")
     {
         Plugin = plugin;
 
@@ -30,12 +30,32 @@ public class MinionWindow : Window
         // Flags = ImGuiWindowFlags.NoResize;
     }
 
-    public override void PreDraw()
+    public override void OnOpen()
     {
-        base.PreDraw();
+        UnlockedActions.Clear();
+        UnlockedActions.AddRange(ItemHelper.GetAllowedItems());
+        base.OnOpen();
     }
 
-    private void DrawMinionEntry(int actionIndex, ExecutableAction minion)
+    public override void OnClose()
+    {
+        ListSearchedIndexes.Clear();
+        _searchString = string.Empty;
+        base.OnClose();
+    }
+
+    public override void Draw()
+    {
+        ImGui.BeginChild("##ItemHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        DrawHeader();
+        ImGui.EndChild();
+
+        ImGui.BeginChild("##ItemListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        DrawItemTable();
+        ImGui.EndChild();
+    }
+
+    private void DrawItemEntry(int actionIndex, ExecutableAction item)
     {
         ImGui.PushID(actionIndex);
         ImGui.TableNextRow();
@@ -43,30 +63,31 @@ public class MinionWindow : Window
         ImGui.TextUnformatted($"{actionIndex + 1:000}");
 
         ImGui.TableNextColumn();
-        var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId).GetWrapOrEmpty().Handle;
+        var icon = DalamudApi.TextureProvider.GetFromGameIcon(item.IconId).GetWrapOrEmpty().Handle;
         var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
 
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.ExecuteTextCommand(minion.TextCommand);
+            Plugin.IpcProvider.ExecuteItemCommand(item.ActionId);
         }
         ImGuiUtil.ToolTip("Click to execute");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{minion.ActionName}");
+        ImGui.TextUnformatted($"{item.ActionName} ({item.ActionId})");
+        // ImGui.TextUnformatted($"{item.ActionName}\n({item.IconId}) {item.Category}");
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText($"{minion.ActionName}");
+            ImGui.SetClipboardText($"{item.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted(minion.TextCommand);
+        ImGui.TextUnformatted(item.TextCommand);
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText(minion.TextCommand);
+            ImGui.SetClipboardText(item.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
@@ -74,19 +95,16 @@ public class MinionWindow : Window
         ImGui.PopID();
     }
 
-    private unsafe void DrawMinionTable()
+    private unsafe void DrawItemTable()
     {
-        UnlockedActions.Clear();
-        UnlockedActions.AddRange(MinionHelper.GetAllowedItems());
-
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 4;
 
         var isFiltered = !string.IsNullOrEmpty(_searchString);
-        var itemCount = isFiltered ? ListSearchedIndexs.Count : UnlockedActions.Count;
+        var itemCount = isFiltered ? ListSearchedIndexes.Count : UnlockedActions.Count;
 
-        if (ImGui.BeginTable("##MountTable", tableColumnCount, tableFlags))
+        if (ImGui.BeginTable("##ItemTable", tableColumnCount, tableFlags))
         {
             ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
@@ -106,10 +124,10 @@ public class MinionWindow : Window
                 for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
                 {
                     if (i >= itemCount) break;
-                    int realIndex = isFiltered ? ListSearchedIndexs[i] : i;
+                    int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
                     if (realIndex >= UnlockedActions.Count) continue;
 
-                    DrawMinionEntry(realIndex, UnlockedActions[realIndex]);
+                    DrawItemEntry(realIndex, UnlockedActions[realIndex]);
                 }
             }
 
@@ -120,9 +138,9 @@ public class MinionWindow : Window
 
     private void Search()
     {
-        ListSearchedIndexs.Clear();
+        ListSearchedIndexes.Clear();
 
-        ListSearchedIndexs.AddRange(
+        ListSearchedIndexes.AddRange(
             UnlockedActions
             .Select((item, index) => new { item, index })
             .Where(x => x.item.ActionName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
@@ -133,7 +151,7 @@ public class MinionWindow : Window
 
     private void DrawHeader()
     {
-        ImGui.TextUnformatted($"{Language.MinionTitle} (unlocked)");
+        ImGui.TextUnformatted($"{Language.ItemTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute
@@ -142,7 +160,7 @@ public class MinionWindow : Window
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##MinionSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
+        if (ImGui.InputTextWithHint("##ItemSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
         {
             Search();
         }
@@ -152,14 +170,5 @@ public class MinionWindow : Window
         ImGui.Spacing();
     }
 
-    public override void Draw()
-    {
-        ImGui.BeginChild("##MinionHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-        DrawHeader();
-        ImGui.EndChild();
 
-        ImGui.BeginChild("##MinionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawMinionTable();
-        ImGui.EndChild();
-    }
 }

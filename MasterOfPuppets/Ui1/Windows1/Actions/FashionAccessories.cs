@@ -17,8 +17,8 @@ public class FashionAccessoriesWindow : Window
     private Plugin Plugin { get; }
 
     private readonly List<ExecutableAction> UnlockedActions = new();
-    private string _searchString = "";
-    private readonly List<int> ListSearchedIndexs = new();
+    private string _searchString = string.Empty;
+    private readonly List<int> ListSearchedIndexes = new();
 
     public FashionAccessoriesWindow(Plugin plugin) : base($"{Language.FashionAccessoriesTitle}###FashionAccessoriesWindow")
     {
@@ -30,9 +30,29 @@ public class FashionAccessoriesWindow : Window
         // Flags = ImGuiWindowFlags.NoResize;
     }
 
-    public override void PreDraw()
+    public override void OnOpen()
     {
-        base.PreDraw();
+        UnlockedActions.Clear();
+        UnlockedActions.AddRange(FashionAccessoriesHelper.GetAllowedItems());
+        base.OnOpen();
+    }
+
+    public override void OnClose()
+    {
+        ListSearchedIndexes.Clear();
+        _searchString = string.Empty;
+        base.OnClose();
+    }
+
+    public override void Draw()
+    {
+        ImGui.BeginChild("##FashionHeaderFixedHeight", new Vector2(-1, 70 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        DrawHeader();
+        ImGui.EndChild();
+
+        ImGui.BeginChild("##FashionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        DrawFashionTable();
+        ImGui.EndChild();
     }
 
     private void DrawFashionEntry(int actionIndex, ExecutableAction fashionAccessorie)
@@ -76,15 +96,12 @@ public class FashionAccessoriesWindow : Window
 
     private unsafe void DrawFashionTable()
     {
-        UnlockedActions.Clear();
-        UnlockedActions.AddRange(FashionAccessoriesHelper.GetAllowedItems());
-
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 4;
 
         var isFiltered = !string.IsNullOrEmpty(_searchString);
-        var itemCount = isFiltered ? ListSearchedIndexs.Count : UnlockedActions.Count;
+        var itemCount = isFiltered ? ListSearchedIndexes.Count : UnlockedActions.Count;
 
         if (ImGui.BeginTable("##FashionAccessoriesTable", tableColumnCount, tableFlags))
         {
@@ -106,7 +123,7 @@ public class FashionAccessoriesWindow : Window
                 for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
                 {
                     if (i >= itemCount) break;
-                    int realIndex = isFiltered ? ListSearchedIndexs[i] : i;
+                    int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
                     if (realIndex >= UnlockedActions.Count) continue;
 
                     DrawFashionEntry(realIndex, UnlockedActions[realIndex]);
@@ -120,8 +137,8 @@ public class FashionAccessoriesWindow : Window
 
     private void Search()
     {
-        ListSearchedIndexs.Clear();
-        ListSearchedIndexs.AddRange(
+        ListSearchedIndexes.Clear();
+        ListSearchedIndexes.AddRange(
             UnlockedActions
             .Select((item, index) => new { item, index })
             .Where(x => x.item.ActionName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
@@ -169,16 +186,5 @@ public class FashionAccessoriesWindow : Window
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
-    }
-
-    public override void Draw()
-    {
-        ImGui.BeginChild("##FashionHeaderFixedHeight", new Vector2(-1, 70 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-        DrawHeader();
-        ImGui.EndChild();
-
-        ImGui.BeginChild("##FashionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawFashionTable();
-        ImGui.EndChild();
     }
 }

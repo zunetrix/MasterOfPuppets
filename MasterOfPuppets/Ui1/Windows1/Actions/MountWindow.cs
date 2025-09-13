@@ -12,15 +12,15 @@ using MasterOfPuppets.Resources;
 
 namespace MasterOfPuppets;
 
-public class ItemWindow : Window
+public class MountWindow : Window
 {
     private Plugin Plugin { get; }
 
     private readonly List<ExecutableAction> UnlockedActions = new();
-    private string _searchString = "";
-    private readonly List<int> ListSearchedIndexs = new();
+    private string _searchString = string.Empty;
+    private readonly List<int> ListSearchedIndexes = new();
 
-    public ItemWindow(Plugin plugin) : base($"{Language.ItemTitle}###ItemWindow")
+    public MountWindow(Plugin plugin) : base($"{Language.MountTitle}###MountWindow")
     {
         Plugin = plugin;
 
@@ -30,12 +30,32 @@ public class ItemWindow : Window
         // Flags = ImGuiWindowFlags.NoResize;
     }
 
-    public override void PreDraw()
+    public override void OnOpen()
     {
-        base.PreDraw();
+        UnlockedActions.Clear();
+        UnlockedActions.AddRange(MountHelper.GetAllowedItems());
+        base.OnOpen();
     }
 
-    private void DrawItemEntry(int actionIndex, ExecutableAction item)
+    public override void OnClose()
+    {
+        ListSearchedIndexes.Clear();
+        _searchString = string.Empty;
+        base.OnClose();
+    }
+
+    public override void Draw()
+    {
+        ImGui.BeginChild("##MountHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        DrawHeader();
+        ImGui.EndChild();
+
+        ImGui.BeginChild("##MountListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        DrawMountTable();
+        ImGui.EndChild();
+    }
+
+    private void DrawMountEntry(int actionIndex, ExecutableAction mount)
     {
         ImGui.PushID(actionIndex);
         ImGui.TableNextRow();
@@ -43,31 +63,30 @@ public class ItemWindow : Window
         ImGui.TextUnformatted($"{actionIndex + 1:000}");
 
         ImGui.TableNextColumn();
-        var icon = DalamudApi.TextureProvider.GetFromGameIcon(item.IconId).GetWrapOrEmpty().Handle;
+        var icon = DalamudApi.TextureProvider.GetFromGameIcon(mount.IconId).GetWrapOrEmpty().Handle;
         var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
 
         ImGui.Image(icon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.ExecuteItemCommand(item.ActionId);
+            Plugin.IpcProvider.ExecuteTextCommand(mount.TextCommand);
         }
         ImGuiUtil.ToolTip("Click to execute");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{item.ActionName} ({item.ActionId})");
-        // ImGui.TextUnformatted($"{item.ActionName}\n({item.IconId}) {item.Category}");
+        ImGui.TextUnformatted($"{mount.ActionName}");
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText($"{item.ActionName}");
+            ImGui.SetClipboardText($"{mount.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted(item.TextCommand);
+        ImGui.TextUnformatted(mount.TextCommand);
         if (ImGui.IsItemClicked())
         {
-            ImGui.SetClipboardText(item.TextCommand);
+            ImGui.SetClipboardText(mount.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip("Click to copy");
@@ -75,19 +94,16 @@ public class ItemWindow : Window
         ImGui.PopID();
     }
 
-    private unsafe void DrawItemTable()
+    private unsafe void DrawMountTable()
     {
-        UnlockedActions.Clear();
-        UnlockedActions.AddRange(ItemHelper.GetAllowedItems());
-
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 4;
 
         var isFiltered = !string.IsNullOrEmpty(_searchString);
-        var itemCount = isFiltered ? ListSearchedIndexs.Count : UnlockedActions.Count;
+        var itemCount = isFiltered ? ListSearchedIndexes.Count : UnlockedActions.Count;
 
-        if (ImGui.BeginTable("##ItemTable", tableColumnCount, tableFlags))
+        if (ImGui.BeginTable("##MountTable", tableColumnCount, tableFlags))
         {
             ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
@@ -107,10 +123,10 @@ public class ItemWindow : Window
                 for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
                 {
                     if (i >= itemCount) break;
-                    int realIndex = isFiltered ? ListSearchedIndexs[i] : i;
+                    int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
                     if (realIndex >= UnlockedActions.Count) continue;
 
-                    DrawItemEntry(realIndex, UnlockedActions[realIndex]);
+                    DrawMountEntry(realIndex, UnlockedActions[realIndex]);
                 }
             }
 
@@ -121,9 +137,9 @@ public class ItemWindow : Window
 
     private void Search()
     {
-        ListSearchedIndexs.Clear();
+        ListSearchedIndexes.Clear();
 
-        ListSearchedIndexs.AddRange(
+        ListSearchedIndexes.AddRange(
             UnlockedActions
             .Select((item, index) => new { item, index })
             .Where(x => x.item.ActionName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
@@ -134,7 +150,7 @@ public class ItemWindow : Window
 
     private void DrawHeader()
     {
-        ImGui.TextUnformatted($"{Language.ItemTitle} (unlocked)");
+        ImGui.TextUnformatted($"{Language.MountTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute
@@ -143,7 +159,7 @@ public class ItemWindow : Window
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##ItemSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
+        if (ImGui.InputTextWithHint("##MountSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
         {
             Search();
         }
@@ -151,16 +167,5 @@ public class ItemWindow : Window
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
-    }
-
-    public override void Draw()
-    {
-        ImGui.BeginChild("##ItemHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-        DrawHeader();
-        ImGui.EndChild();
-
-        ImGui.BeginChild("##ItemListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawItemTable();
-        ImGui.EndChild();
     }
 }

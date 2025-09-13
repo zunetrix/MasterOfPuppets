@@ -67,7 +67,7 @@ public static class ActionHelper
             ActionId = 30869,
             ActionName = "Rain Check",
             IconId = 64276,
-            TextCommand = "",
+            TextCommand = string.Empty,
         };
 
         public static ExecutableAction UmbrellaDance { get; } = new ExecutableAction
@@ -75,7 +75,7 @@ public static class ActionHelper
             ActionId = 30868,
             ActionName = "Umbrella Dance",
             IconId = 64277,
-            TextCommand = "",
+            TextCommand = string.Empty,
         };
     }
 }

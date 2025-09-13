@@ -17,7 +17,7 @@ public class CharactersWindow : Window
 {
     private Plugin Plugin { get; }
 
-    private string _tmpGroupName = "";
+    private string _tmpGroupName = string.Empty;
     private int _selectedCidGroupIndex { get; set; } = 0;
 
     public CharactersWindow(Plugin plugin) : base($"{Plugin.Name} Characters###CharactersWindow")

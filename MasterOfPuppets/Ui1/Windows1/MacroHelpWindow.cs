@@ -17,8 +17,8 @@ public class MacroHelpWindow : Window
 {
     private Plugin Plugin { get; }
 
-    private string _searchString = "";
-    private readonly List<int> ListSearchedIndexs = new();
+    private string _searchString = string.Empty;
+    private readonly List<int> ListSearchedIndexes = new();
 
     public MacroHelpWindow(Plugin plugin) : base($"{Plugin.Name} Help###MacroHelpWindow")
     {
@@ -88,7 +88,7 @@ public class MacroHelpWindow : Window
         var tableColumnCount = 4;
 
         var isFiltered = !string.IsNullOrEmpty(_searchString);
-        var itemCount = isFiltered ? ListSearchedIndexs.Count : MopMacroActionsHelper.Actions.Count;
+        var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
 
         if (ImGui.BeginTable("##MopMacroActionTable", tableColumnCount, tableFlags))
         {
@@ -112,7 +112,7 @@ public class MacroHelpWindow : Window
                 for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
                 {
                     if (i >= itemCount) break;
-                    int realIndex = isFiltered ? ListSearchedIndexs[i] : i;
+                    int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
                     if (realIndex >= MopMacroActionsHelper.Actions.Count) continue;
 
                     DrawMopActionRow(realIndex, MopMacroActionsHelper.Actions[realIndex]);
@@ -162,7 +162,7 @@ public class MacroHelpWindow : Window
     private unsafe void DrawMacroActionsGroups()
     {
         var isFiltered = !string.IsNullOrEmpty(_searchString);
-        var itemCount = isFiltered ? ListSearchedIndexs.Count : MopMacroActionsHelper.Actions.Count;
+        var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
 
         ImGuiListClipperPtr clipper;
         unsafe
@@ -177,7 +177,7 @@ public class MacroHelpWindow : Window
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
             {
                 if (i >= itemCount) break;
-                int realIndex = isFiltered ? ListSearchedIndexs[i] : i;
+                int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
                 if (realIndex >= MopMacroActionsHelper.Actions.Count) continue;
 
                 DrawMopActionEntry(realIndex, MopMacroActionsHelper.Actions[realIndex]);
@@ -189,9 +189,9 @@ public class MacroHelpWindow : Window
 
     private void Search()
     {
-        ListSearchedIndexs.Clear();
+        ListSearchedIndexes.Clear();
 
-        ListSearchedIndexs.AddRange(
+        ListSearchedIndexes.AddRange(
             MopMacroActionsHelper.Actions
             .Select((item, index) => new { item, index })
             .Where(x => x.item.TextCommand.Contains(_searchString, StringComparison.OrdinalIgnoreCase))

@@ -1,6 +1,8 @@
 using System;
 using System.Numerics;
 
+using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 
 using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
@@ -117,20 +119,23 @@ public static class TargetManager
                 if (player == null) return;
 
                 // foreach (var assistActor in DalamudApi.Objects.Where(o => o.ObjectKind == ObjectKind.Player))
+                // var assistActor = DalamudApi.Objects.AsEnumerable().FirstOrDefault(o => o.Name.TextValue.Equals(_objectName));
                 foreach (var assistActor in DalamudApi.Objects)
                 {
-                    // TODO: find how to get object wold to prvent wrong target with same characters names
-                    // DalamudApi.PluginLog.Warning($"""
-                    // Name: {assistActor.Name}
-                    // ObjectKind: {assistActor.ObjectKind}
-                    // DataId: {assistActor.DataId}
-                    // EntityId: {assistActor.EntityId}
-                    // GameObjectId: {assistActor.GameObjectId}
-                    // OwnerId: {assistActor.OwnerId}
-                    // """);
-
                     if (assistActor == null) continue;
-                    if (!assistActor.Name.TextValue.Contains(assistName, StringComparison.InvariantCultureIgnoreCase)
+
+                    // if player concat world name to prevent same characters names conflict
+                    var lookupName = assistActor.Name.TextValue;
+                    if (assistActor.ObjectKind == ObjectKind.Player)
+                    {
+                        var playerObject = assistActor as IPlayerCharacter;
+                        var playerWorld = playerObject.HomeWorld.ValueNullable?.Name;
+                        // var playerWorld = playerObject.HomeWorld.ValueNullable?.Name.ToDalamudString().TextValue;
+                        if (playerWorld != null)
+                            lookupName = $"{lookupName}@{playerWorld}";
+                    }
+
+                    if (!lookupName.Contains(assistName, StringComparison.InvariantCultureIgnoreCase)
                         || !((GameObjectStruct*)assistActor.Address)->GetIsTargetable()) continue;
 
                     var distance = Vector3.Distance(player.Position, assistActor.Position);
