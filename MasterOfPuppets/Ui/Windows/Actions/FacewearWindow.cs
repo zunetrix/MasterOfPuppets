@@ -71,7 +71,7 @@ public class FacewearWindow : Window
         {
             Plugin.IpcProvider.ExecuteTextCommand(facewear.TextCommand);
         }
-        ImGuiUtil.ToolTip("Click to execute");
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted($"{facewear.ActionName}");
@@ -80,7 +80,7 @@ public class FacewearWindow : Window
             ImGui.SetClipboardText($"{facewear.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(facewear.TextCommand);
@@ -89,7 +89,7 @@ public class FacewearWindow : Window
             ImGui.SetClipboardText(facewear.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.PopID();
     }

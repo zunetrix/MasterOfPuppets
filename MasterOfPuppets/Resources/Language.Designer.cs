@@ -920,5 +920,19 @@ internal class Language
             return ResourceManager.GetString("DismissBtn", resourceCulture);
         }
     }
+    internal static string ClickToExecute
+    {
+        get
+        {
+            return ResourceManager.GetString("ClickToExecute", resourceCulture);
+        }
+    }
+    internal static string ClickToCopy
+    {
+        get
+        {
+            return ResourceManager.GetString("ClickToCopy", resourceCulture);
+        }
+    }
 }
 

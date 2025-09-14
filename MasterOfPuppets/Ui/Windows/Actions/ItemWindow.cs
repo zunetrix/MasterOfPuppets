@@ -71,7 +71,7 @@ public class ItemWindow : Window
         {
             Plugin.IpcProvider.ExecuteItemCommand(item.ActionId);
         }
-        ImGuiUtil.ToolTip("Click to execute");
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted($"{item.ActionName} ({item.ActionId})");
@@ -81,7 +81,7 @@ public class ItemWindow : Window
             ImGui.SetClipboardText($"{item.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(item.TextCommand);
@@ -90,7 +90,7 @@ public class ItemWindow : Window
             ImGui.SetClipboardText(item.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.PopID();
     }

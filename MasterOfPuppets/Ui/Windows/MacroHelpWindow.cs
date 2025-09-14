@@ -52,7 +52,7 @@ public class MacroHelpWindow : Window
         // {
         //     Plugin.IpcProvider.ExecuteTextCommand(mount.TextCommand);
         // }
-        // ImGuiUtil.ToolTip("Click to execute");
+        // ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.TableNextColumn();
         ImGui.TextWrapped(mopAction.TextCommand);
@@ -61,7 +61,7 @@ public class MacroHelpWindow : Window
             ImGui.SetClipboardText($"{mopAction.TextCommand}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
         ImGui.TextUnformatted("");
 
         ImGui.TableNextColumn();
@@ -71,7 +71,7 @@ public class MacroHelpWindow : Window
             ImGui.SetClipboardText(mopAction.Example);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
         ImGui.TextUnformatted("");
 
         ImGui.TableNextColumn();
@@ -144,7 +144,7 @@ public class MacroHelpWindow : Window
                 ImGui.SetClipboardText(mopAction.Example);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             }
-            ImGuiUtil.ToolTip("Click to copy");
+            ImGuiUtil.ToolTip(Language.ClickToCopy);
 
             ImGui.Spacing();
             ImGui.Separator();

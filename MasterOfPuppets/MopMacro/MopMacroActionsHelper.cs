@@ -9,9 +9,73 @@ public static class MopMacroActionsHelper
     {
         new MopAction
         {
+            TextCommand = "/mop run <macro number> \"Macro Name\"",
+            SuggestionCommand = "/mop run ",
+            Example = """
+            /clap
+            /wow
+            /mop run "My macro"
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+
+            Call it recursively
+                /clap
+                /wow
+                /mop run "My macro"
+
+            For chat sync command use:
+                moprun <macro number> \"Macro Name\"
+            """
+        },
+        new MopAction
+        {
+            TextCommand = "/mop stop",
+            SuggestionCommand = "/mop stop",
+            Example = """
+            /mop stop
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Stops all macro execution
+
+            For chat sync command use:
+                mopstop
+            """
+        },
+        new MopAction
+        {
+            TextCommand = "/mop targetmytarget",
+            SuggestionCommand = "/mop targetmytarget",
+            Example = """
+            /mop targetmytarget
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Useble only in local clients to target, for remote sync macro use /moptargetof "Name"
+            """
+        },
+        new MopAction
+        {
+            TextCommand = "/mop targetclear",
+            SuggestionCommand = "/mop targetclear",
+            Example = """
+            /mop targetclear
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Useble only in local clients to remove the target, for remote sync macro use /moptargetclear
+            """
+        },
+        new MopAction
+        {
             TextCommand = "/wait <time>",
             SuggestionCommand = "/wait ",
-            Example = "/wait 3",
+            Example = """
+            /wait 3
+            /wait 3.5
+            /wait 0.5
+            """,
             Notes = "Use to wait a certain amount of time"
         },
         new MopAction
@@ -33,7 +97,11 @@ public static class MopMacroActionsHelper
                 /fashion "Fat Cat Parasol"
                 /cheer
             """,
-            Notes = "Use especial pet hotbat slots like mount specials and parasol actions"
+            Notes = """
+            Use especial pet hotbat slots like mount specials and parasol actions
+            As alternativa it can also be used with skill name
+                /mopaction "Umbralla Dance"
+            """
         },
         new MopAction
         {
@@ -135,20 +203,6 @@ public static class MopMacroActionsHelper
             """,
             Notes = """
             Use mounts
-            """
-        },
-        new MopAction
-        {
-            TextCommand = "/mop run <macro number> \"Macro Name\"",
-            SuggestionCommand = "/mop run ",
-            Example = """
-            /mount "My macro"
-            /mount 3
-            """,
-            Notes = """
-            Call it recursively
-                /mount "behemoth"
-                /mop run "My macro"
             """
         }
     };

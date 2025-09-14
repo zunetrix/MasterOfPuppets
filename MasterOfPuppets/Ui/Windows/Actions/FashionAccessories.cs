@@ -9,6 +9,7 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Bindings.ImGui;
 
 using MasterOfPuppets.Resources;
+using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 
@@ -71,7 +72,7 @@ public class FashionAccessoriesWindow : Window
         {
             Plugin.IpcProvider.ExecuteTextCommand(fashionAccessorie.TextCommand);
         }
-        ImGuiUtil.ToolTip("Click to execute");
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted($"{fashionAccessorie.ActionName}");
@@ -80,7 +81,7 @@ public class FashionAccessoriesWindow : Window
             ImGui.SetClipboardText($"{fashionAccessorie.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(fashionAccessorie.TextCommand);
@@ -89,7 +90,7 @@ public class FashionAccessoriesWindow : Window
             ImGui.SetClipboardText(fashionAccessorie.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.PopID();
     }
@@ -164,24 +165,50 @@ public class FashionAccessoriesWindow : Window
         }
 
         ImGui.SameLine();
-        var rainCheckIcon = DalamudApi.TextureProvider.GetFromGameIcon(ActionHelper.FavoriteActions.RainCheck.IconId).GetWrapOrEmpty().Handle;
-        var umbrellaDanceIcon = DalamudApi.TextureProvider.GetFromGameIcon(ActionHelper.FavoriteActions.UmbrellaDance.IconId).GetWrapOrEmpty().Handle;
+        var rainCheck = ActionHelper.GetExecutableActionById(30869); // Rain Check
+        var rainCheckIcon = DalamudApi.TextureProvider.GetFromGameIcon(rainCheck.IconId).GetWrapOrEmpty().Handle;
+
+        var umbrellaDance = ActionHelper.GetExecutableActionById(30868); // Umbrella Dance
+        var umbrellaDanceIcon = DalamudApi.TextureProvider.GetFromGameIcon(umbrellaDance.IconId).GetWrapOrEmpty().Handle;
+
+        var changePose = EmoteHelper.GetExecutableActionById(90); // Change Pose
+        var changePoseIcon = DalamudApi.TextureProvider.GetFromGameIcon(changePose.IconId).GetWrapOrEmpty().Handle;
+
+        var putAway = GeneralActionHelper.GetExecutableActionById(28); // Put Away
+        var putAwayIcon = DalamudApi.TextureProvider.GetFromGameIcon(putAway.IconId).GetWrapOrEmpty().Handle;
+
         var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
 
         ImGui.Image(rainCheckIcon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.ExecuteActionCommand(ActionHelper.FavoriteActions.RainCheck.ActionId);
+            Plugin.IpcProvider.ExecuteActionCommand(rainCheck.ActionId);
         }
-        ImGuiUtil.ToolTip("Click to execute");
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.SameLine();
         ImGui.Image(umbrellaDanceIcon, iconSize);
         if (ImGui.IsItemClicked())
         {
-            Plugin.IpcProvider.ExecuteActionCommand(ActionHelper.FavoriteActions.UmbrellaDance.ActionId);
+            Plugin.IpcProvider.ExecuteActionCommand(umbrellaDance.ActionId);
         }
-        ImGuiUtil.ToolTip("Click to execute");
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
+
+        ImGui.SameLine();
+        ImGui.Image(changePoseIcon, iconSize);
+        if (ImGui.IsItemClicked())
+        {
+            Plugin.IpcProvider.ExecuteTextCommand(changePose.TextCommand);
+        }
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
+
+        ImGui.SameLine();
+        ImGui.Image(putAwayIcon, iconSize);
+        if (ImGui.IsItemClicked())
+        {
+            Plugin.IpcProvider.ExecuteTextCommand(putAway.TextCommand);
+        }
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.Spacing();
         ImGui.Separator();

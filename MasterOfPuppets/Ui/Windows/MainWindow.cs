@@ -237,6 +237,10 @@ internal class MainWindow : Window
                 ImGui.EndMenu();
             }
 
+            if (ImGui.BeginMenu("Command Help"))
+            {
+                Plugin.Ui.MacroHelpWindow.Toggle();
+            }
             ImGui.EndMenuBar();
 
             ImGui.PopStyleVar();
@@ -300,21 +304,6 @@ internal class MainWindow : Window
         {
             SearchMacro();
         }
-        ImGuiUtil.HelpMarker("""
-        Commands:
-            /mop run number
-            /mop run macro_name
-            /mop run "macro name with spaces"
-            /mop stop
-
-        Chat commands
-            moprun number
-            moprun macro_name
-            moprun "macro name with spaces"
-            mopstop
-
-        Drag to reorder macro list
-        """);
 
         int buttonMacroCount = 4;
         float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
@@ -395,6 +384,7 @@ internal class MainWindow : Window
 
         ImGui.TableNextColumn();
         ImGui.Selectable($"{macro.Name}");
+        ImGuiUtil.ToolTip("Drag to reorder");
 
         if (ImGui.BeginDragDropSource())
         {

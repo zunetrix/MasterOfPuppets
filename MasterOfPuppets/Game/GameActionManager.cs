@@ -27,6 +27,31 @@ public static class GameActionManager
         }
     }
 
+    public static unsafe void UseGeneralActionById(uint actionId)
+    {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate
+        {
+            ActionManager.Instance()->UseAction(ActionType.GeneralAction, actionId);
+        });
+    }
+
+    public static unsafe void UseGeneralActionByName(string actionName)
+    {
+        var action = GeneralActionHelper.GetExecutableActionByName(actionName);
+        if (action == null)
+        {
+            DalamudApi.PluginLog.Debug("Invalid general action name");
+            return;
+        }
+
+        DalamudApi.Framework.RunOnFrameworkThread(delegate
+        {
+            ActionManager.Instance()->UseAction(ActionType.GeneralAction, action.ActionId);
+        });
+
+        // DalamudApi.PluginLog.Debug($"[USE GENERL ACTION] {action.ActionId}");
+    }
+
     public static unsafe void UseActionById(uint actionId)
     {
         DalamudApi.Framework.RunOnFrameworkThread(delegate

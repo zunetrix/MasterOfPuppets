@@ -128,8 +128,7 @@ public class DebugWindow : Window
 
             if (ImGui.Button("ExecuteActionCommand Umbrella Dance"))
             {
-                Plugin.IpcProvider.ExecuteActionCommand(ActionHelper.FavoriteActions.RainCheck.ActionId);
-                // GameActionManager.UseAction(30868);
+                Plugin.IpcProvider.ExecuteActionCommand(30868);
                 DalamudApi.ShowNotification($"ExecuteActionCommand", NotificationType.Info, 5000);
             }
 
@@ -261,7 +260,7 @@ public class DebugWindow : Window
                                 ImGui.SetClipboardText($"{slot.ApparentActionId}");
                                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
                             }
-                            ImGuiUtil.ToolTip("Click to copy");
+                            ImGuiUtil.ToolTip(Language.ClickToCopy);
 
                             ImGui.TableNextColumn();
                             var icon = DalamudApi.TextureProvider.GetFromGameIcon(slot.IconId).GetWrapOrEmpty().Handle;
@@ -272,7 +271,7 @@ public class DebugWindow : Window
                             {
                                 HotbarManager.ExecuteHotbarActionBySlotIndex((uint)hotbarIndex, (uint)slotIndex);
                             }
-                            ImGuiUtil.ToolTip("Click to execute");
+                            ImGuiUtil.ToolTip(Language.ClickToExecute);
 
                             ImGui.TableNextColumn();
                             ImGui.TextUnformatted($"{slot.GetDisplayNameForSlot(slot.ApparentSlotType, slot.ApparentActionId)}");
@@ -333,7 +332,7 @@ public class DebugWindow : Window
                             ImGui.SetClipboardText($"{slot.ApparentActionId}");
                             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
                         }
-                        ImGuiUtil.ToolTip("Click to copy");
+                        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
                         ImGui.TableNextColumn();
                         var icon = DalamudApi.TextureProvider.GetFromGameIcon(slot.IconId).GetWrapOrEmpty().Handle;
@@ -344,7 +343,7 @@ public class DebugWindow : Window
                         {
                             HotbarManager.ExecutePetHotbarActionBySlotIndex((uint)slotIndex);
                         }
-                        ImGuiUtil.ToolTip("Click to execute");
+                        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
                         ImGui.TableNextColumn();
                         ImGui.TextUnformatted($"{slot.GetDisplayNameForSlot(slot.ApparentSlotType, slot.ApparentActionId)}");

@@ -71,7 +71,7 @@ public class MinionWindow : Window
         {
             Plugin.IpcProvider.ExecuteTextCommand(minion.TextCommand);
         }
-        ImGuiUtil.ToolTip("Click to execute");
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted($"{minion.ActionName}");
@@ -80,7 +80,7 @@ public class MinionWindow : Window
             ImGui.SetClipboardText($"{minion.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(minion.TextCommand);
@@ -89,7 +89,7 @@ public class MinionWindow : Window
             ImGui.SetClipboardText(minion.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.PopID();
     }

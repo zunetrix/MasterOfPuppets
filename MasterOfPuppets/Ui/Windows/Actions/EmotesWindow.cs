@@ -72,7 +72,7 @@ public class EmotesWindow : Window
         {
             Plugin.IpcProvider.ExecuteTextCommand(emote.TextCommand);
         }
-        ImGuiUtil.ToolTip("Click to execute");
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted($"{emote.ActionName}");
@@ -81,7 +81,7 @@ public class EmotesWindow : Window
             ImGui.SetClipboardText($"{emote.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(emote.TextCommand);
@@ -90,7 +90,7 @@ public class EmotesWindow : Window
             ImGui.SetClipboardText(emote.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         // ImGui.TableNextColumn();
         // ImGui.TextUnformatted(emote.Category);

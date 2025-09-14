@@ -305,7 +305,13 @@ Right-Click to copy command</value>
     <data name="SettingsWindowAutoSaveMacro" xml:space="preserve">
         <value>Auto Save Macro</value>
     </data>
-    <data name="DissmissBtn" xml:space="preserve">
+    <data name="DismissBtn" xml:space="preserve">
         <value>Dismiss</value>
+    </data>
+    <data name="ClickToExecute" xml:space="preserve">
+        <value>Click to execute</value>
+    </data>
+    <data name="ClickToCopy" xml:space="preserve">
+        <value>Click to copy</value>
     </data>
 </root>

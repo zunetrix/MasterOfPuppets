@@ -71,7 +71,7 @@ public class MountWindow : Window
         {
             Plugin.IpcProvider.ExecuteTextCommand(mount.TextCommand);
         }
-        ImGuiUtil.ToolTip("Click to execute");
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted($"{mount.ActionName}");
@@ -80,7 +80,7 @@ public class MountWindow : Window
             ImGui.SetClipboardText($"{mount.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(mount.TextCommand);
@@ -89,7 +89,7 @@ public class MountWindow : Window
             ImGui.SetClipboardText(mount.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
-        ImGuiUtil.ToolTip("Click to copy");
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
 
         ImGui.PopID();
     }

@@ -132,6 +132,7 @@ public class CharactersWindow : Window
 
                 ImGui.TableNextColumn();
                 ImGui.Selectable($"{characters[i].Name}");
+                ImGuiUtil.ToolTip($"Drag to reorder");
 
                 if (ImGui.BeginDragDropSource())
                 {
@@ -177,25 +178,25 @@ public class CharactersWindow : Window
                 ImGui.PopStyleColor();
 
                 ImGui.TableNextColumn();
-                ImGui.BeginDisabled(i == 0);
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowUp, $"##MoveUpCharacter_{i}", "Move Up"))
-                {
-                    Plugin.Config.MoveCharacterToIndex(i, i - 1);
-                    Plugin.IpcProvider.SyncConfiguration();
-                }
-                ImGui.EndDisabled();
+                // ImGui.BeginDisabled(i == 0);
+                // if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowUp, $"##MoveUpCharacter_{i}", "Move Up"))
+                // {
+                //     Plugin.Config.MoveCharacterToIndex(i, i - 1);
+                //     Plugin.IpcProvider.SyncConfiguration();
+                // }
+                // ImGui.EndDisabled();
 
 
-                ImGui.SameLine();
-                ImGui.BeginDisabled(i == characters.Count - 1);
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowDown, $"##MoveDownCharacter_{i}", "Move Down"))
-                {
-                    Plugin.Config.MoveCharacterToIndex(i, i + 1);
-                    Plugin.IpcProvider.SyncConfiguration();
-                }
-                ImGui.EndDisabled();
+                // ImGui.SameLine();
+                // ImGui.BeginDisabled(i == characters.Count - 1);
+                // if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowDown, $"##MoveDownCharacter_{i}", "Move Down"))
+                // {
+                //     Plugin.Config.MoveCharacterToIndex(i, i + 1);
+                //     Plugin.IpcProvider.SyncConfiguration();
+                // }
+                // ImGui.EndDisabled();
 
-                ImGui.SameLine();
+                // ImGui.SameLine();
                 if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{i}", "Remove"))
                 {
                     Plugin.Config.RemoveCharacter(characters[i].Cid);
