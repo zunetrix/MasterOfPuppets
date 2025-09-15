@@ -74,7 +74,7 @@ public class ItemWindow : Window
         ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{item.ActionName} ({item.ActionId})");
+        ImGui.TextUnformatted($"{item.ActionName}");
         // ImGui.TextUnformatted($"{item.ActionName}\n({item.IconId}) {item.Category}");
         if (ImGui.IsItemClicked())
         {

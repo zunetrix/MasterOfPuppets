@@ -25,7 +25,7 @@ public static class MopMacroActionsHelper
                 /mop run "My macro"
 
             For chat sync command use:
-                moprun <macro number> \"Macro Name\"
+                moprun <macro number> "Macro Name"
             """
         },
         new MopAction

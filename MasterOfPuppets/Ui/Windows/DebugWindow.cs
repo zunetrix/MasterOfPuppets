@@ -56,7 +56,6 @@ public class DebugWindow : Window
         DrawGeneralDebugTab();
         DrawHotbarDebugTab();
         DrawPetHotbarDebugTab();
-        DrawItemsDebugTab();
         DrawElementsDebugTab();
 
         ImGui.EndTabBar();
@@ -352,25 +351,6 @@ public class DebugWindow : Window
                     }
                     ImGui.EndTable();
                 }
-            }
-
-            ImGui.EndTabItem();
-        }
-    }
-
-    private void DrawItemsDebugTab()
-    {
-        if (ImGui.BeginTabItem($"Items###ItemsDebugTab"))
-        {
-            var items = ItemHelper.GetAllowedItems();
-            foreach (var item in items)
-            {
-                ImGui.TextUnformatted($"{item.ActionId}");
-                ImGui.TextUnformatted($"{item.ActionName}");
-                ImGui.TextUnformatted($"{item.IconId}");
-                ImGui.Spacing();
-                ImGui.Separator();
-                ImGui.Spacing();
             }
 
             ImGui.EndTabItem();

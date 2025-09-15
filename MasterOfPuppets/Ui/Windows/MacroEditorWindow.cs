@@ -341,9 +341,12 @@ public class MacroEditorWindow : Window
         ImGui.EndChild();
 
         ImGui.SameLine();
-        ImGui.BeginGroup();
 
+        ImGui.BeginGroup();
         ImGui.BeginDisabled(availableCharacters.Count == 0);
+
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
         ImGui.PushItemWidth(characterComboWidth);
         var charactersListPreviewLabel = Plugin.Config.Characters.Count == 0 ? "Set up the characters first" : "Select character to add";
         if (ImGui.BeginCombo($"##CharacterSelectList_command_{commandIndex}", charactersListPreviewLabel))
@@ -359,8 +362,8 @@ public class MacroEditorWindow : Window
         }
         ImGui.PopItemWidth();
 
-        ImGui.Spacing();
 
+        ImGui.Spacing();
         ImGui.PushItemWidth(characterComboWidth);
         if (ImGui.BeginCombo($"##CidsGroupSelectList_command_{commandIndex}", "Select group to add"))
         {
@@ -380,6 +383,10 @@ public class MacroEditorWindow : Window
             ImGui.EndCombo();
         }
         ImGui.PopItemWidth();
+
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
+
         ImGui.EndDisabled();
 
         ImGui.Spacing();

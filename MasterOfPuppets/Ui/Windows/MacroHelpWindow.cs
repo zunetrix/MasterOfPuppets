@@ -30,9 +30,36 @@ public class MacroHelpWindow : Window
         // Flags = ImGuiWindowFlags.NoResize;
     }
 
-    public override void PreDraw()
+    public override void Draw()
     {
-        base.PreDraw();
+        ImGui.BeginChild("##MacroHelpHeaderFixedHeight", new Vector2(-1, 60 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        DrawHeader();
+        ImGui.EndChild();
+
+        ImGui.BeginChild("##MacroHelpListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        // DrawMacroActionsTable();
+        DrawMacroActionsGroups();
+        ImGui.EndChild();
+    }
+
+    private void DrawHeader()
+    {
+        ImGui.TextUnformatted($"{Language.ActionsTitle}");
+        ImGui.SameLine();
+        ImGuiUtil.HelpMarker("""
+        Click to copy
+        """);
+
+        ImGui.Spacing();
+
+        if (ImGui.InputTextWithHint("##MacroHelpSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
+        {
+            Search();
+        }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
     }
 
     private void DrawMopActionRow(int itemIndex, MopAction mopAction)
@@ -81,49 +108,6 @@ public class MacroHelpWindow : Window
         ImGui.PopID();
     }
 
-    private unsafe void DrawMacroActionsTable()
-    {
-        var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
-               ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
-        var tableColumnCount = 4;
-
-        var isFiltered = !string.IsNullOrEmpty(_searchString);
-        var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
-
-        if (ImGui.BeginTable("##MopMacroActionTable", tableColumnCount, tableFlags))
-        {
-            ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Text Command", ImGuiTableColumnFlags.WidthStretch, 1.0f);
-            ImGui.TableSetupColumn("Example", ImGuiTableColumnFlags.WidthStretch, 1.0f);
-            ImGui.TableSetupColumn("Notes", ImGuiTableColumnFlags.WidthStretch);
-
-            ImGui.TableHeadersRow();
-
-            ImGuiListClipperPtr clipper;
-            unsafe
-            {
-                clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
-            }
-
-            clipper.Begin(itemCount);
-
-            while (clipper.Step())
-            {
-                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
-                {
-                    if (i >= itemCount) break;
-                    int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
-                    if (realIndex >= MopMacroActionsHelper.Actions.Count) continue;
-
-                    DrawMopActionRow(realIndex, MopMacroActionsHelper.Actions[realIndex]);
-                }
-            }
-
-            clipper.End();
-            ImGui.EndTable();
-        }
-    }
-
     private void DrawMopActionEntry(int itemIndex, MopAction mopAction)
     {
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CopyMopActionTextCommand_{itemIndex}", "Copy Text Command"))
@@ -159,32 +143,19 @@ public class MacroHelpWindow : Window
         ImGui.Spacing();
     }
 
-    private unsafe void DrawMacroActionsGroups()
+
+    private void DrawMacroActionsGroups()
     {
         var isFiltered = !string.IsNullOrEmpty(_searchString);
         var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
 
-        ImGuiListClipperPtr clipper;
-        unsafe
+        for (int i = 0; i < itemCount; i++)
         {
-            clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
+            int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
+            if (realIndex >= MopMacroActionsHelper.Actions.Count) continue;
+
+            DrawMopActionEntry(realIndex, MopMacroActionsHelper.Actions[realIndex]);
         }
-
-        clipper.Begin(itemCount);
-
-        while (clipper.Step())
-        {
-            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
-            {
-                if (i >= itemCount) break;
-                int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
-                if (realIndex >= MopMacroActionsHelper.Actions.Count) continue;
-
-                DrawMopActionEntry(realIndex, MopMacroActionsHelper.Actions[realIndex]);
-            }
-        }
-
-        clipper.End();
     }
 
     private void Search()
@@ -200,35 +171,75 @@ public class MacroHelpWindow : Window
         );
     }
 
-    private void DrawHeader()
-    {
-        ImGui.TextUnformatted($"{Language.ActionsTitle}");
-        ImGui.SameLine();
-        ImGuiUtil.HelpMarker("""
-        Click to copy
-        """);
+    // private unsafe void DrawMacroActionsGroupsClipper()
+    // {
+    //     var isFiltered = !string.IsNullOrEmpty(_searchString);
+    //     var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
 
-        ImGui.Spacing();
+    //     ImGuiListClipperPtr clipper;
+    //     unsafe
+    //     {
+    //         clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
+    //     }
 
-        if (ImGui.InputTextWithHint("##MacroHelpSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
-        {
-            Search();
-        }
+    //     clipper.Begin(itemCount);
 
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-    }
+    //     while (clipper.Step())
+    //     {
+    //         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+    //         {
+    //             if (i >= itemCount) break;
+    //             int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
+    //             if (realIndex >= MopMacroActionsHelper.Actions.Count) continue;
 
-    public override void Draw()
-    {
-        ImGui.BeginChild("##MacroHelpHeaderFixedHeight", new Vector2(-1, 60 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-        DrawHeader();
-        ImGui.EndChild();
+    //             DrawMopActionEntry(realIndex, MopMacroActionsHelper.Actions[realIndex]);
+    //         }
+    //     }
 
-        // ImGui.BeginChild("##MacroHelpListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        // DrawMacroActionsTable();
-        // ImGui.EndChild();
-        DrawMacroActionsGroups();
-    }
+    //     clipper.End();
+    // }
+
+
+    // private unsafe void DrawMacroActionsTable()
+    // {
+    //     var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
+    //            ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
+    //     var tableColumnCount = 4;
+
+    //     var isFiltered = !string.IsNullOrEmpty(_searchString);
+    //     var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
+
+    //     if (ImGui.BeginTable("##MopMacroActionTable", tableColumnCount, tableFlags))
+    //     {
+    //         ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
+    //         ImGui.TableSetupColumn("Text Command", ImGuiTableColumnFlags.WidthStretch, 1.0f);
+    //         ImGui.TableSetupColumn("Example", ImGuiTableColumnFlags.WidthStretch, 1.0f);
+    //         ImGui.TableSetupColumn("Notes", ImGuiTableColumnFlags.WidthStretch);
+
+    //         ImGui.TableHeadersRow();
+
+    //         ImGuiListClipperPtr clipper;
+    //         unsafe
+    //         {
+    //             clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
+    //         }
+
+    //         clipper.Begin(itemCount);
+
+    //         while (clipper.Step())
+    //         {
+    //             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+    //             {
+    //                 if (i >= itemCount) break;
+    //                 int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
+    //                 if (realIndex >= MopMacroActionsHelper.Actions.Count) continue;
+
+    //                 DrawMopActionRow(realIndex, MopMacroActionsHelper.Actions[realIndex]);
+    //             }
+    //         }
+
+    //         clipper.End();
+    //         ImGui.EndTable();
+    //     }
+    // }
 }

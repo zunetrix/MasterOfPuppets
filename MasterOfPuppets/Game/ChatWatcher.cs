@@ -19,9 +19,9 @@ internal class ChatWatcher : IDisposable
     {
         // XivChatType.Say,
         XivChatType.Party,
-        XivChatType.CrossParty,
+        // XivChatType.CrossParty,
         XivChatType.FreeCompany,
-        XivChatType.Alliance,
+        // XivChatType.Alliance,
         XivChatType.Ls1,
         XivChatType.Ls2,
         XivChatType.Ls3,
@@ -82,6 +82,8 @@ internal class ChatWatcher : IDisposable
     private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {
         if (!Plugin.Config.UseChatSync) return;
+        if (isHandled) return;
+
         if (!AllowedChatTypes.Contains(type)
             || !Plugin.Config.ListenedChatTypes.Contains(type)
             || (Plugin.Config.UseChatCommandSenderWhitelist && !Plugin.Config.ChatCommandSenderWhitelist.Contains(sender.ToString()))
@@ -90,9 +92,13 @@ internal class ChatWatcher : IDisposable
             return;
         }
 
-        if (isHandled) return;
+        var messageString = message.ToString();
+        if (!CommandHandlers.Keys.Any(cmd => messageString.StartsWith(cmd, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
 
-        var parsedArgs = ParseArgs(message.ToString());
+        var parsedArgs = ParseArgs(messageString);
         if (!parsedArgs.Any()) return;
 
         string command = parsedArgs[0].ToLower();

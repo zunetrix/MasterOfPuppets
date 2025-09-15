@@ -163,7 +163,6 @@ internal class MainWindow : Window
 
             if (ImGui.BeginMenu("Actions"))
             {
-
                 if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowEmotesMenu"))
                 {
                     Ui.EmotesWindow.Toggle();
@@ -237,12 +236,12 @@ internal class MainWindow : Window
                 ImGui.EndMenu();
             }
 
-            if (ImGui.BeginMenu("Command Help"))
+            if (ImGui.MenuItem("Command Help"))
             {
                 Plugin.Ui.MacroHelpWindow.Toggle();
             }
-            ImGui.EndMenuBar();
 
+            ImGui.EndMenuBar();
             ImGui.PopStyleVar();
             ImGui.PopStyleColor();
         }

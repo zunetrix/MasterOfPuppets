@@ -32,7 +32,7 @@ internal static class MacroQueueExecutor
                 var secondsRound = Math.Round(seconds, 2, MidpointRounding.AwayFromZero);
                 var delayMs = TimeSpan.FromSeconds(secondsRound);
 
-                DalamudApi.PluginLog.Debug($"[WAIT] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}...");
+                DalamudApi.PluginLog.Debug($"[wait] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}...");
                 await Task.Delay(delayMs, token);
             },
 
@@ -48,12 +48,12 @@ internal static class MacroQueueExecutor
                 if (uint.TryParse(args, out uint actionId))
                 {
                     GameActionManager.UseActionById(actionId);
-                    DalamudApi.PluginLog.Debug($"[mopaction id] {actionId}");
+                    DalamudApi.PluginLog.Debug($"[mopaction] {actionId}");
                 }
                 else
                 {
                     GameActionManager.UseActionByName(args);
-                    DalamudApi.PluginLog.Debug($"[mopaction name] {args}");
+                    DalamudApi.PluginLog.Debug($"[mopaction] {args}");
                 }
 
                 await Task.CompletedTask;
@@ -72,13 +72,13 @@ internal static class MacroQueueExecutor
                 {
                     GameActionManager.UseItemById(itemId);
                     // GameActionManager.UseInventoryItemById(itemId);
-                    DalamudApi.PluginLog.Debug($"[mopitem id] {itemId}");
+                    DalamudApi.PluginLog.Debug($"[mopitem] {itemId}");
                 }
                 else
                 {
                     GameActionManager.UseItemByName(args);
                     // GameActionManager.UseInventoryItemByName(args);
-                    DalamudApi.PluginLog.Debug($"[mopitem name] {args}");
+                    DalamudApi.PluginLog.Debug($"[mopitem] {args}");
                 }
 
                 await Task.CompletedTask;
@@ -185,7 +185,7 @@ internal static class MacroQueueExecutor
                         "wait"
                     };
 
-                    if (!noDelayActions.Contains(action) || (delayBetweenActions > 0.0))
+                    if (!noDelayActions.Contains(action) && (delayBetweenActions > 0.0))
                     {
                         var secondsRound = Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero);
                         var delayMs = TimeSpan.FromSeconds(secondsRound);

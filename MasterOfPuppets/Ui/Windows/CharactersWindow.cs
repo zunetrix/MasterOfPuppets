@@ -86,6 +86,8 @@ public class CharactersWindow : Window
         ImGui.BeginDisabled(availablePartyMembers.Count == 0);
         ImGui.TextUnformatted(Language.CharactersLabel);
 
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
         if (ImGui.BeginCombo($"##PartyMemberSelectList", "Select a party character to add"))
         {
             foreach (var partyMember in availablePartyMembers)
@@ -98,6 +100,10 @@ public class CharactersWindow : Window
             }
             ImGui.EndCombo();
         }
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
+
+
         ImGui.EndDisabled();
         ImGuiUtil.HelpMarker("""
         Added characters are used to assign macro actions
@@ -248,6 +254,9 @@ public class CharactersWindow : Window
         ? cidsGroups[_selectedCidGroupIndex].Name
         : "Select a group";
 
+
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
         if (ImGui.BeginCombo($"##CidsGroupsSelectList", previewGroupValue))
         {
             for (var groupIndex = 0; groupIndex < cidsGroups.Count; groupIndex++)
@@ -263,6 +272,8 @@ public class CharactersWindow : Window
             }
             ImGui.EndCombo();
         }
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
 
         ImGui.SameLine();
         ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
@@ -292,6 +303,8 @@ public class CharactersWindow : Window
         ImGui.BeginDisabled(availableCharacters.Count == 0);
         ImGui.TextUnformatted(Language.CharactersLabel);
 
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
         if (ImGui.BeginCombo($"##CidGroupCharactersSelectList_cidGroup_{_selectedCidGroupIndex}", "Select a character to add to the group"))
         {
             foreach (var character in availableCharacters)
@@ -305,6 +318,9 @@ public class CharactersWindow : Window
             }
             ImGui.EndCombo();
         }
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
+
         ImGui.EndDisabled();
     }
 
