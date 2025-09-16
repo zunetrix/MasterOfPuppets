@@ -233,6 +233,29 @@ internal class MainWindow : Window
                     Ui.ItemWindow.Toggle();
                 }
 
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##ExecuteTargetMyTargetCommand"))
+                {
+                    Plugin.IpcProvider.ExecuteTargetMyTarget();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable("Target My Target"))
+                {
+                    Plugin.IpcProvider.ExecuteTargetMyTarget();
+                }
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Times, $"##ExecuteTargetClearCommand"))
+                {
+                    Plugin.IpcProvider.ExecuteTargetClear();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable("Target Clear"))
+                {
+                    Plugin.IpcProvider.ExecuteTargetClear();
+                }
+
                 ImGui.EndMenu();
             }
 

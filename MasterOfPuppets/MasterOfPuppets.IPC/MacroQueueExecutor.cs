@@ -20,19 +20,19 @@ internal static class MacroQueueExecutor
     private static readonly Dictionary<string, Func<string, CancellationToken, Task>> CustomMacroActionsHandlers =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            ["wait"] = async (args, token) =>
+            ["mopwait"] = async (args, token) =>
             {
                 if (string.IsNullOrWhiteSpace(args) ||
                 !double.TryParse(args, NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds))
                 {
-                    DalamudApi.PluginLog.Warning($"[wait] invalid argument: \"{args}\"");
+                    DalamudApi.PluginLog.Warning($"[mopwait] invalid argument: \"{args}\"");
                     return;
                 }
 
                 var secondsRound = Math.Round(seconds, 2, MidpointRounding.AwayFromZero);
                 var delayMs = TimeSpan.FromSeconds(secondsRound);
 
-                DalamudApi.PluginLog.Debug($"[wait] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}...");
+                DalamudApi.PluginLog.Debug($"[mopwait] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}...");
                 await Task.Delay(delayMs, token);
             },
 
@@ -107,11 +107,11 @@ internal static class MacroQueueExecutor
                 await Task.CompletedTask;
             },
 
-            ["petbarslot"] = async (args, token) =>
+            ["moppetbarslot"] = async (args, token) =>
             {
                 if (string.IsNullOrWhiteSpace(args) || !int.TryParse(args, out int slotIndex))
                 {
-                    DalamudApi.PluginLog.Warning($"[petbarslot] invalid argument: \"{args}\"");
+                    DalamudApi.PluginLog.Warning($"[moppetbarslot] invalid argument: \"{args}\"");
                     return;
                 }
 
@@ -119,12 +119,12 @@ internal static class MacroQueueExecutor
                 var maxHotBarSlots = 15;
                 if (realSlotIndex < 0 || realSlotIndex > maxHotBarSlots)
                 {
-                    DalamudApi.PluginLog.Warning($"[petbarslot] invalid slot {slotIndex}");
+                    DalamudApi.PluginLog.Warning($"[moppetbarslot] invalid slot {slotIndex}");
                     return;
                 }
 
                 HotbarManager.ExecutePetHotbarActionBySlotIndex((uint)realSlotIndex);
-                DalamudApi.PluginLog.Debug($"[petbarslot] {slotIndex}");
+                DalamudApi.PluginLog.Debug($"[moppetbarslot] {slotIndex}");
                 await Task.CompletedTask;
             },
         };
@@ -182,7 +182,7 @@ internal static class MacroQueueExecutor
                         "moptarget",
                         "moptargetof",
                         "moptargetclear",
-                        "wait"
+                        "mopwait"
                     };
 
                     if (!noDelayActions.Contains(action) && (delayBetweenActions > 0.0))

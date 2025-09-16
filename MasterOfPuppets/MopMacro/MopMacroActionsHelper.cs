@@ -73,38 +73,38 @@ public static class MopMacroActionsHelper
         },
         new MopAction
         {
-            TextCommand = "/wait <time>",
-            SuggestionCommand = "/wait ",
+            TextCommand = "/mopwait <time>",
+            SuggestionCommand = "/mopwait ",
             Example = """
-            /wait 3
-            /wait 3.5
-            /wait 0.5
+            /mopwait 3
+            /mopwait 3.5
+            /mopwait 0.5
             """,
-            Notes = "Use to wait a certain amount of time"
+            Notes = "Use to wait a certain amount of time is accepts decimals"
         },
         new MopAction
         {
-            TextCommand = "/petbarslot <slot number>",
-            SuggestionCommand = "/petbarslot ",
+            TextCommand = "/moppetbarslot <slot number>",
+            SuggestionCommand = "/moppetbarslot ",
             Example = """
             Rain Check:
-                /petbarslot 1
+                /moppetbarslot 1
 
             Umbrella Dance:
-                /petbarslot 2
+                /moppetbarslot 2
 
             Complete umbrella dance macro example
                 /fashion "Fat Cat Parasol"
-                /wait 3
-                /petbarslot 2
-                /wait 13
+                /mopwait 3
+                /moppetbarslot 2
+                /mopwait 13
                 /fashion "Fat Cat Parasol"
                 /cheer
             """,
             Notes = """
             Use especial pet hotbat slots like mount specials and parasol actions
             As alternativa it can also be used with skill name
-                /mopaction "Umbralla Dance"
+                /mopaction "Umbrella Dance"
             """
         },
         new MopAction
