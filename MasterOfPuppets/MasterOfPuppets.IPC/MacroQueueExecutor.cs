@@ -199,11 +199,11 @@ internal static class MacroQueueExecutor
             {
                 DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
 
-                // Chat.SendMessage(action);
-                DalamudApi.Framework.RunOnFrameworkThread(delegate
-                {
-                    Chat.SendMessage(action);
-                });
+                Chat.SendMessage(action);
+                // DalamudApi.Framework.RunOnFrameworkThread(delegate
+                // {
+                //     Chat.SendMessage(action);
+                // });
 
                 if (delayBetweenActions > 0.0)
                 {

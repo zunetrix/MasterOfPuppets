@@ -66,17 +66,11 @@ internal class ChatWatcher : IDisposable
         if (string.IsNullOrWhiteSpace(args))
             return list;
 
-        var matches = Regex.Matches(args.ToLowerInvariant(), @"[\""].+?[\""]|[^ ]+");
+        // preserve args with double quotes as one argument
+        var matches = Regex.Matches(args, @"[\""].+?[\""]|[^ ]+");
         foreach (Match match in matches)
         {
-            var value = match.Value;
-
-            if (value.StartsWith("\"") && value.EndsWith("\""))
-            {
-                value = value.Substring(1, value.Length - 2);
-            }
-
-            list.Add(value.ToLower());
+            list.Add(match.Value);
         }
 
         // inline execution
@@ -84,6 +78,15 @@ internal class ChatWatcher : IDisposable
         {
             string combined = string.Join(" ", list.Skip(1));
             return new List<string> { list[0], combined };
+        }
+
+        // normal macro name
+        for (int i = 1; i < list.Count; i++)
+        {
+            if (list[i].StartsWith("\"") && list[i].EndsWith("\""))
+            {
+                list[i] = list[i].Substring(1, list[i].Length - 2);
+            }
         }
 
         return list;
