@@ -12,7 +12,7 @@ internal static class MacroQueueExecutor
 {
     private static readonly ConcurrentQueue<(string[] actions, double delay)> MacroQueue = new();
     private static bool _running = false;
-    private static CancellationTokenSource _cts = new();
+    private static CancellationTokenSource _cancelTokenSource = new();
 
     public static List<string> CurrentActionsExecutionList { get; private set; } = new();
     public static int CurrentActionExecutionIndex { get; private set; } = -1;
@@ -145,8 +145,8 @@ internal static class MacroQueueExecutor
         {
             while (MacroQueue.TryDequeue(out var item))
             {
-                await ExecuteActions(item.actions, _cts.Token, item.delay);
-                if (_cts.IsCancellationRequested) break;
+                await ExecuteActions(item.actions, _cancelTokenSource.Token, item.delay);
+                if (_cancelTokenSource.IsCancellationRequested) break;
             }
         }
         finally
@@ -218,9 +218,9 @@ internal static class MacroQueueExecutor
 
     public static void StopMacroQueueExecution()
     {
-        _cts.Cancel();
-        _cts.Dispose();
-        _cts = new CancellationTokenSource();
+        _cancelTokenSource.Cancel();
+        _cancelTokenSource.Dispose();
+        _cancelTokenSource = new CancellationTokenSource();
 
         MacroQueue.Clear();
     }

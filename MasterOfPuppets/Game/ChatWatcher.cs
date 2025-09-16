@@ -61,9 +61,12 @@ internal class ChatWatcher : IDisposable
 
     private List<string> ParseArgs(string args)
     {
-        var matches = Regex.Matches(args.ToLowerInvariant(), @"[\""].+?[\""]|[^ ]+");
         var list = new List<string>();
 
+        if (string.IsNullOrWhiteSpace(args))
+            return list;
+
+        var matches = Regex.Matches(args.ToLowerInvariant(), @"[\""].+?[\""]|[^ ]+");
         foreach (Match match in matches)
         {
             var value = match.Value;
@@ -74,6 +77,13 @@ internal class ChatWatcher : IDisposable
             }
 
             list.Add(value.ToLower());
+        }
+
+        // inline execution
+        if (list.Count > 1 && list[1].StartsWith("/"))
+        {
+            string combined = string.Join(" ", list.Skip(1));
+            return new List<string> { list[0], combined };
         }
 
         return list;
@@ -92,6 +102,7 @@ internal class ChatWatcher : IDisposable
             return;
         }
 
+        // listen only to known commands
         var messageString = message.ToString();
         if (!CommandHandlers.Keys.Any(cmd => messageString.StartsWith(cmd, StringComparison.OrdinalIgnoreCase)))
         {
@@ -104,7 +115,7 @@ internal class ChatWatcher : IDisposable
         string command = parsedArgs[0].ToLower();
         string[] args = parsedArgs.Skip(1).ToArray();
 
-        DalamudApi.PluginLog.Debug($"OnChatMessage: [{command}]: {string.Join(" | ", args)}");
+        DalamudApi.PluginLog.Debug($"OnChatMessage: [{command}]: {string.Join("|", args)}");
 
         if (CommandHandlers.TryGetValue(command, out var action))
         {
@@ -124,6 +135,14 @@ internal class ChatWatcher : IDisposable
     {
         if (args.Length < 1) return;
 
+        // inline execution direct command
+        if (args[0].StartsWith("/", StringComparison.OrdinalIgnoreCase))
+        {
+            MacroQueueExecutor.EnqueueMacroActions(args, Plugin.Config.DelayBetweenActions);
+            return;
+        }
+
+        // macro name or number
         int macroIndexByName = Plugin.Config.Macros.FindIndex(m => string.Equals(m.Name, args[0], StringComparison.OrdinalIgnoreCase));
 
         if (!int.TryParse(args[0], out var macroIndexArg) && macroIndexByName == -1)

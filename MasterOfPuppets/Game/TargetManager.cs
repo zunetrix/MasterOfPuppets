@@ -134,7 +134,7 @@ public static class TargetManager
                         if (playerWorld != null)
                             lookupName = $"{lookupName}@{playerWorld}";
                     }
-                    DalamudApi.PluginLog.Warning($"TargetOf: \"{lookupName}\"");
+                    // DalamudApi.PluginLog.Warning($"TargetOf: \"{lookupName}\"");
 
                     if (!lookupName.Contains(assistName, StringComparison.InvariantCultureIgnoreCase)
                         || !((GameObjectStruct*)assistActor.Address)->GetIsTargetable()) continue;

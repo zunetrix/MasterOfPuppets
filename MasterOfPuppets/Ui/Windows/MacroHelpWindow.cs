@@ -143,7 +143,6 @@ public class MacroHelpWindow : Window
         ImGui.Spacing();
     }
 
-
     private void DrawMacroActionsGroups()
     {
         var isFiltered = !string.IsNullOrEmpty(_searchString);

@@ -26,6 +26,10 @@ public static class MopMacroActionsHelper
 
             For chat sync command use:
                 moprun <macro number> "Macro Name"
+
+            Inline chat execution
+                moprun /clap
+                moprun /moptargetof "Name@World"
             """
         },
         new MopAction

@@ -7,6 +7,7 @@ using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
 
+// TODO: move macros from config to individual manager and json file
 public static class MacroManager
 {
     private static string CompressString(string s)

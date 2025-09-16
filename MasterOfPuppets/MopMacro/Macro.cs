@@ -76,7 +76,7 @@ public class Macro
         };
     }
 
-    public void SanitizeAllActions()
+    public void SanitizeActions()
     {
         if (Commands == null) return;
 

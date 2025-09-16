@@ -86,7 +86,7 @@ public class MacroEditorWindow : Window
     private void SaveMacro()
     {
         var isNewMacro = MacroIndex == Plugin.Config.Macros.Count;
-        MacroItem.SanitizeAllActions();
+        MacroItem.SanitizeActions();
 
         if (isNewMacro)
         {
@@ -97,10 +97,9 @@ public class MacroEditorWindow : Window
             Plugin.Config.Macros[MacroIndex] = MacroItem;
         }
 
+        DalamudApi.ShowNotification($"Macro saved", NotificationType.Success, 5000);
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();
-        DalamudApi.ShowNotification($"Macro saved", NotificationType.Success, 5000);
-        this.IsOpen = false;
     }
 
     public override void Draw()
@@ -126,6 +125,7 @@ public class MacroEditorWindow : Window
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Save, $"##SaveMacroBtn", Language.SaveMacroBtn))
         {
             SaveMacro();
+            this.IsOpen = false;
         }
         ImGui.PopStyleColor(3);
 
