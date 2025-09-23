@@ -5,9 +5,6 @@ using System.Text.RegularExpressions;
 
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Interface.ImGuiNotification;
-
-using MasterOfPuppets.Ipc;
 
 namespace MasterOfPuppets;
 
@@ -59,7 +56,7 @@ internal class ChatWatcher : IDisposable
         DalamudApi.ChatGui.ChatMessage -= OnChatMessage;
     }
 
-    private List<string> ParseArgs(string args)
+    private List<string> ParseChatArgs(string args)
     {
         var list = new List<string>();
 
@@ -112,7 +109,7 @@ internal class ChatWatcher : IDisposable
             return;
         }
 
-        var parsedArgs = ParseArgs(messageString);
+        var parsedArgs = ParseChatArgs(messageString);
         if (!parsedArgs.Any()) return;
 
         string command = parsedArgs[0].ToLower();
@@ -141,34 +138,27 @@ internal class ChatWatcher : IDisposable
         // inline execution direct command
         if (args[0].StartsWith("/", StringComparison.OrdinalIgnoreCase))
         {
-            MacroQueueExecutor.EnqueueMacroActions(args, Plugin.Config.DelayBetweenActions);
+            // string[] tokens = { "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]", "[8]", "[t]", "[me]", "[tt]" };
+            // replace to the original game tokens that canot be sent via chat <me> will be translated to the char name
+            args[0] = Regex.Replace(
+                args[0],
+                @"\[(1|2|3|4|5|6|7|8|t|me|tt)\]",
+                m => $"<{m.Groups[1].Value}>",
+                RegexOptions.IgnoreCase
+            );
+
+            Plugin.MacroHandler.EnqueueMacroActions("mop-inline-macro", actions: args, Plugin.Config.DelayBetweenActions);
             return;
         }
 
-        // macro name or number
-        int macroIndexByName = Plugin.Config.Macros.FindIndex(m => string.Equals(m.Name, args[0], StringComparison.OrdinalIgnoreCase));
-
-        if (!int.TryParse(args[0], out var macroIndexArg) && macroIndexByName == -1)
-        {
-            DalamudApi.ShowNotification($"Invalid arguments to run macro", NotificationType.Error, 5000);
-            return;
-        }
-
-        // user input 1 index based
-        int macroIndex = macroIndexByName != -1 ? macroIndexByName : macroIndexArg - 1;
-        var isValidMacroIndex = Plugin.Config.Macros.IndexExists(macroIndex);
-        if (!isValidMacroIndex) return;
-
+        // macro execution
+        string macroNameOrIndex = args[0];
+        int macroIndex = Plugin.MacroManager.FindMacroIndex(macroNameOrIndex);
         var macro = Plugin.Config.Macros[macroIndex];
         var playerCid = DalamudApi.ClientState.LocalContentId;
+        var playerActions = macro.GetCidActions(playerCid);
 
-        var playerActions = macro.Commands?
-            .FirstOrDefault(c => c.Cids.Contains(playerCid))?.Actions;
-
-        if (string.IsNullOrWhiteSpace(playerActions)) return;
-
-        string[] actions = playerActions.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-        MacroQueueExecutor.EnqueueMacroActions(actions, Plugin.Config.DelayBetweenActions);
+        Plugin.MacroHandler.EnqueueMacroActions(macro.Name, playerActions, Plugin.Config.DelayBetweenActions);
     }
 
     public void SendChatStopMacroExecution()

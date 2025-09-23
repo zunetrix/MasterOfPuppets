@@ -97,8 +97,7 @@ internal class MainWindow : Window
         try
         {
             string macroImportString = ImGui.GetClipboardText();
-            var macro = MacroManager.MacroExportStringToMacro(macroImportString);
-            Plugin.Config.ImportMacro(macro);
+            Plugin.MacroManager.ImportMacroFromString(macroImportString);
             Plugin.IpcProvider.SyncConfiguration();
             DalamudApi.ShowNotification($"Macro imported", NotificationType.Success, 5000);
         }
@@ -259,7 +258,7 @@ internal class MainWindow : Window
                 ImGui.EndMenu();
             }
 
-            if (ImGui.MenuItem("Command Help"))
+            if (ImGui.MenuItem("Help"))
             {
                 Plugin.Ui.MacroHelpWindow.Toggle();
             }
@@ -371,9 +370,9 @@ internal class MainWindow : Window
         ImGui.PopStyleColor(3);
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.List, $"##ShowMacroQueueExecutorBtn", Language.ShowMacroQueueExecutorBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.List, $"##ShowMacroQueueBtn", Language.ShowMacroQueueBtn))
         {
-            Ui.MacroQueueExecutorWindow.Toggle();
+            Ui.MacroQueueWindow.Toggle();
         }
 
         ImGui.Spacing();
@@ -442,7 +441,7 @@ internal class MainWindow : Window
                     {
                         int targetIndex = originalIndex + offset;
                         // PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
-                        Plugin.Config.MoveMacroToIndex(originalIndex, targetIndex);
+                        Plugin.MacroManager.MoveMacroToIndex(originalIndex, targetIndex);
                         Plugin.IpcProvider.SyncConfiguration();
                     }
                 }
@@ -453,12 +452,11 @@ internal class MainWindow : Window
         ImGui.PopStyleColor();
 
         ImGui.TableNextColumn();
-        ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteMacro_{macroIdx}", Language.DeleteMacroBtn);
-        if (ImGui.IsItemHovered())
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteMacro_{macroIdx}", Language.DeleteMacroBtn))
         {
-            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            if (ImGui.GetIO().KeyCtrl)
             {
-                Plugin.Config.RemoveMacro(macroIdx);
+                Plugin.MacroManager.RemoveMacro(macroIdx);
                 Plugin.IpcProvider.SyncConfiguration();
             }
         }
@@ -466,7 +464,7 @@ internal class MainWindow : Window
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.FileExport, $"##ExportMacro_{macroIdx}", Language.ExportMacroBtn))
         {
-            var macroExportData = MacroManager.MacroToExportString(Plugin.Config.Macros[macroIdx].CloneWithoutCharacters());
+            var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: false);
             ImGui.SetClipboardText(macroExportData);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
@@ -476,7 +474,7 @@ internal class MainWindow : Window
         {
             if (ImGui.MenuItem("Export with characters"))
             {
-                var macroExportData = MacroManager.MacroToExportString(Plugin.Config.Macros[macroIdx].Clone());
+                var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: true);
                 ImGui.SetClipboardText(macroExportData);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             }
@@ -486,7 +484,7 @@ internal class MainWindow : Window
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CloneMacro_{macroIdx}", Language.CloneMacroBtn))
         {
-            Plugin.Config.CloneMacro(macroIdx);
+            Plugin.MacroManager.CloneMacro(macroIdx);
             Plugin.IpcProvider.SyncConfiguration();
         }
 
@@ -534,8 +532,7 @@ internal class MainWindow : Window
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                 ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 3;
-        var macros = Plugin.Config.Macros;
-        var itemCount = isFiltered ? MacroListSearchedIndexes.Count : macros.Count;
+        var itemCount = isFiltered ? MacroListSearchedIndexes.Count : Plugin.Config.Macros.Count;
 
         if (ImGui.BeginTable("##MacrosTable", tableColumnCount, tableFlags))
         {
@@ -557,7 +554,7 @@ internal class MainWindow : Window
                 {
                     if (i >= itemCount) break;
                     int realIndex = isFiltered ? MacroListSearchedIndexes[i] : i;
-                    if (realIndex >= macros.Count) continue;
+                    if (realIndex >= Plugin.Config.Macros.Count) continue;
 
                     DrawMacroEntry(realIndex);
                 }

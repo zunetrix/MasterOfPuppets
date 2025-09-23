@@ -21,6 +21,8 @@ public class Plugin : IDalamudPlugin
     internal PluginUi Ui { get; }
     internal IpcProvider IpcProvider { get; }
     internal ChatWatcher ChatWatcher { get; }
+    internal MacroHandler MacroHandler { get; }
+    internal MacroManager MacroManager { get; }
 
     public Plugin(IDalamudPluginInterface pluginInterface)
     {
@@ -31,6 +33,8 @@ public class Plugin : IDalamudPlugin
         Ui = new PluginUi(this);
         IpcProvider = new IpcProvider(this);
         ChatWatcher = new ChatWatcher(this);
+        MacroManager = new MacroManager(this);
+        MacroHandler = new MacroHandler(this);
 
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
         DalamudApi.PluginInterface.LanguageChanged += OnLanguageChange;
@@ -43,11 +47,10 @@ public class Plugin : IDalamudPlugin
         DalamudApi.CommandManager.AddHandler("/mop", new CommandInfo(OnCommand)
         {
             HelpMessage = """
-            Alias command
-                /mop run macro_number
-                /mop run "Macro name"
-                /mop stop
-
+            Commands:
+                /mop run "Macro name" -> execute macro
+                /mop stop -> stop macro execution
+                /mop queue -> show queue window
                 /mop targetmytarget
                 /mop targetclear
             """,
@@ -112,25 +115,26 @@ public class Plugin : IDalamudPlugin
             {
                 case "run":
                     {
-                        int macroIndexByName = Config.Macros.FindIndex(m => string.Equals(m.Name, args[1], StringComparison.OrdinalIgnoreCase));
-
-                        if (args.Count <= 1 || (!int.TryParse(args[1], out var macroIndexArg) && macroIndexByName == -1))
+                        if (args.Count <= 1)
                         {
                             DalamudApi.ShowNotification($"Invalid arguments to run macro", NotificationType.Error, 5000);
                             return;
                         }
 
-                        // user input 1 index based
-                        int macroIndex = macroIndexByName != -1 ? macroIndexByName : macroIndexArg - 1;
-                        var isValidMacroIndex = Config.Macros.IndexExists(macroIndex);
-                        if (!isValidMacroIndex) return;
-
+                        var macroNameOrNumber = args[1];
+                        int macroIndex = MacroManager.FindMacroIndex(macroNameOrNumber);
                         IpcProvider.RunMacro(macroIndex);
                     }
                     break;
+
                 case "stop":
                     IpcProvider.StopMacroExecution();
                     break;
+
+                case "queue":
+                    Ui.MacroQueueWindow.Toggle();
+                    break;
+
                 case "targetmytarget":
                     IpcProvider.ExecuteTargetMyTarget();
                     break;
@@ -138,12 +142,30 @@ public class Plugin : IDalamudPlugin
                 case "targetclear":
                     IpcProvider.ExecuteTargetClear();
                     break;
+                    // case "objectquantity":
+                    //     {
+                    //         if (args.Count <= 1)
+                    //         {
+                    //             DalamudApi.ShowNotification($"Invalid arguments to setobjectquantity", NotificationType.Error, 5000);
+                    //             return;
+                    //         }
+
+                    //         if (!Enum.TryParse<SettingsDisplayObjectLimitType>(args[1], ignoreCase: true, out var displayObjectLimitType)
+                    //             || !Enum.IsDefined(typeof(SettingsDisplayObjectLimitType), displayObjectLimitType))
+                    //         {
+                    //             DalamudApi.PluginLog.Warning($"Invalid object quantity value (0-5): {displayObjectLimitType}");
+                    //             return;
+                    //         }
+
+                    //         IpcProvider.SetGameSettingsObjectQuantity(displayObjectLimitType);
+                    //     }
+                    //     break;
             }
         }
         else
         {
             // no args toggle plugin window
-            Ui.MainWindow.IsOpen = !Ui.MainWindow.IsOpen;
+            Ui.MainWindow.Toggle();
         }
     }
 

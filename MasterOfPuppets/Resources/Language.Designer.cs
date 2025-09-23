@@ -703,11 +703,11 @@ internal class Language
             return ResourceManager.GetString("SearchInputLabel", resourceCulture);
         }
     }
-    internal static string ShowMacroQueueExecutorBtn
+    internal static string ShowMacroQueueBtn
     {
         get
         {
-            return ResourceManager.GetString("ShowMacroQueueExecutorBtn", resourceCulture);
+            return ResourceManager.GetString("ShowMacroQueueBtn", resourceCulture);
         }
     }
     internal static string ShowEmotesBtn
@@ -724,11 +724,18 @@ internal class Language
             return ResourceManager.GetString("EmotesTitle", resourceCulture);
         }
     }
-    internal static string MacroExecutionQueueTitle
+    internal static string MacroQueueTitle
     {
         get
         {
-            return ResourceManager.GetString("MacroExecutionQueueTitle", resourceCulture);
+            return ResourceManager.GetString("MacroQueueTitle", resourceCulture);
+        }
+    }
+    internal static string MacroImportExportTitle
+    {
+        get
+        {
+            return ResourceManager.GetString("MacroImportExportTitle", resourceCulture);
         }
     }
     internal static string ShowCharactersBtn
@@ -750,6 +757,13 @@ internal class Language
         get
         {
             return ResourceManager.GetString("SettingsWindowSyncClients", resourceCulture);
+        }
+    }
+    internal static string SettingsGameSettingsTab
+    {
+        get
+        {
+            return ResourceManager.GetString("SettingsGameSettingsTab", resourceCulture);
         }
     }
     internal static string FashionAccessoriesTitle

@@ -7,6 +7,7 @@ using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Bindings.ImGui;
 
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -93,6 +94,26 @@ public class DebugWindow : Window
             if (ImGui.Button("Target My Target"))
             {
                 Plugin.IpcProvider.ExecuteTargetMyTarget();
+            }
+
+            if (ImGui.Button("Enable Walk"))
+            {
+                MovementManager.EnableWalk();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Disable Walk"))
+            {
+                MovementManager.DisableWalk();
+            }
+
+            if (ImGui.Button("Get Object Quantity"))
+            {
+                GameSettingsManager.GetDisplayObjectLimit();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Set Object Quantity"))
+            {
+                GameSettingsManager.SetDisplayObjectLimit(SettingsDisplayObjectLimitType.Minimum);
             }
 
             if (ImGui.Button("Print Game Chat Error"))
@@ -413,6 +434,58 @@ public class DebugWindow : Window
         ImGui.EndCombo();
         return false;
     }
+
+    // /// <summary>
+    // /// Draw a "picker" popup to chose a plugin.
+    // /// </summary>
+    // /// <param name="id">The ID of the popup.</param>
+    // /// <param name="pickerSearch">String holding the search input.</param>
+    // /// <param name="onClicked">Action to be called if a plugin is clicked.</param>
+    // /// <param name="pluginDisabled">Function that should return true if a plugin should show as disabled.</param>
+    // /// <param name="pluginFiltered">Function that should return true if a plugin should not appear in the list.</param>
+    // /// <returns>An ImGuiID to open the popup.</returns>
+    // internal static uint DrawPluginPicker(string id, ref string pickerSearch, Action<LocalPlugin> onClicked, Func<LocalPlugin, bool> pluginDisabled, Func<LocalPlugin, bool>? pluginFiltered = null)
+    // {
+    //     var pm = Service<PluginManager>.GetNullable();
+    //     if (pm == null)
+    //         return 0;
+
+    //     var addPluginToProfilePopupId = ImGui.GetID(id);
+    //     using var popup = ImRaii.Popup(id);
+
+    //     if (popup.Success)
+    //     {
+    //         var width = ImGuiHelpers.GlobalScale * 300;
+
+    //         ImGui.SetNextItemWidth(width);
+    //         ImGui.InputTextWithHint("###pluginPickerSearch"u8, Locs.SearchHint, ref pickerSearch, 255);
+
+    //         var currentSearchString = pickerSearch;
+
+    //         using var listBox = ImRaii.ListBox("###pluginPicker"u8, new Vector2(width, width - 80));
+    //         if (listBox.Success)
+    //         {
+    //             // TODO: Plugin searching should be abstracted... installer and this should use the same search
+    //             var plugins = pm.InstalledPlugins.Where(
+    //                                 x => x.Manifest.SupportsProfiles &&
+    //                                      (currentSearchString.IsNullOrWhitespace() || x.Manifest.Name.Contains(
+    //                                           currentSearchString,
+    //                                           StringComparison.InvariantCultureIgnoreCase)))
+    //                             .Where(pluginFiltered ?? (_ => true));
+
+    //             foreach (var plugin in plugins)
+    //             {
+    //                 using var disabled2 = ImRaii.Disabled(pluginDisabled(plugin));
+    //                 if (ImGui.Selectable($"{plugin.Manifest.Name}{(plugin is LocalDevPlugin ? "(dev plugin)" : string.Empty)}###selector{plugin.Manifest.InternalName}"))
+    //                 {
+    //                     onClicked(plugin);
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     return addPluginToProfilePopupId;
+    // }
 
     private void DrawElementsDebugTab()
     {

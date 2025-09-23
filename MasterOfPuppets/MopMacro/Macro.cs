@@ -48,6 +48,42 @@ public class Command
             Actions = this.Actions
         };
     }
+
+    public void SanitizeActionsText()
+    {
+        if (string.IsNullOrWhiteSpace(this.Actions)) return;
+
+        var lines = this.Actions
+            .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .Select(line => System.Text.RegularExpressions.Regex.Replace(line, @"\s+", " "))
+            .ToList();
+
+        lines = lines
+       .Where(line => !line.StartsWith("/mop run", StringComparison.OrdinalIgnoreCase))
+       .ToList();
+
+        // keep only the last loop action
+        int lastLoopIndex = lines.FindLastIndex(l => l.StartsWith("/moploop", StringComparison.OrdinalIgnoreCase));
+        if (lastLoopIndex != -1)
+        {
+            lines = lines
+                .Where((line, idx) => !line.StartsWith("/moploop", StringComparison.OrdinalIgnoreCase) || idx == lastLoopIndex)
+                .ToList();
+        }
+
+        this.Actions = string.Join("\n", lines);
+    }
+
+
+    public string[] GetActionList()
+    {
+        string[] actionList = this.Actions.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+        .Where(line => line.Length > 0 && !line.StartsWith("#")).ToArray();
+
+        return actionList;
+    }
 }
 
 public class Macro
@@ -76,24 +112,11 @@ public class Macro
         };
     }
 
+    public string[] GetCidActions(ulong cid) =>
+    Commands?.FirstOrDefault(c => c.Cids.Contains(cid))?.GetActionList() ?? [];
+
     public void SanitizeActions()
     {
-        if (Commands == null) return;
-
-        foreach (var command in Commands)
-        {
-            if (string.IsNullOrWhiteSpace(command.Actions)) continue;
-
-            var cleaned = string.Join(
-                "\n",
-                command.Actions
-                    .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(line => line.Trim())
-                    .Where(line => !string.IsNullOrWhiteSpace(line))
-                    .Select(line => System.Text.RegularExpressions.Regex.Replace(line, @"\s+", " "))
-            );
-
-            command.Actions = cleaned;
-        }
+        Commands?.ForEach(command => command.SanitizeActionsText());
     }
 }

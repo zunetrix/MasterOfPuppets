@@ -16,6 +16,7 @@ public class SettingsWindow : Window
     private Plugin Plugin { get; }
     private FileDialogManager FileDialogManager { get; }
     private string _characterName = string.Empty;
+    private SettingsDisplayObjectLimitType _objectQuantityType;
 
     public SettingsWindow(Plugin plugin) : base($"{Plugin.Name} {Language.SettingsTitle}###SettingsWindow")
     {
@@ -25,6 +26,8 @@ public class SettingsWindow : Window
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
+
+        _objectQuantityType = GameSettingsManager.GetDisplayObjectLimit();
 
         FileDialogManager = new FileDialogManager();
     }
@@ -41,6 +44,7 @@ public class SettingsWindow : Window
         DrawGeneralTab();
         DrawWindowTab();
         DrawChatSyncTab();
+        DrawGameSettingsTab();
 
         // if (ImGui.BeginTabItem($"{Language.SettingsSoundTab}###sound-tab"))
         // {
@@ -138,6 +142,7 @@ public class SettingsWindow : Window
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
+            ImGuiUtil.HelpMarker("Allow actions to be executed in broadcast to all clients");
 
             ImGui.Spacing();
 
@@ -173,6 +178,7 @@ public class SettingsWindow : Window
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
+            ImGuiUtil.HelpMarker("Set 0 to disable");
 
             ImGui.Spacing();
             ImGui.Spacing();
@@ -198,7 +204,6 @@ public class SettingsWindow : Window
             }
             ImGui.PopStyleColor(3);
 
-
             // ImGui.Spacing();
             // var targetedColour = Plugin.Config.TargetedColour;
             // if (ImGui.ColorEdit4(Language.SettingsMarkersMarkTargetColour, ref targetedColour))
@@ -221,7 +226,6 @@ public class SettingsWindow : Window
 
     private void DrawWindowTab()
     {
-
         if (ImGui.BeginTabItem($"{Language.SettingsWindowTab}###WindowTab"))
         {
             var openOnStartup = Plugin.Config.OpenOnStartup;
@@ -403,6 +407,24 @@ public class SettingsWindow : Window
 
                 ImGui.Unindent();
             }
+
+            ImGui.EndTabItem();
+        }
+    }
+
+    private void DrawGameSettingsTab()
+    {
+        if (ImGui.BeginTabItem($"{Language.SettingsGameSettingsTab}###GameSettingsTab"))
+        {
+            ImGui.TextUnformatted("Object Quantity Limit");
+            ImGuiUtil.HelpMarker("Change for all clients");
+            if (ImGuiUtil.EnumCombo("##SettingsObjectQuantity", ref _objectQuantityType))
+            {
+                Plugin.IpcProvider.SetGameSettingsObjectQuantity(_objectQuantityType);
+            }
+            ImGuiUtil.ToolTip("Change object quantity limit");
+
+            ImGui.EndTabItem();
         }
     }
 }

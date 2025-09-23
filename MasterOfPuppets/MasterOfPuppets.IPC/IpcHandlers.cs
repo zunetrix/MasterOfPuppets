@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 
 namespace MasterOfPuppets.Ipc;
 
@@ -14,12 +13,14 @@ internal class IpcHandleAttribute : Attribute
     }
 }
 
-
 internal class IpcHandlers
 {
     private readonly Plugin Plugin;
 
-    public IpcHandlers(Plugin plugin) => Plugin = plugin;
+    public IpcHandlers(Plugin plugin)
+    {
+        Plugin = plugin;
+    }
 
     [IpcHandle(IpcMessageType.SyncConfiguration)]
     private void HandleSyncConfiguration(IpcMessage message)
@@ -53,12 +54,6 @@ internal class IpcHandlers
         GameActionManager.UseItemById(itemId);
     }
 
-    [IpcHandle(IpcMessageType.StopMacroExecution)]
-    private void HandleStopMacroExecution(IpcMessage message)
-    {
-        MacroQueueExecutor.StopMacroQueueExecution();
-    }
-
     [IpcHandle(IpcMessageType.ExecuteTargetMyTarget)]
     private void HandleExecuteTargetMyTarget(IpcMessage message)
     {
@@ -72,24 +67,30 @@ internal class IpcHandlers
         TargetManager.TargetClear();
     }
 
+    [IpcHandle(IpcMessageType.SetGameSettingsObjectQuantity)]
+    private void HandleSetGameSettingsObjectQuantity(IpcMessage message)
+    {
+        SettingsDisplayObjectLimitType displayObjectLimitType = message.DataStruct<SettingsDisplayObjectLimitType>();
+
+        if (!Enum.IsDefined(typeof(SettingsDisplayObjectLimitType), displayObjectLimitType))
+        {
+            DalamudApi.PluginLog.Warning($"Invalid object quantity value: {displayObjectLimitType}");
+            return;
+        }
+
+        GameSettingsManager.SetDisplayObjectLimit(displayObjectLimitType);
+    }
+
+    [IpcHandle(IpcMessageType.StopMacroExecution)]
+    private void HandleStopMacroExecution(IpcMessage message)
+    {
+        Plugin.MacroHandler.StopMacroQueueExecution();
+    }
+
     [IpcHandle(IpcMessageType.RunMacro)]
     private void HandleRunMacro(IpcMessage message)
     {
-        var macroIndex = message.DataStruct<int>();
-        if (macroIndex < 0 || macroIndex >= Plugin.Config.Macros.Count) return;
-
-        var macro = Plugin.Config.Macros[macroIndex];
-        var playerCid = DalamudApi.ClientState.LocalContentId;
-
-        var playerActions = macro.Commands?
-            .FirstOrDefault(c => c.Cids.Contains(playerCid))?.Actions;
-
-        if (string.IsNullOrWhiteSpace(playerActions)) return;
-
-        var actions = playerActions
-        .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
-        .Where(line => line.Length > 0 && !line.StartsWith("#")).ToArray();
-
-        MacroQueueExecutor.EnqueueMacroActions(actions, Plugin.Config.DelayBetweenActions);
+        int macroIndex = message.DataStruct<int>();
+        Plugin.MacroHandler.ExecuteMacro(macroIndex);
     }
 }

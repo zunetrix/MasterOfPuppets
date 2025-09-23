@@ -50,6 +50,7 @@ public static class TargetManager
 
                 if (closestMatch == null) return;
 
+                DalamudApi.PluginLog.Debug($"targeting: {closestMatch.Name.TextValue}");
                 DalamudApi.Targets.Target = closestMatch;
             });
         }
@@ -161,6 +162,7 @@ public static class TargetManager
                     return;
                 }
 
+                DalamudApi.PluginLog.Debug($"targeting: {closestMatch.TargetObject.Name.TextValue}");
                 DalamudApi.Targets.Target = closestMatch.TargetObject;
             });
         }

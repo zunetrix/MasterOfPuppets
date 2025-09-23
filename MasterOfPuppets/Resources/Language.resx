@@ -169,6 +169,9 @@
     <data name="MacroListTitle" xml:space="preserve">
         <value>Macro List</value>
     </data>
+    <data name="MacroImportExportTitle" xml:space="preserve">
+        <value>Macro Import Export</value>
+    </data>
     <data name="AddMacroBtn" xml:space="preserve">
         <value>Add New Macro</value>
     </data>
@@ -176,7 +179,7 @@
         <value>Edit Macro</value>
     </data>
     <data name="DeleteMacroBtn" xml:space="preserve">
-        <value>Delete Macro (double click)</value>
+        <value>Delete Macro (hold CTRL + click)</value>
     </data>
     <data name="SaveMacroBtn" xml:space="preserve">
         <value>Save Macro</value>
@@ -218,8 +221,8 @@ Right-Click to copy command</value>
     <data name="SearchInputLabel" xml:space="preserve">
         <value>Seach</value>
     </data>
-    <data name="ShowMacroQueueExecutorBtn" xml:space="preserve">
-        <value>Macro Execution Queue</value>
+    <data name="ShowMacroQueueBtn" xml:space="preserve">
+        <value>Macro Queue</value>
     </data>
     <data name="ShowEmotesBtn" xml:space="preserve">
         <value>Emotes</value>
@@ -227,8 +230,8 @@ Right-Click to copy command</value>
     <data name="EmotesTitle" xml:space="preserve">
         <value>Emotes</value>
     </data>
-    <data name="MacroExecutionQueueTitle" xml:space="preserve">
-        <value>Macro Execution Queue</value>
+    <data name="MacroQueueTitle" xml:space="preserve">
+        <value>Macro Queue</value>
     </data>
     <data name="SettingsWindowSaveConfigAfterSync" xml:space="preserve">
         <value>Save config after sync</value>
@@ -287,8 +290,11 @@ Right-Click to copy command</value>
     <data name="SettingsChatSyncTab" xml:space="preserve">
         <value>Chat Sync</value>
     </data>
+    <data name="SettingsGameSettingsTab" xml:space="preserve">
+        <value>Game Settings</value>
+    </data>
     <data name="ExportMacroBtn" xml:space="preserve">
-        <value>Export Macro</value>
+        <value>Export Macro (right click for more options)</value>
     </data>
     <data name="ImportMacroBtn" xml:space="preserve">
         <value>Import Macro From Clipboard</value>

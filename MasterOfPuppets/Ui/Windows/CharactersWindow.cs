@@ -203,10 +203,13 @@ public class CharactersWindow : Window
                 // ImGui.EndDisabled();
 
                 // ImGui.SameLine();
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{i}", "Remove"))
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{i}", "Remove (hold CTRL + click)"))
                 {
-                    Plugin.Config.RemoveCharacter(characters[i].Cid);
-                    Plugin.IpcProvider.SyncConfiguration();
+                    if (ImGui.GetIO().KeyCtrl)
+                    {
+                        Plugin.Config.RemoveCharacter(characters[i].Cid);
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
                 }
 
                 ImGui.PopID();
@@ -254,7 +257,6 @@ public class CharactersWindow : Window
         ? cidsGroups[_selectedCidGroupIndex].Name
         : "Select a group";
 
-
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
         if (ImGui.BeginCombo($"##CidsGroupsSelectList", previewGroupValue))
@@ -282,11 +284,15 @@ public class CharactersWindow : Window
         ImGui.BeginDisabled(!Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex));
         if (ImGui.Button($"Delete group"))
         {
-            Plugin.Config.CidsGroups.RemoveAt(_selectedCidGroupIndex);
-            Plugin.Config.Save();
-            Plugin.IpcProvider.SyncConfiguration();
+            if (ImGui.GetIO().KeyCtrl)
+            {
+                Plugin.Config.CidsGroups.RemoveAt(_selectedCidGroupIndex);
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
         }
         ImGui.EndDisabled();
+        ImGuiUtil.ToolTip("(hold CTRL + click)");
     }
 
     private void DrawGroupAvailableCharacterSelector()

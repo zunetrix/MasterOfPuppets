@@ -45,7 +45,6 @@ public static class ImGuiUtil
 
     public static Vector2 GetWindowContentRegion() => ImGui.GetWindowContentRegionMax() - ImGui.GetWindowContentRegionMin();
 
-
     public static bool EnumCombo<TEnum>(
     string label,
     ref TEnum @enum,
@@ -196,7 +195,6 @@ public static class ImGuiUtil
     {
         ImGuiComponents.IconButtonWithText(icon, text, size);
     }
-
 
     public static void DrawColoredBanner(string content, Vector4 color)
     {

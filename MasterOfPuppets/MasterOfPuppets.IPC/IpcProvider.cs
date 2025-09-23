@@ -153,6 +153,12 @@ internal class IpcProvider : IDisposable
         BroadCast(message, includeSelf: true);
     }
 
+    public void SetGameSettingsObjectQuantity(SettingsDisplayObjectLimitType displayObjectLimitType)
+    {
+        var message = IpcMessage.Create(IpcMessageType.SetGameSettingsObjectQuantity, displayObjectLimitType).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
     public void StopMacroExecution()
     {
         var message = IpcMessage.Create(IpcMessageType.StopMacroExecution).Serialize();
@@ -162,7 +168,6 @@ internal class IpcProvider : IDisposable
     public void RunMacro(int macroIndex, bool includeSelf = true)
     {
         DalamudApi.PluginLog.Debug($"[Run Macro] {macroIndex}");
-        // var macroJson = macroData.JsonSerialize();
         var message = IpcMessage.Create(IpcMessageType.RunMacro, macroIndex).Serialize();
         BroadCast(message, includeSelf);
     }

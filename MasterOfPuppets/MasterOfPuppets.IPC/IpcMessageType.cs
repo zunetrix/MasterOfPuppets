@@ -12,5 +12,6 @@ public enum IpcMessageType
     ExecuteActionCommand,
     ExecuteItemCommand,
     ExecuteTargetMyTarget,
-    ExecuteTargetClear
+    ExecuteTargetClear,
+    SetGameSettingsObjectQuantity
 }

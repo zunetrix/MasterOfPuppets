@@ -87,42 +87,12 @@ internal class Configuration : IPluginConfiguration
         OpenOnLogin = newPluginConfig.OpenOnLogin;
     }
 
-    public void ImportMacro(Macro macro)
+    public void AddCharacter(Character character)
     {
-        Macros.Add(macro);
-    }
-
-    public void MoveMacroToIndex(int itemIndex, int targetIndex)
-    {
-        Macros.MoveItemToIndex(itemIndex, targetIndex);
-        this.Save();
-    }
-
-    public void RemoveMacro(int itemIndex)
-    {
-        var isEmptyList = Macros == null || Macros.Count == 0;
-        var isValidIndex = itemIndex >= 0 && itemIndex < Macros.Count;
-
-        if (isEmptyList || !isValidIndex)
-            return;
-
-        Macros.RemoveAt(itemIndex);
-
-        this.Save();
-    }
-
-    public void CloneMacro(int itemIndex)
-    {
-        var isEmptyList = Macros == null || Macros.Count == 0;
-        var isValidIndex = itemIndex >= 0 && itemIndex < Macros.Count;
-
-
-        if (isEmptyList || !isValidIndex)
-            return;
-
-        var cloenedMacro = Macros[itemIndex].Clone();
-        cloenedMacro.Name += " (copy)";
-        Macros.Add(cloenedMacro);
+        if (!Characters.Any(c => c.Cid == character.Cid))
+        {
+            Characters.Add(new Character { Cid = character.Cid, Name = character.Name });
+        }
 
         this.Save();
     }
@@ -146,16 +116,6 @@ internal class Configuration : IPluginConfiguration
     public void MoveCharacterToIndex(int itemIndex, int targetIndex)
     {
         Characters.MoveItemToIndex(itemIndex, targetIndex);
-        this.Save();
-    }
-
-    public void AddCharacter(Character character)
-    {
-        if (!Characters.Any(c => c.Cid == character.Cid))
-        {
-            Characters.Add(new Character { Cid = character.Cid, Name = character.Name });
-        }
-
         this.Save();
     }
 }

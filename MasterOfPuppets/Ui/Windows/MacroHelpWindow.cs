@@ -17,6 +17,8 @@ public class MacroHelpWindow : Window
 {
     private Plugin Plugin { get; }
 
+    private int SelectedItemIndex = 0;
+
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
@@ -32,24 +34,109 @@ public class MacroHelpWindow : Window
 
     public override void Draw()
     {
-        ImGui.BeginChild("##MacroHelpHeaderFixedHeight", new Vector2(-1, 60 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginChild("##MacroHelpHeaderFixedHeight", new Vector2(-1, 45 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         DrawHeader();
         ImGui.EndChild();
 
         ImGui.BeginChild("##MacroHelpListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        // DrawMacroActionsTable();
-        DrawMacroActionsGroups();
+        DrawMacroHelpList();
+        ImGui.SameLine();
+        DrawMacroHelpContent(SelectedItemIndex);
         ImGui.EndChild();
+    }
+
+    private void DrawMacroHelpList()
+    {
+        var isFiltered = !string.IsNullOrEmpty(_searchString);
+        // var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
+
+        var helpData = isFiltered
+            ? ListSearchedIndexes.Select(i => MopMacroActionsHelper.Actions[i])
+            : MopMacroActionsHelper.Actions;
+
+        var macroActionGroups = helpData
+        .GroupBy(a => a.Category);
+        // .OrderBy(g => g.Key);
+
+        // left pane
+        ImGui.BeginChild("##MacroHelpCommandList", ImGuiHelpers.ScaledVector2(250, 0), true);
+        foreach (var macroActionGroup in macroActionGroups)
+        {
+            if (ImGui.CollapsingHeader($"{macroActionGroup.Key}##MacroHelpCategory{macroActionGroup.Key}"))
+            {
+                foreach (var action in macroActionGroup)
+                {
+                    int realIndex = MopMacroActionsHelper.Actions.IndexOf(action);
+                    bool isSelected = SelectedItemIndex == realIndex;
+
+                    if (isSelected)
+                    {
+                        ImGui.PushStyleColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered);
+                        ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered);
+                        ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
+                    }
+
+                    if (ImGui.Selectable(action.SuggestionCommand, isSelected))
+                    {
+                        SelectedItemIndex = realIndex;
+                    }
+
+                    if (isSelected)
+                        ImGui.PopStyleColor(3);
+                }
+            }
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+        }
+        ImGui.EndChild();
+    }
+
+    private void DrawMacroHelpContent(int itemIndex)
+    {
+        var MacroHelpData = MopMacroActionsHelper.Actions[itemIndex];
+
+        ImGui.BeginGroup();
+        ImGui.BeginChild("##MacroHelpContent", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()));
+        ImGuiUtil.DrawColoredBanner($"{MacroHelpData.SuggestionCommand}", Style.Components.ButtonBlueHovered);
+        ImGui.Spacing();
+        ImGui.Indent();
+
+        ImGui.TextUnformatted("Usage:");
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CopyMopActionTextCommand", "Copy Text Command"))
+        {
+            ImGui.SetClipboardText($"{MacroHelpData.SuggestionCommand}");
+            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+        }
+        ImGui.SameLine();
+        ImGui.TextUnformatted(MacroHelpData.TextCommand);
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        ImGui.TextUnformatted("Example:");
+        ImGui.TextWrapped(MacroHelpData.Example);
+        if (ImGui.IsItemClicked())
+        {
+            ImGui.SetClipboardText(MacroHelpData.Example);
+            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+        }
+        ImGuiUtil.ToolTip(Language.ClickToCopy);
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        ImGui.TextWrapped(MacroHelpData.Notes);
+
+        ImGui.Unindent();
+        ImGui.EndChild();
+        ImGui.EndGroup();
     }
 
     private void DrawHeader()
     {
-        ImGui.TextUnformatted($"{Language.ActionsTitle}");
-        ImGui.SameLine();
-        ImGuiUtil.HelpMarker("""
-        Click to copy
-        """);
-
         ImGui.Spacing();
 
         if (ImGui.InputTextWithHint("##MacroHelpSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
@@ -60,101 +147,6 @@ public class MacroHelpWindow : Window
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
-    }
-
-    private void DrawMopActionRow(int itemIndex, MopAction mopAction)
-    {
-        ImGui.PushID(itemIndex);
-        ImGui.TableNextRow();
-        ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{itemIndex + 1:000}");
-        ImGui.TextUnformatted("");
-
-        // ImGui.TableNextColumn();
-        // var icon = DalamudApi.TextureProvider.GetFromGameIcon(mount.IconId).GetWrapOrEmpty().Handle;
-        // var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
-
-        // ImGui.Image(icon, iconSize);
-        // if (ImGui.IsItemClicked())
-        // {
-        //     Plugin.IpcProvider.ExecuteTextCommand(mount.TextCommand);
-        // }
-        // ImGuiUtil.ToolTip(Language.ClickToExecute);
-
-        ImGui.TableNextColumn();
-        ImGui.TextWrapped(mopAction.TextCommand);
-        if (ImGui.IsItemClicked())
-        {
-            ImGui.SetClipboardText($"{mopAction.TextCommand}");
-            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-        }
-        ImGuiUtil.ToolTip(Language.ClickToCopy);
-        ImGui.TextUnformatted("");
-
-        ImGui.TableNextColumn();
-        ImGui.TextWrapped(mopAction.Example);
-        if (ImGui.IsItemClicked())
-        {
-            ImGui.SetClipboardText(mopAction.Example);
-            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-        }
-        ImGuiUtil.ToolTip(Language.ClickToCopy);
-        ImGui.TextUnformatted("");
-
-        ImGui.TableNextColumn();
-        ImGui.TextWrapped(mopAction.Notes);
-        ImGui.TextUnformatted("");
-
-        ImGui.PopID();
-    }
-
-    private void DrawMopActionEntry(int itemIndex, MopAction mopAction)
-    {
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CopyMopActionTextCommand_{itemIndex}", "Copy Text Command"))
-        {
-            ImGui.SetClipboardText($"{mopAction.TextCommand}");
-            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-        }
-
-        ImGui.SameLine();
-
-        if (ImGui.CollapsingHeader($"{mopAction.TextCommand}##MopAction_{itemIndex}"))
-        {
-            ImGui.Indent();
-
-            ImGui.TextUnformatted(mopAction.Example);
-            if (ImGui.IsItemClicked())
-            {
-                ImGui.SetClipboardText(mopAction.Example);
-                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-            }
-            ImGuiUtil.ToolTip(Language.ClickToCopy);
-
-            ImGui.Spacing();
-            ImGui.Separator();
-            ImGui.Spacing();
-
-            ImGui.TextUnformatted(mopAction.Notes);
-
-            ImGui.Unindent();
-        }
-
-        ImGui.Spacing();
-        ImGui.Spacing();
-    }
-
-    private void DrawMacroActionsGroups()
-    {
-        var isFiltered = !string.IsNullOrEmpty(_searchString);
-        var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
-
-        for (int i = 0; i < itemCount; i++)
-        {
-            int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
-            if (realIndex >= MopMacroActionsHelper.Actions.Count) continue;
-
-            DrawMopActionEntry(realIndex, MopMacroActionsHelper.Actions[realIndex]);
-        }
     }
 
     private void Search()
@@ -169,76 +161,4 @@ public class MacroHelpWindow : Window
             .ToList()
         );
     }
-
-    // private unsafe void DrawMacroActionsGroupsClipper()
-    // {
-    //     var isFiltered = !string.IsNullOrEmpty(_searchString);
-    //     var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
-
-    //     ImGuiListClipperPtr clipper;
-    //     unsafe
-    //     {
-    //         clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
-    //     }
-
-    //     clipper.Begin(itemCount);
-
-    //     while (clipper.Step())
-    //     {
-    //         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
-    //         {
-    //             if (i >= itemCount) break;
-    //             int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
-    //             if (realIndex >= MopMacroActionsHelper.Actions.Count) continue;
-
-    //             DrawMopActionEntry(realIndex, MopMacroActionsHelper.Actions[realIndex]);
-    //         }
-    //     }
-
-    //     clipper.End();
-    // }
-
-
-    // private unsafe void DrawMacroActionsTable()
-    // {
-    //     var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
-    //            ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
-    //     var tableColumnCount = 4;
-
-    //     var isFiltered = !string.IsNullOrEmpty(_searchString);
-    //     var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
-
-    //     if (ImGui.BeginTable("##MopMacroActionTable", tableColumnCount, tableFlags))
-    //     {
-    //         ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
-    //         ImGui.TableSetupColumn("Text Command", ImGuiTableColumnFlags.WidthStretch, 1.0f);
-    //         ImGui.TableSetupColumn("Example", ImGuiTableColumnFlags.WidthStretch, 1.0f);
-    //         ImGui.TableSetupColumn("Notes", ImGuiTableColumnFlags.WidthStretch);
-
-    //         ImGui.TableHeadersRow();
-
-    //         ImGuiListClipperPtr clipper;
-    //         unsafe
-    //         {
-    //             clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
-    //         }
-
-    //         clipper.Begin(itemCount);
-
-    //         while (clipper.Step())
-    //         {
-    //             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
-    //             {
-    //                 if (i >= itemCount) break;
-    //                 int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
-    //                 if (realIndex >= MopMacroActionsHelper.Actions.Count) continue;
-
-    //                 DrawMopActionRow(realIndex, MopMacroActionsHelper.Actions[realIndex]);
-    //             }
-    //         }
-
-    //         clipper.End();
-    //         ImGui.EndTable();
-    //     }
-    // }
 }

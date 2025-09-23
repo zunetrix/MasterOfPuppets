@@ -54,7 +54,7 @@ public class MacroEditorWindow : Window
     {
         MacroItem = new() { Commands = new List<Command>() };
         EditingExistingMacro = false;
-        MacroIndex = Plugin.Config.Macros.Count;
+        MacroIndex = Plugin.MacroManager.GetTotalMacros();
         SelectedCommandIndex = 0;
 
         _suggestions = [];
@@ -66,12 +66,8 @@ public class MacroEditorWindow : Window
     {
         RessetState();
 
-        var isEmptyList = Plugin.Config.Macros == null || Plugin.Config.Macros.Count == 0;
-        var isValidIndex = macroIndex >= 0 && macroIndex < Plugin.Config.Macros.Count;
-        if (isEmptyList || !isValidIndex) return;
-
+        MacroItem = Plugin.MacroManager.GetMacroByIndex(macroIndex);
         MacroIndex = macroIndex;
-        MacroItem = Plugin.Config.Macros[MacroIndex];
         EditingExistingMacro = true;
 
         this.Toggle();
@@ -85,16 +81,15 @@ public class MacroEditorWindow : Window
 
     private void SaveMacro()
     {
-        var isNewMacro = MacroIndex == Plugin.Config.Macros.Count;
-        MacroItem.SanitizeActions();
+        var isNewMacro = MacroIndex == Plugin.MacroManager.GetTotalMacros();
 
         if (isNewMacro)
         {
-            Plugin.Config.Macros.Add(MacroItem);
+            Plugin.MacroManager.AddMacro(MacroItem);
         }
         else
         {
-            Plugin.Config.Macros[MacroIndex] = MacroItem;
+            Plugin.MacroManager.UpdateMacro(MacroIndex, MacroItem);
         }
 
         DalamudApi.ShowNotification($"Macro saved", NotificationType.Success, 5000);
@@ -192,10 +187,9 @@ public class MacroEditorWindow : Window
         ImGui.BeginChild("##CommandList", ImGuiHelpers.ScaledVector2(150, 0), true);
         for (var commandIndex = 0; commandIndex < MacroItem.Commands.Count; commandIndex++)
         {
-            ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCommand_{commandIndex}", "Remove (Double Click)");
-            if (ImGui.IsItemHovered())
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCommand_{commandIndex}", "Remove (hold CTRL + click)"))
             {
-                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                if (ImGui.GetIO().KeyCtrl)
                 {
                     MacroItem.Commands.RemoveAt(commandIndex);
                 }
@@ -410,7 +404,7 @@ public class MacroEditorWindow : Window
 
         ImGui.Spacing();
         ImGui.Spacing();
-        ImGui.TextUnformatted("Actions");
+        ImGui.TextUnformatted(Language.ActionsTitle);
         if (ImGui.InputTextMultiline($"##InputAction_command_{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 150)))
         {
             _currentWord = GetCurrentWord(MacroItem.Commands[commandIndex].Actions);
@@ -488,195 +482,4 @@ public class MacroEditorWindow : Window
             text = text.Substring(0, index) + newWord + text.Substring(index + oldWord.Length);
         }
     }
-
-    // private void DrawCommandListCollapsing()
-    // {
-    //     var usedCids = MacroItem.Commands?
-    //     .SelectMany(c => c.Cids)
-    //     .ToHashSet() ?? new HashSet<ulong>();
-
-    //     var availableCharacters = Plugin.Config.Characters
-    //     .Where(character => !usedCids.Contains(character.Cid))
-    //     .ToList();
-
-    //     // new macro dont have any command
-    //     if (MacroItem.Commands == null || MacroItem.Commands.Count == 0) return;
-
-    //     float halfWidth = ImGui.GetContentRegionAvail().X / 2f - ImGui.GetStyle().ItemSpacing.X - 10 * ImGuiHelpers.GlobalScale;
-    //     float totalWidth = ImGui.GetContentRegionAvail().X;
-    //     float listWidth = totalWidth * 0.6f;
-    //     float comboWidth = totalWidth * 0.4f - ImGui.GetStyle().ItemSpacing.X - 20 * ImGuiHelpers.GlobalScale;
-
-    //     for (var commandIndex = 0; commandIndex < MacroItem.Commands.Count; commandIndex++)
-    //     {
-    //         if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowUp, $"##MoveCommandUpBtn_command{commandIndex}", "Move Up"))
-    //         {
-    //             MacroItem.Commands.MoveItemToIndex(commandIndex, commandIndex - 1);
-    //         }
-
-    //         ImGui.SameLine();
-    //         if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowDown, $"##MoveCommandDownBtn_command{commandIndex}", "Move Down"))
-    //         {
-    //             MacroItem.Commands.MoveItemToIndex(commandIndex, commandIndex + 1);
-    //         }
-
-    //         ImGui.SameLine();
-    //         ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCommandBtn_command{commandIndex}", "Remove Command (double click)");
-    //         if (ImGui.IsItemHovered())
-    //         {
-    //             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-    //             {
-    //                 MacroItem.Commands.RemoveAt(commandIndex);
-    //             }
-    //         }
-
-    //         // prevent render if all commands deleted
-    //         if (!MacroItem.Commands.IndexExists(commandIndex)) return;
-
-    //         ImGui.SameLine();
-
-    //         if (ImGui.CollapsingHeader($"Command ({commandIndex + 1})"))
-    //         {
-    //             ImGui.Indent();
-    //             ImGui.Spacing();
-
-    //             // horizontal layout
-    //             ImGui.BeginGroup();
-    //             ImGui.BeginChild($"##CharactersListChild_command_{commandIndex}", new Vector2(listWidth, 150), true);
-    //             ImGui.TextUnformatted(Language.CharactersLabel);
-
-    //             if (ImGui.BeginListBox($"##CharactersList_command_{commandIndex}", new Vector2(-1, -1)))
-    //             {
-    //                 for (var characterIndex = 0; characterIndex < MacroItem.Commands[commandIndex].Cids.Count; characterIndex++)
-    //                 {
-    //                     var targetCid = MacroItem.Commands[commandIndex].Cids[characterIndex];
-    //                     var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
-    //                         ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
-
-    //                     if (ImGui.Selectable($"{character.Name}##command_{commandIndex}_character_{characterIndex}", false, ImGuiSelectableFlags.AllowDoubleClick))
-    //                     {
-    //                         if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-    //                             MacroItem.Commands[commandIndex].Cids.RemoveAll(cid => cid == targetCid);
-    //                     }
-
-    //                     ImGuiUtil.ToolTip("Doubleclick to remove");
-    //                 }
-    //                 ImGui.EndListBox();
-    //             }
-    //             ImGui.EndChild();
-
-    //             ImGui.SameLine();
-    //             ImGui.BeginGroup();
-
-    //             ImGui.BeginDisabled(availableCharacters.Count == 0);
-    //             ImGui.PushItemWidth(comboWidth);
-    //             var charactersListPreviewLabel = Plugin.Config.Characters.Count == 0 ? "Set up the characters first" : "Select character to add";
-    //             if (ImGui.BeginCombo($"##CharacterSelectList_command_{commandIndex}", charactersListPreviewLabel))
-    //             {
-    //                 foreach (var character in availableCharacters)
-    //                 {
-    //                     if (ImGui.Selectable($"{character.Name}##Cid_{character.Cid}", false))
-    //                     {
-    //                         MacroItem.Commands[commandIndex].Cids.AddUnique(character.Cid);
-    //                     }
-    //                 }
-    //                 ImGui.EndCombo();
-    //             }
-    //             ImGui.PopItemWidth();
-
-    //             ImGui.Spacing();
-
-    //             ImGui.PushItemWidth(comboWidth);
-    //             if (ImGui.BeginCombo($"##CidsGroupSelectList_command_{commandIndex}", "Select group to add"))
-    //             {
-    //                 for (var groupIndex = 0; groupIndex < Plugin.Config.CidsGroups.Count; groupIndex++)
-    //                 {
-    //                     if (ImGui.Selectable($"{Plugin.Config.CidsGroups[groupIndex].Name}##CidGroup_{groupIndex}", false))
-    //                     {
-    //                         var availableCidsToAdd = Plugin.Config.CidsGroups[groupIndex].Cids
-    //                             .Where(cid => !MacroItem.Commands[commandIndex].Cids.Contains(cid)).ToList();
-
-    //                         if (availableCidsToAdd.Count == 0)
-    //                             DalamudApi.ShowNotification($"No available characters to add", NotificationType.Info, 3000);
-
-    //                         MacroItem.Commands[commandIndex].Cids.AddRangeUnique(availableCidsToAdd);
-    //                     }
-    //                 }
-    //                 ImGui.EndCombo();
-    //             }
-    //             ImGui.PopItemWidth();
-    //             ImGui.EndDisabled();
-
-    //             ImGui.Spacing();
-
-    //             ImGui.Button(Language.RemoveAllBtn);
-    //             if (ImGui.IsItemHovered())
-    //             {
-    //                 if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-    //                 {
-    //                     MacroItem.Commands[commandIndex].Cids = new();
-    //                 }
-    //             }
-    //             ImGuiUtil.ToolTip("Double Click");
-
-    //             ImGui.EndGroup();
-    //             ImGui.EndGroup();
-
-    //             ImGui.Spacing();
-    //             ImGui.Spacing();
-    //             ImGui.TextUnformatted("Actions");
-    //             if (ImGui.InputTextMultiline($"##InputAction_command_{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 150)))
-    //             {
-    //                 _currentWord = GetCurrentWord(MacroItem.Commands[commandIndex].Actions);
-
-    //                 // prevent suggestions for new line
-    //                 if (string.IsNullOrWhiteSpace(_currentWord))
-    //                 {
-    //                     _suggestions.Clear();
-    //                     _lastWord = string.Empty;
-    //                 }
-    //             }
-
-    //             if (!string.IsNullOrWhiteSpace(_currentWord) && _currentWord != _lastWord)
-    //             {
-    //                 _suggestions = MopMacroActionsHelper.Actions
-    //                     .Select(x => x.SuggestionCommand)
-    //                     .Concat(EmoteHelper.GetAllowedItems().Select(x => x.TextCommand))
-    //                     .Concat(ItemHelper.GetAllowedItems().Select(x => x.TextCommand))
-    //                     .Where(s => s.Contains(_currentWord, StringComparison.OrdinalIgnoreCase))
-    //                     .ToList();
-
-    //                 _lastWord = _currentWord;
-    //             }
-
-    //             if (_suggestions.Any())
-    //             {
-    //                 ImGui.BeginChild($"##AutoCompleteChild_{commandIndex}", new Vector2(-1, 150), true);
-    //                 int? selectedIndex = null;
-    //                 for (int i = 0; i < _suggestions.Count; i++)
-    //                 {
-    //                     if (ImGui.Selectable(_suggestions[i]))
-    //                         selectedIndex = i;
-    //                 }
-
-    //                 if (selectedIndex.HasValue)
-    //                 {
-    //                     ReplaceCurrentWord(ref MacroItem.Commands[commandIndex].Actions, _currentWord, _suggestions[selectedIndex.Value]);
-    //                     _suggestions.Clear();
-    //                     _lastWord = string.Empty;
-    //                 }
-    //                 ImGui.EndChild();
-    //             }
-
-    //             ImGui.Spacing();
-    //             ImGui.Spacing();
-    //             ImGui.Spacing();
-    //             ImGui.Separator();
-    //             ImGui.Unindent();
-    //         }
-
-    //         ImGui.Spacing();
-    //         ImGui.Spacing();
-    //     }
-    // }
 }

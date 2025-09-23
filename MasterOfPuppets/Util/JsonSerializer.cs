@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace MasterOfPuppets.Util;
 
-static class JsonSerializer
+public static class JsonSerializer
 {
     private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings()
     {

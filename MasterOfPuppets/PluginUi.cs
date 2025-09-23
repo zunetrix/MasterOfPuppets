@@ -12,7 +12,7 @@ namespace MasterOfPuppets
         public MainWindow MainWindow { get; }
         public SettingsWindow SettingsWindow { get; }
         public MacroEditorWindow MacroEditorWindow { get; }
-        public MacroQueueExecutorWindow MacroQueueExecutorWindow { get; }
+        public MacroQueueWindow MacroQueueWindow { get; }
         public CharactersWindow CharactersWindow { get; }
         public EmotesWindow EmotesWindow { get; }
         public MountWindow MountWindow { get; }
@@ -21,6 +21,7 @@ namespace MasterOfPuppets
         public FacewearWindow FacewearWindow { get; }
         public FashionAccessoriesWindow FashionAccessoriesWindow { get; }
         public MacroHelpWindow MacroHelpWindow { get; }
+        public MacroImportExportWindow MacroImportExportWindow { get; }
         public DebugWindow DebugWindow { get; }
 
         public PluginUi(Plugin plugin)
@@ -30,7 +31,7 @@ namespace MasterOfPuppets
             MainWindow = new MainWindow(Plugin, this);
             SettingsWindow = new SettingsWindow(Plugin);
             MacroEditorWindow = new MacroEditorWindow(Plugin);
-            MacroQueueExecutorWindow = new MacroQueueExecutorWindow(Plugin);
+            MacroQueueWindow = new MacroQueueWindow(Plugin);
             CharactersWindow = new CharactersWindow(Plugin);
             EmotesWindow = new EmotesWindow(Plugin);
             MountWindow = new MountWindow(Plugin);
@@ -39,12 +40,13 @@ namespace MasterOfPuppets
             FacewearWindow = new FacewearWindow(Plugin);
             FashionAccessoriesWindow = new FashionAccessoriesWindow(Plugin);
             MacroHelpWindow = new MacroHelpWindow(Plugin);
+            MacroImportExportWindow = new MacroImportExportWindow(Plugin);
             DebugWindow = new DebugWindow(Plugin);
 
             WindowSystem.AddWindow(MainWindow);
             WindowSystem.AddWindow(SettingsWindow);
             WindowSystem.AddWindow(MacroEditorWindow);
-            WindowSystem.AddWindow(MacroQueueExecutorWindow);
+            WindowSystem.AddWindow(MacroQueueWindow);
             WindowSystem.AddWindow(CharactersWindow);
             WindowSystem.AddWindow(EmotesWindow);
             WindowSystem.AddWindow(MountWindow);

@@ -7,15 +7,14 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 
 using MasterOfPuppets.Resources;
-using MasterOfPuppets.Ipc;
 
 namespace MasterOfPuppets;
 
-public class MacroQueueExecutorWindow : Window
+public class MacroQueueWindow : Window
 {
     private Plugin Plugin { get; }
 
-    public MacroQueueExecutorWindow(Plugin plugin) : base($"{Language.MacroExecutionQueueTitle}###MacroQueueExecutorWindow")
+    public MacroQueueWindow(Plugin plugin) : base($"{Language.MacroQueueTitle}###MacroQueueWindow")
     {
         Plugin = plugin;
 
@@ -51,14 +50,14 @@ public class MacroQueueExecutorWindow : Window
 
         if (ImGui.BeginListBox($"##CurrentActionsExecutionList", new Vector2(300, 200)))
         {
-            for (int i = 0; i < MacroQueueExecutor.CurrentActionsExecutionList.Count; i++)
+            for (int i = 0; i < Plugin.MacroHandler.CurrentActionsExecutionList.Count; i++)
             {
-                var isCurrentItemActive = i == MacroQueueExecutor.CurrentActionExecutionIndex;
+                var isCurrentItemActive = i == Plugin.MacroHandler.CurrentActionExecutionIndex;
                 if (isCurrentItemActive)
                 {
                     ImGui.PushStyleColor(ImGuiCol.Text, Style.Colors.Green);
                 }
-                ImGui.Selectable($"[{i:000}] {MacroQueueExecutor.CurrentActionsExecutionList[i]}##CurrentActionsExecutionList{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
+                ImGui.Selectable($"[{i + 1:000}] {Plugin.MacroHandler.CurrentActionsExecutionList[i]}##CurrentActionsExecutionList{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
                 // var windowWidth = ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
                 // ImGui.SameLine(windowWidth - ImGui.CalcTextSize(time).X);
 
