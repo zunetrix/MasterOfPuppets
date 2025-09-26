@@ -24,7 +24,7 @@ public class MountWindow : Window
     {
         Plugin = plugin;
 
-        Size = ImGuiHelpers.ScaledVector2(500, 300);
+        Size = ImGuiHelpers.ScaledVector2(500, 450);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;

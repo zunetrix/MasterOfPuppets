@@ -24,8 +24,9 @@ public class CharactersWindow : Window
     {
         Plugin = plugin;
 
-        Size = ImGuiHelpers.ScaledVector2(500, 300);
+        Size = ImGuiHelpers.ScaledVector2(450, 400);
         SizeCondition = ImGuiCond.FirstUseEver;
+        // SizeCondition = ImGuiCond.Always;
     }
 
     public override void PreDraw()
@@ -106,7 +107,7 @@ public class CharactersWindow : Window
 
         ImGui.EndDisabled();
         ImGuiUtil.HelpMarker("""
-        Added characters are used to assign macro actions
+        Added characters are used to assign macro actions, once in the list they dont need be in the party to be assigned in macros
 
         Drag to reorder
         """);
@@ -217,6 +218,9 @@ public class CharactersWindow : Window
 
             ImGui.EndTable();
         }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
     }
 
     private void DrawCidsGroupsHeader()

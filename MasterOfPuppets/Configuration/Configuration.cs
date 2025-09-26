@@ -26,7 +26,11 @@ internal class Configuration : IPluginConfiguration
     public List<CidGroup> CidsGroups { get; set; } = new();
     public double DelayBetweenActions { get; set; } = 1.00;
     public bool AutoSaveMacro { get; set; } = false;
-    public string MacroExportPath { get; set; } = string.Empty;
+    public string MacroExportPath { get; set; } = DalamudApi.PluginInterface.ConfigDirectory.FullName ?? string.Empty;
+    public MacroImportMode MacroImportMode { get; set; } = MacroImportMode.AppendAll;
+    public bool IncludeCidOnExport { get; set; } = false;
+    public bool IncludeCidOnImport { get; set; } = true;
+    public bool BackupBeforeImport { get; set; } = true;
 
     // chat commands
     public bool UseChatSync { get; set; } = false;
@@ -68,18 +72,23 @@ internal class Configuration : IPluginConfiguration
         if (string.IsNullOrWhiteSpace(cofigurationJson)) return;
 
         var newPluginConfig = cofigurationJson.JsonDeserialize<Configuration>();
-
+        // macro
         Macros = newPluginConfig.Macros;
         Characters = newPluginConfig.Characters;
         CidsGroups = newPluginConfig.CidsGroups;
         AutoSaveMacro = newPluginConfig.AutoSaveMacro;
+
+        // import export
         MacroExportPath = newPluginConfig.MacroExportPath;
+        MacroImportMode = newPluginConfig.MacroImportMode;
+        IncludeCidOnExport = newPluginConfig.IncludeCidOnExport;
+        IncludeCidOnImport = newPluginConfig.IncludeCidOnImport;
+        BackupBeforeImport = newPluginConfig.BackupBeforeImport;
 
         SyncClients = newPluginConfig.SyncClients;
 
         UseChatSync = newPluginConfig.UseChatSync;
         ListenedChatTypes = newPluginConfig.ListenedChatTypes;
-
         UseChatCommandSenderWhitelist = newPluginConfig.UseChatCommandSenderWhitelist;
         ChatCommandSenderWhitelist = newPluginConfig.ChatCommandSenderWhitelist;
 

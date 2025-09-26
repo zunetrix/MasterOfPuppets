@@ -18,7 +18,7 @@ public class MacroQueueWindow : Window
     {
         Plugin = plugin;
 
-        Size = ImGuiHelpers.ScaledVector2(310, 250);
+        Size = ImGuiHelpers.ScaledVector2(250, 220);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
@@ -31,8 +31,19 @@ public class MacroQueueWindow : Window
 
     public override void Draw()
     {
-        ImGui.TextUnformatted("Action Queue");
+        ImGui.BeginDisabled(true);
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, $"##StartMacroExecutionQueueBtn", "Start"))
+        {
+            // Plugin.IpcProvider.StartMacroExecution();
+        }
+
         ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Pause, $"##PauseMacroExecutionQueueBtn", "Pause"))
+        {
+            // Plugin.IpcProvider.PauseMacroExecution();
+        }
+        ImGui.EndDisabled();
+
         ImGui.SameLine();
         ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);

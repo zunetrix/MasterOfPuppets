@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Numerics;
 
-using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
@@ -14,7 +13,6 @@ namespace MasterOfPuppets;
 public class SettingsWindow : Window
 {
     private Plugin Plugin { get; }
-    private FileDialogManager FileDialogManager { get; }
     private string _characterName = string.Empty;
     private SettingsDisplayObjectLimitType _objectQuantityType;
 
@@ -22,19 +20,16 @@ public class SettingsWindow : Window
     {
         Plugin = plugin;
 
-        Size = ImGuiHelpers.ScaledVector2(500, 300);
+        Size = ImGuiHelpers.ScaledVector2(400, 300);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
 
         _objectQuantityType = GameSettingsManager.GetDisplayObjectLimit();
-
-        FileDialogManager = new FileDialogManager();
     }
 
     public override void PreDraw()
     {
-        FileDialogManager.Draw();
         base.PreDraw();
     }
 
@@ -42,92 +37,8 @@ public class SettingsWindow : Window
     {
         if (!ImGui.BeginTabBar("##SettingsTabs")) return;
         DrawGeneralTab();
-        DrawWindowTab();
         DrawChatSyncTab();
         DrawGameSettingsTab();
-
-        // if (ImGui.BeginTabItem($"{Language.SettingsSoundTab}###sound-tab"))
-        // {
-        //     var playSound = Plugin.Config.PlaySoundOnTarget;
-        //     if (ImGui.Checkbox(Language.SettingsSoundEnabled, ref playSound))
-        //     {
-        //         Plugin.Config.PlaySoundOnTarget = playSound;
-        //         Plugin.Config.Save();
-        //     }
-
-        //     ImGui.TextUnformatted(Language.SettingsSoundPath);
-        //     Vector2 buttonSize;
-        //     ImGui.PushFont(UiBuilder.IconFont);
-        //     try
-        //     {
-        //         buttonSize = ImGuiHelpers.GetButtonSize(FontAwesomeIcon.Folder.ToIconString());
-        //     }
-        //     finally
-        //     {
-        //         ImGui.PopFont();
-        //     }
-
-        //     var path = Plugin.Config.SoundPath ?? "";
-        //     ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - buttonSize.X);
-        //     if (ImGui.InputText("###sound-path", ref path, 1_000))
-        //     {
-        //         path = path.Trim();
-        //         Plugin.Config.SoundPath = path.Length == 0 ? null : path;
-        //         Plugin.Config.Save();
-        //     }
-
-        //     ImGui.SameLine();
-
-        //     ImGui.PushFont(UiBuilder.IconFont);
-        //     try
-        //     {
-        //         if (ImGui.Button(FontAwesomeIcon.Folder.ToIconString()))
-        //         {
-        //             FileDialogManager.OpenFileDialog(Language.SettingsSoundPath, ".wav,.mp3,.aif,.aiff,.wma,.aac", (selected, selectedPath) =>
-        //             {
-        //                 if (!selected)
-        //                 {
-        //                     return;
-        //                 }
-
-        //                 path = selectedPath.Trim();
-        //                 Plugin.Config.SoundPath = path.Length == 0 ? null : path;
-        //                 Plugin.Config.Save();
-        //             });
-        //         }
-        //     }
-        //     finally
-        //     {
-        //         ImGui.PopFont();
-        //     }
-
-        //     ImGui.Text(Language.SettingsSoundPathHelp);
-
-        //     var volume = Plugin.Config.SoundVolume * 100f;
-        //     if (ImGui.DragFloat(Language.SettingsSoundVolume, ref volume, .1f, 0f, 100f, "%.1f%%"))
-        //     {
-        //         Plugin.Config.SoundVolume = Math.Max(0f, Math.Min(1f, volume / 100f));
-        //         Plugin.Config.Save();
-        //     }
-
-        //     var soundCooldown = Plugin.Config.SoundCooldown;
-        //     if (ImGui.DragFloat(Language.SettingsSoundCooldown, ref soundCooldown, .01f, 0f, 30f))
-        //     {
-        //         soundCooldown = Math.Max(0f, soundCooldown);
-        //         Plugin.Config.SoundCooldown = soundCooldown;
-        //         Plugin.Config.Save();
-        //     }
-
-        //     var playWhenClosed = Plugin.Config.PlaySoundWhenClosed;
-        //     if (ImGui.Checkbox(Language.SettingsSoundPlayWhenClosed, ref playWhenClosed))
-        //     {
-        //         Plugin.Config.PlaySoundWhenClosed = playWhenClosed;
-        //         Plugin.Config.Save();
-        //     }
-
-        //     ImGui.EndTabItem();
-        // }
-
         ImGui.EndTabBar();
     }
 
@@ -135,6 +46,8 @@ public class SettingsWindow : Window
     {
         if (ImGui.BeginTabItem($"{Language.SettingsGeneralTab}###GeneralTab"))
         {
+
+            ImGuiGroupPanel.BeginGroupPanel(Language.SettingsGeneralTab);
             var syncClients = Plugin.Config.SyncClients;
             if (ImGui.Checkbox(Language.SettingsWindowSyncClients, ref syncClients))
             {
@@ -144,6 +57,7 @@ public class SettingsWindow : Window
             }
             ImGuiUtil.HelpMarker("Allow actions to be executed in broadcast to all clients");
 
+            ImGui.Spacing();
             ImGui.Spacing();
 
             var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
@@ -179,55 +93,13 @@ public class SettingsWindow : Window
                 Plugin.IpcProvider.SyncConfiguration();
             }
             ImGuiUtil.HelpMarker("Set 0 to disable");
+            ImGuiGroupPanel.EndGroupPanel();
 
             ImGui.Spacing();
             ImGui.Spacing();
-            ImGui.Separator();
-            ImGui.Spacing();
-            ImGui.Spacing();
 
-            ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonPurpleNormal);
-            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonPurpleHovered);
-            ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonPurpleActive);
-            if (ImGui.Button(Language.OpenPluginFolder))
-            {
-                WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
-            }
 
-            ImGui.SameLine();
-            ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
-            ImGui.SameLine();
-
-            if (ImGui.Button(Language.OpenPluginConfigFile))
-            {
-                WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
-            }
-            ImGui.PopStyleColor(3);
-
-            // ImGui.Spacing();
-            // var targetedColour = Plugin.Config.TargetedColour;
-            // if (ImGui.ColorEdit4(Language.SettingsMarkersMarkTargetColour, ref targetedColour))
-            // {
-            //     Plugin.Config.TargetedColour = targetedColour;
-            //     Plugin.Config.Save();
-            // }
-
-            // var targetedSize = Plugin.Config.TargetedSize;
-            // if (ImGui.DragFloat(Language.SettingsMarkersMarkTargetSize, ref targetedSize, 0.01f, 0f, 15f))
-            // {
-            //     targetedSize = Math.Max(0f, targetedSize);
-            //     Plugin.Config.TargetedSize = targetedSize;
-            //     Plugin.Config.Save();
-            // }
-
-            ImGui.EndTabItem();
-        }
-    }
-
-    private void DrawWindowTab()
-    {
-        if (ImGui.BeginTabItem($"{Language.SettingsWindowTab}###WindowTab"))
-        {
+            ImGuiGroupPanel.BeginGroupPanel("Window");
             var openOnStartup = Plugin.Config.OpenOnStartup;
             if (ImGui.Checkbox(Language.SettingsWindowOpenOnStartup, ref openOnStartup))
             {
@@ -273,6 +145,48 @@ public class SettingsWindow : Window
             //     Plugin.Config.Save();
             //     Plugin.Ui.MainWindow.UpdateConfig();
             // }
+            ImGuiGroupPanel.EndGroupPanel();
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+            ImGui.Spacing();
+
+            ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonPurpleNormal);
+            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonPurpleHovered);
+            ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonPurpleActive);
+            if (ImGui.Button(Language.OpenPluginFolder))
+            {
+                WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
+            }
+
+            ImGui.SameLine();
+            ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
+            ImGui.SameLine();
+
+            if (ImGui.Button(Language.OpenPluginConfigFile))
+            {
+                WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
+            }
+            ImGui.PopStyleColor(3);
+
+            // ImGui.Spacing();
+            // var targetedColour = Plugin.Config.TargetedColour;
+            // if (ImGui.ColorEdit4(Language.SettingsMarkersMarkTargetColour, ref targetedColour))
+            // {
+            //     Plugin.Config.TargetedColour = targetedColour;
+            //     Plugin.Config.Save();
+            // }
+
+            // var targetedSize = Plugin.Config.TargetedSize;
+            // if (ImGui.DragFloat(Language.SettingsMarkersMarkTargetSize, ref targetedSize, 0.01f, 0f, 15f))
+            // {
+            //     targetedSize = Math.Max(0f, targetedSize);
+            //     Plugin.Config.TargetedSize = targetedSize;
+            //     Plugin.Config.Save();
+            // }
+
             ImGui.EndTabItem();
         }
     }
@@ -318,7 +232,7 @@ public class SettingsWindow : Window
             ImGui.Spacing();
             ImGui.Spacing();
 
-            if (ImGui.CollapsingHeader($"Allowed Chats"))
+            if (ImGui.CollapsingHeader("Allowed Chats"))
             {
                 ImGui.Indent();
                 if (ImGui.BeginCombo("##ListenedChatTypesSelectList", "Select Chat to Listen"))

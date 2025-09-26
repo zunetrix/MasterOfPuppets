@@ -181,6 +181,9 @@
     <data name="DeleteMacroBtn" xml:space="preserve">
         <value>Delete Macro (hold CTRL + click)</value>
     </data>
+    <data name="DeleteSelectedMacrosBtn" xml:space="preserve">
+        <value>Delete Selected Macros</value>
+    </data>
     <data name="SaveMacroBtn" xml:space="preserve">
         <value>Save Macro</value>
     </data>

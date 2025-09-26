@@ -616,6 +616,13 @@ internal class Language
             return ResourceManager.GetString("DeleteMacroBtn", resourceCulture);
         }
     }
+    internal static string DeleteSelectedMacrosBtn
+    {
+        get
+        {
+            return ResourceManager.GetString("DeleteSelectedMacrosBtn", resourceCulture);
+        }
+    }
     internal static string SaveMacroBtn
     {
         get

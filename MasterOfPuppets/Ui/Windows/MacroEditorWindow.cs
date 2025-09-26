@@ -28,7 +28,7 @@ public class MacroEditorWindow : Window
     {
         Plugin = plugin;
 
-        Size = ImGuiHelpers.ScaledVector2(700, 500);
+        Size = ImGuiHelpers.ScaledVector2(700, 550);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
     }
@@ -40,21 +40,25 @@ public class MacroEditorWindow : Window
 
     public override void OnClose()
     {
+        var isMacroSaved = false;
         if (Plugin.Config.AutoSaveMacro && EditingExistingMacro)
         {
-            SaveMacro();
+            isMacroSaved = SaveMacro();
         }
 
-        RessetState();
+        if (isMacroSaved)
+        {
+            RessetState();
 
-        base.OnClose();
+            base.OnClose();
+        }
     }
 
     private void RessetState()
     {
         MacroItem = new() { Commands = new List<Command>() };
         EditingExistingMacro = false;
-        MacroIndex = Plugin.MacroManager.GetTotalMacros();
+        MacroIndex = Plugin.MacroManager.GetMacrosCount();
         SelectedCommandIndex = 0;
 
         _suggestions = [];
@@ -79,22 +83,21 @@ public class MacroEditorWindow : Window
         this.Toggle();
     }
 
-    private void SaveMacro()
+    private bool SaveMacro()
     {
-        var isNewMacro = MacroIndex == Plugin.MacroManager.GetTotalMacros();
+        var isNewMacro = MacroIndex == Plugin.MacroManager.GetMacrosCount();
 
+        bool isMacroSaved;
         if (isNewMacro)
         {
-            Plugin.MacroManager.AddMacro(MacroItem);
+            isMacroSaved = Plugin.MacroManager.AddMacro(MacroItem);
         }
         else
         {
-            Plugin.MacroManager.UpdateMacro(MacroIndex, MacroItem);
+            isMacroSaved = Plugin.MacroManager.UpdateMacro(MacroIndex, MacroItem);
         }
 
-        DalamudApi.ShowNotification($"Macro saved", NotificationType.Success, 5000);
-        Plugin.Config.Save();
-        Plugin.IpcProvider.SyncConfiguration();
+        return isMacroSaved;
     }
 
     public override void Draw()

@@ -1,14 +1,14 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 using Dalamud.Interface;
+using Dalamud.Utility;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.ImGuiFileDialog;
 
 using MasterOfPuppets.Resources;
-using Dalamud.Utility;
-using System;
 
 namespace MasterOfPuppets;
 
@@ -16,15 +16,13 @@ public class MacroImportExportWindow : Window
 {
     private Plugin Plugin { get; }
     private FileDialogManager FileDialogManager { get; }
-    private bool _includeCids = false;
-    private MacroImportMode _importMode = MacroImportMode.Add;
 
     public MacroImportExportWindow(Plugin plugin) : base($"{Language.MacroImportExportTitle}###MacroImportExportWindow")
     {
         Plugin = plugin;
         FileDialogManager = new FileDialogManager();
 
-        Size = ImGuiHelpers.ScaledVector2(310, 250);
+        Size = ImGuiHelpers.ScaledVector2(350, 320);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
@@ -38,59 +36,177 @@ public class MacroImportExportWindow : Window
 
     public override void Draw()
     {
-        ImGui.TextUnformatted("Macro Export");
-        ImGui.Separator();
+        ImGuiGroupPanel.BeginGroupPanel("Macro Export");
+        ImGui.TextUnformatted("Export Directory:");
+        ImGui.TextUnformatted(Plugin.Config.MacroExportPath.EllipsisPath(50));
 
-        var macroExportPath = Plugin.Config.MacroExportPath;
-        ImGui.InputText("Exporting Directory", ref macroExportPath);
         ImGui.SameLine();
+        ImGui.Dummy(ImGuiHelpers.ScaledVector2(10));
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.FileExport))
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.FolderOpen, "##OpenExportFolderBtn", "Open Export Folder"))
+        {
+            WindowsApi.OpenFolder(Plugin.Config.MacroExportPath);
+        }
+
+        var includeCidOnExport = Plugin.Config.IncludeCidOnExport;
+        if (ImGui.Checkbox("Include CIDs##IncludeCidOnExport", ref includeCidOnExport))
+        {
+            Plugin.Config.IncludeCidOnExport = includeCidOnExport;
+            Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
+        }
+        ImGuiUtil.HelpMarker("""
+        Include assigned characters cids data in the exported file
+        (disable if you want to share the macro with someone without your character data)
+        """);
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
+        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
+        if (ImGui.Button("Export All Macros"))
         {
             var exportFolder = Plugin.Config.MacroExportPath.IsNullOrEmpty() ?
                         DalamudApi.PluginInterface.ConfigDirectory.FullName : Plugin.Config.MacroExportPath;
 
-            var dateNow = DateTime.Now.ToString("yyyy-MM-dd_HHmm");
+            var dateNow = DateTime.Now.ToString("yyyy-MM-dd_HHmmss");
             var exportFileName = $"mop-macro-export-{dateNow}.json";
 
             FileDialogManager.SaveFileDialog("Export", ".json", exportFileName, ".json", (result, selectedPath) =>
             {
                 if (!result) return;
 
-                Plugin.MacroManager.ExportMacrosToFile(Path.Combine(exportFolder, exportFileName), _includeCids);
-                Plugin.Config.MacroExportPath = exportFolder;
+                Plugin.MacroManager.ExportMacrosToFile(selectedPath, Plugin.Config.IncludeCidOnExport);
+
+                Plugin.Config.MacroExportPath = Path.GetDirectoryName(selectedPath);
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
             }, exportFolder);
         }
+        ImGui.PopStyleColor(3);
 
         ImGui.SameLine();
-        if (ImGui.Button("Open Export Folder"))
+        ImGui.Dummy(ImGuiHelpers.ScaledVector2(10));
+
+        ImGui.SameLine();
+        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
+        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
+        if (ImGui.Button("Export Selected Macros"))
         {
-            WindowsApi.OpenFolder(Plugin.Config.MacroExportPath);
-        }
+            var exportFolder = Plugin.Config.MacroExportPath.IsNullOrEmpty() ?
+                        DalamudApi.PluginInterface.ConfigDirectory.FullName : Plugin.Config.MacroExportPath;
 
-        ImGui.Checkbox("Include CIDs", ref _includeCids);
+            var dateNow = DateTime.Now.ToString("yyyy-MM-dd_HHmmss");
+            var exportFileName = $"mop-macro-export-{dateNow}.json";
 
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
-
-        ImGui.TextUnformatted("Macro Import");
-        ImGui.Separator();
-
-        if (ImGuiUtil.EnumCombo("##MacroImportMode", ref _importMode))
-        {
-            //
-        }
-
-        if (ImGui.Button("Import File"))
-        {
-            FileDialogManager.OpenFileDialog("Import File", ".json", (result, selectedPaths) =>
+            FileDialogManager.SaveFileDialog("Export", ".json", exportFileName, ".json", (result, selectedPath) =>
             {
                 if (!result) return;
 
-                Plugin.MacroManager.ImportMacrosFromFile(selectedPaths, _importMode);
-            });
+                Plugin.MacroManager.ExportSelectedMacrosToFile(selectedPath, Plugin.Config.IncludeCidOnExport);
+
+                Plugin.Config.MacroExportPath = Path.GetDirectoryName(selectedPath);
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }, exportFolder);
         }
+        ImGui.PopStyleColor(3);
+        ImGuiGroupPanel.EndGroupPanel();
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        ImGuiGroupPanel.BeginGroupPanel("Macro Import");
+
+        ImGui.TextUnformatted("Import Mode:");
+        var macroImportMode = Plugin.Config.MacroImportMode;
+        if (ImGuiUtil.EnumCombo("##MacroImportMode", ref macroImportMode))
+        {
+            Plugin.Config.MacroImportMode = macroImportMode;
+            Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
+        }
+        ImGuiUtil.HelpMarker("""
+        AppendAll:
+            Imports all macros from the source.
+            Macros with the same name will be duplicated.
+
+        AppendNew:
+            Imports only macros that don't already exist in your list.
+            Macros with the same name are ignored.
+
+        Merge:
+            Adds new macros (those with names not in your list) and replaces existing ones with the same name.
+
+        ReplaceExisting:
+            Replaces macros in your list that have the same name, but ignores any new ones from the import source.
+
+        OverwriteAll:
+            Deletes all your current macros and imports everything from the import source.
+        """);
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        var includeCidOnImport = Plugin.Config.IncludeCidOnImport;
+        if (ImGui.Checkbox("Use CIDs##IncludeCidOnImport", ref includeCidOnImport))
+        {
+            Plugin.Config.IncludeCidOnImport = includeCidOnImport;
+            Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
+        }
+        ImGuiUtil.HelpMarker("""
+        Import macros with assigned characters cids data
+        (if disabled only commands and actions will be imported)
+        """);
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        var backupBeforeImport = Plugin.Config.BackupBeforeImport;
+        if (ImGui.Checkbox("Backup before import", ref backupBeforeImport))
+        {
+            Plugin.Config.BackupBeforeImport = backupBeforeImport;
+            Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
+        }
+        ImGuiUtil.HelpMarker("""
+        Auto create a backup file with your current macros before import process
+        """);
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
+        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
+        if (ImGui.Button("Import File"))
+        {
+            FileDialogManager.OpenFileDialog(
+                title: "Import",
+                filters: ".json",
+                startPath: Plugin.Config.MacroExportPath,
+                selectionCountMax: 1,
+                callback: (result, selectedPaths) =>
+                {
+                    if (!result || selectedPaths.Count == 0) return;
+                    if (!File.Exists(selectedPaths[0])) return;
+
+                    Plugin.MacroManager.ImportMacrosFromFile(selectedPaths[0], Plugin.Config.MacroImportMode, Plugin.Config.IncludeCidOnImport, backupBeforeImport);
+                });
+        }
+        ImGui.PopStyleColor(3);
+        ImGuiGroupPanel.EndGroupPanel();
     }
 }
 

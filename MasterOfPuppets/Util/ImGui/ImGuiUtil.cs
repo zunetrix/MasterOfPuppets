@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -12,24 +11,16 @@ namespace MasterOfPuppets;
 
 public static class ImGuiUtil
 {
-    public static Stack<Vector2> IconButtonSize = new Stack<Vector2>();
-
     public static bool IconButton(FontAwesomeIcon icon, string? id = null, string tooltip = null, Vector4? color = null, Vector2? size = null)
     {
         ImGui.PushFont(UiBuilder.IconFont);
         try
         {
+            var iconButtonSize = ImGui.CalcTextSize(icon.ToIconString()) + ImGui.GetStyle().FramePadding * 2;
+
             if (color != null) ImGui.PushStyleColor(ImGuiCol.Text, (Vector4)color);
-            if (IconButtonSize.TryPeek(out var result))
-            {
-                return ImGui.Button($"{icon.ToIconString()}##{id}{tooltip}", result);
-            }
-            else
-            {
-                return size != null
-                    ? ImGui.Button($"{icon.ToIconString()}##{id}{tooltip}", size.Value)
-                    : ImGui.Button($"{icon.ToIconString()}##{id}{tooltip}");
-            }
+            var buttonSize = size != null ? size.Value : iconButtonSize;
+            return ImGui.Button($"{icon.ToIconString()}##{id}{tooltip}", buttonSize);
         }
         finally
         {

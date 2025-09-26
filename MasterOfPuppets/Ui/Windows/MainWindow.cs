@@ -20,6 +20,7 @@ internal class MainWindow : Window
     public bool IsVisible { get; private set; }
     // private static readonly Version Version = typeof(MainWindow).Assembly.GetName().Version;
     // private static readonly string VersionString = Version?.ToString();
+
     private string _macroSearchString = string.Empty;
     private readonly List<int> MacroListSearchedIndexes = new();
 
@@ -126,6 +127,25 @@ internal class MainWindow : Window
                     Ui.MacroEditorWindow.AddNewMacro();
                 }
 
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteSelectedMacrosMenu"))
+                {
+                    if (ImGui.GetIO().KeyCtrl)
+                    {
+                        Plugin.MacroManager.DeleteSelectedMacros();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.DeleteSelectedMacrosBtn))
+                {
+                    if (ImGui.GetIO().KeyCtrl)
+                    {
+                        Plugin.MacroManager.DeleteSelectedMacros();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+                }
+                ImGuiUtil.ToolTip("(hold CTRL + click)");
+
                 // -----------------------
 
                 if (ImGuiUtil.IconButton(FontAwesomeIcon.FileExport, $"##MacroImportExportMenu"))
@@ -148,6 +168,18 @@ internal class MainWindow : Window
                 if (ImGui.Selectable(Language.ImportMacroBtn))
                 {
                     ImportMacroFromClipboard();
+                }
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##CharactersMenu"))
+                {
+                    Ui.CharactersWindow.Toggle();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.ShowCharactersBtn))
+                {
+                    Ui.CharactersWindow.Toggle();
                 }
 
                 ImGui.EndMenu();
@@ -319,7 +351,7 @@ internal class MainWindow : Window
             SearchMacro();
         }
 
-        int buttonMacroCount = 4;
+        int buttonMacroCount = 3;
         float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
@@ -329,27 +361,16 @@ internal class MainWindow : Window
         }
 
         // ImGui.SameLine();
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportMacroBtn", Language.ImportMacroBtn))
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportMacroFromClipboardBtn", Language.ImportMacroBtn))
         // {
-        //     try
-        //     {
-        //         string macroImportString = ImGui.GetClipboardText();
-        //         var macro = MacroManager.MacroExportStringToMacro(macroImportString);
-        //         Plugin.Config.ImportMacro(macro);
-        //         Plugin.IpcProvider.SyncConfiguration();
-        //         DalamudApi.ShowNotification($"Macro imported", NotificationType.Success, 5000);
-        //     }
-        //     catch
-        //     {
-        //         DalamudApi.ShowNotification($"Unable to import invalid macro", NotificationType.Error, 5000);
-        //     }
+        //     ImportMacroFromClipboard();
         // }
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
-        {
-            Ui.CharactersWindow.Toggle();
-        }
+        // ImGui.SameLine();
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
+        // {
+        //     Ui.CharactersWindow.Toggle();
+        // }
 
         ImGui.SameLine();
         ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
@@ -394,6 +415,17 @@ internal class MainWindow : Window
         ImGui.PushID(macroIdx);
         ImGui.TableNextRow();
         ImGui.TableSetColumnIndex(0);
+        // ImGui.TableNextColumn();
+        bool isChecked = Plugin.MacroManager.SelectedMacrosIndexes.Contains(macroIdx);
+        if (ImGui.Checkbox($"##SelectedMacroCheck_{macroIdx}", ref isChecked))
+        {
+            if (isChecked)
+                Plugin.MacroManager.SelectedMacrosIndexes.Add(macroIdx);
+            else
+                Plugin.MacroManager.SelectedMacrosIndexes.Remove(macroIdx);
+        }
+
+        ImGui.TableNextColumn();
         ImGui.TextUnformatted($"{macroIdx + 1:000}");
 
         ImGui.TableNextColumn();
@@ -435,6 +467,7 @@ internal class MainWindow : Window
                         int targetIndex = originalIndex + offset;
                         // PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
                         Plugin.MacroManager.MoveMacroToIndex(originalIndex, targetIndex);
+                        Plugin.MacroManager.SelectedMacrosIndexes.Clear();
                         Plugin.IpcProvider.SyncConfiguration();
                     }
                 }
@@ -449,7 +482,7 @@ internal class MainWindow : Window
         {
             if (ImGui.GetIO().KeyCtrl)
             {
-                Plugin.MacroManager.RemoveMacro(macroIdx);
+                Plugin.MacroManager.DeleteMacro(macroIdx);
                 Plugin.IpcProvider.SyncConfiguration();
             }
         }
@@ -524,11 +557,12 @@ internal class MainWindow : Window
 
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                 ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
-        var tableColumnCount = 3;
+        var tableColumnCount = 4;
         var itemCount = isFiltered ? MacroListSearchedIndexes.Count : Plugin.Config.Macros.Count;
 
         if (ImGui.BeginTable("##MacrosTable", tableColumnCount, tableFlags))
         {
+            ImGui.TableSetupColumn("##CheckMacro", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Macro", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("Options", ImGuiTableColumnFlags.WidthFixed);

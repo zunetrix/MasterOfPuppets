@@ -15,27 +15,59 @@ public class MacroManager
 {
     private Plugin Plugin { get; }
     // public List<Macro> Macros { get; set; } = new();
+    public HashSet<int> SelectedMacrosIndexes = new();
 
     public MacroManager(Plugin plugin)
     {
         Plugin = plugin;
     }
 
-    public int GetTotalMacros()
+    public int GetMacrosCount()
     {
         return Plugin.Config.Macros.Count;
     }
 
-    public void AddMacro(Macro macro)
+    public bool ContainsMacroName(string macroName)
     {
-        macro.SanitizeActions();
-        Plugin.Config.Macros.Add(macro);
+        int macroIndex = Plugin.Config.Macros.FindIndex(macro => string.Equals(macro.Name, macroName, StringComparison.OrdinalIgnoreCase));
+        return macroIndex != -1;
     }
 
-    public void UpdateMacro(int macroIdx, Macro macro)
+    public bool AddMacro(Macro macro)
     {
+        if (this.ContainsMacroName(macro.Name))
+        {
+            DalamudApi.ShowNotification($"Macro name ({macro.Name}) already exists", NotificationType.Error, 5000);
+            return false;
+        }
+
+        macro.SanitizeActions();
+        Plugin.Config.Macros.Add(macro);
+
+        DalamudApi.ShowNotification($"Macro saved", NotificationType.Success, 5000);
+        Plugin.Config.Save();
+        Plugin.IpcProvider.SyncConfiguration();
+
+        return true;
+    }
+
+    public bool UpdateMacro(int macroIdx, Macro macro)
+    {
+        int existingMacroIndex = Plugin.Config.Macros.FindIndex(m => string.Equals(m.Name, macro.Name, StringComparison.OrdinalIgnoreCase));
+        if (existingMacroIndex != macroIdx)
+        {
+            DalamudApi.ShowNotification($"Macro name ({macro.Name}) already exists", NotificationType.Error, 5000);
+            return false;
+        }
+
         macro.SanitizeActions();
         Plugin.Config.Macros[macroIdx] = macro;
+
+
+        DalamudApi.ShowNotification($"Macro updated", NotificationType.Success, 5000);
+        Plugin.Config.Save();
+        Plugin.IpcProvider.SyncConfiguration();
+        return true;
     }
 
     public Macro GetMacroByIndex(int macroIndex)
@@ -48,11 +80,11 @@ public class MacroManager
         return Plugin.Config.Macros[macroIndex];
     }
 
-    public void RemoveMacro(int itemIndex)
+    public void DeleteMacro(int itemIndex)
     {
         var isEmptyList = Plugin.Config.Macros == null || Plugin.Config.Macros.Count == 0;
-        var isValidIndex = itemIndex >= 0 && itemIndex < Plugin.Config.Macros.Count;
-
+        var isValidIndex = Plugin.Config.Macros.IndexExists(itemIndex);
+        ;
         if (isEmptyList || !isValidIndex)
             return;
 
@@ -64,7 +96,7 @@ public class MacroManager
     public void CloneMacro(int itemIndex)
     {
         var isEmptyList = Plugin.Config.Macros == null || Plugin.Config.Macros.Count == 0;
-        var isValidIndex = itemIndex >= 0 && itemIndex < Plugin.Config.Macros.Count;
+        var isValidIndex = Plugin.Config.Macros.IndexExists(itemIndex);
 
         if (isEmptyList || !isValidIndex)
             return;
@@ -84,7 +116,7 @@ public class MacroManager
 
     public int FindMacroIndex(string macroNameOrNumber)
     {
-        int macroIndexByName = Plugin.Config.Macros.FindIndex(m => string.Equals(m.Name, macroNameOrNumber, StringComparison.OrdinalIgnoreCase));
+        int macroIndexByName = Plugin.Config.Macros.FindIndex(macro => string.Equals(macro.Name, macroNameOrNumber, StringComparison.OrdinalIgnoreCase));
 
         if (!int.TryParse(macroNameOrNumber, out var macroIndexArg) && macroIndexByName == -1)
         {
@@ -127,13 +159,39 @@ public class MacroManager
         Plugin.Config.Macros.Add(newMacro);
     }
 
-    public void ExportMacrosToFile(string filePath, bool includeCids = false)
+    public void DeleteSelectedMacros()
+    {
+        if (SelectedMacrosIndexes == null || SelectedMacrosIndexes.Count == 0)
+            return;
+
+        // remove in reverse order
+        var indexesToRemove = SelectedMacrosIndexes.OrderByDescending(i => i).ToList();
+
+        foreach (var index in indexesToRemove)
+        {
+            if (Plugin.Config.Macros.IndexExists(index))
+            {
+                Plugin.Config.Macros.RemoveAt(index);
+            }
+        }
+
+        SelectedMacrosIndexes.Clear();
+        Plugin.Config.Save();
+    }
+
+    public void ExportSelectedMacrosToFile(string filePath, bool includeCids = false)
     {
         try
         {
-            var macroJson = includeCids
-                ? Plugin.Config.Macros.JsonSerialize()
-                : Plugin.Config.Macros.Select(macro => macro.CloneWithoutCharacters()).ToList().JsonSerialize();
+            if (SelectedMacrosIndexes == null || SelectedMacrosIndexes.Count == 0) return;
+
+            var selectedMacros = Plugin.Config.Macros
+            .Select((macro, index) => new { macro, index })
+            .Where(x => SelectedMacrosIndexes.Contains(x.index))
+            .Select(x => includeCids ? x.macro : x.macro.CloneWithoutCharacters())
+            .ToList();
+
+            string macroJson = selectedMacros.JsonSerialize();
 
             File.WriteAllText(filePath, macroJson, Encoding.UTF8);
 
@@ -146,25 +204,89 @@ public class MacroManager
         }
     }
 
-    public void ImportMacrosFromFile(string filePath, MacroImportMode importMode)
+    public void ExportMacrosToFile(string filePath, bool includeCids = false)
     {
         try
         {
+            var selectedMacros = Plugin.Config.Macros
+            .Select((macro, index) => new { macro, index })
+            .Select(x => includeCids ? x.macro : x.macro.CloneWithoutCharacters())
+            .ToList();
+
+            string macroJson = selectedMacros.JsonSerialize();
+
+            File.WriteAllText(filePath, macroJson, Encoding.UTF8);
+
+            DalamudApi.ShowNotification("Macros Exported!", NotificationType.Success, 5000);
+        }
+        catch (Exception e)
+        {
+            DalamudApi.PluginLog.Warning(e, "Error while exporting macros");
+            DalamudApi.ShowNotification("Error while exporting macros", NotificationType.Error, 5000);
+        }
+    }
+
+    public void BackupMacros()
+    {
+        try
+        {
+            string macroJson = Plugin.Config.Macros.JsonSerialize();
+            var dateNow = DateTime.Now.ToString("yyyy-MM-dd_HHmmss");
+            var exportFileName = $"mop-macro-backup-{dateNow}.json";
+            string filePath = Path.Combine(DalamudApi.PluginInterface.ConfigDirectory.FullName, exportFileName);
+
+            File.WriteAllText(filePath, macroJson, Encoding.UTF8);
+        }
+        catch (Exception e)
+        {
+            DalamudApi.PluginLog.Warning(e, "Error while backuping macros");
+            DalamudApi.ShowNotification("Error while backuping macros", NotificationType.Error, 5000);
+        }
+    }
+
+    public void ImportMacrosFromFile(string filePath, MacroImportMode importMode, bool includeCids, bool backupBeforeImport)
+    {
+        try
+        {
+            if (backupBeforeImport)
+            {
+                this.BackupMacros();
+            }
+
             var macrosData = File.ReadAllText(filePath, Encoding.UTF8);
             var macrosImport = macrosData.JsonDeserialize<List<Macro>>() ?? new List<Macro>();
 
+            if (!includeCids)
+            {
+                macrosImport = macrosImport
+                   .Select(macro => macro.CloneWithoutCharacters())
+                   .ToList();
+            }
+
+            var macroIndexMap = Plugin.Config.Macros
+                          .Select((m, i) => new { m.Name, Index = i })
+                          .ToDictionary(x => x.Name, x => x.Index, StringComparer.OrdinalIgnoreCase);
+
             switch (importMode)
             {
-                case MacroImportMode.Add:
+                case MacroImportMode.AppendAll:
                     Plugin.Config.Macros.AddRange(macrosImport);
                     break;
 
-                case MacroImportMode.MergeOverwrite:
+                case MacroImportMode.AppendNew:
+                    foreach (var macroImport in macrosImport)
                     {
-                        var macroIndexMap = Plugin.Config.Macros
-                            .Select((m, i) => new { m.Name, Index = i })
-                            .ToDictionary(x => x.Name, x => x.Index, StringComparer.OrdinalIgnoreCase);
+                        if (macroIndexMap.TryGetValue(macroImport.Name, out var idx))
+                            continue;
 
+                        Plugin.Config.Macros.Add(macroImport);
+                        macroIndexMap[macroImport.Name] = Plugin.Config.Macros.Count - 1;
+
+                    }
+                    break;
+
+                case MacroImportMode.Merge:
+                    {
                         foreach (var macroImport in macrosImport)
                         {
                             if (macroIndexMap.TryGetValue(macroImport.Name, out var idx))
@@ -180,7 +302,19 @@ public class MacroManager
                     }
                     break;
 
-                case MacroImportMode.Replace:
+                case MacroImportMode.ReplaceExisting:
+                    {
+                        foreach (var macroImport in macrosImport)
+                        {
+                            if (macroIndexMap.TryGetValue(macroImport.Name, out var idx))
+                            {
+                                Plugin.Config.Macros[idx] = macroImport;
+                            }
+                        }
+                    }
+                    break;
+
+                case MacroImportMode.OverwriteAll:
                     Plugin.Config.Macros = macrosImport;
                     break;
             }
@@ -199,7 +333,9 @@ public class MacroManager
 
 public enum MacroImportMode
 {
-    Add,
-    MergeOverwrite,
-    Replace
+    AppendAll,
+    AppendNew,
+    Merge,
+    ReplaceExisting,
+    OverwriteAll
 }
