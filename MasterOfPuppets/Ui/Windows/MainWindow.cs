@@ -128,26 +128,19 @@ internal class MainWindow : Window
 
                 // -----------------------
 
-                ImGui.BeginDisabled(true);
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.FileExport, $"##ExportAllMacroMenu"))
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.FileExport, $"##MacroImportExportMenu"))
                 {
-                    // Ui.MacroExportWindow..Toggle();
+                    Ui.MacroImportExportWindow.Toggle();
                 }
                 ImGui.SameLine();
-                if (ImGui.Selectable("Export All Macros"))
+                if (ImGui.Selectable("Import Export Macros"))
                 {
-                    // Ui.MacroExportWindow..Toggle();
+                    Ui.MacroImportExportWindow.Toggle();
                 }
-
-                // if (ImGui.MenuItem("Export All Macros", enabled: false))
-                // {
-                //     //TODO
-                // }
-                ImGui.EndDisabled();
 
                 // -----------------------
 
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportMacroMenu"))
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportFromClipboardMenu"))
                 {
                     ImportMacroFromClipboard();
                 }
@@ -559,14 +552,13 @@ internal class MainWindow : Window
                     DrawMacroEntry(realIndex);
                 }
             }
-
-            // for (int i = 0; i < macros.Count; i++)
-            // {
-            //     DrawMacroEntry(i, macros[i]);
-            // }
             clipper.End();
             ImGui.EndTable();
         }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+        ImGui.Spacing();
     }
 
     internal void UpdateWindowConfig()

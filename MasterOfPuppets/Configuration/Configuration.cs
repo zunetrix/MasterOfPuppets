@@ -26,6 +26,7 @@ internal class Configuration : IPluginConfiguration
     public List<CidGroup> CidsGroups { get; set; } = new();
     public double DelayBetweenActions { get; set; } = 1.00;
     public bool AutoSaveMacro { get; set; } = false;
+    public string MacroExportPath { get; set; } = string.Empty;
 
     // chat commands
     public bool UseChatSync { get; set; } = false;
@@ -38,11 +39,11 @@ internal class Configuration : IPluginConfiguration
     public bool OpenOnStartup { get; set; } = false;
 
     // public Vector4 ThemeColour { get; set; } = new(0f, 1f, 0f, 1f);
-    public bool OpenOnLogin { get; set; }
+    public bool OpenOnLogin { get; set; } = false;
     public bool AllowMovement { get; set; } = true;
     public bool AllowResize { get; set; } = true;
     public bool ShowSettingsButton { get; set; } = true;
-    public bool AllowCloseWithEscape { get; set; }
+    public bool AllowCloseWithEscape { get; set; } = false;
 
     public void Initialize(IDalamudPluginInterface pluginInterface)
     {
@@ -72,6 +73,7 @@ internal class Configuration : IPluginConfiguration
         Characters = newPluginConfig.Characters;
         CidsGroups = newPluginConfig.CidsGroups;
         AutoSaveMacro = newPluginConfig.AutoSaveMacro;
+        MacroExportPath = newPluginConfig.MacroExportPath;
 
         SyncClients = newPluginConfig.SyncClients;
 

@@ -581,9 +581,6 @@ internal class Language
 
 
 
-    /// <summary>
-    ///   Looks up a localized string similar to {0} settings.
-    /// </summary>
     internal static string SettingsTitle
     {
         get
@@ -946,6 +943,13 @@ internal class Language
         get
         {
             return ResourceManager.GetString("ClickToCopy", resourceCulture);
+        }
+    }
+    internal static string MacroExportPath
+    {
+        get
+        {
+            return ResourceManager.GetString("MacroExportPath", resourceCulture);
         }
     }
 }

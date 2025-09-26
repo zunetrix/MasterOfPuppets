@@ -55,6 +55,7 @@ namespace MasterOfPuppets
             WindowSystem.AddWindow(FacewearWindow);
             WindowSystem.AddWindow(FashionAccessoriesWindow);
             WindowSystem.AddWindow(MacroHelpWindow);
+            WindowSystem.AddWindow(MacroImportExportWindow);
             WindowSystem.AddWindow(DebugWindow);
         }
 

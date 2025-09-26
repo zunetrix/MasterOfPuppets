@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 using Dalamud.Interface.ImGuiNotification;
 
@@ -71,10 +75,33 @@ public class MacroManager
 
         Plugin.Config.Save();
     }
+
     public void MoveMacroToIndex(int itemIndex, int targetIndex)
     {
         Plugin.Config.Macros.MoveItemToIndex(itemIndex, targetIndex);
         Plugin.Config.Save();
+    }
+
+    public int FindMacroIndex(string macroNameOrNumber)
+    {
+        int macroIndexByName = Plugin.Config.Macros.FindIndex(m => string.Equals(m.Name, macroNameOrNumber, StringComparison.OrdinalIgnoreCase));
+
+        if (!int.TryParse(macroNameOrNumber, out var macroIndexArg) && macroIndexByName == -1)
+        {
+            DalamudApi.PluginLog.Error($"Invalid macro name or number {macroNameOrNumber}");
+            DalamudApi.ShowNotification($"Invalid macro name or number", NotificationType.Error, 5000);
+            throw new ArgumentException($"Invalid macro name or numnber {macroNameOrNumber}");
+        }
+
+        // user input 1 index based
+        int macroIndex = macroIndexByName != -1 ? macroIndexByName : macroIndexArg - 1;
+        var isValidMacroIndex = Plugin.Config.Macros.IndexExists(macroIndex);
+        if (!isValidMacroIndex)
+        {
+            throw new ArgumentException($"Invalid macro index");
+        }
+
+        return macroIndex;
     }
 
     public string ExportMacroToString(int itemIndex, bool includeCids = false)
@@ -100,46 +127,79 @@ public class MacroManager
         Plugin.Config.Macros.Add(newMacro);
     }
 
-    public int FindMacroIndex(string macroNameOrNumber)
+    public void ExportMacrosToFile(string filePath, bool includeCids = false)
     {
-        int macroIndexByName = Plugin.Config.Macros.FindIndex(m => string.Equals(m.Name, macroNameOrNumber, StringComparison.OrdinalIgnoreCase));
-
-        if (!int.TryParse(macroNameOrNumber, out var macroIndexArg) && macroIndexByName == -1)
+        try
         {
-            DalamudApi.PluginLog.Error($"Invalid macro name or number {macroNameOrNumber}");
-            DalamudApi.ShowNotification($"Invalid macro name or number", NotificationType.Error, 5000);
-            throw new ArgumentException($"Invalid macro name or numnber {macroNameOrNumber}");
-        }
+            var macroJson = includeCids
+                ? Plugin.Config.Macros.JsonSerialize()
+                : Plugin.Config.Macros.Select(macro => macro.CloneWithoutCharacters()).ToList().JsonSerialize();
 
-        // user input 1 index based
-        int macroIndex = macroIndexByName != -1 ? macroIndexByName : macroIndexArg - 1;
-        var isValidMacroIndex = Plugin.Config.Macros.IndexExists(macroIndex);
-        if (!isValidMacroIndex)
+            File.WriteAllText(filePath, macroJson, Encoding.UTF8);
+
+            DalamudApi.ShowNotification("Macros Exported!", NotificationType.Success, 5000);
+        }
+        catch (Exception e)
         {
-            throw new ArgumentException($"Invalid macro index");
+            DalamudApi.PluginLog.Warning(e, "Error while exporting macros");
+            DalamudApi.ShowNotification("Error while exporting macros", NotificationType.Error, 5000);
         }
-
-        return macroIndex;
     }
 
-    // public static string SerializeObject(object o, bool saveAllValues) => !saveAllValues
-    //  ? JsonConvert.SerializeObject(o, new JsonSerializerSettings
-    //  {
-    //      TypeNameHandling = TypeNameHandling.Objects,
-    //      NullValueHandling = NullValueHandling.Ignore,
-    //      DefaultValueHandling = DefaultValueHandling.Ignore,
-    //  })
-    //  : JsonConvert.SerializeObject(o, new JsonSerializerSettings
-    //  {
-    //      TypeNameHandling = TypeNameHandling.Objects
-    //  });
+    public void ImportMacrosFromFile(string filePath, MacroImportMode importMode)
+    {
+        try
+        {
+            var macrosData = File.ReadAllText(filePath, Encoding.UTF8);
+            var macrosImport = macrosData.JsonDeserialize<List<Macro>>() ?? new List<Macro>();
 
-    // public static T DeserializeObject<T>(string o) => JsonConvert.DeserializeObject<T>(o, new JsonSerializerSettings
-    // {
-    //     TypeNameHandling = TypeNameHandling.Objects,
-    // });
+            switch (importMode)
+            {
+                case MacroImportMode.Add:
+                    Plugin.Config.Macros.AddRange(macrosImport);
+                    break;
 
-    // public static string ExportObject(object o, bool saveAllValues) => CompressString(SerializeObject(o, saveAllValues));
+                case MacroImportMode.MergeOverwrite:
+                    {
+                        var macroIndexMap = Plugin.Config.Macros
+                            .Select((m, i) => new { m.Name, Index = i })
+                            .ToDictionary(x => x.Name, x => x.Index, StringComparer.OrdinalIgnoreCase);
 
-    // public static T ImportObject<T>(string import) => DeserializeObject<T>(DecompressString(import));
+                        foreach (var macroImport in macrosImport)
+                        {
+                            if (macroIndexMap.TryGetValue(macroImport.Name, out var idx))
+                            {
+                                Plugin.Config.Macros[idx] = macroImport;
+                            }
+                            else
+                            {
+                                Plugin.Config.Macros.Add(macroImport);
+                                macroIndexMap[macroImport.Name] = Plugin.Config.Macros.Count - 1;
+                            }
+                        }
+                    }
+                    break;
+
+                case MacroImportMode.Replace:
+                    Plugin.Config.Macros = macrosImport;
+                    break;
+            }
+
+            Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
+            DalamudApi.ShowNotification("Macros imported!", NotificationType.Success, 5000);
+        }
+        catch (Exception e)
+        {
+            DalamudApi.PluginLog.Error(e, "Error while importing macros");
+            DalamudApi.ShowNotification("Error while importing macros", NotificationType.Error, 5000);
+        }
+    }
+}
+
+public enum MacroImportMode
+{
+    Add,
+    MergeOverwrite,
+    Replace
 }

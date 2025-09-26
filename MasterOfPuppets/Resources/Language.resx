@@ -320,4 +320,7 @@ Right-Click to copy command</value>
     <data name="ClickToCopy" xml:space="preserve">
         <value>Click to copy</value>
     </data>
+    <data name="MacroExportPath" xml:space="preserve">
+        <value>Export Directory</value>
+    </data>
 </root>
