@@ -190,7 +190,7 @@ public class MacroEditorWindow : Window
         ImGui.BeginChild("##CommandList", ImGuiHelpers.ScaledVector2(150, 0), true);
         for (var commandIndex = 0; commandIndex < MacroItem.Commands.Count; commandIndex++)
         {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCommand_{commandIndex}", "Remove (hold CTRL + click)"))
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCommand_{commandIndex}", Language.DeleteInstructionTooltip))
             {
                 if (ImGui.GetIO().KeyCtrl)
                 {
@@ -325,13 +325,14 @@ public class MacroEditorWindow : Window
                 var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
                     ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
 
-                if (ImGui.Selectable($"{character.Name}##command_{commandIndex}_character_{characterIndex}", false, ImGuiSelectableFlags.AllowDoubleClick))
+                if (ImGui.Selectable($"{character.Name}##command_{commandIndex}_character_{characterIndex}", false))
                 {
-                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                    if (ImGui.GetIO().KeyCtrl)
+                    {
                         MacroItem.Commands[commandIndex].Cids.RemoveAll(cid => cid == targetCid);
+                    }
                 }
-
-                ImGuiUtil.ToolTip("Doubleclick to remove");
+                ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
             }
             ImGui.EndListBox();
         }
@@ -391,15 +392,14 @@ public class MacroEditorWindow : Window
         ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);
         ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive);
-        ImGui.Button(Language.RemoveAllBtn);
-        if (ImGui.IsItemHovered())
+        if (ImGui.Button(Language.RemoveAllBtn))
         {
-            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            if (ImGui.GetIO().KeyCtrl)
             {
                 MacroItem.Commands[commandIndex].Cids = new();
             }
         }
-        ImGuiUtil.ToolTip("Double Click");
+        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
         ImGui.PopStyleColor(3);
 
         ImGui.EndGroup();

@@ -144,7 +144,7 @@ internal class MainWindow : Window
                         Plugin.IpcProvider.SyncConfiguration();
                     }
                 }
-                ImGuiUtil.ToolTip("(hold CTRL + click)");
+                ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
 
                 // -----------------------
 
@@ -478,7 +478,7 @@ internal class MainWindow : Window
         ImGui.PopStyleColor();
 
         ImGui.TableNextColumn();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteMacro_{macroIdx}", Language.DeleteMacroBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteMacro_{macroIdx}", Language.DeleteInstructionTooltip))
         {
             if (ImGui.GetIO().KeyCtrl)
             {

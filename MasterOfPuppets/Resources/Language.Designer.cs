@@ -609,11 +609,11 @@ internal class Language
             return ResourceManager.GetString("EditMacroBtn", resourceCulture);
         }
     }
-    internal static string DeleteMacroBtn
+    internal static string DeleteInstructionTooltip
     {
         get
         {
-            return ResourceManager.GetString("DeleteMacroBtn", resourceCulture);
+            return ResourceManager.GetString("DeleteInstructionTooltip", resourceCulture);
         }
     }
     internal static string DeleteSelectedMacrosBtn

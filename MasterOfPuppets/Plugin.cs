@@ -39,15 +39,11 @@ public class Plugin : IDalamudPlugin
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
         DalamudApi.PluginInterface.LanguageChanged += OnLanguageChange;
 
-        DalamudApi.CommandManager.AddHandler("/masterofpuppets", new CommandInfo(OnCommand)
-        {
-            HelpMessage = "Use with no arguments to show plugin window.",
-        });
-
         DalamudApi.CommandManager.AddHandler("/mop", new CommandInfo(OnCommand)
         {
             HelpMessage = """
             Commands:
+                /mop -> show/hide UI
                 /mop run "Macro name" -> execute macro
                 /mop stop -> stop macro execution
                 /mop queue -> show queue window
@@ -77,7 +73,6 @@ public class Plugin : IDalamudPlugin
         DalamudApi.ClientState.Login -= OnLogin;
         DalamudApi.PluginInterface.LanguageChanged -= OnLanguageChange;
 
-        DalamudApi.CommandManager.RemoveHandler("/masterofpuppets");
         DalamudApi.CommandManager.RemoveHandler("/mop");
         IpcProvider.Dispose();
         ChatWatcher.Dispose();

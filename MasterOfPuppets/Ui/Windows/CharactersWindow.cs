@@ -204,7 +204,7 @@ public class CharactersWindow : Window
                 // ImGui.EndDisabled();
 
                 // ImGui.SameLine();
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{i}", "Remove (hold CTRL + click)"))
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{i}", Language.DeleteInstructionTooltip))
                 {
                     if (ImGui.GetIO().KeyCtrl)
                     {
@@ -286,7 +286,10 @@ public class CharactersWindow : Window
         ImGui.SameLine();
 
         ImGui.BeginDisabled(!Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex));
-        if (ImGui.Button($"Delete group"))
+        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);
+        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive);
+        if (ImGui.Button($"Delete Group"))
         {
             if (ImGui.GetIO().KeyCtrl)
             {
@@ -295,8 +298,9 @@ public class CharactersWindow : Window
                 Plugin.IpcProvider.SyncConfiguration();
             }
         }
+        ImGui.PopStyleColor(3);
         ImGui.EndDisabled();
-        ImGuiUtil.ToolTip("(hold CTRL + click)");
+        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
     }
 
     private void DrawGroupAvailableCharacterSelector()
@@ -351,9 +355,9 @@ public class CharactersWindow : Window
                 var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
                     ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
 
-                if (ImGui.Selectable($"{character.Name}##CidsGroups{_selectedCidGroupIndex}_character{characterIndex}", false, ImGuiSelectableFlags.AllowDoubleClick))
+                if (ImGui.Selectable($"{character.Name}##CidsGroups{_selectedCidGroupIndex}_character{characterIndex}", false))
                 {
-                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                    if (ImGui.GetIO().KeyCtrl)
                     {
                         Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids.RemoveAll(cid => cid == targetCid);
                         Plugin.Config.Save();
@@ -361,7 +365,7 @@ public class CharactersWindow : Window
                     }
 
                 }
-                ImGuiUtil.ToolTip("Doubleclick to remove");
+                ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
             }
             ImGui.EndListBox();
         }

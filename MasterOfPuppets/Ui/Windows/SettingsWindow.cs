@@ -260,15 +260,15 @@ public class SettingsWindow : Window
                     foreach (var chatType in Plugin.Config.ListenedChatTypes.ToList())
                     {
                         var displayName = $"{chatType}";
-                        if (ImGui.Selectable(displayName, false, ImGuiSelectableFlags.AllowDoubleClick))
+                        if (ImGui.Selectable(displayName, false))
                         {
-                            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                            if (ImGui.GetIO().KeyCtrl)
                             {
                                 Plugin.Config.ListenedChatTypes.Remove(chatType);
                                 Plugin.IpcProvider.SyncConfiguration();
                             }
                         }
-                        ImGuiUtil.ToolTip("Doubleclick to remove");
+                        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
                     }
                     ImGui.EndListBox();
                 }
@@ -306,22 +306,20 @@ public class SettingsWindow : Window
                 {
                     foreach (var senderName in Plugin.Config.ChatCommandSenderWhitelist)
                     {
-                        if (ImGui.Selectable(senderName, false, ImGuiSelectableFlags.AllowDoubleClick))
+                        if (ImGui.Selectable(senderName, false))
                         {
-                            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                            if (ImGui.GetIO().KeyCtrl)
                             {
                                 Plugin.Config.ChatCommandSenderWhitelist.Remove(senderName);
                                 Plugin.IpcProvider.SyncConfiguration();
                             }
                         }
-                        ImGuiUtil.ToolTip("Doubleclick to remove");
+                        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
                     }
                     ImGui.EndListBox();
                 }
-
                 ImGui.Unindent();
             }
-
             ImGui.EndTabItem();
         }
     }
