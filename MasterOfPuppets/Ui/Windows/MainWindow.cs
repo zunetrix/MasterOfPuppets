@@ -10,13 +10,14 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
 internal class MainWindow : Window
 {
-    private PluginUi Ui { get; }
     private Plugin Plugin { get; }
+    private PluginUi Ui { get; }
     public bool IsVisible { get; private set; }
     // private static readonly Version Version = typeof(MainWindow).Assembly.GetName().Version;
     // private static readonly string VersionString = Version?.ToString();
@@ -26,8 +27,8 @@ internal class MainWindow : Window
 
     internal MainWindow(Plugin plugin, PluginUi ui) : base(Plugin.Name)
     {
-        Ui = ui;
         Plugin = plugin;
+        Ui = ui;
 
         Size = ImGuiHelpers.ScaledVector2(300, 250);
         SizeCondition = ImGuiCond.FirstUseEver;
@@ -488,7 +489,7 @@ internal class MainWindow : Window
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.FileExport, $"##ExportMacro_{macroIdx}", Language.ExportMacroBtn))
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowUpRightFromSquare, $"##ExportMacro_{macroIdx}", Language.ExportMacroBtn))
         {
             var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: false);
             ImGui.SetClipboardText(macroExportData);

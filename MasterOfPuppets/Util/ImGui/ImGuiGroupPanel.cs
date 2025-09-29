@@ -4,7 +4,7 @@ using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 
-namespace MasterOfPuppets;
+namespace MasterOfPuppets.Util.ImGuiExt;
 
 // https://github.com/ocornut/imgui/issues/1496#issuecomment-655048353
 public static class ImGuiGroupPanel
@@ -154,4 +154,5 @@ public static class ImGuiGroupPanel
         public Vector2 Max;
     }
 }
+
 

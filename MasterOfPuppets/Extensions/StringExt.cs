@@ -1,8 +1,9 @@
-using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 
-public static class StringExtensions
+namespace MasterOfPuppets.Extensions;
+
+public static class StringExt
 {
     public static string EllipsisPath(this string path, int maxLength = 30, char delimiter = '\\')
     {

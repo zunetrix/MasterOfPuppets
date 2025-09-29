@@ -6,10 +6,13 @@ using System.Collections.Generic;
 using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
-
-using MasterOfPuppets.Resources;
 using Dalamud.Utility;
 using Dalamud.Interface.Utility;
+
+using MasterOfPuppets.Resources;
+using MasterOfPuppets.Extensions;
+using MasterOfPuppets.Util.ImGuiExt;
+using MasterOfPuppets.Extensions.Dalamud;
 
 namespace MasterOfPuppets;
 

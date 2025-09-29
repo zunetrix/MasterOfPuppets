@@ -7,6 +7,7 @@ using System.Text;
 using Dalamud.Interface.ImGuiNotification;
 
 using MasterOfPuppets.Util;
+using MasterOfPuppets.Extensions;
 
 namespace MasterOfPuppets;
 

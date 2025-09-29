@@ -14,11 +14,19 @@ class MacroHandler
     private Plugin Plugin { get; }
 
     private readonly ConcurrentQueue<(string macroId, string[] actions, double delay)> MacroQueue = new();
-    private bool _running = false;
+
     private CancellationTokenSource _cancelTokenSource = new();
+    private bool _runningMacroQueue = false;
 
     public List<string> CurrentActionsExecutionList { get; private set; } = new();
     public int CurrentActionExecutionIndex { get; private set; } = -1;
+
+
+    private readonly ConcurrentQueue<(string macroId, string[] actions, double delay)> MacroLoopQueue = new();
+    private bool _runningMacroLoopQueue = false;
+    public List<string> CurrentActionsLoopExecutionList { get; private set; } = new();
+    public int CurrentActionLoopExecutionIndex { get; private set; } = -1;
+
     private readonly Dictionary<string, Func<string, string, CancellationToken, Task>> CustomMacroActionHandlers;
 
     //  private readonly Dictionary<string, IMacroActionHandler> CustomMacroActionHandlers;
@@ -58,7 +66,7 @@ class MacroHandler
                 var secondsRound = Math.Round(seconds, 2, MidpointRounding.AwayFromZero);
                 var delayMs = TimeSpan.FromSeconds(secondsRound);
 
-                DalamudApi.PluginLog.Debug($"[mopwait] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}...");
+                DalamudApi.PluginLog.Debug($"[mopwait] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}...");
                 await Task.Delay(delayMs, token);
             },
 
@@ -70,7 +78,7 @@ class MacroHandler
                 if (string.IsNullOrWhiteSpace(args))
                 {
                     DalamudApi.PluginLog.Debug($"[moploop]");
-                    this.ClearActionsExecutionList();
+                    this.ClearActionsLoopExecutionList();
                     this.EnqueueMacroActions(macroId, actions, Plugin.Config.DelayBetweenActions);
                     return;
                 }
@@ -86,7 +94,7 @@ class MacroHandler
                 .Where((action) => !action.StartsWith("/moploop", StringComparison.OrdinalIgnoreCase))
                 .ToArray();
 
-                this.ClearActionsExecutionList();
+                this.ClearActionsLoopExecutionList();
                 for (int i = 0; i < runAmount; i++)
                 {
                     this.EnqueueMacroActions(macroId, noLoopActions, Plugin.Config.DelayBetweenActions);
@@ -221,28 +229,58 @@ class MacroHandler
 
     public void EnqueueMacroActions(string macroId, string[] actions, double delayBetweenActions)
     {
-        MacroQueue.Enqueue((macroId, actions, delayBetweenActions));
-        CurrentActionsExecutionList.AddRange(actions);
-        _ = ProcessQueue();
+        bool hasLoop = actions.Any(a => a.Contains("/moploop", StringComparison.OrdinalIgnoreCase));
+        if (hasLoop)
+        {
+            MacroLoopQueue.Enqueue((macroId, actions, delayBetweenActions));
+            CurrentActionsLoopExecutionList.AddRange(actions);
+            _ = ProcessLoopQueue();
+        }
+        else
+        {
+            MacroQueue.Enqueue((macroId, actions, delayBetweenActions));
+            CurrentActionsExecutionList.AddRange(actions);
+            _ = ProcessQueue();
+        }
     }
 
     private async Task ProcessQueue()
     {
-        if (_running) return;
-        _running = true;
+        if (_runningMacroQueue) return;
+        _runningMacroQueue = true;
 
         try
         {
             while (MacroQueue.TryDequeue(out var item))
             {
-                await ExecuteMacroActions(item.macroId, item.actions, item.delay, _cancelTokenSource.Token);
                 if (_cancelTokenSource.IsCancellationRequested) break;
+                await ExecuteMacroActions(item.macroId, item.actions, item.delay, _cancelTokenSource.Token);
             }
         }
         finally
         {
             this.ClearActionsExecutionList();
-            _running = false;
+            _runningMacroQueue = false;
+        }
+    }
+
+    private async Task ProcessLoopQueue()
+    {
+        if (_runningMacroLoopQueue) return;
+        _runningMacroLoopQueue = true;
+
+        try
+        {
+            while (MacroLoopQueue.TryDequeue(out var item))
+            {
+                if (_cancelTokenSource.IsCancellationRequested) break;
+                await ExecuteMacroLoopActions(item.macroId, item.actions, item.delay, _cancelTokenSource.Token);
+            }
+        }
+        finally
+        {
+            this.ClearActionsLoopExecutionList();
+            _runningMacroLoopQueue = false;
         }
     }
 
@@ -282,7 +320,7 @@ class MacroHandler
                     {
                         var secondsRound = Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero);
                         var delayMs = TimeSpan.FromSeconds(secondsRound);
-                        DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}");
+                        DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
                         await Task.Delay(delayMs, token);
                     }
                 }
@@ -292,17 +330,81 @@ class MacroHandler
             {
                 DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
 
-                Chat.SendMessage(action);
-                // DalamudApi.Framework.RunOnFrameworkThread(delegate
-                // {
-                //     Chat.SendMessage(action);
-                // });
+                // Chat.SendMessage(action);
+                _ = DalamudApi.Framework.RunOnFrameworkThread(delegate
+                {
+                    Chat.SendMessage(action);
+                });
 
                 if (delayBetweenActions > 0.0)
                 {
                     var secondsRound = Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero);
                     var delayMs = TimeSpan.FromSeconds(secondsRound);
-                    DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}");
+                    DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
+                    await Task.Delay(delayMs, token);
+                }
+            }
+        }
+    }
+
+    // TODO: refactor duplicated
+    private async Task ExecuteMacroLoopActions(string macroId, string[] actions, double delayBetweenActions, CancellationToken token)
+    {
+        foreach (var action in actions)
+        {
+            if (token.IsCancellationRequested) break;
+
+            CurrentActionLoopExecutionIndex++;
+
+            var match = Regex.Match(action, @"^\/(\w+)\s*(.*)$");
+            bool handled = false;
+
+            if (match.Success)
+            {
+                var command = match.Groups[1].Value;
+                var args = match.Groups[2].Value.Trim();
+
+                if (CustomMacroActionHandlers.TryGetValue(command, out var handlerFn))
+                {
+                    await handlerFn(macroId, args, token);
+                    handled = true;
+
+                    var noGlobalDelayActions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        "moptarget",
+                        "moptargetof",
+                        "moptargetclear",
+                        "mopwait",
+                        "moploop",
+                        "mopmacro",
+                        "mopobjectquantity"
+                    };
+
+                    if (!noGlobalDelayActions.Contains(command) && (delayBetweenActions > 0.0))
+                    {
+                        var secondsRound = Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero);
+                        var delayMs = TimeSpan.FromSeconds(secondsRound);
+                        DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
+                        await Task.Delay(delayMs, token);
+                    }
+                }
+            }
+
+            if (!handled)
+            {
+                DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
+
+                // Chat.SendMessage(action);
+                _ = DalamudApi.Framework.RunOnFrameworkThread(delegate
+                {
+                    Chat.SendMessage(action);
+                });
+
+                if (delayBetweenActions > 0.0)
+                {
+                    var secondsRound = Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero);
+                    var delayMs = TimeSpan.FromSeconds(secondsRound);
+                    DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
                     await Task.Delay(delayMs, token);
                 }
             }
@@ -333,6 +435,12 @@ class MacroHandler
         CurrentActionExecutionIndex = -1;
     }
 
+    private void ClearActionsLoopExecutionList()
+    {
+        CurrentActionsLoopExecutionList.Clear();
+        CurrentActionLoopExecutionIndex = -1;
+    }
+
     public void StopMacroQueueExecution()
     {
         _cancelTokenSource.Cancel();
@@ -340,6 +448,9 @@ class MacroHandler
         _cancelTokenSource = new CancellationTokenSource();
 
         MacroQueue.Clear();
-        CurrentActionExecutionIndex = -1;
+        MacroLoopQueue.Clear();
+
+        this.ClearActionsExecutionList();
+        this.ClearActionsLoopExecutionList();
     }
 }

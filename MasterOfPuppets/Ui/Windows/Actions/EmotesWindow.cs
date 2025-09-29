@@ -9,6 +9,7 @@ using Dalamud.Interface.ImGuiNotification;
 
 using MasterOfPuppets.Resources;
 using Dalamud.Interface.Utility;
+using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 

@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 
+using Dalamud.Plugin;
 using Dalamud.Game.Command;
 using Dalamud.Interface.ImGuiNotification;
-using Dalamud.Plugin;
 
 using MasterOfPuppets.Ipc;
 using MasterOfPuppets.Resources;

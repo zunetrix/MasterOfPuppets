@@ -7,6 +7,9 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util.ImGuiExt;
+using MasterOfPuppets.Util;
+using MasterOfPuppets.Extensions;
 
 namespace MasterOfPuppets;
 

@@ -7,6 +7,7 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
@@ -18,7 +19,7 @@ public class MacroQueueWindow : Window
     {
         Plugin = plugin;
 
-        Size = ImGuiHelpers.ScaledVector2(250, 220);
+        Size = ImGuiHelpers.ScaledVector2(550, 300);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
@@ -59,7 +60,10 @@ public class MacroQueueWindow : Window
         ImGui.Separator();
         ImGui.Spacing();
 
-        if (ImGui.BeginListBox($"##CurrentActionsExecutionList", new Vector2(300, 200)))
+
+        ImGui.BeginChild("##CurrentActionsExecutionListLeftPane", ImGuiHelpers.ScaledVector2(300, 250));
+        ImGui.TextUnformatted("Macro Queue");
+        if (ImGui.BeginListBox($"##CurrentActionsExecutionList", ImGuiHelpers.ScaledVector2(300, 220)))
         {
             for (int i = 0; i < Plugin.MacroHandler.CurrentActionsExecutionList.Count; i++)
             {
@@ -68,7 +72,7 @@ public class MacroQueueWindow : Window
                 {
                     ImGui.PushStyleColor(ImGuiCol.Text, Style.Colors.Green);
                 }
-                ImGui.Selectable($"[{i + 1:000}] {Plugin.MacroHandler.CurrentActionsExecutionList[i]}##CurrentActionsExecutionList{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
+                ImGui.Selectable($"[{i + 1:000}] {Plugin.MacroHandler.CurrentActionsExecutionList[i]}##CurrentActionsExecutionList_{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
                 // var windowWidth = ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
                 // ImGui.SameLine(windowWidth - ImGui.CalcTextSize(time).X);
 
@@ -80,5 +84,29 @@ public class MacroQueueWindow : Window
 
             ImGui.EndListBox();
         }
+        ImGui.EndChild();
+
+        ImGui.SameLine();
+        ImGui.BeginChild("##CurrentActionsExecutionListRightPane", ImGuiHelpers.ScaledVector2(300, 250));
+        ImGui.TextUnformatted($"Loop Queue");
+        if (ImGui.BeginListBox($"##CurrentActionsLoopExecutionList", ImGuiHelpers.ScaledVector2(300, 220)))
+        {
+            for (int i = 0; i < Plugin.MacroHandler.CurrentActionsLoopExecutionList.Count; i++)
+            {
+                var isCurrentItemActive = i == Plugin.MacroHandler.CurrentActionLoopExecutionIndex;
+                if (isCurrentItemActive)
+                {
+                    ImGui.PushStyleColor(ImGuiCol.Text, Style.Colors.Green);
+                }
+                ImGui.Selectable($"[{i + 1:000}] {Plugin.MacroHandler.CurrentActionsLoopExecutionList[i]}##CurrentActionsLoopExecutionList_{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
+
+                if (isCurrentItemActive)
+                {
+                    ImGui.PopStyleColor();
+                }
+            }
+            ImGui.EndListBox();
+        }
+        ImGui.EndChild();
     }
 }

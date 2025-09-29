@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 using System.Linq;
 using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
@@ -7,30 +8,35 @@ using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
+// using Dalamud.Interface.Utility.Raii;
 using Dalamud.Bindings.ImGui;
 
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util.ImGuiExt;
+using MasterOfPuppets.Extensions.Dalamud;
 
 namespace MasterOfPuppets;
 
-public class DebugWindow : Window
+internal class DebugWindow : Window
 {
     private Plugin Plugin { get; }
+    private PluginUi Ui { get; }
     private FileDialogManager FileDialogManager { get; }
 
+    private uint _macroIconId = 60042;
+    private static string _inputTextContent = string.Empty;
     private static string _targetName = string.Empty;
     private static string _search = string.Empty;
     private static HashSet<object>? _filtered;
     private static int _hoveredItem;
     private static readonly Dictionary<string, (bool toogle, bool wasEnterClickedLastTime)> _comboDic = [];
 
-
-    public DebugWindow(Plugin plugin) : base($"{Plugin.Name} Debug###DebugWindow")
+    public DebugWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name} Debug###DebugWindow")
     {
         Plugin = plugin;
+        Ui = ui;
 
         Size = ImGuiHelpers.ScaledVector2(500, 450);
         SizeCondition = ImGuiCond.FirstUseEver;
@@ -486,12 +492,92 @@ public class DebugWindow : Window
 
     //     return addPluginToProfilePopupId;
     // }
+    private void DrawSpinner()
+    {
+        var spinnerLabel = $"##Spinner_{1}";
+        // var spinnerRadius = ImGui.GetTextLineHeight() / 4;
+        var spinnerRadius = ImGui.GetTextLineHeight();
+        var spinnerThickness = 5 * ImGuiHelpers.GlobalScale;
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + spinnerRadius);
+        ImGuiUtil.Spinner(spinnerLabel, spinnerRadius, spinnerThickness, Style.Colors.Blue);
+    }
+
+    private void DrawIconPicker()
+    {
+        var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
+        // var icon = DalamudApi.TextureProvider.GetFromGameIcon(undefinedIconId).GetWrapOrEmpty().Handle;
+        var icon = DalamudApi.TextureProvider.GetMacroIcon(_macroIconId).GetWrapOrEmpty().Handle;
+        ImGui.Image(icon, iconSize);
+        if (ImGui.IsItemClicked())
+        {
+            Ui.IconPickerDialogWindow.Open(_macroIconId, selectedIconId =>
+            {
+                _macroIconId = selectedIconId;
+                DalamudApi.PluginLog.Warning($"selectedIconId: {selectedIconId}");
+            });
+        }
+    }
+
+    private void DrawConfirmModalDialog()
+    {
+        // modal confirmation
+        if (ImGui.Button("Delete.."))
+            ImGui.OpenPopup("Delete?");
+
+        var viewport = ImGui.GetMainViewport();
+        Vector2 center = viewport.GetCenter();
+        ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
+
+        if (ImGui.BeginPopupModal("Delete?", ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            ImGui.Text("All those beautiful files will be deleted.\nThis operation cannot be undone!");
+            ImGui.Separator();
+
+            // Checkbox "Don't ask me next time"
+            bool dontAskNextTime = false;
+            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
+            ImGui.Checkbox("Don't ask me next time", ref dontAskNextTime);
+            ImGui.PopStyleVar();
+
+            if (ImGui.Button("OK", new Vector2(120, 0)))
+                ImGui.CloseCurrentPopup();
+
+            ImGui.SetItemDefaultFocus();
+            ImGui.SameLine();
+            if (ImGui.Button("Cancel", new Vector2(120, 0)))
+                ImGui.CloseCurrentPopup();
+
+            ImGui.EndPopup();
+        }
+    }
 
     private void DrawElementsDebugTab()
     {
         if (ImGui.BeginTabItem($"Gui Elements###GuiElementsDebugTab"))
         {
             ImGui.TextUnformatted("ImGui Elements");
+            DrawSpinner();
+
+            DrawIconPicker();
+
+            DrawConfirmModalDialog();
+
+
+            // // Reserve space for line numbers first
+            // var lineNumbers = ImGuiInputTextMultilineLineNumbers.Reserve(_inputTextContent, new Vector2(200, 400));
+
+            // // Draw the text input with reduced width
+            // var result = ImGui.InputTextMultiline(
+            //     "macro text",
+            //     ref _inputTextContent,
+            //     maxLength,
+            //     lineNumbers.RemainingTextSize,
+            //     flags,
+            //     decoratedCallback
+            // );
+
+            // // Now draw the line numbers after the InputText is rendered
+            // lineNumbers.Draw(label);
 
             // SearchableCombo();
 

@@ -7,6 +7,7 @@ using Dalamud.Plugin;
 using Dalamud.Game.Text;
 
 using MasterOfPuppets.Util;
+using MasterOfPuppets.Extensions;
 
 namespace MasterOfPuppets;
 

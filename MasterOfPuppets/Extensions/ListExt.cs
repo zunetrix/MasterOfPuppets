@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-public static class ListExtensions
+namespace MasterOfPuppets.Extensions;
+
+public static class ListExt
 {
     /// <summary>
     /// Move a list item in safe way

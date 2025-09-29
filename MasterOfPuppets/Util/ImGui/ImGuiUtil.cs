@@ -7,10 +7,14 @@ using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility;
 
-namespace MasterOfPuppets;
+namespace MasterOfPuppets.Util.ImGuiExt;
 
 public static class ImGuiUtil
 {
+
+    // ------------------------
+    // COMPONENTS
+    // ------------------------
     public static bool IconButton(FontAwesomeIcon icon, string? id = null, string tooltip = null, Vector4? color = null, Vector2? size = null)
     {
         ImGui.PushFont(UiBuilder.IconFont);
@@ -30,11 +34,10 @@ public static class ImGuiUtil
         }
     }
 
-    public static float GetWindowContentRegionWidth() => ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
-
-    public static float GetWindowContentRegionHeight() => ImGui.GetWindowContentRegionMax().Y - ImGui.GetWindowContentRegionMin().Y;
-
-    public static Vector2 GetWindowContentRegion() => ImGui.GetWindowContentRegionMax() - ImGui.GetWindowContentRegionMin();
+    public static void IconButtonWithText(FontAwesomeIcon icon, string text, Vector2 size)
+    {
+        ImGuiComponents.IconButtonWithText(icon, text, size);
+    }
 
     public static bool EnumCombo<TEnum>(
     string label,
@@ -157,34 +160,11 @@ public static class ImGuiUtil
         }
     }
 
-    public static void HelpMarker(string description)
-    {
-        ImGui.SameLine();
-        ImGuiUtil.DrawFontawesomeIconOutlined(FontAwesomeIcon.InfoCircle, Style.Colors.Black, Style.Components.TooltipBorderColor);
-        ImGuiUtil.ToolTip(description);
-    }
-
-    public static void HelpMarker(string desc, bool sameline = true)
+    public static void HelpMarker(string description, bool sameline = true)
     {
         if (sameline) ImGui.SameLine();
-        //ImGui.PushFont(UiBuilder.IconFont);
-        ImGui.TextDisabled("(?)");
-        //ImGui.PopFont();
-        if (ImGui.IsItemHovered())
-        {
-            ImGui.PushFont(UiBuilder.DefaultFont);
-            ImGui.BeginTooltip();
-            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35.0f);
-            ImGui.TextUnformatted(desc);
-            ImGui.PopTextWrapPos();
-            ImGui.EndTooltip();
-            ImGui.PopFont();
-        }
-    }
-
-    public static void IconButtonWithText(FontAwesomeIcon icon, string text, Vector2 size)
-    {
-        ImGuiComponents.IconButtonWithText(icon, text, size);
+        ImGuiUtil.DrawFontawesomeIconOutlined(FontAwesomeIcon.InfoCircle, Style.Colors.Black, Style.Components.TooltipBorderColor);
+        ImGuiUtil.ToolTip(description);
     }
 
     public static void DrawColoredBanner(string content, Vector4 color)
@@ -194,5 +174,132 @@ public static class ImGuiUtil
         ImGui.PushStyleColor(ImGuiCol.ButtonActive, color);
         ImGui.Button(content, new Vector2(-1, ImGui.GetFrameHeight()));
         ImGui.PopStyleColor(3);
+    }
+
+    /// Applies a border over the previous item
+    public static void ItemBorder(
+        uint col,
+        float rounding = 1.0f,
+        float thickness = 1.0f
+    )
+    {
+        var drawList = ImGui.GetWindowDrawList();
+        drawList.AddRect(
+            ImGui.GetItemRectMin(),
+            ImGui.GetItemRectMax(),
+            col,
+            rounding,
+            ImDrawFlags.None,
+            thickness
+        );
+    }
+
+    public static void Spinner(string label, float radius, float thickness, Vector4 color)
+    {
+        var style = ImGui.GetStyle();
+        ImGui.PushID(label);
+
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + style.FramePadding.Y);
+        var size = new Vector2(radius * 2, radius * 2);
+
+        ImGui.Dummy(size);
+        var dummyPos = ImGui.GetItemRectMin();
+        var dummySize = ImGui.GetItemRectSize();
+        var center = new Vector2(
+            dummyPos.X + (dummySize.X / 2),
+            dummyPos.Y + (dummySize.Y / 2)
+        );
+
+        // Render
+        ImGui.GetWindowDrawList().PathClear();
+
+        var numSegments = 30;
+        var start = Math.Abs(Math.Sin(ImGui.GetTime() * 1.8f) * (numSegments - 5));
+
+        var aMin = Math.PI * 2.0f * ((float)start / (float)numSegments);
+        var aMax = Math.PI * 2.0f * (((float)numSegments - 3) / (float)numSegments);
+
+        for (var i = 0; i < numSegments; ++i)
+        {
+            var a = aMin + ((float)i / (float)numSegments) * (aMax - aMin);
+            ImGui.GetWindowDrawList().PathLineTo(
+                new Vector2(
+                    center.X + (float)Math.Cos(a + (float)ImGui.GetTime() * 8) * (radius - thickness / 2),
+                    center.Y + (float)Math.Sin(a + (float)ImGui.GetTime() * 8) * (radius - thickness / 2)
+                )
+            );
+        }
+
+        ImGui.GetWindowDrawList().PathStroke(ColorUtil.Vector4ToUint(color), ImDrawFlags.None, thickness);
+
+        ImGui.PopID();
+    }
+
+    // ------------------------
+    // HELPERS
+    // ------------------------
+
+    public static float GetWindowContentRegionWidth() => ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
+
+    public static float GetWindowContentRegionHeight() => ImGui.GetWindowContentRegionMax().Y - ImGui.GetWindowContentRegionMin().Y;
+
+    public static Vector2 GetWindowContentRegion() => ImGui.GetWindowContentRegionMax() - ImGui.GetWindowContentRegionMin();
+
+    public static ImGui.ImGuiInputTextCallbackDelegate CallbackCharFilterFn(Func<char, bool> predicate)
+    {
+        unsafe
+        {
+            return (ref ImGuiInputTextCallbackData ev) =>
+            {
+                return predicate((char)ev.EventChar) ? 0 : 1;
+            };
+        }
+    }
+
+    public static bool IsNotNull(this ImGuiPayloadPtr payload)
+    {
+        return !payload.IsNull;
+    }
+
+    /// <summary>
+    /// Returns the screen position of the text at `textPos` in `text` assuming it was drawn in
+    /// an InputTextMultiline
+    /// </summary>
+    public static Vector2 InputTextCalcText2dPos(string text, int textPos)
+    {
+        var font = ImGui.GetFont();
+        var fontScale = ImGui.GetIO().FontGlobalScale;
+        float lineHeight = ImGui.GetFontSize();
+
+        Vector2 textSize = new Vector2(0, 0);
+        float lineWidth = 0.0f;
+
+        int sIndex = 0;
+        while (sIndex < textPos && sIndex < text.Length)
+        {
+            char c = text[sIndex];
+            sIndex += 1;
+            if (c == '\n')
+            {
+                textSize.X = 0;
+                textSize.Y += lineHeight;
+                lineWidth = 0.0f;
+                continue;
+            }
+            if (c == '\r')
+                continue;
+
+            // ImGui.NET doesn't allow us to pass 32-bit wchar like the native implementation does, so instead
+            // we need to account for surrogate pairs ourselves or the width gets misaligned
+            // 0xE0F0 0x00BB   0xE0F00BB
+            float charWidth = font.GetCharAdvance((ushort)c) * fontScale;
+            lineWidth += charWidth;
+        }
+
+
+        if (textSize.X < lineWidth)
+            textSize.X = lineWidth;
+
+        return textSize;
     }
 }

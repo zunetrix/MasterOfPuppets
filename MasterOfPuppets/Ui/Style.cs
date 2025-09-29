@@ -151,4 +151,15 @@ public static class ColorUtil
 
         return new Vector4(r, g, b, alpha);
     }
+
+    public static uint Vector4ToUint(Vector4 color)
+    {
+        var r = (uint)(color.X * 255.0f);
+        var g = (uint)(color.Y * 255.0f);
+        var b = (uint)(color.Z * 255.0f);
+        var a = (uint)(color.W * 255.0f);
+
+        // ImGui usa formato ABGR
+        return (a << 24) | (b << 16) | (g << 8) | r;
+    }
 }

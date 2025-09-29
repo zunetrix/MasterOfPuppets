@@ -10,6 +10,8 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Bindings.ImGui;
 
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util.ImGuiExt;
+using MasterOfPuppets.Extensions;
 
 namespace MasterOfPuppets;
 
@@ -49,7 +51,6 @@ public class MacroEditorWindow : Window
         if (isMacroSaved)
         {
             RessetState();
-
             base.OnClose();
         }
     }
@@ -102,11 +103,11 @@ public class MacroEditorWindow : Window
 
     public override void Draw()
     {
-        ImGui.BeginChild("##MacroEditorHeaderFixedHeight", new Vector2(-1, 90 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginChild("##MacroEditorHeaderFixedHeight", ImGuiHelpers.ScaledVector2(-1, 90), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         DrawHeader();
         ImGui.EndChild();
 
-        ImGui.BeginChild("##MacroEditorListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        ImGui.BeginChild("##MacroEditorListScrollableContent", ImGuiHelpers.ScaledVector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
         DrawCommandList();
         ImGui.EndChild();
     }
@@ -258,38 +259,6 @@ public class MacroEditorWindow : Window
         ImGui.SameLine();
 
         DrawCommandEditor(SelectedCommandIndex);
-
-
-        // // modal delete confirm
-        // if (ImGui.Button("Delete.."))
-        //     ImGui.OpenPopup("Delete?");
-
-        // // Centraliza a janela quando aparecer
-        // var viewport = ImGui.GetMainViewport();
-        // Vector2 center = viewport.GetCenter();
-        // ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
-
-        // if (ImGui.BeginPopupModal("Delete?", ImGuiWindowFlags.AlwaysAutoResize))
-        // {
-        //     ImGui.Text("All those beautiful files will be deleted.\nThis operation cannot be undone!");
-        //     ImGui.Separator();
-
-        //     // Checkbox "Don't ask me next time"
-        //     bool dontAskNextTime = false;
-        //     ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
-        //     ImGui.Checkbox("Don't ask me next time", ref dontAskNextTime);
-        //     ImGui.PopStyleVar();
-
-        //     if (ImGui.Button("OK", new Vector2(120, 0)))
-        //         ImGui.CloseCurrentPopup();
-
-        //     ImGui.SetItemDefaultFocus();
-        //     ImGui.SameLine();
-        //     if (ImGui.Button("Cancel", new Vector2(120, 0)))
-        //         ImGui.CloseCurrentPopup();
-
-        //     ImGui.EndPopup();
-        // }
     }
 
     private void DrawCommandEditor(int commandIndex)
@@ -408,7 +377,7 @@ public class MacroEditorWindow : Window
         ImGui.Spacing();
         ImGui.Spacing();
         ImGui.TextUnformatted(Language.ActionsTitle);
-        if (ImGui.InputTextMultiline($"##InputAction_command_{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 150)))
+        if (ImGui.InputTextMultiline($"##InputAction_command_{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 200)))
         {
             _currentWord = GetCurrentWord(MacroItem.Commands[commandIndex].Actions);
 

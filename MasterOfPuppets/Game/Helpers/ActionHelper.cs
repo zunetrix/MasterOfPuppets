@@ -60,37 +60,4 @@ public static class ActionHelper
         uint undefinedIcon = 60042;
         return GetActionById(item)?.Icon ?? undefinedIcon;
     }
-
-    // public static class CustomActions
-    // {
-    //     public static ExecutableAction RainCheck { get; } = new ExecutableAction
-    //     {
-    //         ActionId = 30869,
-    //         ActionName = "Rain Check",
-    //         IconId = 64276,
-    //         TextCommand = string.Empty,
-    //     };
-
-    //     public static ExecutableAction UmbrellaDance { get; } = new ExecutableAction
-    //     {
-    //         ActionId = 30868,
-    //         ActionName = "Umbrella Dance",
-    //         IconId = 64277,
-    //         TextCommand = string.Empty,
-    //     };
-    //     public static ExecutableAction PutAway { get; } = new ExecutableAction
-    //     {
-    //         ActionId = 61188,
-    //         ActionName = "Put Away",
-    //         IconId = 28,
-    //         TextCommand = string.Empty,
-    //     };
-    //     public static ExecutableAction ChangePose { get; } = new ExecutableAction
-    //     {
-    //         ActionId = 61188,
-    //         ActionName = "Change Pose",
-    //         IconId = 90,
-    //         TextCommand = string.Empty,
-    //     };
-    // }
 }

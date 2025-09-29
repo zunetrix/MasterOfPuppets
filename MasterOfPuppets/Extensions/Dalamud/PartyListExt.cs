@@ -4,9 +4,9 @@ using Dalamud.Game.ClientState.Party;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 
-namespace MasterOfPuppets;
+namespace MasterOfPuppets.Extensions.Dalamud;
 
-public static class PartyListExtensions
+public static class PartyListExt
 {
     public static IPartyMember? GetMeAsPartyMember(this IPartyList partyList) => partyList.IsInParty() ? partyList.FirstOrDefault(i => i.ContentId == (long)DalamudApi.ClientState.LocalContentId) : null;
     public static IPartyMember? GetPartyLeader(this IPartyList partyList) => partyList.IsInParty() ? partyList[(int)partyList.PartyLeaderIndex] : null;

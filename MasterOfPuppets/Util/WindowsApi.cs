@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Diagnostics;
 
-using MasterOfPuppets;
+namespace MasterOfPuppets.Util;
 
 public static class WindowsApi
 {

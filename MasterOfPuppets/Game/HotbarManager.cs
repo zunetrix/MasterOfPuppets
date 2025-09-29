@@ -92,25 +92,4 @@ internal static class HotbarManager
             DalamudApi.PluginLog.Error(e, $"Error while using pet hotbar slot {slotIndex}");
         }
     }
-
-    public static void ExecuteEmote(uint actionId)
-    {
-        DalamudApi.Framework.RunOnFrameworkThread(delegate
-        {
-            ExecuteHotbarAction(HotbarSlotType.Emote, actionId);
-        });
-    }
-
-    public static void ExecuteOrnament(uint actionId)
-    {
-        DalamudApi.Framework.RunOnFrameworkThread(delegate
-        {
-            ExecuteHotbarAction(HotbarSlotType.Ornament, actionId);
-        });
-    }
-
-    private static Emote? GetEmoteById(uint id)
-    {
-        return DalamudApi.DataManager.Excel.GetSheet<Emote>().GetRowOrDefault(id);
-    }
 }
