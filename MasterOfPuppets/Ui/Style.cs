@@ -133,6 +133,20 @@ public class ColorPalette
     public Vector4 GrassGreen50 = new Vector4(0.5568628f, 1f, 0.37647063f, 0.23529413f);
     public Vector4 DarkGreen = new Vector4(0.1254902f, 0.2509804f, 0.0627451f, 0.6745098f);
     public Vector4 DarkGray = new Vector4(0.18f, 0.21f, 0.25f, 1f);
+
+    public static Vector4 AutoTranslateStartGreen = new(
+        96.0f / 255.0f,
+        223.0f / 255.0f,
+        46.0f / 255.0f,
+        1.0f
+    ); // #60DF2E
+
+    public static Vector4 AutoTranslateEndRed = new(
+        221 / 255.0f,
+        54 / 255.0f,
+        54 / 255.0f,
+        1.0f
+    ); // #DD3636
 }
 
 public static class ColorUtil

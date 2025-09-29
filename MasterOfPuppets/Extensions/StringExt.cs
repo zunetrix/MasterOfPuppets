@@ -38,4 +38,22 @@ public static class StringExt
         return string.Join(delimiter.ToString(), resultParts);
     }
 
+    public static string? NullIfEmpty(this string self) => self != "" ? self : null;
+
+    public static string IfEmpty(this string self, string replacement) => self != "" ? self : replacement;
+
+    public static string Truncate(this string self, int maxLength)
+    {
+        if (self.Length > maxLength)
+        {
+            return self.Substring(0, maxLength);
+        }
+
+        return self;
+    }
+
+    public static int MaxLineLength(this string self)
+    {
+        return Enumerable.Max(self.Split("\n").Select(s => s.Count()));
+    }
 }

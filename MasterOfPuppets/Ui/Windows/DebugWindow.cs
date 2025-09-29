@@ -8,6 +8,7 @@ using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
+using Dalamud.Game.Text.SeStringHandling;
 // using Dalamud.Interface.Utility.Raii;
 using Dalamud.Bindings.ImGui;
 
@@ -16,6 +17,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 using MasterOfPuppets.Extensions.Dalamud;
+using MasterOfPuppets.Extensions.Dalamud.String;
 
 namespace MasterOfPuppets;
 
@@ -26,12 +28,13 @@ internal class DebugWindow : Window
     private FileDialogManager FileDialogManager { get; }
 
     private uint _macroIconId = 60042;
-    private static string _inputTextContent = string.Empty;
+    private static SeString _inputTextContent = string.Empty;
     private static string _targetName = string.Empty;
     private static string _search = string.Empty;
     private static HashSet<object>? _filtered;
     private static int _hoveredItem;
     private static readonly Dictionary<string, (bool toogle, bool wasEnterClickedLastTime)> _comboDic = [];
+    private ImGuiInputTextMultiline InputTextMultiline;
 
     public DebugWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name} Debug###DebugWindow")
     {
@@ -48,6 +51,7 @@ internal class DebugWindow : Window
         // };
 
         FileDialogManager = new FileDialogManager();
+        InputTextMultiline = new ImGuiInputTextMultiline(plugin);
     }
 
     public override void PreDraw()
@@ -551,6 +555,26 @@ internal class DebugWindow : Window
         }
     }
 
+    private void DrawMultilineInput()
+    {
+        if (InputTextMultiline.Draw(
+            "###MacroContent",
+            ref _inputTextContent,
+            ushort.MaxValue, // Allow for many lines, since we chunk them by blocks of 15 for execution/binding.
+            new Vector2(
+                MathF.Min(ImGui.GetContentRegionAvail().X, 500f * ImGuiHelpers.GlobalScale),
+                ImGui.GetTextLineHeight() * 20
+            ),
+        // Don't allow lines that are longer then the max line length
+        ImGuiInputTextFlags.CallbackCharFilter,
+        ImGuiUtil.CallbackCharFilterFn(_ => _inputTextContent.MaxLineLength() < 181)
+        ))
+        {
+            DalamudApi.PluginLog.Warning($"{_inputTextContent}");
+            // Macro.Lines = lines;
+        }
+    }
+
     private void DrawElementsDebugTab()
     {
         if (ImGui.BeginTabItem($"Gui Elements###GuiElementsDebugTab"))
@@ -562,22 +586,7 @@ internal class DebugWindow : Window
 
             DrawConfirmModalDialog();
 
-
-            // // Reserve space for line numbers first
-            // var lineNumbers = ImGuiInputTextMultilineLineNumbers.Reserve(_inputTextContent, new Vector2(200, 400));
-
-            // // Draw the text input with reduced width
-            // var result = ImGui.InputTextMultiline(
-            //     "macro text",
-            //     ref _inputTextContent,
-            //     maxLength,
-            //     lineNumbers.RemainingTextSize,
-            //     flags,
-            //     decoratedCallback
-            // );
-
-            // // Now draw the line numbers after the InputText is rendered
-            // lineNumbers.Draw(label);
+            DrawMultilineInput();
 
             // SearchableCombo();
 

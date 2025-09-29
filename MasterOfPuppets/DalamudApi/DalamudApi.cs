@@ -22,7 +22,6 @@ public class DalamudApi
     [PluginService] public static ITextureProvider TextureProvider { get; private set; } = null!;
     [PluginService] public static IChatGui ChatGui { get; private set; } = null!;
     [PluginService] public static IGameConfig GameConfig { get; private set; } = null!;
-
     [PluginService] public static IObjectTable Objects { get; private set; }
     [PluginService] public static ITargetManager Targets { get; private set; }
     // [PluginService] public static IKeyState KeyState { get; private set; }
@@ -32,6 +31,7 @@ public class DalamudApi
     // [PluginService] public static IToastGui ToastGui { get; private set; } = null!;
     // Chat
     [PluginService] public static ISigScanner SigScanner { get; private set; } = null!;
+    [PluginService] public static ISeStringEvaluator SeStringEvaluator { get; private set; } = null!;
 
     private const string PluginPrefixName = $"[MoP] ";
 

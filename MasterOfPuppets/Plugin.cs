@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 using Dalamud.Plugin;
@@ -9,6 +9,7 @@ using Dalamud.Interface.ImGuiNotification;
 
 using MasterOfPuppets.Ipc;
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util.ImGuiExt.AutoComplete;
 
 namespace MasterOfPuppets;
 
@@ -22,6 +23,7 @@ public class Plugin : IDalamudPlugin
     internal ChatWatcher ChatWatcher { get; }
     internal MacroHandler MacroHandler { get; }
     internal MacroManager MacroManager { get; }
+    internal CompletionIndex CompletionIndex { get; }
 
     public Plugin(IDalamudPluginInterface pluginInterface)
     {
@@ -34,6 +36,7 @@ public class Plugin : IDalamudPlugin
         ChatWatcher = new ChatWatcher(this);
         MacroManager = new MacroManager(this);
         MacroHandler = new MacroHandler(this);
+        CompletionIndex = new CompletionIndex();
 
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
         DalamudApi.PluginInterface.LanguageChanged += OnLanguageChange;

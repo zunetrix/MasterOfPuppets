@@ -73,9 +73,19 @@
         <PackageReference Include="DalamudPackager" Version="13.0.0" />
         <PackageReference Include="Fody" Version="6.9.2" PrivateAssets="all" />
         <PackageReference Include="Resourcer.Fody" Version="1.8.1" PrivateAssets="all" />
-        <PackageReference Include="protobuf-net" Version="3.2.46" />
+
+        <!-- IPC -->
         <PackageReference Include="TinyIpc" Version="3.1.1" />
-        <!-- <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.3" /> -->
+        <PackageReference Include="protobuf-net" Version="3.2.46" />
+
+        <!-- Parser combinators for condition expressions -->
+        <PackageReference Include="Sprache" Version="2.3.1" />
+
+        <!-- Discriminated unions -->
+        <!-- <PackageReference Include="OneOf" Version="3.0.263" /> -->
+
+        <!-- Efficient text searching -->
+        <PackageReference Include="KTrie" Version="2.6.0" />
     </ItemGroup>
     <!-- <ItemGroup>
         <ProjectReference Include="..\MasterOfPuppets.IPC\MasterOfPuppets.IPC.csproj" />
