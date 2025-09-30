@@ -31,7 +31,7 @@ internal class DebugWindow : Window
     private static HashSet<object>? _filtered;
     private static int _hoveredItem;
     private static readonly Dictionary<string, (bool toogle, bool wasEnterClickedLastTime)> _comboDic = [];
-    private ImGuiInputTextMultiline InputTextMultiline;
+    private readonly ImGuiInputTextMultiline InputTextMultiline;
 
     public DebugWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name} Debug###DebugWindow")
     {

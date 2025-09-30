@@ -12,7 +12,6 @@ using MasterOfPuppets.Util.ImGuiExt.AutoComplete;
 
 namespace MasterOfPuppets.Util.ImGuiExt;
 
-
 /// <summary>
 /// Popup to show
 /// </summary>
@@ -115,28 +114,32 @@ public class AutoCompletePopup
 
         if (PopupPos.HasValue) { ImGui.SetNextWindowPos(PopupPos.Value); }
         ImGui.SetNextWindowSize(new Vector2(windowWidth, ImGui.GetFontSize() * 10));
+
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
         if (ImGui.BeginPopup(name, popupFlags))
         {
             ImGui.SetNextItemWidth(windowWidth - (ImGui.GetStyle().FramePadding.X * 8));
 
-            unsafe
-            {
-                if (
-                    ImGui.InputTextWithHint(
-                        "##AutoCompleteFilterInput",
-                        "Filter...",
-                        ref _autoCompleteFilter,
-                        256,
-                        ImGuiInputTextFlags.CallbackAlways | ImGuiInputTextFlags.CallbackHistory
-                            | ImGuiInputTextFlags.CallbackEdit,
-                        AutoCompleteFilterCallback
-                    )
+            float defaultHeight = ImGui.GetTextLineHeight() + ImGui.GetStyle().FramePadding.Y * 2;
+            ImGui.BeginChild("##AutoCompleteFilterInputFixedHeight", ImGuiHelpers.ScaledVector2(-1, defaultHeight), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+            if (
+                ImGui.InputTextWithHint(
+                    "##AutoCompleteFilterInput",
+                    "Filter...",
+                    ref _autoCompleteFilter,
+                    256,
+                    ImGuiInputTextFlags.CallbackAlways | ImGuiInputTextFlags.CallbackHistory
+                        | ImGuiInputTextFlags.CallbackEdit,
+                    AutoCompleteFilterCallback
                 )
-                {
-                    Completions = Plugin.CompletionIndex.Search(_autoCompleteFilter).ToList();
-                    SelectedCompletionIndex = 0;
-                }
+            )
+            {
+                Completions = Plugin.CompletionIndex.Search(_autoCompleteFilter).ToList();
+                SelectedCompletionIndex = 0;
             }
+            ImGui.EndChild();
+
 
             if (ImGui.IsWindowAppearing())
             {
@@ -172,6 +175,7 @@ public class AutoCompletePopup
                 }
             }
 
+            ImGui.BeginChild("##AutoCompleteCompletionsTableScrollableContent", ImGuiHelpers.ScaledVector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
             var selectedCompletion = SelectedCompletion;
             if (ImGui.BeginTable("###AutoCompleteCompletionsTable", 2))
             {
@@ -280,8 +284,12 @@ public class AutoCompletePopup
                     }
                 }
             }
+            ImGui.EndChild();
+
             ImGui.EndPopup();
         }
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
     }
 
     /// <summary>
