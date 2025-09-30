@@ -90,7 +90,7 @@ public class CompletionIndex
     private List<CompletionInfo> AllCompletionInfo()
     {
         var allowedGroups = new[] {
-            49, // mount
+            // 49, // mount
             56, // actions skills
             69, // blue mage
             62, // text command

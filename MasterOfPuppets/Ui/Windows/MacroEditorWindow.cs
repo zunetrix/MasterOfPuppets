@@ -22,6 +22,7 @@ public class MacroEditorWindow : Window
     private int MacroIndex;
     private int SelectedCommandIndex = 0;
     private bool EditingExistingMacro = false;
+    private readonly ImGuiInputTextMultiline InputTextMultiline;
     private List<string> _suggestions = [];
     private string _currentWord = string.Empty;
     private string _lastWord = string.Empty;
@@ -29,10 +30,12 @@ public class MacroEditorWindow : Window
     public MacroEditorWindow(Plugin plugin) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow")
     {
         Plugin = plugin;
+        InputTextMultiline = new ImGuiInputTextMultiline(plugin);
 
-        Size = ImGuiHelpers.ScaledVector2(700, 550);
+        Size = ImGuiHelpers.ScaledVector2(650, 600);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
+        Flags = ImGuiWindowFlags.NoResize;
     }
 
     public override void PreDraw()
@@ -377,17 +380,37 @@ public class MacroEditorWindow : Window
         ImGui.Spacing();
         ImGui.Spacing();
         ImGui.TextUnformatted(Language.ActionsTitle);
-        if (ImGui.InputTextMultiline($"##InputAction_command_{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 200)))
-        {
-            _currentWord = GetCurrentWord(MacroItem.Commands[commandIndex].Actions);
 
-            // prevent suggestions for new line
-            if (string.IsNullOrWhiteSpace(_currentWord))
-            {
-                _suggestions.Clear();
-                _lastWord = string.Empty;
-            }
+
+        if (InputTextMultiline.Draw(
+            $"##InputActionCommand_{commandIndex}",
+            ref MacroItem.Commands[commandIndex].Actions,
+            ushort.MaxValue,
+            new Vector2(
+                MathF.Min(ImGui.GetContentRegionAvail().X, 500f * ImGuiHelpers.GlobalScale),
+                ImGui.GetTextLineHeight() * 20
+            ),
+        // Don't allow lines that are longer then the max line length
+        ImGuiInputTextFlags.None
+        // ImGuiUtil.CallbackCharFilterFn(_ => _inputTextContent.Length() < 181)
+        ))
+        {
+            // DalamudApi.PluginLog.Warning($"{_inputTextContent}");
+            // Macro.Lines = lines;
         }
+
+
+        // if (ImGui.InputTextMultiline($"##InputAction_command_{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 200)))
+        // {
+        //     _currentWord = GetCurrentWord(MacroItem.Commands[commandIndex].Actions);
+
+        //     // prevent suggestions for new line
+        //     if (string.IsNullOrWhiteSpace(_currentWord))
+        //     {
+        //         _suggestions.Clear();
+        //         _lastWord = string.Empty;
+        //     }
+        // }
 
         if (!string.IsNullOrWhiteSpace(_currentWord) && _currentWord != _lastWord)
         {

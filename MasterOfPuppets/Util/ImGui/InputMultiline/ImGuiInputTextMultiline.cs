@@ -91,7 +91,10 @@ public class ImGuiInputTextMultiline
             if (!previousEditWord.HasValue) { break; }
             var (editStart, editEnd) = previousEditWord.Value;
             text = text.Remove(editStart, editEnd - editStart); // Remove current word
-            text = text.Insert(editStart, completion.SeString.ExtractText());
+
+            var completionString = completion.SeString.ExtractText();
+            var completionText = completionString.StartsWith("/") ? completionString : $"\"{completionString}\"";
+            text = text.Insert(editStart, completionText);
             input = text;
             edited = true;
         }
