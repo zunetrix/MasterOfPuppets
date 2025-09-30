@@ -8,8 +8,6 @@ using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
-using Dalamud.Game.Text.SeStringHandling;
-// using Dalamud.Interface.Utility.Raii;
 using Dalamud.Bindings.ImGui;
 
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -17,7 +15,6 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 using MasterOfPuppets.Extensions.Dalamud;
-using MasterOfPuppets.Extensions.Dalamud.String;
 
 namespace MasterOfPuppets;
 
@@ -28,7 +25,7 @@ internal class DebugWindow : Window
     private FileDialogManager FileDialogManager { get; }
 
     private uint _macroIconId = 60042;
-    private static SeString _inputTextContent = string.Empty;
+    private static string _inputTextContent = string.Empty;
     private static string _targetName = string.Empty;
     private static string _search = string.Empty;
     private static HashSet<object>? _filtered;
@@ -525,14 +522,14 @@ internal class DebugWindow : Window
     private void DrawConfirmModalDialog()
     {
         // modal confirmation
-        if (ImGui.Button("Delete.."))
-            ImGui.OpenPopup("Delete?");
+        if (ImGui.Button("Delete"))
+            ImGui.OpenPopup("##DeleteConfirmPopup");
 
         var viewport = ImGui.GetMainViewport();
         Vector2 center = viewport.GetCenter();
         ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
 
-        if (ImGui.BeginPopupModal("Delete?", ImGuiWindowFlags.AlwaysAutoResize))
+        if (ImGui.BeginPopupModal("##DeleteConfirmPopup", ImGuiWindowFlags.AlwaysAutoResize))
         {
             ImGui.Text("All those beautiful files will be deleted.\nThis operation cannot be undone!");
             ImGui.Separator();
@@ -566,11 +563,11 @@ internal class DebugWindow : Window
                 ImGui.GetTextLineHeight() * 20
             ),
         // Don't allow lines that are longer then the max line length
-        ImGuiInputTextFlags.CallbackCharFilter,
-        ImGuiUtil.CallbackCharFilterFn(_ => _inputTextContent.MaxLineLength() < 181)
+        ImGuiInputTextFlags.None
+        // ImGuiUtil.CallbackCharFilterFn(_ => _inputTextContent.Length() < 181)
         ))
         {
-            DalamudApi.PluginLog.Warning($"{_inputTextContent}");
+            // DalamudApi.PluginLog.Warning($"{_inputTextContent}");
             // Macro.Lines = lines;
         }
     }

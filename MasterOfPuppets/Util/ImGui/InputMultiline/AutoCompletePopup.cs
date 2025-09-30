@@ -20,7 +20,7 @@ namespace MasterOfPuppets.Util.ImGuiExt;
 /// Heavily inspired by Chat2: https://github.com/Infiziert90/ChatTwo/blob/3951c49e1aa9941afbefe855298b663e68bff3e4/ChatTwo/Ui/ChatLogWindow.cs#L1399
 /// ImGui implementation also heavily inspired by this comment: https://github.com/ocornut/imgui/issues/718#issuecomment-2539185115
 /// </remarks>
-public class SeStringAutoCompletePopup
+public class AutoCompletePopup
 {
     private Plugin Plugin { get; }
 
@@ -80,10 +80,10 @@ public class SeStringAutoCompletePopup
     // We can't use the ImGuiClipper extensions because they don't return a Ptr reference
     private ImGuiListClipperPtr clipper = ImGui.ImGuiListClipper();
 
-    private ImGuiWindowFlags popupFlags =
+    private readonly ImGuiWindowFlags popupFlags =
         ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings;
 
-    public SeStringAutoCompletePopup(Plugin plugin)
+    public AutoCompletePopup(Plugin plugin)
     {
         Plugin = plugin;
     }
@@ -123,7 +123,7 @@ public class SeStringAutoCompletePopup
             {
                 if (
                     ImGui.InputTextWithHint(
-                        "##auto-complete-filter",
+                        "##AutoCompleteFilterInput",
                         "Filter...",
                         ref _autoCompleteFilter,
                         256,
@@ -173,7 +173,7 @@ public class SeStringAutoCompletePopup
             }
 
             var selectedCompletion = SelectedCompletion;
-            if (ImGui.BeginTable("###se_string_auto_complete/completions_layout_table", 2))
+            if (ImGui.BeginTable("###AutoCompleteCompletionsTable", 2))
             {
                 ImGui.TableSetupColumn("Completion", ImGuiTableColumnFlags.WidthFixed, longestCompletionWidth);
                 ImGui.TableSetupColumn("Group", ImGuiTableColumnFlags.WidthFixed, longestGroupWidth);

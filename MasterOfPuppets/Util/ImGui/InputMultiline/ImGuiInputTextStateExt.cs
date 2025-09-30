@@ -51,6 +51,9 @@ public static class ImGuiInputTextStateExt
 
     private static bool IsWordBoundary(char c)
     {
-        return char.IsSeparator(c) || char.IsWhiteSpace(c) || c == '\uE040' || c == '\uE041';
+        // char AutoTranslateStart = '\uE040';
+        // char AutoTranslateEnd = '\uE041';
+        // return char.IsSeparator(c) || char.IsWhiteSpace(c) || c == AutoTranslateStart || c == AutoTranslateEnd;
+        return char.IsSeparator(c) || char.IsWhiteSpace(c);
     }
 }

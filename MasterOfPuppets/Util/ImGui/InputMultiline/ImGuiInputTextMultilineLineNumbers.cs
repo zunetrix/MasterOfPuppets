@@ -9,6 +9,7 @@ using MasterOfPuppets.Extensions.Dalamud;
 
 namespace MasterOfPuppets.Util.ImGuiExt;
 
+// Original: https://github.com/grittyfrog/MacroMate/blob/master/MacroMate/Extensions/Imgui/InputTextMultilineLineNumbers.cs
 public class ImGuiInputTextMultilineLineNumbers
 {
     public static ImGuiInputTextMultilineLineNumbers Reserve(string text, Vector2 size)

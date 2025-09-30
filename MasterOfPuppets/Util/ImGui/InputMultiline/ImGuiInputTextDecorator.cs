@@ -19,7 +19,6 @@ public class ImGuiInputTextDecorator
     private unsafe ImGuiInputTextStatePtr TextState => new(&ImGui.GetCurrentContext().Handle->InputTextState);
 
     /// Decorates an InputText
-    ///
     /// Assumes that InputText was the last rendered ImGui widget.
     /// Assumes no overlapping decorations
     public void DecorateInputText(

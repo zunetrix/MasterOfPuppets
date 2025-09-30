@@ -21,9 +21,9 @@ public class CompletionIndex
     /// The `GroupTitle` field of most completion entries is empty, if we want to know the group title
     /// we need to look at the "special" group header completion, there should be 1 per GroupId.
     /// </summary>
-    private Dictionary<uint, Completion> CompletionGroupsById = new();
-    private TrieDictionary<List<CompletionInfo>> CompletionsByText = new();
-    private Dictionary<(uint, uint), CompletionInfo> CompletionInfoByGroupKey = new();
+    private readonly Dictionary<uint, Completion> CompletionGroupsById = new();
+    private readonly TrieDictionary<List<CompletionInfo>> CompletionsByText = new();
+    private readonly Dictionary<(uint, uint), CompletionInfo> CompletionInfoByGroupKey = new();
 
     public enum IndexState { UNINDEXED, INDEXING, INDEXED }
     public IndexState State { get; private set; } = IndexState.UNINDEXED;
@@ -31,7 +31,7 @@ public class CompletionIndex
     public IEnumerable<CompletionInfo> Search(string prefix)
     {
         if (State != IndexState.INDEXED) { return new List<CompletionInfo>(); }
-        if (prefix == "") { return new List<CompletionInfo>(); }
+        if (prefix == string.Empty) { return new List<CompletionInfo>(); }
 
         return CompletionsByText.StartsWith(prefix.ToLower()).SelectMany(c => c.Value);
     }
@@ -77,6 +77,7 @@ public class CompletionIndex
             .Where(c =>
             {
                 var lookupTable = c.LookupTable.ExtractText();
+
                 return lookupTable != "";
             });
 
@@ -88,7 +89,15 @@ public class CompletionIndex
 
     private List<CompletionInfo> AllCompletionInfo()
     {
+        var allowedGroups = new[] {
+            49, // mount
+            56, // actions skills
+            69, // blue mage
+            62, // text command
+        };
+
         return DalamudApi.DataManager.GetExcelSheet<Completion>()
+             .Where(raw => allowedGroups.Contains(raw.Group))
              .Select(raw => ParsedCompletion.From(raw))
              .SelectMany<ParsedCompletion, CompletionInfo>(parsed => CompletionInfo.From(parsed))
              .Select(info =>

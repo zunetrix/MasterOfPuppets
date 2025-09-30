@@ -4,7 +4,7 @@ using Dalamud.Bindings.ImGui;
 
 namespace MasterOfPuppets.Extensions.Dalamud;
 
-public static class ImGuiVectorExt
+public static class ImVectorExt
 {
     public static IEnumerable<T> AsEnumerable<T>(this ImVector<T> self) where T : unmanaged
     {

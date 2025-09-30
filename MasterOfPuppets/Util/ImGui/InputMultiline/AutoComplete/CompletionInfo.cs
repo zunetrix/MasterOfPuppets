@@ -90,14 +90,14 @@ public record class CompletionInfo(
 
     private static ReadOnlySeString? GetHelpText(string table, uint rowId)
     {
+        if (TryGetRowByName<TextCommand>(table, rowId, out var textCommand)) { return textCommand.Description; }
+        if (TryGetRowByName<PetAction>(table, rowId, out var petAction)) { return petAction.Description; }
         if (TryGetRowByName<GuardianDeity>(table, rowId, out var gd)) { return gd.Description; }
         if (TryGetRowByName<GeneralAction>(table, rowId, out var ga)) { return ga.Description; }
         if (TryGetTransientRowByName<ActionTransient>(table, rowId, out var action)) { return action.Description; }
         if (TryGetRowByName<CraftAction>(table, rowId, out var craftAction)) { return craftAction.Description; }
         if (TryGetRowByName<BuddyAction>(table, rowId, out var buddyAction)) { return buddyAction.Description; }
-        if (TryGetRowByName<PetAction>(table, rowId, out var petAction)) { return petAction.Description; }
         if (TryGetRowByName<MainCommand>(table, rowId, out var mainCommand)) { return mainCommand.Description; }
-        if (TryGetRowByName<TextCommand>(table, rowId, out var textCommand)) { return textCommand.Description; }
         if (TryGetTransientRowByName<CompanionTransient>(table, rowId, out var companion)) { return companion.Tooltip; }
         if (TryGetRowByName<MKDSupportJob>(table, rowId, out var occJob)) { return occJob.Unknown3; }
 
