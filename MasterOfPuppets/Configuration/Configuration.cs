@@ -1,19 +1,18 @@
-﻿using System;
-using System.Linq;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using Dalamud.Configuration;
-using Dalamud.Plugin;
 using Dalamud.Game.Text;
+using Dalamud.Plugin;
 
-using MasterOfPuppets.Util;
 using MasterOfPuppets.Extensions;
+using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
 
 [Serializable]
-internal class Configuration : IPluginConfiguration
-{
+internal class Configuration : IPluginConfiguration {
     public int Version { get; set; } = 1;
     private IDalamudPluginInterface Interface { get; set; } = null!;
 
@@ -50,26 +49,22 @@ internal class Configuration : IPluginConfiguration
     public bool ShowSettingsButton { get; set; } = true;
     public bool AllowCloseWithEscape { get; set; } = false;
 
-    public void Initialize(IDalamudPluginInterface pluginInterface)
-    {
+    public void Initialize(IDalamudPluginInterface pluginInterface) {
         Interface = pluginInterface;
     }
 
-    public void Save()
-    {
+    public void Save() {
         Interface.SavePluginConfig(this);
     }
 
-    public void ResetData()
-    {
+    public void ResetData() {
         Macros = new();
         Characters = new();
         CidsGroups = new();
         ListenedChatTypes = new();
     }
 
-    public void UpdateFromJson(string cofigurationJson)
-    {
+    public void UpdateFromJson(string cofigurationJson) {
         if (string.IsNullOrWhiteSpace(cofigurationJson)) return;
 
         var newPluginConfig = cofigurationJson.JsonDeserialize<Configuration>();
@@ -99,34 +94,29 @@ internal class Configuration : IPluginConfiguration
         OpenOnLogin = newPluginConfig.OpenOnLogin;
     }
 
-    public void AddCharacter(Character character)
-    {
-        if (!Characters.Any(c => c.Cid == character.Cid))
-        {
+    public void AddCharacter(Character character) {
+        if (!Characters.Any(c => c.Cid == character.Cid)) {
             Characters.Add(new Character { Cid = character.Cid, Name = character.Name });
         }
 
         this.Save();
     }
 
-    public void RemoveCharacter(ulong cid)
-    {
+    public void RemoveCharacter(ulong cid) {
         var isEmptyList = Characters == null || Characters.Count == 0;
 
         if (isEmptyList)
             return;
 
         var existingIndex = Characters.FindIndex(character => character.Cid == cid);
-        if (existingIndex != -1)
-        {
+        if (existingIndex != -1) {
             Characters.RemoveAt(existingIndex);
         }
 
         this.Save();
     }
 
-    public void MoveCharacterToIndex(int itemIndex, int targetIndex)
-    {
+    public void MoveCharacterToIndex(int itemIndex, int targetIndex) {
         Characters.MoveItemToIndex(itemIndex, targetIndex);
         this.Save();
     }

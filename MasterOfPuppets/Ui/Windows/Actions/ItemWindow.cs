@@ -1,28 +1,26 @@
-﻿using System;
-using System.Numerics;
-using System.Linq;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 
-using Dalamud.Interface.Windowing;
-using Dalamud.Interface.Utility;
-using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class ItemWindow : Window
-{
+public class ItemWindow : Window {
     private Plugin Plugin { get; }
 
     private readonly List<ExecutableAction> UnlockedActions = new();
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    public ItemWindow(Plugin plugin) : base($"{Language.ItemTitle}###ItemWindow")
-    {
+    public ItemWindow(Plugin plugin) : base($"{Language.ItemTitle}###ItemWindow") {
         Plugin = plugin;
 
         Size = ImGuiHelpers.ScaledVector2(500, 450);
@@ -31,22 +29,19 @@ public class ItemWindow : Window
         // Flags = ImGuiWindowFlags.NoResize;
     }
 
-    public override void OnOpen()
-    {
+    public override void OnOpen() {
         UnlockedActions.Clear();
         UnlockedActions.AddRange(ItemHelper.GetAllowedItems());
         base.OnOpen();
     }
 
-    public override void OnClose()
-    {
+    public override void OnClose() {
         ListSearchedIndexes.Clear();
         _searchString = string.Empty;
         base.OnClose();
     }
 
-    public override void Draw()
-    {
+    public override void Draw() {
         ImGui.BeginChild("##ItemHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         DrawHeader();
         ImGui.EndChild();
@@ -56,8 +51,7 @@ public class ItemWindow : Window
         ImGui.EndChild();
     }
 
-    private void DrawItemEntry(int actionIndex, ExecutableAction item)
-    {
+    private void DrawItemEntry(int actionIndex, ExecutableAction item) {
         ImGui.PushID(actionIndex);
         ImGui.TableNextRow();
         ImGui.TableNextColumn();
@@ -68,8 +62,7 @@ public class ItemWindow : Window
         var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
 
         ImGui.Image(icon, iconSize);
-        if (ImGui.IsItemClicked())
-        {
+        if (ImGui.IsItemClicked()) {
             Plugin.IpcProvider.ExecuteItemCommand(item.ActionId);
         }
         ImGuiUtil.ToolTip(Language.ClickToExecute);
@@ -77,8 +70,7 @@ public class ItemWindow : Window
         ImGui.TableNextColumn();
         ImGui.TextUnformatted($"{item.ActionName}");
         // ImGui.TextUnformatted($"{item.ActionName}\n({item.IconId}) {item.Category}");
-        if (ImGui.IsItemClicked())
-        {
+        if (ImGui.IsItemClicked()) {
             ImGui.SetClipboardText($"{item.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
@@ -86,8 +78,7 @@ public class ItemWindow : Window
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(item.TextCommand);
-        if (ImGui.IsItemClicked())
-        {
+        if (ImGui.IsItemClicked()) {
             ImGui.SetClipboardText(item.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
@@ -96,8 +87,7 @@ public class ItemWindow : Window
         ImGui.PopID();
     }
 
-    private unsafe void DrawItemTable()
-    {
+    private unsafe void DrawItemTable() {
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 4;
@@ -105,25 +95,21 @@ public class ItemWindow : Window
         var isFiltered = !string.IsNullOrEmpty(_searchString);
         var itemCount = isFiltered ? ListSearchedIndexes.Count : UnlockedActions.Count;
 
-        if (ImGui.BeginTable("##ItemTable", tableColumnCount, tableFlags))
-        {
+        if (ImGui.BeginTable("##ItemTable", tableColumnCount, tableFlags)) {
             ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 1.0f);
             ImGui.TableSetupColumn("Text Commands", ImGuiTableColumnFlags.WidthStretch);
 
             ImGuiListClipperPtr clipper;
-            unsafe
-            {
+            unsafe {
                 clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
             }
 
             clipper.Begin(itemCount);
 
-            while (clipper.Step())
-            {
-                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
-                {
+            while (clipper.Step()) {
+                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
                     if (i >= itemCount) break;
                     int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
                     if (realIndex >= UnlockedActions.Count) continue;
@@ -137,8 +123,7 @@ public class ItemWindow : Window
         }
     }
 
-    private void Search()
-    {
+    private void Search() {
         ListSearchedIndexes.Clear();
 
         ListSearchedIndexes.AddRange(
@@ -150,8 +135,7 @@ public class ItemWindow : Window
         );
     }
 
-    private void DrawHeader()
-    {
+    private void DrawHeader() {
         ImGui.TextUnformatted($"{Language.ItemTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
@@ -161,8 +145,7 @@ public class ItemWindow : Window
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##ItemSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
-        {
+        if (ImGui.InputTextWithHint("##ItemSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
 

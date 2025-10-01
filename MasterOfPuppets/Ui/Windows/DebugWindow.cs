@@ -1,25 +1,24 @@
-﻿using System;
-using System.Numerics;
-using System.Linq;
-using System.Diagnostics.CodeAnalysis;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Numerics;
 
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiFileDialog;
-using Dalamud.Interface.Windowing;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
-using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Windowing;
 
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
-using MasterOfPuppets.Extensions.Dalamud;
 
 namespace MasterOfPuppets;
 
-internal class DebugWindow : Window
-{
+internal class DebugWindow : Window {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
     private FileDialogManager FileDialogManager { get; }
@@ -33,8 +32,7 @@ internal class DebugWindow : Window
     private static readonly Dictionary<string, (bool toogle, bool wasEnterClickedLastTime)> _comboDic = [];
     private readonly ImGuiInputTextMultiline InputTextMultiline;
 
-    public DebugWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name} Debug###DebugWindow")
-    {
+    public DebugWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name} Debug###DebugWindow") {
         Plugin = plugin;
         Ui = ui;
 
@@ -51,14 +49,12 @@ internal class DebugWindow : Window
         InputTextMultiline = new ImGuiInputTextMultiline(plugin);
     }
 
-    public override void PreDraw()
-    {
+    public override void PreDraw() {
         FileDialogManager.Draw();
         base.PreDraw();
     }
 
-    public override void Draw()
-    {
+    public override void Draw() {
         if (!ImGui.BeginTabBar("##DebugTabs")) return;
 
         DrawGeneralDebugTab();
@@ -69,10 +65,8 @@ internal class DebugWindow : Window
         ImGui.EndTabBar();
     }
 
-    private void DrawGeneralDebugTab()
-    {
-        if (ImGui.BeginTabItem($"General###GeneralDebugTab"))
-        {
+    private void DrawGeneralDebugTab() {
+        if (ImGui.BeginTabItem($"General###GeneralDebugTab")) {
             ImGui.TextUnformatted("Actions Test");
 
             ImGui.Spacing();
@@ -82,132 +76,108 @@ internal class DebugWindow : Window
 
             ImGui.InputTextWithHint("##TargetNameDebugInput", "Target name", ref _targetName, 255, ImGuiInputTextFlags.AutoSelectAll);
             ImGui.SameLine();
-            if (ImGui.Button("Target"))
-            {
+            if (ImGui.Button("Target")) {
                 TargetManager.TargetByName(_targetName);
             }
 
             ImGui.SameLine();
-            if (ImGui.Button("Target Clear"))
-            {
+            if (ImGui.Button("Target Clear")) {
                 TargetManager.TargetClear();
             }
 
-            if (ImGui.Button("Target Clear Broadcast"))
-            {
+            if (ImGui.Button("Target Clear Broadcast")) {
                 Plugin.IpcProvider.ExecuteTargetClear();
             }
 
-            if (ImGui.Button("Target My Target"))
-            {
+            if (ImGui.Button("Target My Target")) {
                 Plugin.IpcProvider.ExecuteTargetMyTarget();
             }
 
-            if (ImGui.Button("Enable Walk"))
-            {
+            if (ImGui.Button("Enable Walk")) {
                 MovementManager.EnableWalk();
             }
             ImGui.SameLine();
-            if (ImGui.Button("Disable Walk"))
-            {
+            if (ImGui.Button("Disable Walk")) {
                 MovementManager.DisableWalk();
             }
 
-            if (ImGui.Button("Get Object Quantity"))
-            {
+            if (ImGui.Button("Get Object Quantity")) {
                 GameSettingsManager.GetDisplayObjectLimit();
             }
             ImGui.SameLine();
-            if (ImGui.Button("Set Object Quantity"))
-            {
+            if (ImGui.Button("Set Object Quantity")) {
                 GameSettingsManager.SetDisplayObjectLimit(SettingsDisplayObjectLimitType.Minimum);
             }
 
-            if (ImGui.Button("Print Game Chat Error"))
-            {
+            if (ImGui.Button("Print Game Chat Error")) {
                 DalamudApi.ChatGui.PrintError($"Test error message");
             }
 
-            if (ImGui.Button("Chat SendChatRunMacro(2)"))
-            {
+            if (ImGui.Button("Chat SendChatRunMacro(2)")) {
                 Plugin.ChatWatcher.SendChatRunMacro("2");
             }
 
-            if (ImGui.Button("Chat SendChatRunMacro(Parasol action 1)"))
-            {
+            if (ImGui.Button("Chat SendChatRunMacro(Parasol action 1)")) {
                 Plugin.ChatWatcher.SendChatRunMacro("\"Parasol action 1\"");
             }
 
-            if (ImGui.Button("Chat SendChatStopMacroExecution"))
-            {
+            if (ImGui.Button("Chat SendChatStopMacroExecution")) {
                 Plugin.ChatWatcher.SendChatStopMacroExecution();
             }
 
             ImGui.Button("Resset all Config data (double click)");
-            if (ImGui.IsItemHovered())
-            {
-                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                {
+            if (ImGui.IsItemHovered()) {
+                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
                     Plugin.Config.ResetData();
                     Plugin.IpcProvider.SyncConfiguration();
                 }
             }
 
-            if (ImGui.Button("ExecuteActionCommand Umbrella Dance"))
-            {
+            if (ImGui.Button("ExecuteActionCommand Umbrella Dance")) {
                 Plugin.IpcProvider.ExecuteActionCommand(30868);
                 DalamudApi.ShowNotification($"ExecuteActionCommand", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("ExecuteHotbarActionBySlotIndex(1, 5)"))
-            {
+            if (ImGui.Button("ExecuteHotbarActionBySlotIndex(1, 5)")) {
                 HotbarManager.ExecuteHotbarActionBySlotIndex(1, 5);
                 DalamudApi.ShowNotification($"ExecuteHotbarActionBySlotIndex", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("ExecutePetHotbarActionBySlotIndex(0)"))
-            {
+            if (ImGui.Button("ExecutePetHotbarActionBySlotIndex(0)")) {
                 HotbarManager.ExecutePetHotbarActionBySlotIndex(0);
                 DalamudApi.ShowNotification($"ExecutePetHotbarActionBySlotIndex", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("ExecutePetHotbarActionBySlotIndex(1)"))
-            {
+            if (ImGui.Button("ExecutePetHotbarActionBySlotIndex(1)")) {
                 HotbarManager.ExecutePetHotbarActionBySlotIndex(1);
                 DalamudApi.ShowNotification($"ExecuteHotbarActionBySlotIndex", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("UseItemByName(Heavenscracker)"))
-            {
+            if (ImGui.Button("UseItemByName(Heavenscracker)")) {
                 GameActionManager.UseItemByName("Heavenscracker");
                 DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
             }
-            if (ImGui.Button("UseActionByName(Peloton)"))
-            {
+            if (ImGui.Button("UseActionByName(Peloton)")) {
                 GameActionManager.UseActionByName("Peloton");
                 DalamudApi.ShowNotification($"UseActionByName", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("Broadcast ExecuteItemCommand"))
-            {
+            if (ImGui.Button("Broadcast ExecuteItemCommand")) {
                 Plugin.IpcProvider.ExecuteItemCommand(5893);
                 DalamudApi.ShowNotification($"ExecuteItemCommand", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("UseItemByName(Lominsan Sparkler)"))
-            {
+            if (ImGui.Button("UseItemByName(Lominsan Sparkler)")) {
                 GameActionManager.UseItemByName("Lominsan Sparkler");
                 DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("UseItemById(5893)"))
-            {
+            if (ImGui.Button("UseItemById(5893)")) {
                 uint lominsanSparklere = 5893;
                 GameActionManager.UseItemById(lominsanSparklere);
                 DalamudApi.ShowNotification($"UseItemById", NotificationType.Info, 5000);
             }
-            if (ImGui.Button("Broadcast UseItemById(5893)"))
-            {
+            if (ImGui.Button("Broadcast UseItemById(5893)")) {
                 uint lominsanSparklere = 5893;
                 Plugin.IpcProvider.ExecuteItemCommand(lominsanSparklere);
                 DalamudApi.ShowNotification($"Broadcast UseItemById(5893)", NotificationType.Info, 5000);
@@ -217,8 +187,7 @@ internal class DebugWindow : Window
             //     ImGui.TextUnformatted($"{ActionManager.Instance()->QueuedActionId}");
             // }
 
-            if (ImGui.Button("Use Invalid Item name"))
-            {
+            if (ImGui.Button("Use Invalid Item name")) {
                 var item = ItemHelper.GetExecutableActionByName("Lominsan Sparkler Flare");
                 DalamudApi.PluginLog.Warning($"item: {item?.ActionName}");
 
@@ -230,25 +199,19 @@ internal class DebugWindow : Window
         }
     }
 
-    private unsafe void DrawHotbarDebugTab()
-    {
+    private unsafe void DrawHotbarDebugTab() {
         var hotbars = RaptureHotbarModule.Instance()->Hotbars;
-        if (hotbars.IsEmpty || hotbars.Length <= 0)
-        {
+        if (hotbars.IsEmpty || hotbars.Length <= 0) {
             DalamudApi.PluginLog.Warning($"Invalid Hotbars");
             return;
         }
 
-        if (ImGui.BeginTabItem($"Hotbars###HotbarsDebugTab"))
-        {
+        if (ImGui.BeginTabItem($"Hotbars###HotbarsDebugTab")) {
             // for (var hotbarIndex = 0; hotbarIndex < hotbars.Length; hotbarIndex++)
             int hotbarIndex = 0;
-            foreach (var hotbar in hotbars)
-            {
-                if (ImGui.CollapsingHeader($"Hotbar [{hotbarIndex}]"))
-                {
-                    if (hotbar.Slots.IsEmpty)
-                    {
+            foreach (var hotbar in hotbars) {
+                if (ImGui.CollapsingHeader($"Hotbar [{hotbarIndex}]")) {
+                    if (hotbar.Slots.IsEmpty) {
                         DalamudApi.PluginLog.Warning($"hotbar.Slots.IsEmpty");
                         return;
                     }
@@ -257,8 +220,7 @@ internal class DebugWindow : Window
                         ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
                     var tableColumnCount = 5;
 
-                    if (ImGui.BeginTable($"##HotbarTable_{hotbarIndex}", tableColumnCount, tableFlags))
-                    {
+                    if (ImGui.BeginTable($"##HotbarTable_{hotbarIndex}", tableColumnCount, tableFlags)) {
                         ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
                         ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed);
                         ImGui.TableSetupColumn("ID", ImGuiTableColumnFlags.WidthFixed);
@@ -267,8 +229,7 @@ internal class DebugWindow : Window
 
                         // hotbar.GetHotbarSlot(slotIndex);
 
-                        for (var slotIndex = 0; slotIndex < hotbar.Slots.Length; slotIndex++)
-                        {
+                        for (var slotIndex = 0; slotIndex < hotbar.Slots.Length; slotIndex++) {
                             // if (hotbar.Slots[slotIndex].IsEmpty) return;
                             var slot = hotbar.Slots[slotIndex];
 
@@ -282,8 +243,7 @@ internal class DebugWindow : Window
 
                             ImGui.TableNextColumn();
                             ImGui.TextUnformatted($"{slot.CommandId} - ({slot.ApparentActionId})");
-                            if (ImGui.IsItemClicked())
-                            {
+                            if (ImGui.IsItemClicked()) {
                                 ImGui.SetClipboardText($"{slot.ApparentActionId}");
                                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
                             }
@@ -294,8 +254,7 @@ internal class DebugWindow : Window
                             var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
                             ImGui.TextUnformatted($"{slot.IconId}");
                             ImGui.Image(icon, iconSize);
-                            if (ImGui.IsItemClicked())
-                            {
+                            if (ImGui.IsItemClicked()) {
                                 HotbarManager.ExecuteHotbarActionBySlotIndex((uint)hotbarIndex, (uint)slotIndex);
                             }
                             ImGuiUtil.ToolTip(Language.ClickToExecute);
@@ -316,32 +275,26 @@ internal class DebugWindow : Window
         }
     }
 
-    private unsafe void DrawPetHotbarDebugTab()
-    {
-        if (RaptureHotbarModule.Instance()->PetHotbar.Slots.IsEmpty)
-        {
+    private unsafe void DrawPetHotbarDebugTab() {
+        if (RaptureHotbarModule.Instance()->PetHotbar.Slots.IsEmpty) {
             DalamudApi.PluginLog.Warning($"petHotbar.Slots");
             return;
         }
 
-        if (ImGui.BeginTabItem($"Pet Hotbar###PetHotbarsDebugTab"))
-        {
-            if (ImGui.CollapsingHeader($"Pet Hotbar"))
-            {
+        if (ImGui.BeginTabItem($"Pet Hotbar###PetHotbarsDebugTab")) {
+            if (ImGui.CollapsingHeader($"Pet Hotbar")) {
                 var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                     ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
                 var tableColumnCount = 5;
 
-                if (ImGui.BeginTable($"##PetHotbarTable", tableColumnCount, tableFlags))
-                {
+                if (ImGui.BeginTable($"##PetHotbarTable", tableColumnCount, tableFlags)) {
                     ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
                     ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed);
                     ImGui.TableSetupColumn("ID", ImGuiTableColumnFlags.WidthFixed);
                     ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
                     ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
 
-                    for (var slotIndex = 0; slotIndex < RaptureHotbarModule.Instance()->PetHotbar.Slots.Length; slotIndex++)
-                    {
+                    for (var slotIndex = 0; slotIndex < RaptureHotbarModule.Instance()->PetHotbar.Slots.Length; slotIndex++) {
                         var slot = RaptureHotbarModule.Instance()->PetHotbar.Slots[slotIndex];
 
                         ImGui.PushID(slotIndex);
@@ -354,8 +307,7 @@ internal class DebugWindow : Window
 
                         ImGui.TableNextColumn();
                         ImGui.TextUnformatted($"{slot.CommandId} - ({slot.ApparentActionId})");
-                        if (ImGui.IsItemClicked())
-                        {
+                        if (ImGui.IsItemClicked()) {
                             ImGui.SetClipboardText($"{slot.ApparentActionId}");
                             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
                         }
@@ -366,8 +318,7 @@ internal class DebugWindow : Window
                         var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
                         ImGui.TextUnformatted($"{slot.IconId}");
                         ImGui.Image(icon, iconSize);
-                        if (ImGui.IsItemClicked())
-                        {
+                        if (ImGui.IsItemClicked()) {
                             HotbarManager.ExecutePetHotbarActionBySlotIndex((uint)slotIndex);
                         }
                         ImGuiUtil.ToolTip(Language.ClickToExecute);
@@ -385,15 +336,13 @@ internal class DebugWindow : Window
         }
     }
 
-    public static bool SearchableCombo<T>(string id, [NotNullWhen(true)] out T? selected, string preview, IEnumerable<T> possibilities, Func<T, string> toName, Func<T, string, bool> searchPredicate, Func<T, bool> preFilter, ImGuiComboFlags flags = ImGuiComboFlags.None) where T : notnull
-    {
+    public static bool SearchableCombo<T>(string id, [NotNullWhen(true)] out T? selected, string preview, IEnumerable<T> possibilities, Func<T, string> toName, Func<T, string, bool> searchPredicate, Func<T, bool> preFilter, ImGuiComboFlags flags = ImGuiComboFlags.None) where T : notnull {
         _comboDic.TryAdd(id, (false, false));
         (var toggle, var wasEnterClickedLastTime) = _comboDic[id];
         selected = default;
         if (!ImGui.BeginCombo(id + (toggle ? "##x" : ""), preview, flags)) return false;
 
-        if (wasEnterClickedLastTime || ImGui.IsKeyPressed(ImGuiKey.Escape))
-        {
+        if (wasEnterClickedLastTime || ImGui.IsKeyPressed(ImGuiKey.Escape)) {
             toggle = !toggle;
             _search = string.Empty;
             _filtered = null;
@@ -406,8 +355,7 @@ internal class DebugWindow : Window
         if (ImGui.IsKeyPressed(ImGuiKey.DownArrow))
             _hoveredItem++;
         _hoveredItem = Math.Clamp(_hoveredItem, 0, Math.Max(_filtered?.Count - 1 ?? 0, 0));
-        if (ImGui.IsWindowAppearing() && ImGui.IsWindowFocused() && !ImGui.IsAnyItemActive())
-        {
+        if (ImGui.IsWindowAppearing() && ImGui.IsWindowFocused() && !ImGui.IsAnyItemActive()) {
             _search = string.Empty;
             _filtered = null;
             ImGui.SetKeyboardFocusHere(0);
@@ -416,19 +364,16 @@ internal class DebugWindow : Window
         if (ImGui.InputText("##ExcelSheetComboSearch", ref _search, 128))
             _filtered = null;
 
-        if (_filtered == null)
-        {
+        if (_filtered == null) {
             _filtered = possibilities.Where(preFilter).Where(s => searchPredicate(s, _search)).Cast<object>().ToHashSet();
             _hoveredItem = 0;
         }
 
         var i = 0;
-        foreach (var row in _filtered.Cast<T>())
-        {
+        foreach (var row in _filtered.Cast<T>()) {
             var hovered = _hoveredItem == i;
             ImGui.PushID(i);
-            if (ImGui.Selectable(toName(row), hovered) || (enterClicked && hovered))
-            {
+            if (ImGui.Selectable(toName(row), hovered) || (enterClicked && hovered)) {
                 selected = row;
                 ImGui.PopID();
                 ImGui.EndCombo();
@@ -493,8 +438,7 @@ internal class DebugWindow : Window
 
     //     return addPluginToProfilePopupId;
     // }
-    private void DrawSpinner()
-    {
+    private void DrawSpinner() {
         var spinnerLabel = $"##Spinner_{1}";
         // var spinnerRadius = ImGui.GetTextLineHeight() / 4;
         var spinnerRadius = ImGui.GetTextLineHeight();
@@ -503,24 +447,20 @@ internal class DebugWindow : Window
         ImGuiUtil.Spinner(spinnerLabel, spinnerRadius, spinnerThickness, Style.Colors.Blue);
     }
 
-    private void DrawIconPicker()
-    {
+    private void DrawIconPicker() {
         var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
         // var icon = DalamudApi.TextureProvider.GetFromGameIcon(undefinedIconId).GetWrapOrEmpty().Handle;
         var icon = DalamudApi.TextureProvider.GetMacroIcon(_macroIconId).GetWrapOrEmpty().Handle;
         ImGui.Image(icon, iconSize);
-        if (ImGui.IsItemClicked())
-        {
-            Ui.IconPickerDialogWindow.Open(_macroIconId, selectedIconId =>
-            {
+        if (ImGui.IsItemClicked()) {
+            Ui.IconPickerDialogWindow.Open(_macroIconId, selectedIconId => {
                 _macroIconId = selectedIconId;
                 DalamudApi.PluginLog.Warning($"selectedIconId: {selectedIconId}");
             });
         }
     }
 
-    private void DrawConfirmModalDialog()
-    {
+    private void DrawConfirmModalDialog() {
         // modal confirmation
         if (ImGui.Button("Delete"))
             ImGui.OpenPopup("##DeleteConfirmPopup");
@@ -529,8 +469,7 @@ internal class DebugWindow : Window
         Vector2 center = viewport.GetCenter();
         ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
 
-        if (ImGui.BeginPopupModal("##DeleteConfirmPopup", ImGuiWindowFlags.AlwaysAutoResize))
-        {
+        if (ImGui.BeginPopupModal("##DeleteConfirmPopup", ImGuiWindowFlags.AlwaysAutoResize)) {
             ImGui.Text("All those beautiful files will be deleted.\nThis operation cannot be undone!");
             ImGui.Separator();
 
@@ -552,8 +491,7 @@ internal class DebugWindow : Window
         }
     }
 
-    private void DrawMultilineInput()
-    {
+    private void DrawMultilineInput() {
         if (InputTextMultiline.Draw(
             "###MacroContent",
             ref _inputTextContent,
@@ -565,17 +503,14 @@ internal class DebugWindow : Window
         // Don't allow lines that are longer then the max line length
         ImGuiInputTextFlags.None
         // ImGuiUtil.CallbackCharFilterFn(_ => _inputTextContent.Length() < 181)
-        ))
-        {
+        )) {
             // DalamudApi.PluginLog.Warning($"{_inputTextContent}");
             // Macro.Lines = lines;
         }
     }
 
-    private void DrawElementsDebugTab()
-    {
-        if (ImGui.BeginTabItem($"Gui Elements###GuiElementsDebugTab"))
-        {
+    private void DrawElementsDebugTab() {
+        if (ImGui.BeginTabItem($"Gui Elements###GuiElementsDebugTab")) {
             ImGui.TextUnformatted("ImGui Elements");
             DrawSpinner();
 

@@ -5,14 +5,11 @@ using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 
-public static class TextCommandHelper
-{
-    private static ExecutableAction GetExecutableAction(TextCommand textCommand)
-    {
+public static class TextCommandHelper {
+    private static ExecutableAction GetExecutableAction(TextCommand textCommand) {
         uint undefinedIcon = 60042;
 
-        return new ExecutableAction
-        {
+        return new ExecutableAction {
             ActionId = textCommand.RowId,
             ActionName = textCommand.Command.ToString(),
             IconId = undefinedIcon,
@@ -22,16 +19,14 @@ public static class TextCommandHelper
         };
     }
 
-    public static List<ExecutableAction> GetAllowedTextCommands()
-    {
+    public static List<ExecutableAction> GetAllowedTextCommands() {
         return DalamudApi.DataManager.GetExcelSheet<TextCommand>()
             // .Where(a => a.IsUnlocked())
             .Select(GetExecutableAction)
             .ToList();
     }
 
-    public static TextCommand? GetTextCommandByName(string textCommandName)
-    {
+    public static TextCommand? GetTextCommandByName(string textCommandName) {
         // returns RowId = 0 for invalid names
         var textcommand = DalamudApi.DataManager.GetExcelSheet<TextCommand>()!
         .FirstOrDefault(a => string.Equals(a.Command.ToString(), textCommandName, System.StringComparison.OrdinalIgnoreCase));
@@ -40,8 +35,7 @@ public static class TextCommandHelper
         return isTextCommandFound ? textcommand : null;
     }
 
-    public static ExecutableAction? GetExecutableActionByName(string textCommandName)
-    {
+    public static ExecutableAction? GetExecutableActionByName(string textCommandName) {
         var textCommand = GetTextCommandByName(textCommandName);
         return textCommand == null ? null : GetExecutableAction(textCommand.Value);
     }

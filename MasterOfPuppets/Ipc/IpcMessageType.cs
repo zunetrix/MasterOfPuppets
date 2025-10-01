@@ -1,7 +1,6 @@
 namespace MasterOfPuppets.Ipc;
 
-public enum IpcMessageType
-{
+public enum IpcMessageType {
     Hello = 1,
     Bye,
     Acknowledge,

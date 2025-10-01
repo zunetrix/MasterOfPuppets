@@ -12,10 +12,8 @@ namespace MasterOfPuppets;
 /// <summary>
 /// A class containing chat functionality
 /// </summary>
-public static class Chat
-{
-    private static class Signatures
-    {
+public static class Chat {
+    private static class Signatures {
         internal const string SendChat = "48 89 5C 24 ?? 48 89 74 24 10 57 48 83 EC 20 48 8B F2 48 8B F9 45 84 C9";
         internal const string SanitiseString = "E8 ?? ?? ?? ?? 48 8D 4C 24 ?? 0F B6 F8 E8 ?? ?? ?? ?? 48 8D 4D D0";
     }
@@ -26,17 +24,13 @@ public static class Chat
 
     private static readonly unsafe delegate* unmanaged<Utf8String*, int, IntPtr, void> _sanitiseString = null!;
 
-    static Chat()
-    {
-        if (DalamudApi.SigScanner.TryScanText(Signatures.SendChat, out var processChatBoxPtr))
-        {
+    static Chat() {
+        if (DalamudApi.SigScanner.TryScanText(Signatures.SendChat, out var processChatBoxPtr)) {
             ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(processChatBoxPtr);
         }
 
-        unsafe
-        {
-            if (DalamudApi.SigScanner.TryScanText(Signatures.SanitiseString, out var sanitisePtr))
-            {
+        unsafe {
+            if (DalamudApi.SigScanner.TryScanText(Signatures.SanitiseString, out var sanitisePtr)) {
                 _sanitiseString = (delegate* unmanaged<Utf8String*, int, IntPtr, void>)sanitisePtr;
             }
         }
@@ -55,10 +49,8 @@ public static class Chat
     /// </summary>
     /// <param name="message">Message to send</param>
     /// <exception cref="InvalidOperationException">If the signature for this function could not be found</exception>
-    public static unsafe void SendMessageUnsafe(byte[] message)
-    {
-        if (ProcessChatBox == null)
-        {
+    public static unsafe void SendMessageUnsafe(byte[] message) {
+        if (ProcessChatBox == null) {
             throw new InvalidOperationException("Could not find signature for chat sending");
         }
 
@@ -73,8 +65,7 @@ public static class Chat
         Marshal.FreeHGlobal(mem1);
     }
 
-    public static void SendMessage(string message)
-    {
+    public static void SendMessage(string message) {
         DalamudApi.Framework.RunOnTick(() => SendMessageInternal(message));
     }
 
@@ -91,21 +82,17 @@ public static class Chat
     /// <param name="message">message to send</param>
     /// <exception cref="ArgumentException">If <paramref name="message"/> is empty, longer than 500 bytes in UTF-8, or contains invalid characters.</exception>
     /// <exception cref="InvalidOperationException">If the signature for this function could not be found</exception>
-    private static void SendMessageInternal(string message)
-    {
+    private static void SendMessageInternal(string message) {
         var bytes = Encoding.UTF8.GetBytes(message);
-        if (bytes.Length == 0)
-        {
+        if (bytes.Length == 0) {
             throw new ArgumentException("message is empty", nameof(message));
         }
 
-        if (bytes.Length > 500)
-        {
+        if (bytes.Length > 500) {
             throw new ArgumentException("message is longer than 500 bytes", nameof(message));
         }
 
-        if (message.Length != SanitiseText(message).Length)
-        {
+        if (message.Length != SanitiseText(message).Length) {
             throw new ArgumentException("message contained invalid characters", nameof(message));
         }
 
@@ -125,10 +112,8 @@ public static class Chat
     /// <param name="text">text to sanitise</param>
     /// <returns>sanitised text</returns>
     /// <exception cref="InvalidOperationException">If the signature for this function could not be found</exception>
-    public static unsafe string SanitiseText(string text)
-    {
-        if (_sanitiseString == null)
-        {
+    public static unsafe string SanitiseText(string text) {
+        if (_sanitiseString == null) {
             throw new InvalidOperationException("Could not find signature for chat sanitisation");
         }
 
@@ -144,8 +129,7 @@ public static class Chat
     }
 
     [StructLayout(LayoutKind.Explicit)]
-    private readonly struct ChatPayload : IDisposable
-    {
+    private readonly struct ChatPayload : IDisposable {
         [FieldOffset(0)]
         private readonly IntPtr textPtr;
 
@@ -158,8 +142,7 @@ public static class Chat
         [FieldOffset(24)]
         private readonly ulong unk2;
 
-        internal ChatPayload(byte[] stringBytes)
-        {
+        internal ChatPayload(byte[] stringBytes) {
             this.textPtr = Marshal.AllocHGlobal(stringBytes.Length + 30);
             Marshal.Copy(stringBytes, 0, this.textPtr, stringBytes.Length);
             Marshal.WriteByte(this.textPtr + stringBytes.Length, 0);
@@ -170,8 +153,7 @@ public static class Chat
             this.unk2 = 0;
         }
 
-        public void Dispose()
-        {
+        public void Dispose() {
             Marshal.FreeHGlobal(this.textPtr);
         }
     }

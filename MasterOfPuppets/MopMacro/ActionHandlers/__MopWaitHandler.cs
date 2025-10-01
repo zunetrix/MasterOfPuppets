@@ -6,15 +6,12 @@ using System.Threading.Tasks;
 using MasterOfPuppets;
 
 // TODO: refactor macro action handlers into strategy pattern
-public class MopWaitHandler : IMacroActionHandler
-{
+public class MopWaitHandler : IMacroActionHandler {
     public string Command => "mopwait";
 
-    public async Task ExecuteAsync(string macroId, string args, CancellationToken token)
-    {
+    public async Task ExecuteAsync(string macroId, string args, CancellationToken token) {
         if (string.IsNullOrWhiteSpace(args) ||
-            !double.TryParse(args, NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds))
-        {
+            !double.TryParse(args, NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds)) {
             DalamudApi.PluginLog.Warning($"[mopwait] invalid argument: \"{args}\"");
             return;
         }

@@ -1,11 +1,10 @@
-﻿using System;
+using System;
 
 using Dalamud.Interface.Windowing;
 
 namespace MasterOfPuppets;
 
-internal class PluginUi : IDisposable
-{
+internal class PluginUi : IDisposable {
     private Plugin Plugin { get; }
 
     private WindowSystem WindowSystem { get; } = new();
@@ -25,8 +24,7 @@ internal class PluginUi : IDisposable
     public IconPickerDialogWindow IconPickerDialogWindow { get; }
     public DebugWindow DebugWindow { get; }
 
-    public PluginUi(Plugin plugin)
-    {
+    public PluginUi(Plugin plugin) {
         Plugin = plugin;
 
         MainWindow = new MainWindow(Plugin, this);
@@ -63,13 +61,11 @@ internal class PluginUi : IDisposable
         WindowSystem.AddWindow(DebugWindow);
     }
 
-    public void Dispose()
-    {
+    public void Dispose() {
         WindowSystem.RemoveAllWindows();
     }
 
-    public void Draw()
-    {
+    public void Draw() {
         var player = DalamudApi.ClientState.LocalPlayer;
         if (player == null) return;
 

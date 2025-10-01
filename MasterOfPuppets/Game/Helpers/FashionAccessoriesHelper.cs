@@ -5,12 +5,9 @@ using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 
-public static class FashionAccessoriesHelper
-{
-    private static ExecutableAction GetExecutableAction(Ornament ornament)
-    {
-        return new ExecutableAction
-        {
+public static class FashionAccessoriesHelper {
+    private static ExecutableAction GetExecutableAction(Ornament ornament) {
+        return new ExecutableAction {
             ActionId = ornament.RowId,
             ActionName = ornament.Singular.ToString(),
             IconId = ornament.Icon,
@@ -19,8 +16,7 @@ public static class FashionAccessoriesHelper
         };
     }
 
-    public static List<ExecutableAction> GetAllowedItems()
-    {
+    public static List<ExecutableAction> GetAllowedItems() {
         var excludedIds = new uint[] { 32 };
         return DalamudApi.DataManager.GetExcelSheet<Ornament>()!
             .Where(o => o.IsUnlocked() && !excludedIds.Contains(o.RowId))
@@ -28,19 +24,16 @@ public static class FashionAccessoriesHelper
             .ToList();
     }
 
-    private static Ornament? GetOrnamentById(uint id)
-    {
+    private static Ornament? GetOrnamentById(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Ornament>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint actionId)
-    {
+    public static ExecutableAction? GetExecutableActionById(uint actionId) {
         var action = GetOrnamentById(actionId);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
-    public static uint GetIconId(uint item)
-    {
+    public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
         return GetOrnamentById(item)?.Icon ?? undefinedIcon;
     }

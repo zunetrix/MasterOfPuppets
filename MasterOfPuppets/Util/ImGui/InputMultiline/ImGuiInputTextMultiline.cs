@@ -4,8 +4,7 @@ using Dalamud.Bindings.ImGui;
 
 namespace MasterOfPuppets.Util.ImGuiExt;
 
-public class ImGuiInputTextMultiline
-{
+public class ImGuiInputTextMultiline {
     private Plugin Plugin { get; }
     private (int, int)? previousEditWord = null; // The word range we want to edit if we get an auto-complete event
 
@@ -13,8 +12,7 @@ public class ImGuiInputTextMultiline
 
     private unsafe ImGuiInputTextStatePtr TextState => new(&ImGui.GetCurrentContext().Handle->InputTextState);
 
-    public ImGuiInputTextMultiline(Plugin plugin)
-    {
+    public ImGuiInputTextMultiline(Plugin plugin) {
         Plugin = plugin;
         AutoCompletePopup = new AutoCompletePopup(plugin);
     }
@@ -26,8 +24,7 @@ public class ImGuiInputTextMultiline
         Vector2 size,
         ImGuiInputTextFlags flags
     // ImGui.ImGuiInputTextCallbackDelegate callback
-    )
-    {
+    ) {
         AutoCompletePopup.Draw();
 
         bool edited = false;
@@ -43,11 +40,9 @@ public class ImGuiInputTextMultiline
             // var result = callback(ref data);
             // var result = ref data;
 
-            if (data.EventFlag == ImGuiInputTextFlags.CallbackCompletion)
-            {
+            if (data.EventFlag == ImGuiInputTextFlags.CallbackCompletion) {
                 var currentWord = TextState.CurrentEditWord();
-                if (currentWord != null)
-                {
+                if (currentWord != null) {
                     previousEditWord = TextState.CurrentEditWordBounds();
                     AutoCompletePopup.AutoCompleteFilter = currentWord;
                     AutoCompletePopup.PopupPos =
@@ -78,16 +73,14 @@ public class ImGuiInputTextMultiline
         // draw the line numbers after the InputText is rendered
         lineNumbers.Draw(label);
 
-        if (result)
-        {
+        if (result) {
             input = text;
             edited = true;
         }
 
         // var focused = ImGui.IsItemFocused();
 
-        while (AutoCompletePopup.CompletionEvents.TryDequeue(out var completion))
-        {
+        while (AutoCompletePopup.CompletionEvents.TryDequeue(out var completion)) {
             if (!previousEditWord.HasValue) { break; }
             var (editStart, editEnd) = previousEditWord.Value;
             text = text.Remove(editStart, editEnd - editStart); // Remove current word

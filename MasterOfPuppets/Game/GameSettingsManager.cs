@@ -5,8 +5,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
 namespace MasterOfPuppets;
 
-public enum SettingsDisplayObjectLimitType
-{
+public enum SettingsDisplayObjectLimitType {
     Automatic = 0,
     Maximum = 1,
     High = 2,
@@ -15,10 +14,8 @@ public enum SettingsDisplayObjectLimitType
     Minimum = 5
 }
 
-public static class GameSettingsManager
-{
-    public static unsafe void GetSettings()
-    {
+public static class GameSettingsManager {
+    public static unsafe void GetSettings() {
         var gameConfig = Framework.Instance()->SystemConfig.SystemConfigBase.ConfigBase.ConfigEntry;
         uint displayObjectLimit = gameConfig[(int)ConfigOption.DisplayObjectLimitType].Value.UInt;
         uint displayObjectLimit2 = gameConfig[(int)ConfigOption.DisplayObjectLimitType2].Value.UInt;
@@ -28,15 +25,13 @@ public static class GameSettingsManager
         // gameConfig[(int)ConfigOption.DisplayObjectLimitType].SetValueUInt((uint)DisplayObjectLimit.Maximum);
     }
 
-    public static SettingsDisplayObjectLimitType GetDisplayObjectLimit()
-    {
+    public static SettingsDisplayObjectLimitType GetDisplayObjectLimit() {
         DalamudApi.GameConfig.TryGet(SystemConfigOption.DisplayObjectLimitType2, out uint displayObjectLimitType2);
         // DalamudApi.PluginLog.Debug($"displayObjectLimitType2 {displayObjectLimitType2}");
         return (SettingsDisplayObjectLimitType)displayObjectLimitType2;
     }
 
-    public static void SetDisplayObjectLimit(SettingsDisplayObjectLimitType displayObjectLimitType)
-    {
+    public static void SetDisplayObjectLimit(SettingsDisplayObjectLimitType displayObjectLimitType) {
         DalamudApi.GameConfig.Set(SystemConfigOption.DisplayObjectLimitType2, (uint)displayObjectLimitType);
     }
 

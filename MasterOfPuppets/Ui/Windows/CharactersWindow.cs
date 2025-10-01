@@ -1,30 +1,28 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Collections.Generic;
 
-using Dalamud.Interface;
-using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Utility;
+using Dalamud.Interface;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Windowing;
+using Dalamud.Utility;
 
-using MasterOfPuppets.Resources;
 using MasterOfPuppets.Extensions;
-using MasterOfPuppets.Util.ImGuiExt;
 using MasterOfPuppets.Extensions.Dalamud;
+using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class CharactersWindow : Window
-{
+public class CharactersWindow : Window {
     private Plugin Plugin { get; }
 
     private string _tmpGroupName = string.Empty;
     private int _selectedCidGroupIndex { get; set; } = 0;
 
-    public CharactersWindow(Plugin plugin) : base($"{Plugin.Name} Characters###CharactersWindow")
-    {
+    public CharactersWindow(Plugin plugin) : base($"{Plugin.Name} Characters###CharactersWindow") {
         Plugin = plugin;
 
         Size = ImGuiHelpers.ScaledVector2(450, 400);
@@ -32,31 +30,26 @@ public class CharactersWindow : Window
         // SizeCondition = ImGuiCond.Always;
     }
 
-    public override void PreDraw()
-    {
+    public override void PreDraw() {
         base.PreDraw();
     }
 
-    private bool IsValidGroup()
-    {
+    private bool IsValidGroup() {
         var isValidGroup = Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex) && Plugin.Config.CidsGroups.Count > 0;
         return isValidGroup;
     }
 
-    public override void Draw()
-    {
+    public override void Draw() {
         if (!ImGui.BeginTabBar("##CharactersManagerTabs")) return;
 
-        if (ImGui.BeginTabItem($"Characters List###CharactersTab"))
-        {
+        if (ImGui.BeginTabItem($"Characters List###CharactersTab")) {
             DrawPartyMemberSelector();
             DrawCharactersTable();
 
             ImGui.EndTabItem();
         }
 
-        if (ImGui.BeginTabItem($"Characters Groups###CidsGroupsTab"))
-        {
+        if (ImGui.BeginTabItem($"Characters Groups###CidsGroupsTab")) {
             DrawCidsGroupsHeader();
             DrawCidsGroupsSelector();
             DrawGroupAvailableCharacterSelector();
@@ -68,8 +61,7 @@ public class CharactersWindow : Window
         ImGui.EndTabBar();
     }
 
-    private List<Character> GetAvailablePartyMembers()
-    {
+    private List<Character> GetAvailablePartyMembers() {
         var usedCids = Plugin.Config.Characters
        .Select(c => c.Cid)
        .ToHashSet() ?? new HashSet<ulong>();
@@ -83,8 +75,7 @@ public class CharactersWindow : Window
         return availablePartyMembers;
     }
 
-    private void DrawPartyMemberSelector()
-    {
+    private void DrawPartyMemberSelector() {
         var availablePartyMembers = GetAvailablePartyMembers();
 
         ImGui.BeginDisabled(availablePartyMembers.Count == 0);
@@ -92,12 +83,9 @@ public class CharactersWindow : Window
 
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginCombo($"##PartyMemberSelectList", "Select a party character to add"))
-        {
-            foreach (var partyMember in availablePartyMembers)
-            {
-                if (ImGui.Selectable($"{partyMember.Name}##{partyMember.Cid}", false))
-                {
+        if (ImGui.BeginCombo($"##PartyMemberSelectList", "Select a party character to add")) {
+            foreach (var partyMember in availablePartyMembers) {
+                if (ImGui.Selectable($"{partyMember.Name}##{partyMember.Cid}", false)) {
                     Plugin.Config.AddCharacter(partyMember);
                     Plugin.IpcProvider.SyncConfiguration();
                 }
@@ -123,18 +111,15 @@ public class CharactersWindow : Window
         ImGui.Spacing();
     }
 
-    private void DrawCharactersTable()
-    {
+    private void DrawCharactersTable() {
         var characters = Plugin.Config.Characters;
         if (ImGui.BeginTable("##CharactersTable", 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
-        ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV))
-        {
+        ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV)) {
             ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("Options", ImGuiTableColumnFlags.WidthFixed);
 
-            for (int i = 0; i < characters.Count; i++)
-            {
+            for (int i = 0; i < characters.Count; i++) {
                 ImGui.PushID(i);
                 ImGui.TableNextRow();
                 ImGui.TableSetColumnIndex(0);
@@ -144,10 +129,8 @@ public class CharactersWindow : Window
                 ImGui.Selectable($"{characters[i].Name}");
                 ImGuiUtil.ToolTip($"Drag to reorder");
 
-                if (ImGui.BeginDragDropSource())
-                {
-                    unsafe
-                    {
+                if (ImGui.BeginDragDropSource()) {
+                    unsafe {
                         ImGui.SetDragDropPayload("DND_CHARACTER_LIST", new ReadOnlySpan<byte>(&i, sizeof(int)), ImGuiCond.None);
                         ImGui.Button($"({i + 1}) {characters[i].Name}");
                     }
@@ -157,25 +140,20 @@ public class CharactersWindow : Window
                 }
 
                 ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
-                if (ImGui.BeginDragDropTarget())
-                {
+                if (ImGui.BeginDragDropTarget()) {
                     ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_CHARACTER_LIST");
 
                     bool isDropping = false;
-                    unsafe
-                    {
+                    unsafe {
                         isDropping = !dragDropPayload.IsNull;
                     }
 
-                    if (isDropping && dragDropPayload.IsDelivery())
-                    {
-                        unsafe
-                        {
+                    if (isDropping && dragDropPayload.IsDelivery()) {
+                        unsafe {
                             int originalIndex = *(int*)dragDropPayload.Data;
 
                             int offset = i - originalIndex;
-                            if (offset != 0 && originalIndex + offset >= 0)
-                            {
+                            if (offset != 0 && originalIndex + offset >= 0) {
                                 int targetIndex = originalIndex + offset;
                                 // DalamudApi.PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
                                 Plugin.Config.MoveCharacterToIndex(originalIndex, targetIndex);
@@ -207,10 +185,8 @@ public class CharactersWindow : Window
                 // ImGui.EndDisabled();
 
                 // ImGui.SameLine();
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{i}", Language.DeleteInstructionTooltip))
-                {
-                    if (ImGui.GetIO().KeyCtrl)
-                    {
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{i}", Language.DeleteInstructionTooltip)) {
+                    if (ImGui.GetIO().KeyCtrl) {
                         Plugin.Config.RemoveCharacter(characters[i].Cid);
                         Plugin.IpcProvider.SyncConfiguration();
                     }
@@ -226,16 +202,14 @@ public class CharactersWindow : Window
         ImGui.Spacing();
     }
 
-    private void DrawCidsGroupsHeader()
-    {
+    private void DrawCidsGroupsHeader() {
         ImGui.InputTextWithHint("##GroupNameInput", "Group name", ref _tmpGroupName, 255, ImGuiInputTextFlags.AutoSelectAll);
 
         ImGui.SameLine();
         ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
         ImGui.SameLine();
 
-        if (ImGui.Button($"Add new group##AddNewGroupBtn"))
-        {
+        if (ImGui.Button($"Add new group##AddNewGroupBtn")) {
             if (_tmpGroupName.IsNullOrEmpty()) return;
 
             var newGroup = new CidGroup { Name = _tmpGroupName, Cids = new() };
@@ -251,8 +225,7 @@ public class CharactersWindow : Window
         ImGui.Spacing();
     }
 
-    private void DrawCidsGroupsSelector()
-    {
+    private void DrawCidsGroupsSelector() {
         if (Plugin.Config.CidsGroups.Count == 0) return;
 
         var cidsGroups = Plugin.Config.CidsGroups;
@@ -266,13 +239,10 @@ public class CharactersWindow : Window
 
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginCombo($"##CidsGroupsSelectList", previewGroupValue))
-        {
-            for (var groupIndex = 0; groupIndex < cidsGroups.Count; groupIndex++)
-            {
+        if (ImGui.BeginCombo($"##CidsGroupsSelectList", previewGroupValue)) {
+            for (var groupIndex = 0; groupIndex < cidsGroups.Count; groupIndex++) {
                 bool isGroupSelected = _selectedCidGroupIndex == groupIndex;
-                if (ImGui.Selectable($"{cidsGroups[groupIndex].Name}##group_{groupIndex}", isGroupSelected))
-                {
+                if (ImGui.Selectable($"{cidsGroups[groupIndex].Name}##group_{groupIndex}", isGroupSelected)) {
                     _selectedCidGroupIndex = groupIndex;
 
                     if (isGroupSelected)
@@ -292,10 +262,8 @@ public class CharactersWindow : Window
         ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);
         ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive);
-        if (ImGui.Button($"Delete Group"))
-        {
-            if (ImGui.GetIO().KeyCtrl)
-            {
+        if (ImGui.Button($"Delete Group")) {
+            if (ImGui.GetIO().KeyCtrl) {
                 Plugin.Config.CidsGroups.RemoveAt(_selectedCidGroupIndex);
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
@@ -306,8 +274,7 @@ public class CharactersWindow : Window
         ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
     }
 
-    private void DrawGroupAvailableCharacterSelector()
-    {
+    private void DrawGroupAvailableCharacterSelector() {
         if (!IsValidGroup()) return;
 
         var characters = Plugin.Config.Characters;
@@ -322,12 +289,9 @@ public class CharactersWindow : Window
 
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginCombo($"##CidGroupCharactersSelectList_cidGroup_{_selectedCidGroupIndex}", "Select a character to add to the group"))
-        {
-            foreach (var character in availableCharacters)
-            {
-                if (ImGui.Selectable($"{character.Name}##{character.Cid}", false))
-                {
+        if (ImGui.BeginCombo($"##CidGroupCharactersSelectList_cidGroup_{_selectedCidGroupIndex}", "Select a character to add to the group")) {
+            foreach (var character in availableCharacters) {
+                if (ImGui.Selectable($"{character.Name}##{character.Cid}", false)) {
                     cidGroup.Cids.Add(character.Cid);
                     Plugin.Config.Save();
                     Plugin.IpcProvider.SyncConfiguration();
@@ -341,27 +305,22 @@ public class CharactersWindow : Window
         ImGui.EndDisabled();
     }
 
-    private void DrawCidGroupCharactersList()
-    {
+    private void DrawCidGroupCharactersList() {
         if (!IsValidGroup()) return;
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
-        if (ImGui.BeginListBox($"##CidsGroupsCharactersList_group{_selectedCidGroupIndex}", new Vector2(-1, 200)))
-        {
-            for (var characterIndex = 0; characterIndex < Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids.Count; characterIndex++)
-            {
+        if (ImGui.BeginListBox($"##CidsGroupsCharactersList_group{_selectedCidGroupIndex}", new Vector2(-1, 200))) {
+            for (var characterIndex = 0; characterIndex < Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids.Count; characterIndex++) {
                 var targetCid = Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids[characterIndex];
                 // find cid name
                 var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
                     ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
 
-                if (ImGui.Selectable($"{character.Name}##CidsGroups{_selectedCidGroupIndex}_character{characterIndex}", false))
-                {
-                    if (ImGui.GetIO().KeyCtrl)
-                    {
+                if (ImGui.Selectable($"{character.Name}##CidsGroups{_selectedCidGroupIndex}_character{characterIndex}", false)) {
+                    if (ImGui.GetIO().KeyCtrl) {
                         Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids.RemoveAll(cid => cid == targetCid);
                         Plugin.Config.Save();
                         Plugin.IpcProvider.SyncConfiguration();

@@ -1,28 +1,26 @@
-﻿using System;
-using System.Numerics;
-using System.Linq;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 
-using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Resources;
-using Dalamud.Interface.Utility;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class EmotesWindow : Window
-{
+public class EmotesWindow : Window {
     private Plugin Plugin { get; }
 
     private readonly List<ExecutableAction> UnlockedActions = new();
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    public EmotesWindow(Plugin plugin) : base($"{Language.EmotesTitle}###EmotesWindow")
-    {
+    public EmotesWindow(Plugin plugin) : base($"{Language.EmotesTitle}###EmotesWindow") {
         Plugin = plugin;
 
         Size = ImGuiHelpers.ScaledVector2(500, 450);
@@ -31,22 +29,19 @@ public class EmotesWindow : Window
         // Flags = ImGuiWindowFlags.NoResize;
     }
 
-    public override void OnOpen()
-    {
+    public override void OnOpen() {
         UnlockedActions.Clear();
         UnlockedActions.AddRange(EmoteHelper.GetAllowedItems());
         base.OnOpen();
     }
 
-    public override void OnClose()
-    {
+    public override void OnClose() {
         ListSearchedIndexes.Clear();
         _searchString = string.Empty;
         base.OnClose();
     }
 
-    public override void Draw()
-    {
+    public override void Draw() {
         ImGui.BeginChild("##EmotesHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         DrawHeader();
         ImGui.EndChild();
@@ -56,8 +51,7 @@ public class EmotesWindow : Window
         ImGui.EndChild();
     }
 
-    private void DrawEmoteEntry(int actionIndex, ExecutableAction emote)
-    {
+    private void DrawEmoteEntry(int actionIndex, ExecutableAction emote) {
         ImGui.PushID(actionIndex);
         ImGui.TableNextRow();
         // ImGui.TableSetColumnIndex(0);
@@ -69,16 +63,14 @@ public class EmotesWindow : Window
         var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
 
         ImGui.Image(icon, iconSize);
-        if (ImGui.IsItemClicked())
-        {
+        if (ImGui.IsItemClicked()) {
             Plugin.IpcProvider.ExecuteTextCommand(emote.TextCommand);
         }
         ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted($"{emote.ActionName}");
-        if (ImGui.IsItemClicked())
-        {
+        if (ImGui.IsItemClicked()) {
             ImGui.SetClipboardText($"{emote.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
@@ -86,8 +78,7 @@ public class EmotesWindow : Window
 
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(emote.TextCommand);
-        if (ImGui.IsItemClicked())
-        {
+        if (ImGui.IsItemClicked()) {
             ImGui.SetClipboardText(emote.TextCommand);
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
@@ -99,8 +90,7 @@ public class EmotesWindow : Window
         ImGui.PopID();
     }
 
-    private unsafe void DrawEmoteTable()
-    {
+    private unsafe void DrawEmoteTable() {
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 4;
@@ -108,8 +98,7 @@ public class EmotesWindow : Window
         var isFiltered = !string.IsNullOrEmpty(_searchString);
         var itemCount = isFiltered ? ListSearchedIndexes.Count : UnlockedActions.Count;
 
-        if (ImGui.BeginTable("##EmotesTable", tableColumnCount, tableFlags))
-        {
+        if (ImGui.BeginTable("##EmotesTable", tableColumnCount, tableFlags)) {
             ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 1.0f);
@@ -117,17 +106,14 @@ public class EmotesWindow : Window
             // ImGui.TableSetupColumn("Category", ImGuiTableColumnFlags.WidthStretch);
 
             ImGuiListClipperPtr clipper;
-            unsafe
-            {
+            unsafe {
                 clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
             }
 
             clipper.Begin(itemCount);
 
-            while (clipper.Step())
-            {
-                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
-                {
+            while (clipper.Step()) {
+                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
                     if (i >= itemCount) break;
                     int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
                     if (realIndex >= UnlockedActions.Count) continue;
@@ -141,8 +127,7 @@ public class EmotesWindow : Window
         }
     }
 
-    private void Search()
-    {
+    private void Search() {
         ListSearchedIndexes.Clear();
 
         ListSearchedIndexes.AddRange(
@@ -154,8 +139,7 @@ public class EmotesWindow : Window
         );
     }
 
-    private void DrawHeader()
-    {
+    private void DrawHeader() {
         ImGui.TextUnformatted($"{Language.EmotesTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
@@ -165,8 +149,7 @@ public class EmotesWindow : Window
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##EmoteSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll))
-        {
+        if (ImGui.InputTextWithHint("##EmoteSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
 

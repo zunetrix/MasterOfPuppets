@@ -5,12 +5,9 @@ using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 
-public static class EmoteHelper
-{
-    private static ExecutableAction GetExecutableAction(Emote emote)
-    {
-        return new ExecutableAction
-        {
+public static class EmoteHelper {
+    private static ExecutableAction GetExecutableAction(Emote emote) {
+        return new ExecutableAction {
             ActionId = emote.RowId,
             ActionName = emote.Name.ToString(),
             IconId = emote.Icon,
@@ -21,27 +18,23 @@ public static class EmoteHelper
         };
     }
 
-    public static List<ExecutableAction> GetAllowedItems()
-    {
+    public static List<ExecutableAction> GetAllowedItems() {
         return DalamudApi.DataManager.GetExcelSheet<Emote>()
             .Where(e => e.IsUnlocked() && e.EmoteCategory.ValueNullable?.Name.ToString() != "Expressions")
             .Select(GetExecutableAction)
             .ToList();
     }
 
-    private static Emote? GetEmoteById(uint id)
-    {
+    private static Emote? GetEmoteById(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Emote>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint slotId)
-    {
+    public static ExecutableAction? GetExecutableActionById(uint slotId) {
         var emote = GetEmoteById(slotId);
         return emote == null ? null : GetExecutableAction(emote.Value);
     }
 
-    public static uint GetIconId(uint item)
-    {
+    public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
         return GetEmoteById(item)?.Icon ?? undefinedIcon;
     }

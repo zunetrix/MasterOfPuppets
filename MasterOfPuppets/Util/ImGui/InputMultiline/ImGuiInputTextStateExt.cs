@@ -6,10 +6,8 @@ using MasterOfPuppets.Extensions.Dalamud;
 
 namespace MasterOfPuppets.Util.ImGuiExt;
 
-public static class ImGuiInputTextStateExt
-{
-    public static string SelectedText(this ImGuiInputTextStatePtr self)
-    {
+public static class ImGuiInputTextStateExt {
+    public static string SelectedText(this ImGuiInputTextStatePtr self) {
         // These are in wchar-positions, not UTF8 positions
         var lower = self.Stb.SelectStart <= self.Stb.SelectEnd ? self.Stb.SelectStart : self.Stb.SelectEnd;
         var higher = self.Stb.SelectStart <= self.Stb.SelectEnd ? self.Stb.SelectEnd : self.Stb.SelectStart;
@@ -22,8 +20,7 @@ public static class ImGuiInputTextStateExt
     /// Returns the current "word" the user is writing, based on the characters from the previous
     /// word boundary up to the cursor.
     /// </summary>
-    public static string? CurrentEditWord(this ImGuiInputTextStatePtr self)
-    {
+    public static string? CurrentEditWord(this ImGuiInputTextStatePtr self) {
         var (wordStart, wordEnd) = self.CurrentEditWordBounds();
         var length = wordEnd - wordStart;
 
@@ -32,25 +29,21 @@ public static class ImGuiInputTextStateExt
         return string.Join("", self.TextW.AsEnumerable().Skip(wordStart).Take(length).Select(us => (char)us));
     }
 
-    public static (int, int) CurrentEditWordBounds(this ImGuiInputTextStatePtr self)
-    {
+    public static (int, int) CurrentEditWordBounds(this ImGuiInputTextStatePtr self) {
         var wordStart = self.CurrentEditWordStart();
         var wordEnd = self.Stb.Cursor;
         return (wordStart, wordEnd);
     }
 
-    public static int CurrentEditWordStart(this ImGuiInputTextStatePtr self)
-    {
+    public static int CurrentEditWordStart(this ImGuiInputTextStatePtr self) {
         var wordStart = self.Stb.Cursor;
-        while (wordStart > 0 && !IsWordBoundary((char)self.TextW[wordStart - 1]))
-        {
+        while (wordStart > 0 && !IsWordBoundary((char)self.TextW[wordStart - 1])) {
             wordStart -= 1;
         }
         return wordStart;
     }
 
-    private static bool IsWordBoundary(char c)
-    {
+    private static bool IsWordBoundary(char c) {
         // char AutoTranslateStart = '\uE040';
         // char AutoTranslateEnd = '\uE041';
         // return char.IsSeparator(c) || char.IsWhiteSpace(c) || c == AutoTranslateStart || c == AutoTranslateEnd;

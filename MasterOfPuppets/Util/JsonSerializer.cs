@@ -2,10 +2,8 @@ using Newtonsoft.Json;
 
 namespace MasterOfPuppets.Util;
 
-public static class JsonSerializer
-{
-    private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings()
-    {
+public static class JsonSerializer {
+    private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings() {
         TypeNameHandling = TypeNameHandling.None,
         TypeNameAssemblyFormatHandling =
         TypeNameAssemblyFormatHandling.Simple

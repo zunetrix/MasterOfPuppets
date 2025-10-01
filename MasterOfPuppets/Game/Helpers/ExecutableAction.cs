@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -8,8 +8,7 @@ using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureHotbarModule;
 namespace MasterOfPuppets;
 
 [Serializable]
-public class ExecutableAction
-{
+public class ExecutableAction {
     [JsonProperty("id")] public uint ActionId;
     [JsonProperty("name")] public string ActionName;
     [JsonProperty("iconId")] public uint IconId;

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiSeStringRenderer;
 using Dalamud.Interface.Utility;
-using Dalamud.Bindings.ImGui;
 
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Util.ImGuiExt.AutoComplete;
@@ -19,19 +19,16 @@ namespace MasterOfPuppets.Util.ImGuiExt;
 /// Heavily inspired by Chat2: https://github.com/Infiziert90/ChatTwo/blob/3951c49e1aa9941afbefe855298b663e68bff3e4/ChatTwo/Ui/ChatLogWindow.cs#L1399
 /// ImGui implementation also heavily inspired by this comment: https://github.com/ocornut/imgui/issues/718#issuecomment-2539185115
 /// </remarks>
-public class AutoCompletePopup
-{
+public class AutoCompletePopup {
     private Plugin Plugin { get; }
 
     private string name = $"##AutoCompletePopup";
     private uint? id;
 
     private string _autoCompleteFilter = "";
-    public string AutoCompleteFilter
-    {
+    public string AutoCompleteFilter {
         get => _autoCompleteFilter;
-        set
-        {
+        set {
             _autoCompleteFilter = value;
             Completions = Plugin.CompletionIndex.Search(_autoCompleteFilter).ToList();
         }
@@ -42,17 +39,13 @@ public class AutoCompletePopup
     private List<CompletionInfo> Completions { get; set; } = new();
 
     private int? _selectedCompletionIndex = null;
-    public int? SelectedCompletionIndex
-    {
+    public int? SelectedCompletionIndex {
         get { return _selectedCompletionIndex; }
-        set
-        {
-            if (value.HasValue)
-            {
+        set {
+            if (value.HasValue) {
                 _selectedCompletionIndex = Math.Clamp(value.Value, 0, Math.Max(0, Completions.Count - 1));
             }
-            else
-            {
+            else {
                 _selectedCompletionIndex = null;
             }
             ShouldScrollOnNextDraw = true;
@@ -82,17 +75,14 @@ public class AutoCompletePopup
     private readonly ImGuiWindowFlags popupFlags =
         ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings;
 
-    public AutoCompletePopup(Plugin plugin)
-    {
+    public AutoCompletePopup(Plugin plugin) {
         Plugin = plugin;
     }
 
-    public void Draw()
-    {
+    public void Draw() {
         id ??= ImGui.GetID(name);
 
-        if (ShouldOpenOnNextDraw)
-        {
+        if (ShouldOpenOnNextDraw) {
             ShouldOpenOnNextDraw = false;
             ImGui.OpenPopup(id.Value);
             SelectedCompletionIndex = 0;
@@ -117,8 +107,7 @@ public class AutoCompletePopup
 
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginPopup(name, popupFlags))
-        {
+        if (ImGui.BeginPopup(name, popupFlags)) {
             ImGui.SetNextItemWidth(windowWidth - (ImGui.GetStyle().FramePadding.X * 8));
 
             float defaultHeight = ImGui.GetTextLineHeight() + ImGui.GetStyle().FramePadding.Y * 2;
@@ -133,52 +122,43 @@ public class AutoCompletePopup
                         | ImGuiInputTextFlags.CallbackEdit,
                     AutoCompleteFilterCallback
                 )
-            )
-            {
+            ) {
                 Completions = Plugin.CompletionIndex.Search(_autoCompleteFilter).ToList();
                 SelectedCompletionIndex = 0;
             }
             ImGui.EndChild();
 
 
-            if (ImGui.IsWindowAppearing())
-            {
+            if (ImGui.IsWindowAppearing()) {
                 FixCursor = true;
                 ImGui.SetKeyboardFocusHere(-1);
             }
 
-            if (ImGui.IsItemActive())
-            {
-                if (ImGui.IsKeyPressed(ImGuiKey.DownArrow))
-                {
+            if (ImGui.IsItemActive()) {
+                if (ImGui.IsKeyPressed(ImGuiKey.DownArrow)) {
                     SelectedCompletionIndex = SelectedCompletionIndex + 1;
                 }
-                else if (ImGui.IsKeyPressed(ImGuiKey.UpArrow))
-                {
+                else if (ImGui.IsKeyPressed(ImGuiKey.UpArrow)) {
                     SelectedCompletionIndex = SelectedCompletionIndex - 1;
                 }
             }
 
-            if (ImGui.IsItemDeactivated())
-            {
-                if (ImGui.IsKeyDown(ImGuiKey.Escape))
-                {
+            if (ImGui.IsItemDeactivated()) {
+                if (ImGui.IsKeyDown(ImGuiKey.Escape)) {
                     ImGui.CloseCurrentPopup();
                     return;
                 }
 
                 var enter = ImGui.IsKeyDown(ImGuiKey.Enter) || ImGui.IsKeyDown(ImGuiKey.KeypadEnter);
-                if (Completions.Count > 0 && enter)
-                {
+                if (Completions.Count > 0 && enter) {
                     Complete();
                     ImGui.CloseCurrentPopup();
                 }
             }
 
-            ImGui.BeginChild("##AutoCompleteCompletionsTableScrollableContent", ImGuiHelpers.ScaledVector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
             var selectedCompletion = SelectedCompletion;
-            if (ImGui.BeginTable("###AutoCompleteCompletionsTable", 2))
-            {
+            ImGui.BeginChild("##AutoCompleteCompletionsTableScrollableContent", ImGuiHelpers.ScaledVector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+            if (ImGui.BeginTable("###AutoCompleteCompletionsTable", 2)) {
                 ImGui.TableSetupColumn("Completion", ImGuiTableColumnFlags.WidthFixed, longestCompletionWidth);
                 ImGui.TableSetupColumn("Group", ImGuiTableColumnFlags.WidthFixed, longestGroupWidth);
 
@@ -187,14 +167,12 @@ public class AutoCompletePopup
                 (CompletionInfo, Vector2, Vector2)? visibleSelectedCompletionData = null;
 
                 clipper.Begin(Completions.Count());
-                while (clipper.Step())
-                {
+                while (clipper.Step()) {
                     var completionRange = Completions
                         .WithIndex()
                         .Skip(clipper.DisplayStart)
                         .Take(clipper.DisplayEnd - clipper.DisplayStart);
-                    foreach (var (completion, index) in completionRange)
-                    {
+                    foreach (var (completion, index) in completionRange) {
                         ImGui.PushID(index);
                         ImGui.TableNextRow();
                         ImGui.TableNextColumn();
@@ -207,8 +185,7 @@ public class AutoCompletePopup
                                 selected,
                                 ImGuiSelectableFlags.SpanAllColumns
                             )
-                        )
-                        {
+                        ) {
                             SelectedCompletionIndex = index;
                             Complete();
                             ImGui.CloseCurrentPopup();
@@ -216,12 +193,10 @@ public class AutoCompletePopup
 
                         // Hovering something takes precedence tooltip-wise, but otherwise
                         // we want to show a tooltip for the currently selected item.
-                        if (ImGui.IsItemHovered())
-                        {
+                        if (ImGui.IsItemHovered()) {
                             hoveredCompletionData = (completion, ImGui.GetItemRectMin(), ImGui.GetItemRectMax());
                         }
-                        if (selected)
-                        {
+                        if (selected) {
                             visibleSelectedCompletionData = (completion, ImGui.GetItemRectMin(), ImGui.GetItemRectMax());
                         }
 
@@ -238,34 +213,28 @@ public class AutoCompletePopup
                 }
 
                 var scrollPos = clipper.StartPosY + clipper.ItemsHeight * SelectedCompletionIndex.GetValueOrDefault();
-                if (ShouldScrollOnNextDraw)
-                {
+                if (ShouldScrollOnNextDraw) {
                     ImGui.SetScrollFromPosY(scrollPos - ImGui.GetWindowPos().Y);
                     ShouldScrollOnNextDraw = false;
                 }
                 clipper.End();
                 ImGui.EndTable();
 
-                if (hoveredCompletionData != null || visibleSelectedCompletionData != null)
-                {
+                if (hoveredCompletionData != null || visibleSelectedCompletionData != null) {
                     var completionTooltipData = hoveredCompletionData ?? visibleSelectedCompletionData;
-                    if (completionTooltipData != null)
-                    {
+                    if (completionTooltipData != null) {
                         var scrollbarPad = 20 * ImGuiHelpers.GlobalScale;
 
                         var (completionTooltip, min, max) = completionTooltipData.Value;
-                        if (completionTooltip.HelpText.HasValue)
-                        {
+                        if (completionTooltip.HelpText.HasValue) {
                             var selectionSize = max - min;
                             var selectionMidpoint = min + (selectionSize / 2.0f);
 
-                            if (selectionMidpoint.X <= ImGui.GetWindowViewport().Size.X / 2.0f)
-                            {
+                            if (selectionMidpoint.X <= ImGui.GetWindowViewport().Size.X / 2.0f) {
                                 var tooltipX = max.X + scrollbarPad;
                                 ImGui.SetNextWindowPos(new Vector2(tooltipX, min.Y));
                             }
-                            else if (LastCompletionTooltipSize.HasValue)
-                            { // Otherwise...
+                            else if (LastCompletionTooltipSize.HasValue) { // Otherwise...
                                 var tooltipX = min.X - LastCompletionTooltipSize.Value.X - scrollbarPad;
                                 ImGui.SetNextWindowPos(new Vector2(tooltipX, min.Y));
                             }
@@ -273,8 +242,7 @@ public class AutoCompletePopup
                             ImGui.BeginTooltip();
                             var drawResult = ImGuiHelpers.SeStringWrapped(
                                 completionTooltip.HelpText.Value,
-                                new SeStringDrawParams()
-                                {
+                                new SeStringDrawParams() {
                                     WrapWidth = 640 * ImGuiHelpers.GlobalScale
                                 }
                             );
@@ -295,23 +263,18 @@ public class AutoCompletePopup
     /// <summary>
     /// Open this popup, but only if there are some completions
     /// </summary>
-    public void Open()
-    {
+    public void Open() {
         ShouldOpenOnNextDraw = true;
     }
 
-    private void Complete()
-    {
-        if (SelectedCompletionIndex.HasValue)
-        {
+    private void Complete() {
+        if (SelectedCompletionIndex.HasValue) {
             CompletionEvents.Enqueue(Completions[SelectedCompletionIndex.Value]);
         }
     }
 
-    private int AutoCompleteFilterCallback(ImGuiInputTextCallbackDataPtr data)
-    {
-        if (FixCursor)
-        {
+    private int AutoCompleteFilterCallback(ImGuiInputTextCallbackDataPtr data) {
+        if (FixCursor) {
             FixCursor = false;
             data.CursorPos = _autoCompleteFilter.Length;
             data.SelectionStart = data.SelectionEnd = data.CursorPos;

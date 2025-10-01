@@ -5,10 +5,8 @@ using System.Text;
 
 namespace MasterOfPuppets.Util;
 
-public static class Compressor
-{
-    public static string CompressString(string input)
-    {
+public static class Compressor {
+    public static string CompressString(string input) {
         var bytes = Encoding.UTF8.GetBytes(input);
         using var ms = new MemoryStream();
         using (var gs = new GZipStream(ms, CompressionMode.Compress))
@@ -16,8 +14,7 @@ public static class Compressor
         return Convert.ToBase64String(ms.ToArray());
     }
 
-    public static string DecompressString(string input)
-    {
+    public static string DecompressString(string input) {
         var data = Convert.FromBase64String(input);
         using var ms = new MemoryStream(data);
         using var gs = new GZipStream(ms, CompressionMode.Decompress);

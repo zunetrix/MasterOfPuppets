@@ -15,8 +15,7 @@ namespace MasterOfPuppets.Util.ImGuiExt.AutoComplete;
 /// <remarks>
 /// Heavily inspired by Chat2: https://github.com/Infiziert90/ChatTwo/blob/main/ChatTwo/Util/AutoTranslate.cs#L70
 /// </remarks>
-public class CompletionIndex
-{
+public class CompletionIndex {
     /// <summary>
     /// The `GroupTitle` field of most completion entries is empty, if we want to know the group title
     /// we need to look at the "special" group header completion, there should be 1 per GroupId.
@@ -28,34 +27,28 @@ public class CompletionIndex
     public enum IndexState { UNINDEXED, INDEXING, INDEXED }
     public IndexState State { get; private set; } = IndexState.UNINDEXED;
 
-    public IEnumerable<CompletionInfo> Search(string prefix)
-    {
+    public IEnumerable<CompletionInfo> Search(string prefix) {
         if (State != IndexState.INDEXED) { return new List<CompletionInfo>(); }
         if (prefix == string.Empty) { return new List<CompletionInfo>(); }
 
         return CompletionsByText.StartsWith(prefix.ToLower()).SelectMany(c => c.Value);
     }
 
-    public CompletionInfo? ById(uint group, uint key)
-    {
+    public CompletionInfo? ById(uint group, uint key) {
         if (State != IndexState.INDEXED) { return null; }
 
         return CompletionInfoByGroupKey.GetValueOrDefault((group, key));
     }
 
-    public CompletionIndex()
-    {
+    public CompletionIndex() {
         StartIndexing();
     }
 
-    public void StartIndexing()
-    {
+    public void StartIndexing() {
         if (State != IndexState.UNINDEXED) { return; }
 
-        Task.Run(() =>
-        {
-            try
-            {
+        Task.Run(() => {
+            try {
                 State = IndexState.INDEXING;
                 RefreshCompletionGroupIndex();
 
@@ -64,31 +57,26 @@ public class CompletionIndex
                 RefreshCompletionInfoByGroupKey(completions);
                 State = IndexState.INDEXED;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 DalamudApi.PluginLog.Error($"Failed to index completions\n{ex}");
             }
         });
     }
 
-    private void RefreshCompletionGroupIndex()
-    {
+    private void RefreshCompletionGroupIndex() {
         var completionGroups = DalamudApi.DataManager.GetExcelSheet<Completion>()
-            .Where(c =>
-            {
+            .Where(c => {
                 var lookupTable = c.LookupTable.ExtractText();
 
                 return lookupTable != "";
             });
 
-        foreach (var cg in completionGroups)
-        {
+        foreach (var cg in completionGroups) {
             CompletionGroupsById[cg.Group] = cg;
         }
     }
 
-    private List<CompletionInfo> AllCompletionInfo()
-    {
+    private List<CompletionInfo> AllCompletionInfo() {
         var allowedGroups = new[] {
             // 49, // mount
             56, // actions skills
@@ -100,10 +88,8 @@ public class CompletionIndex
              .Where(raw => allowedGroups.Contains(raw.Group))
              .Select(raw => ParsedCompletion.From(raw))
              .SelectMany<ParsedCompletion, CompletionInfo>(parsed => CompletionInfo.From(parsed))
-             .Select(info =>
-             {
-                 if (CompletionGroupsById.TryGetValue(info.Group, out var completionGroup))
-                 {
+             .Select(info => {
+                 if (CompletionGroupsById.TryGetValue(info.Group, out var completionGroup)) {
                      return info with { GroupTitle = completionGroup.GroupTitle };
                  }
                  return info;
@@ -111,19 +97,15 @@ public class CompletionIndex
             .ToList();
     }
 
-    private void RefreshCompletionIndex(IEnumerable<CompletionInfo> completions)
-    {
+    private void RefreshCompletionIndex(IEnumerable<CompletionInfo> completions) {
         var grouped = completions.GroupBy(c => c.SeString.ExtractText().ToLower());
-        foreach (var g in grouped)
-        {
+        foreach (var g in grouped) {
             CompletionsByText.Add(g.Key, g.ToList());
         }
     }
 
-    private void RefreshCompletionInfoByGroupKey(IEnumerable<CompletionInfo> completions)
-    {
-        foreach (var completion in completions)
-        {
+    private void RefreshCompletionInfoByGroupKey(IEnumerable<CompletionInfo> completions) {
+        foreach (var completion in completions) {
             CompletionInfoByGroupKey[(completion.Group, completion.Key)] = completion;
         }
     }

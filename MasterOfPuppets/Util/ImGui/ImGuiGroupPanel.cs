@@ -7,17 +7,14 @@ using Dalamud.Bindings.ImGui;
 namespace MasterOfPuppets.Util.ImGuiExt;
 
 // https://github.com/ocornut/imgui/issues/1496#issuecomment-655048353
-public static class ImGuiGroupPanel
-{
+public static class ImGuiGroupPanel {
     static readonly Stack<RectF> s_GroupPanelLabelStack = new Stack<RectF>();
 
-    public static unsafe void BeginGroupPanel(string name)
-    {
+    public static unsafe void BeginGroupPanel(string name) {
         BeginGroupPanel(name, -Vector2.One);
     }
 
-    public static unsafe void BeginGroupPanel(string name, Vector2 size)
-    {
+    public static unsafe void BeginGroupPanel(string name, Vector2 size) {
         ImGui.BeginGroup();
         var cursorPos = ImGui.GetCursorScreenPos();
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
@@ -61,8 +58,7 @@ public static class ImGuiGroupPanel
         ImGui.PushTextWrapPos(igGetContentRegionMax()->X);
     }
 
-    public static unsafe void EndGroupPanel()
-    {
+    public static unsafe void EndGroupPanel() {
         ImGui.PopTextWrapPos();
         ImGui.PopItemWidth();
 
@@ -95,11 +91,9 @@ public static class ImGuiGroupPanel
         var frameRect = new RectF(itemMin + halfFrame, itemMax - new Vector2(halfFrame.X, 0.0f));
         labelRect.Min.X -= itemSpacing.X;
         labelRect.Max.X += itemSpacing.X;
-        for (int i = 0; i < 4; ++i)
-        {
+        for (int i = 0; i < 4; ++i) {
             const float FLT_MAX = float.MaxValue;
-            switch (i)
-            {
+            switch (i) {
                 // left half-plane
                 case 0: ImGui.PushClipRect(new Vector2(-FLT_MAX, -FLT_MAX), new Vector2(labelRect.Min.X, FLT_MAX), true); break;
                 // right half-plane
@@ -128,24 +122,20 @@ public static class ImGuiGroupPanel
         ImGui.EndGroup();
     }
 
-    private static unsafe Vector2* igGetWindowSize()
-    {
+    private static unsafe Vector2* igGetWindowSize() {
         Vector2 v;
         ImGuiNative.GetWindowSize(&v);
         return &v;
     }
 
-    private static unsafe Vector2* igGetContentRegionMax()
-    {
+    private static unsafe Vector2* igGetContentRegionMax() {
         Vector2 v;
         ImGuiNative.GetContentRegionMax(&v);
         return &v;
     }
 
-    struct RectF
-    {
-        public RectF(Vector2 min, Vector2 max) : this()
-        {
+    struct RectF {
+        public RectF(Vector2 min, Vector2 max) : this() {
             Min = min;
             Max = max;
         }

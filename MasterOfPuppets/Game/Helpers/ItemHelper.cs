@@ -6,12 +6,9 @@ using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 
-public static class ItemHelper
-{
-    private static ExecutableAction GetExecutableAction(Item item)
-    {
-        return new ExecutableAction
-        {
+public static class ItemHelper {
+    private static ExecutableAction GetExecutableAction(Item item) {
+        return new ExecutableAction {
             ActionId = item.RowId,
             ActionName = item.Name.ToString(),
             // ActionName = item.Singular.ToString(),
@@ -24,8 +21,7 @@ public static class ItemHelper
         };
     }
 
-    public static List<ExecutableAction> GetAllowedItems()
-    {
+    public static List<ExecutableAction> GetAllowedItems() {
         List<uint> allowedCategories = [
             (uint)ItemUICategoryEnum.Miscellany,
             (uint)ItemUICategoryEnum.SeasonalMiscellany
@@ -37,8 +33,7 @@ public static class ItemHelper
         .ToList();
     }
 
-    public static Item? GetItemByName(string itemName)
-    {
+    public static Item? GetItemByName(string itemName) {
         // returns RowId = 0 for invalid names
         var item = DalamudApi.DataManager.Excel.GetSheet<Item>()
         .FirstOrDefault(i => string.Equals(i.Name.ToString(), itemName, StringComparison.OrdinalIgnoreCase));
@@ -47,31 +42,26 @@ public static class ItemHelper
         return isItemFound ? item : null;
     }
 
-    public static ExecutableAction? GetExecutableActionByName(string itemName)
-    {
+    public static ExecutableAction? GetExecutableActionByName(string itemName) {
         var item = GetItemByName(itemName);
         return item == null ? null : GetExecutableAction(item.Value);
     }
 
-    private static Item? GetItemById(uint id)
-    {
+    private static Item? GetItemById(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Item>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint slotId)
-    {
+    public static ExecutableAction? GetExecutableActionById(uint slotId) {
         var item = GetItemById(slotId);
         return item == null ? null : GetExecutableAction(item.Value);
     }
 
-    public static uint GetIconId(uint item)
-    {
+    public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
         return GetItemById(item)?.Icon ?? undefinedIcon;
     }
 
-    public enum ItemUICategoryEnum
-    {
+    public enum ItemUICategoryEnum {
         None = 0,
         PugilistsArm = 1,
         GladiatorsArm = 2,

@@ -1,22 +1,21 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Collections.Generic;
 
-using Dalamud.Interface;
-using Dalamud.Interface.Windowing;
-using Dalamud.Interface.Utility;
-using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
+using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Windowing;
 
+using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
-using MasterOfPuppets.Extensions;
 
 namespace MasterOfPuppets;
 
-public class MacroEditorWindow : Window
-{
+public class MacroEditorWindow : Window {
     private Plugin Plugin { get; }
     private Macro MacroItem = new() { Commands = new List<Command>() };
     private int MacroIndex;
@@ -27,8 +26,7 @@ public class MacroEditorWindow : Window
     private string _currentWord = string.Empty;
     private string _lastWord = string.Empty;
 
-    public MacroEditorWindow(Plugin plugin) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow")
-    {
+    public MacroEditorWindow(Plugin plugin) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow") {
         Plugin = plugin;
         InputTextMultiline = new ImGuiInputTextMultiline(plugin);
 
@@ -38,28 +36,23 @@ public class MacroEditorWindow : Window
         Flags = ImGuiWindowFlags.NoResize;
     }
 
-    public override void PreDraw()
-    {
+    public override void PreDraw() {
         base.PreDraw();
     }
 
-    public override void OnClose()
-    {
+    public override void OnClose() {
         var isMacroSaved = false;
-        if (Plugin.Config.AutoSaveMacro && EditingExistingMacro)
-        {
+        if (Plugin.Config.AutoSaveMacro && EditingExistingMacro) {
             isMacroSaved = SaveMacro();
         }
 
-        if (isMacroSaved)
-        {
+        if (isMacroSaved) {
             RessetState();
             base.OnClose();
         }
     }
 
-    private void RessetState()
-    {
+    private void RessetState() {
         MacroItem = new() { Commands = new List<Command>() };
         EditingExistingMacro = false;
         MacroIndex = Plugin.MacroManager.GetMacrosCount();
@@ -70,8 +63,7 @@ public class MacroEditorWindow : Window
         _lastWord = string.Empty;
     }
 
-    public void EditMacro(int macroIndex)
-    {
+    public void EditMacro(int macroIndex) {
         RessetState();
 
         MacroItem = Plugin.MacroManager.GetMacroByIndex(macroIndex);
@@ -81,31 +73,26 @@ public class MacroEditorWindow : Window
         this.Toggle();
     }
 
-    public void AddNewMacro()
-    {
+    public void AddNewMacro() {
         RessetState();
         this.Toggle();
     }
 
-    private bool SaveMacro()
-    {
+    private bool SaveMacro() {
         var isNewMacro = MacroIndex == Plugin.MacroManager.GetMacrosCount();
 
         bool isMacroSaved;
-        if (isNewMacro)
-        {
+        if (isNewMacro) {
             isMacroSaved = Plugin.MacroManager.AddMacro(MacroItem);
         }
-        else
-        {
+        else {
             isMacroSaved = Plugin.MacroManager.UpdateMacro(MacroIndex, MacroItem);
         }
 
         return isMacroSaved;
     }
 
-    public override void Draw()
-    {
+    public override void Draw() {
         ImGui.BeginChild("##MacroEditorHeaderFixedHeight", ImGuiHelpers.ScaledVector2(-1, 90), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         DrawHeader();
         ImGui.EndChild();
@@ -115,8 +102,7 @@ public class MacroEditorWindow : Window
         ImGui.EndChild();
     }
 
-    private void DrawHeader()
-    {
+    private void DrawHeader() {
         ImGui.Text(Language.MacroNameLabel);
         ImGui.InputText("##InputMacroName", ref MacroItem.Name);
 
@@ -124,8 +110,7 @@ public class MacroEditorWindow : Window
         ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonSuccessnNormal);
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonSuccessHovered);
         ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonSuccessActive);
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Save, $"##SaveMacroBtn", Language.SaveMacroBtn))
-        {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Save, $"##SaveMacroBtn", Language.SaveMacroBtn)) {
             SaveMacro();
             this.IsOpen = false;
         }
@@ -134,8 +119,7 @@ public class MacroEditorWindow : Window
         ImGui.SameLine();
 
         var autoSaveMacro = Plugin.Config.AutoSaveMacro;
-        if (ImGui.Checkbox(Language.SettingsWindowAutoSaveMacro, ref autoSaveMacro))
-        {
+        if (ImGui.Checkbox(Language.SettingsWindowAutoSaveMacro, ref autoSaveMacro)) {
             Plugin.Config.AutoSaveMacro = autoSaveMacro;
             Plugin.IpcProvider.SyncConfiguration();
         }
@@ -144,8 +128,7 @@ public class MacroEditorWindow : Window
         ImGui.Separator();
         ImGui.Spacing();
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddCommandBtn", "Add Command"))
-        {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddCommandBtn", "Add Command")) {
             var newCommand = new Command { Cids = new(), Actions = "" };
             MacroItem.Commands.Add(newCommand);
         }
@@ -165,14 +148,12 @@ public class MacroEditorWindow : Window
         float totalButtonsWidth = (buttonWidth * buttonCount) + (spacing * (buttonCount - 1)) + marginRight;
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Question, $"##ShowMacroHelpBtn", Language.ShowMacroHelpBtn))
-        {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Question, $"##ShowMacroHelpBtn", Language.ShowMacroHelpBtn)) {
             Plugin.Ui.MacroHelpWindow.Toggle();
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
-        {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn)) {
             Plugin.Ui.CharactersWindow.Toggle();
         }
 
@@ -183,8 +164,7 @@ public class MacroEditorWindow : Window
         ImGui.Spacing();
     }
 
-    private unsafe void DrawCommandList()
-    {
+    private unsafe void DrawCommandList() {
         //https://github.com/ocornut/imgui/blob/master/imgui_demo.cpp
 
         // new macro dont have any command
@@ -192,12 +172,9 @@ public class MacroEditorWindow : Window
 
         // left pane
         ImGui.BeginChild("##CommandList", ImGuiHelpers.ScaledVector2(150, 0), true);
-        for (var commandIndex = 0; commandIndex < MacroItem.Commands.Count; commandIndex++)
-        {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCommand_{commandIndex}", Language.DeleteInstructionTooltip))
-            {
-                if (ImGui.GetIO().KeyCtrl)
-                {
+        for (var commandIndex = 0; commandIndex < MacroItem.Commands.Count; commandIndex++) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCommand_{commandIndex}", Language.DeleteInstructionTooltip)) {
+                if (ImGui.GetIO().KeyCtrl) {
                     MacroItem.Commands.RemoveAt(commandIndex);
                 }
             }
@@ -205,16 +182,14 @@ public class MacroEditorWindow : Window
             ImGui.SameLine();
 
             bool isSelected = SelectedCommandIndex == commandIndex;
-            if (isSelected)
-            {
+            if (isSelected) {
                 ImGui.PushStyleColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered);
                 ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered);
                 ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
             }
 
             string label = $"Command ({commandIndex + 1})";
-            if (ImGui.Selectable(label, isSelected))
-            {
+            if (ImGui.Selectable(label, isSelected)) {
                 SelectedCommandIndex = commandIndex;
             }
             ImGuiUtil.ToolTip($"Drag to reorder");
@@ -222,8 +197,7 @@ public class MacroEditorWindow : Window
             if (isSelected)
                 ImGui.PopStyleColor(3);
 
-            if (ImGui.BeginDragDropSource())
-            {
+            if (ImGui.BeginDragDropSource()) {
                 ImGui.SetDragDropPayload("DND_COMMAND_LIST", new ReadOnlySpan<byte>(&commandIndex, sizeof(int)), ImGuiCond.None);
                 ImGui.Button(label);
                 // DalamudApi.PluginLog.Warning($"Drag start [{commandIndex}]: {commandIndex}");
@@ -231,19 +205,16 @@ public class MacroEditorWindow : Window
             }
 
             ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
-            if (ImGui.BeginDragDropTarget())
-            {
+            if (ImGui.BeginDragDropTarget()) {
                 ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_COMMAND_LIST");
                 bool isDropping = false;
                 isDropping = !dragDropPayload.IsNull;
 
-                if (isDropping && dragDropPayload.IsDelivery())
-                {
+                if (isDropping && dragDropPayload.IsDelivery()) {
                     int originalIndex = *(int*)dragDropPayload.Data;
 
                     int offset = commandIndex - originalIndex;
-                    if (offset != 0 && originalIndex + offset >= 0)
-                    {
+                    if (offset != 0 && originalIndex + offset >= 0) {
                         int targetIndex = originalIndex + offset;
                         // DalamudApi.PluginLog.Warning($"Drag end [{commandIndex}]: [{originalIndex}, {targetIndex}] {offset}");
                         MacroItem.Commands.MoveItemToIndex(originalIndex, targetIndex);
@@ -264,8 +235,7 @@ public class MacroEditorWindow : Window
         DrawCommandEditor(SelectedCommandIndex);
     }
 
-    private void DrawCommandEditor(int commandIndex)
-    {
+    private void DrawCommandEditor(int commandIndex) {
         var usedCids = MacroItem.Commands?
         .SelectMany(c => c.Cids)
         .ToHashSet() ?? new HashSet<ulong>();
@@ -289,18 +259,14 @@ public class MacroEditorWindow : Window
         ImGui.BeginChild($"##CharactersListChild_command_{commandIndex}", new Vector2(characterListWidth, 150), true);
         ImGui.TextUnformatted(Language.CharactersLabel);
 
-        if (ImGui.BeginListBox($"##CharactersList_command_{commandIndex}", new Vector2(-1, -1)))
-        {
-            for (var characterIndex = 0; characterIndex < MacroItem.Commands[commandIndex].Cids.Count; characterIndex++)
-            {
+        if (ImGui.BeginListBox($"##CharactersList_command_{commandIndex}", new Vector2(-1, -1))) {
+            for (var characterIndex = 0; characterIndex < MacroItem.Commands[commandIndex].Cids.Count; characterIndex++) {
                 var targetCid = MacroItem.Commands[commandIndex].Cids[characterIndex];
                 var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
                     ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
 
-                if (ImGui.Selectable($"{character.Name}##command_{commandIndex}_character_{characterIndex}", false))
-                {
-                    if (ImGui.GetIO().KeyCtrl)
-                    {
+                if (ImGui.Selectable($"{character.Name}##command_{commandIndex}_character_{characterIndex}", false)) {
+                    if (ImGui.GetIO().KeyCtrl) {
                         MacroItem.Commands[commandIndex].Cids.RemoveAll(cid => cid == targetCid);
                     }
                 }
@@ -319,12 +285,9 @@ public class MacroEditorWindow : Window
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
         ImGui.PushItemWidth(characterComboWidth);
         var charactersListPreviewLabel = Plugin.Config.Characters.Count == 0 ? "Set up the characters first" : "Select character to add";
-        if (ImGui.BeginCombo($"##CharacterSelectList_command_{commandIndex}", charactersListPreviewLabel))
-        {
-            foreach (var character in availableCharacters)
-            {
-                if (ImGui.Selectable($"{character.Name}##Cid_{character.Cid}", false))
-                {
+        if (ImGui.BeginCombo($"##CharacterSelectList_command_{commandIndex}", charactersListPreviewLabel)) {
+            foreach (var character in availableCharacters) {
+                if (ImGui.Selectable($"{character.Name}##Cid_{character.Cid}", false)) {
                     MacroItem.Commands[commandIndex].Cids.AddUnique(character.Cid);
                 }
             }
@@ -335,12 +298,9 @@ public class MacroEditorWindow : Window
 
         ImGui.Spacing();
         ImGui.PushItemWidth(characterComboWidth);
-        if (ImGui.BeginCombo($"##CidsGroupSelectList_command_{commandIndex}", "Select group to add"))
-        {
-            for (var groupIndex = 0; groupIndex < Plugin.Config.CidsGroups.Count; groupIndex++)
-            {
-                if (ImGui.Selectable($"{Plugin.Config.CidsGroups[groupIndex].Name}##CidGroup_{groupIndex}", false))
-                {
+        if (ImGui.BeginCombo($"##CidsGroupSelectList_command_{commandIndex}", "Select group to add")) {
+            for (var groupIndex = 0; groupIndex < Plugin.Config.CidsGroups.Count; groupIndex++) {
+                if (ImGui.Selectable($"{Plugin.Config.CidsGroups[groupIndex].Name}##CidGroup_{groupIndex}", false)) {
                     var availableCidsToAdd = Plugin.Config.CidsGroups[groupIndex].Cids
                         .Where(cid => !MacroItem.Commands[commandIndex].Cids.Contains(cid)).ToList();
 
@@ -364,10 +324,8 @@ public class MacroEditorWindow : Window
         ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);
         ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive);
-        if (ImGui.Button(Language.RemoveAllBtn))
-        {
-            if (ImGui.GetIO().KeyCtrl)
-            {
+        if (ImGui.Button(Language.RemoveAllBtn)) {
+            if (ImGui.GetIO().KeyCtrl) {
                 MacroItem.Commands[commandIndex].Cids = new();
             }
         }
@@ -393,8 +351,7 @@ public class MacroEditorWindow : Window
         // Don't allow lines that are longer then the max line length
         ImGuiInputTextFlags.None
         // ImGuiUtil.CallbackCharFilterFn(_ => _inputTextContent.Length() < 181)
-        ))
-        {
+        )) {
             // DalamudApi.PluginLog.Warning($"{_inputTextContent}");
             // Macro.Lines = lines;
         }
@@ -412,8 +369,7 @@ public class MacroEditorWindow : Window
         //     }
         // }
 
-        if (!string.IsNullOrWhiteSpace(_currentWord) && _currentWord != _lastWord)
-        {
+        if (!string.IsNullOrWhiteSpace(_currentWord) && _currentWord != _lastWord) {
             _suggestions = MopMacroActionsHelper.Actions
                 .Select(x => x.SuggestionCommand)
                 .Concat(EmoteHelper.GetAllowedItems().Select(x => x.TextCommand))
@@ -424,21 +380,18 @@ public class MacroEditorWindow : Window
             _lastWord = _currentWord;
         }
 
-        if (_suggestions.Any())
-        {
+        if (_suggestions.Any()) {
             ImGui.Spacing();
             ImGui.Spacing();
 
             ImGui.BeginChild($"##AutoCompleteChild_{commandIndex}", new Vector2(-1, 150), true);
             int? selectedIndex = null;
-            for (int i = 0; i < _suggestions.Count; i++)
-            {
+            for (int i = 0; i < _suggestions.Count; i++) {
                 if (ImGui.Selectable(_suggestions[i]))
                     selectedIndex = i;
             }
 
-            if (selectedIndex.HasValue)
-            {
+            if (selectedIndex.HasValue) {
                 ReplaceCurrentWord(ref MacroItem.Commands[commandIndex].Actions, _currentWord, _suggestions[selectedIndex.Value]);
                 _suggestions.Clear();
                 _lastWord = string.Empty;
@@ -453,8 +406,7 @@ public class MacroEditorWindow : Window
         ImGui.EndGroup();
     }
 
-    private string GetCurrentWord(string text)
-    {
+    private string GetCurrentWord(string text) {
         if (string.IsNullOrEmpty(text))
             return "";
 
@@ -468,12 +420,10 @@ public class MacroEditorWindow : Window
         return tokens.Length > 0 ? tokens[^1] : "";
     }
 
-    private void ReplaceCurrentWord(ref string text, string oldWord, string newWord)
-    {
+    private void ReplaceCurrentWord(ref string text, string oldWord, string newWord) {
         if (string.IsNullOrEmpty(oldWord)) return;
         int index = text.LastIndexOf(oldWord, StringComparison.OrdinalIgnoreCase);
-        if (index >= 0)
-        {
+        if (index >= 0) {
             text = text.Substring(0, index) + newWord + text.Substring(index + oldWord.Length);
         }
     }

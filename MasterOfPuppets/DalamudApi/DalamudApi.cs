@@ -1,16 +1,15 @@
-﻿using System;
+using System;
 
 using Dalamud.Game;
+using Dalamud.Game.ClientState.Objects;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using Dalamud.Interface.ImGuiNotification;
-using Dalamud.Game.ClientState.Objects;
 
 namespace MasterOfPuppets;
 
-public class DalamudApi
-{
+public class DalamudApi {
     [PluginService] public static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
     [PluginService] public static IPluginLog PluginLog { get; private set; } = null!;
     [PluginService] public static ICommandManager CommandManager { get; private set; } = null!;

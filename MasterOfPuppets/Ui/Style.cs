@@ -3,14 +3,12 @@ using System.Numerics;
 namespace MasterOfPuppets;
 
 // constant components/colors that are not customizable
-public static class Style
-{
+public static class Style {
     public static ColorPalette Colors = new();
     public static ComponentsPalette Components = new();
 }
 
-public class ComponentsPalette
-{
+public class ComponentsPalette {
     // imgui
     public Vector4 Text = new Vector4(1f, 1f, 1f, 1f);                         // #FFFFFF
     public Vector4 TextDisabled = new Vector4(0.5f, 0.5f, 0.5f, 1f);           // #808080
@@ -105,8 +103,7 @@ public class ComponentsPalette
     public Vector4 TooltipBorderColor = new Vector4(1.0f, 0.64705884f, 0.0f, 1.0f);  // #FFA500
 }
 
-public class ColorPalette
-{
+public class ColorPalette {
     // public Vector4 Red = new Vector4(1f, 0.2f, 0.2f, 1f);
     // public Vector4 Red = new Vector4(0.784f, 0f, 0f, 1f);
     // public Vector4 Red = new Vector4(1f, 0.35686275f, 0.36862746f, 1f);
@@ -149,10 +146,8 @@ public class ColorPalette
     ); // #DD3636
 }
 
-public static class ColorUtil
-{
-    public static Vector4 HexToVector4(string hex, float alpha = 1.0f)
-    {
+public static class ColorUtil {
+    public static Vector4 HexToVector4(string hex, float alpha = 1.0f) {
         if (hex.StartsWith("#"))
             hex = hex.Substring(1);
 
@@ -166,8 +161,7 @@ public static class ColorUtil
         return new Vector4(r, g, b, alpha);
     }
 
-    public static uint Vector4ToUint(Vector4 color)
-    {
+    public static uint Vector4ToUint(Vector4 color) {
         var r = (uint)(color.X * 255.0f);
         var g = (uint)(color.Y * 255.0f);
         var b = (uint)(color.Z * 255.0f);

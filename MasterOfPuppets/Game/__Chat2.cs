@@ -11,8 +11,7 @@ namespace MasterOfPuppets;
 /// <summary>
 /// A class containing chat functionality
 /// </summary>
-public static class Chat2
-{
+public static class Chat2 {
     /// <summary>
     /// <para>
     /// Send a given message to the chat box. <b>This can send chat to the server.</b>
@@ -25,19 +24,15 @@ public static class Chat2
     /// <param name="message">message to send</param>
     /// <exception cref="ArgumentException">If <paramref name="message"/> is empty, longer than 500 bytes in UTF-8, or contains invalid characters.</exception>
     /// <exception cref="InvalidOperationException">If the signature for this function could not be found -or- The UiModule is currently unavailable</exception>
-    public static unsafe void SendMessage(string message)
-    {
+    public static unsafe void SendMessage(string message) {
         var utf8 = Utf8String.FromString(message);
 
-        try
-        {
-            if (utf8->Length == 0)
-            {
+        try {
+            if (utf8->Length == 0) {
                 throw new ArgumentException("message is empty", nameof(message));
             }
 
-            if (utf8->Length > 500)
-            {
+            if (utf8->Length > 500) {
                 throw new ArgumentException("message is longer than 500 bytes", nameof(message));
             }
 
@@ -45,23 +40,19 @@ public static class Chat2
 
             utf8->SanitizeString(AllowedEntities.UppercaseLetters | AllowedEntities.LowercaseLetters | AllowedEntities.Numbers | AllowedEntities.SpecialCharacters | AllowedEntities.CharacterList | AllowedEntities.OtherCharacters | AllowedEntities.Payloads | AllowedEntities.Unknown9);
 
-            if (utf8->Length != oldLength)
-            {
+            if (utf8->Length != oldLength) {
                 throw new ArgumentException($"message contained invalid characters", nameof(message));
             }
 
             var uiModule = UIModule.Instance();
-            if (uiModule == null)
-            {
+            if (uiModule == null) {
                 throw new InvalidOperationException("The UiModule is currently unavailable");
             }
 
             uiModule->ProcessChatBoxEntry(utf8);
         }
-        finally
-        {
-            if (utf8 != null)
-            {
+        finally {
+            if (utf8 != null) {
                 utf8->Dtor(true);
             }
         }

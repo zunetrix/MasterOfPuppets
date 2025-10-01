@@ -6,8 +6,7 @@ using ProtoBuf;
 namespace MasterOfPuppets.Ipc;
 
 [ProtoContract]
-internal class IpcMessage
-{
+internal class IpcMessage {
     [ProtoMember(1)]
     public IpcMessageType MessageType { get; init; }
     [ProtoMember(2)]
@@ -24,8 +23,7 @@ internal class IpcMessage
     public string[] StringData { get; init; }
     private static readonly int processId = Process.GetCurrentProcess().Id;
 
-    public IpcMessage(IpcMessageType messageType, byte[] data, params string[] stringData)
-    {
+    public IpcMessage(IpcMessageType messageType, byte[] data, params string[] stringData) {
         MessageType = messageType;
         BroadcasterId = (long)DalamudApi.ClientState.LocalContentId;
         PartyId = DalamudApi.PartyList.PartyId;
@@ -43,8 +41,7 @@ internal class IpcMessage
 
     public static IpcMessage Create(IpcMessageType messageType, params string[] stringData) => new(messageType, null, stringData);
 
-    public byte[] Serialize()
-    {
+    public byte[] Serialize() {
         // var sw = Stopwatch.StartNew();
         var protoSerialize = this.ProtoSerialize();
         // DalamudApi.PluginLog.Verbose($"proto serialized in {sw.Elapsed.TotalMilliseconds}ms");

@@ -9,35 +9,28 @@ using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 
 namespace MasterOfPuppets;
 
-public static class TargetManager
-{
-    public static unsafe void TargetByName(string targetName)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(targetName))
-            {
+public static class TargetManager {
+    public static unsafe void TargetByName(string targetName) {
+        try {
+            if (string.IsNullOrWhiteSpace(targetName)) {
                 DalamudApi.PluginLog.Warning($"Invalid target: \"{targetName}\"");
                 return;
             }
 
-            DalamudApi.Framework.RunOnFrameworkThread(delegate
-            {
+            DalamudApi.Framework.RunOnFrameworkThread(delegate {
                 // find target by name
                 IGameObject closestMatch = null;
                 var closestDistance = float.MaxValue;
                 var player = DalamudApi.ClientState.LocalPlayer;
                 if (player == null) return;
 
-                foreach (var actor in DalamudApi.Objects)
-                {
+                foreach (var actor in DalamudApi.Objects) {
                     if (actor == null) continue;
                     if (!actor.Name.TextValue.Contains(targetName, StringComparison.InvariantCultureIgnoreCase)
                         || !((GameObjectStruct*)actor.Address)->GetIsTargetable()) continue;
 
                     var distance = Vector3.Distance(player.Position, actor.Position);
-                    if (closestMatch == null)
-                    {
+                    if (closestMatch == null) {
                         closestMatch = actor;
                         closestDistance = distance;
                         continue;
@@ -54,33 +47,27 @@ public static class TargetManager
                 DalamudApi.Targets.Target = closestMatch;
             });
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while targeting \"{targetName}\"");
         }
     }
 
-    public static unsafe void TargetByObjectId(ulong targetObjectId)
-    {
-        try
-        {
-            DalamudApi.Framework.RunOnFrameworkThread(delegate
-            {
+    public static unsafe void TargetByObjectId(ulong targetObjectId) {
+        try {
+            DalamudApi.Framework.RunOnFrameworkThread(delegate {
                 // find target by object id
                 IGameObject closestMatch = null;
                 var closestDistance = float.MaxValue;
                 var player = DalamudApi.ClientState.LocalPlayer;
                 if (player == null) return;
 
-                foreach (var actor in DalamudApi.Objects)
-                {
+                foreach (var actor in DalamudApi.Objects) {
                     if (actor == null) continue;
                     if (actor.GameObjectId != targetObjectId
                         || !((GameObjectStruct*)actor.Address)->GetIsTargetable()) continue;
 
                     var distance = Vector3.Distance(player.Position, actor.Position);
-                    if (closestMatch == null)
-                    {
+                    if (closestMatch == null) {
                         closestMatch = actor;
                         closestDistance = distance;
                         continue;
@@ -95,24 +82,19 @@ public static class TargetManager
                 DalamudApi.Targets.Target = closestMatch;
             });
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while targeting");
         }
     }
 
-    public static unsafe void TargetOf(string assistName)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(assistName))
-            {
+    public static unsafe void TargetOf(string assistName) {
+        try {
+            if (string.IsNullOrWhiteSpace(assistName)) {
                 DalamudApi.PluginLog.Warning($"Invalid target of: \"{assistName}\"");
                 return;
             }
 
-            DalamudApi.Framework.RunOnFrameworkThread(delegate
-            {
+            DalamudApi.Framework.RunOnFrameworkThread(delegate {
                 // find target by name
                 IGameObject closestMatch = null;
                 var closestDistance = float.MaxValue;
@@ -121,14 +103,12 @@ public static class TargetManager
 
                 // foreach (var assistActor in DalamudApi.Objects.Where(o => o.ObjectKind == ObjectKind.Player))
                 // var assistActor = DalamudApi.Objects.AsEnumerable().FirstOrDefault(o => o.Name.TextValue.Equals(_objectName));
-                foreach (var assistActor in DalamudApi.Objects)
-                {
+                foreach (var assistActor in DalamudApi.Objects) {
                     if (assistActor == null) continue;
 
                     // if player concat world name to prevent same characters names conflict
                     var lookupName = assistActor.Name.TextValue;
-                    if (assistActor.ObjectKind == ObjectKind.Player)
-                    {
+                    if (assistActor.ObjectKind == ObjectKind.Player) {
                         var playerObject = assistActor as IPlayerCharacter;
                         var playerWorld = playerObject.HomeWorld.ValueNullable?.Name;
                         // var playerWorld = playerObject.HomeWorld.ValueNullable?.Name.ToDalamudString().TextValue;
@@ -141,8 +121,7 @@ public static class TargetManager
                         || !((GameObjectStruct*)assistActor.Address)->GetIsTargetable()) continue;
 
                     var distance = Vector3.Distance(player.Position, assistActor.Position);
-                    if (closestMatch == null)
-                    {
+                    if (closestMatch == null) {
                         closestMatch = assistActor;
                         closestDistance = distance;
                         continue;
@@ -157,8 +136,7 @@ public static class TargetManager
                 if (closestMatch.TargetObject == null
                     || !((GameObjectStruct*)closestMatch.TargetObject.Address)->GetIsTargetable()
                     // || closestMatch.TargetObjectId == DalamudApi.ClientState.LocalPlayer.GameObjectId
-                    )
-                {
+                    ) {
                     return;
                 }
 
@@ -166,23 +144,18 @@ public static class TargetManager
                 DalamudApi.Targets.Target = closestMatch.TargetObject;
             });
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error target of \"{assistName}\"");
         }
     }
 
-    public static unsafe void TargetClear()
-    {
-        try
-        {
-            DalamudApi.Framework.RunOnFrameworkThread(delegate
-            {
+    public static unsafe void TargetClear() {
+        try {
+            DalamudApi.Framework.RunOnFrameworkThread(delegate {
                 DalamudApi.Targets.Target = null;
             });
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while cleaning target");
         }
     }

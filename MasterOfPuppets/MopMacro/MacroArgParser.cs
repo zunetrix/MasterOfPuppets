@@ -1,7 +1,6 @@
 using System.Globalization;
 
-public static class MacroArgParser
-{
+public static class MacroArgParser {
     public static string Normalize(string arg) =>
         arg?.Trim().Trim('"') ?? string.Empty;
 

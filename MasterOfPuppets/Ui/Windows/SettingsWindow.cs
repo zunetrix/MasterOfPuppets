@@ -1,26 +1,24 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Numerics;
 
-using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Windowing;
 
-using MasterOfPuppets.Resources;
-using MasterOfPuppets.Util.ImGuiExt;
-using MasterOfPuppets.Util;
 using MasterOfPuppets.Extensions;
+using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util;
+using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class SettingsWindow : Window
-{
+public class SettingsWindow : Window {
     private Plugin Plugin { get; }
     private string _characterName = string.Empty;
     private SettingsDisplayObjectLimitType _objectQuantityType;
 
-    public SettingsWindow(Plugin plugin) : base($"{Plugin.Name} {Language.SettingsTitle}###SettingsWindow")
-    {
+    public SettingsWindow(Plugin plugin) : base($"{Plugin.Name} {Language.SettingsTitle}###SettingsWindow") {
         Plugin = plugin;
 
         Size = ImGuiHelpers.ScaledVector2(400, 300);
@@ -31,13 +29,11 @@ public class SettingsWindow : Window
         _objectQuantityType = GameSettingsManager.GetDisplayObjectLimit();
     }
 
-    public override void PreDraw()
-    {
+    public override void PreDraw() {
         base.PreDraw();
     }
 
-    public override void Draw()
-    {
+    public override void Draw() {
         if (!ImGui.BeginTabBar("##SettingsTabs")) return;
         DrawGeneralTab();
         DrawChatSyncTab();
@@ -45,15 +41,12 @@ public class SettingsWindow : Window
         ImGui.EndTabBar();
     }
 
-    private void DrawGeneralTab()
-    {
-        if (ImGui.BeginTabItem($"{Language.SettingsGeneralTab}###GeneralTab"))
-        {
+    private void DrawGeneralTab() {
+        if (ImGui.BeginTabItem($"{Language.SettingsGeneralTab}###GeneralTab")) {
 
             ImGuiGroupPanel.BeginGroupPanel(Language.SettingsGeneralTab);
             var syncClients = Plugin.Config.SyncClients;
-            if (ImGui.Checkbox(Language.SettingsWindowSyncClients, ref syncClients))
-            {
+            if (ImGui.Checkbox(Language.SettingsWindowSyncClients, ref syncClients)) {
                 Plugin.Config.SyncClients = syncClients;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
@@ -64,8 +57,7 @@ public class SettingsWindow : Window
             ImGui.Spacing();
 
             var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
-            if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync))
-            {
+            if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync)) {
                 Plugin.Config.SaveConfigAfterSync = saveConfigAfterSync;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
@@ -76,8 +68,7 @@ public class SettingsWindow : Window
             ImGui.Spacing();
 
             var autoSaveMacro = Plugin.Config.AutoSaveMacro;
-            if (ImGui.Checkbox(Language.SettingsWindowAutoSaveMacro, ref autoSaveMacro))
-            {
+            if (ImGui.Checkbox(Language.SettingsWindowAutoSaveMacro, ref autoSaveMacro)) {
                 Plugin.Config.AutoSaveMacro = autoSaveMacro;
                 Plugin.IpcProvider.SyncConfiguration();
             }
@@ -88,8 +79,7 @@ public class SettingsWindow : Window
             ImGui.TextUnformatted("Global delay between actions");
             ImGui.SetNextItemWidth(150);
             var delayBetweenActions = Plugin.Config.DelayBetweenActions;
-            if (ImGui.InputDouble("##DelayBetrweenActions", ref delayBetweenActions, 0.1, 1, "%.2f", ImGuiInputTextFlags.AutoSelectAll))
-            {
+            if (ImGui.InputDouble("##DelayBetrweenActions", ref delayBetweenActions, 0.1, 1, "%.2f", ImGuiInputTextFlags.AutoSelectAll)) {
                 delayBetweenActions = Math.Clamp(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero), 0, 60);
                 Plugin.Config.DelayBetweenActions = delayBetweenActions;
                 Plugin.Config.Save();
@@ -104,16 +94,14 @@ public class SettingsWindow : Window
 
             ImGuiGroupPanel.BeginGroupPanel("Window");
             var openOnStartup = Plugin.Config.OpenOnStartup;
-            if (ImGui.Checkbox(Language.SettingsWindowOpenOnStartup, ref openOnStartup))
-            {
+            if (ImGui.Checkbox(Language.SettingsWindowOpenOnStartup, ref openOnStartup)) {
                 Plugin.Config.OpenOnStartup = openOnStartup;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
 
             var openOnLogin = Plugin.Config.OpenOnLogin;
-            if (ImGui.Checkbox(Language.SettingsWindowOpenLogin, ref openOnLogin))
-            {
+            if (ImGui.Checkbox(Language.SettingsWindowOpenLogin, ref openOnLogin)) {
                 Plugin.Config.OpenOnLogin = openOnLogin;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
@@ -159,8 +147,7 @@ public class SettingsWindow : Window
             ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonPurpleNormal);
             ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonPurpleHovered);
             ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonPurpleActive);
-            if (ImGui.Button(Language.OpenPluginFolder))
-            {
+            if (ImGui.Button(Language.OpenPluginFolder)) {
                 WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
             }
 
@@ -168,8 +155,7 @@ public class SettingsWindow : Window
             ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
             ImGui.SameLine();
 
-            if (ImGui.Button(Language.OpenPluginConfigFile))
-            {
+            if (ImGui.Button(Language.OpenPluginConfigFile)) {
                 WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
             }
             ImGui.PopStyleColor(3);
@@ -194,13 +180,10 @@ public class SettingsWindow : Window
         }
     }
 
-    private void DrawChatSyncTab()
-    {
-        if (ImGui.BeginTabItem($"{Language.SettingsChatSyncTab}###ChatSyncTabTab"))
-        {
+    private void DrawChatSyncTab() {
+        if (ImGui.BeginTabItem($"{Language.SettingsChatSyncTab}###ChatSyncTabTab")) {
             var useChatSync = Plugin.Config.UseChatSync;
-            if (ImGui.Checkbox(Language.SettingsWindowUseChatSync, ref useChatSync))
-            {
+            if (ImGui.Checkbox(Language.SettingsWindowUseChatSync, ref useChatSync)) {
                 Plugin.Config.UseChatSync = useChatSync;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
@@ -208,7 +191,7 @@ public class SettingsWindow : Window
             ImGuiUtil.HelpMarker("""
             Enable chat synchronization to run actions across multiple devices.
             This turns on the chat watcher for the moprun and mopstop commands.
-            Set the same macro on both devices and trigger it via chat (party / linkshell etc).
+            Set the same macro on both devices and trigger it via chat(party / linkshell etc).
             You can define which chats are listened to and limit yourself to responding only to commands from certain senders
 
             Chat commands
@@ -222,8 +205,7 @@ public class SettingsWindow : Window
             ImGui.Spacing();
 
             var useChatCommandSenderWhitelist = Plugin.Config.UseChatCommandSenderWhitelist;
-            if (ImGui.Checkbox(Language.SettingsWindowUseChatCommandSenderWhitelist, ref useChatCommandSenderWhitelist))
-            {
+            if (ImGui.Checkbox(Language.SettingsWindowUseChatCommandSenderWhitelist, ref useChatCommandSenderWhitelist)) {
                 Plugin.Config.UseChatCommandSenderWhitelist = useChatCommandSenderWhitelist;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
@@ -235,18 +217,14 @@ public class SettingsWindow : Window
             ImGui.Spacing();
             ImGui.Spacing();
 
-            if (ImGui.CollapsingHeader("Allowed Chats"))
-            {
+            if (ImGui.CollapsingHeader("Allowed Chats")) {
                 ImGui.Indent();
-                if (ImGui.BeginCombo("##ListenedChatTypesSelectList", "Select Chat to Listen"))
-                {
+                if (ImGui.BeginCombo("##ListenedChatTypesSelectList", "Select Chat to Listen")) {
                     // foreach (XivChatType chatType in Enum.GetValues(typeof(XivChatType)))
-                    foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes.Except(Plugin.Config.ListenedChatTypes))
-                    {
+                    foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes.Except(Plugin.Config.ListenedChatTypes)) {
                         // var displayName = $"{chatType} ({(int)chatType})";
                         var displayName = $"{chatType}";
-                        if (ImGui.Selectable(displayName, false))
-                        {
+                        if (ImGui.Selectable(displayName, false)) {
                             Plugin.Config.ListenedChatTypes.Add(chatType);
                             Plugin.IpcProvider.SyncConfiguration();
                         }
@@ -258,15 +236,11 @@ public class SettingsWindow : Window
                 ImGui.Spacing();
 
                 ImGui.TextUnformatted("Listened Chats");
-                if (ImGui.BeginListBox("##ListenedChatTypes", new Vector2(-1, 100)))
-                {
-                    foreach (var chatType in Plugin.Config.ListenedChatTypes.ToList())
-                    {
+                if (ImGui.BeginListBox("##ListenedChatTypes", new Vector2(-1, 100))) {
+                    foreach (var chatType in Plugin.Config.ListenedChatTypes.ToList()) {
                         var displayName = $"{chatType}";
-                        if (ImGui.Selectable(displayName, false))
-                        {
-                            if (ImGui.GetIO().KeyCtrl)
-                            {
+                        if (ImGui.Selectable(displayName, false)) {
+                            if (ImGui.GetIO().KeyCtrl) {
                                 Plugin.Config.ListenedChatTypes.Remove(chatType);
                                 Plugin.IpcProvider.SyncConfiguration();
                             }
@@ -282,8 +256,7 @@ public class SettingsWindow : Window
             ImGui.Spacing();
             ImGui.Spacing();
 
-            if (ImGui.CollapsingHeader($"Allowed Chat Command Senders"))
-            {
+            if (ImGui.CollapsingHeader($"Allowed Chat Command Senders")) {
                 ImGui.Indent();
                 ImGui.TextUnformatted("Sender Name");
                 ImGui.InputTextWithHint("##CommandSenderNameInput", "Sender name", ref _characterName, 255, ImGuiInputTextFlags.AutoSelectAll);
@@ -292,8 +265,7 @@ public class SettingsWindow : Window
                 ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
                 ImGui.SameLine();
 
-                if (ImGui.Button($"Add##AddCommandSenderBtn"))
-                {
+                if (ImGui.Button($"Add##AddCommandSenderBtn")) {
                     if (string.IsNullOrEmpty(_characterName.Trim())) return;
 
                     Plugin.Config.ChatCommandSenderWhitelist.AddUnique(_characterName.Trim());
@@ -305,14 +277,10 @@ public class SettingsWindow : Window
                 ImGui.Spacing();
 
                 ImGui.TextUnformatted("Chat Command Sender Whitelist");
-                if (ImGui.BeginListBox("##ChatCommandSenderWhitelist", new Vector2(-1, 100)))
-                {
-                    foreach (var senderName in Plugin.Config.ChatCommandSenderWhitelist)
-                    {
-                        if (ImGui.Selectable(senderName, false))
-                        {
-                            if (ImGui.GetIO().KeyCtrl)
-                            {
+                if (ImGui.BeginListBox("##ChatCommandSenderWhitelist", new Vector2(-1, 100))) {
+                    foreach (var senderName in Plugin.Config.ChatCommandSenderWhitelist) {
+                        if (ImGui.Selectable(senderName, false)) {
+                            if (ImGui.GetIO().KeyCtrl) {
                                 Plugin.Config.ChatCommandSenderWhitelist.Remove(senderName);
                                 Plugin.IpcProvider.SyncConfiguration();
                             }
@@ -327,14 +295,11 @@ public class SettingsWindow : Window
         }
     }
 
-    private void DrawGameSettingsTab()
-    {
-        if (ImGui.BeginTabItem($"{Language.SettingsGameSettingsTab}###GameSettingsTab"))
-        {
+    private void DrawGameSettingsTab() {
+        if (ImGui.BeginTabItem($"{Language.SettingsGameSettingsTab}###GameSettingsTab")) {
             ImGui.TextUnformatted("Object Quantity Limit");
             ImGuiUtil.HelpMarker("Change for all clients");
-            if (ImGuiUtil.EnumCombo("##SettingsObjectQuantity", ref _objectQuantityType))
-            {
+            if (ImGuiUtil.EnumCombo("##SettingsObjectQuantity", ref _objectQuantityType)) {
                 Plugin.IpcProvider.SetGameSettingsObjectQuantity(_objectQuantityType);
             }
             ImGuiUtil.ToolTip("Change object quantity limit");

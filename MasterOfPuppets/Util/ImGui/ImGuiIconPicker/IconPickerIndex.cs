@@ -8,9 +8,10 @@ using Dalamud.Utility;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
-using FFXIVAction = Lumina.Excel.Sheets.Action;
 
 using MasterOfPuppets.Extensions;
+
+using FFXIVAction = Lumina.Excel.Sheets.Action;
 
 namespace MasterOfPuppets.Util.ImGuiIconPicker;
 
@@ -18,8 +19,7 @@ namespace MasterOfPuppets.Util.ImGuiIconPicker;
 ///
 /// The sheets for this index are hand-selected so it may not be exhaustive,
 /// but it covers most of the game icons.
-public class IconPickerIndex
-{
+public class IconPickerIndex {
     /// The full range of icons that we will try and explore.
     private List<int> iconRange = Enumerable.Range(0, 250000).ToList();
 
@@ -29,8 +29,7 @@ public class IconPickerIndex
     private SortedList<uint, IconInfo> iconInfos = new();
     private SortedList<IconInfoCategory, IconInfoCategoryGroup> iconInfoGroupForCategory = new(IconInfoCategory.NameComparer);
 
-    public enum IndexState
-    {
+    public enum IndexState {
         UNINDEXED,
         INDEXING,
         INDEXED
@@ -40,14 +39,11 @@ public class IconPickerIndex
 
     public IconPickerIndex() { }
 
-    public void StartIndexing(System.Action onFinish)
-    {
+    public void StartIndexing(System.Action onFinish) {
         if (State != IndexState.UNINDEXED) { return; }
 
-        Task.Run(() =>
-        {
-            try
-            {
+        Task.Run(() => {
+            try {
                 State = IndexState.INDEXING;
                 ComputeValidIconIds();
                 ApplyHardcodedCategories();
@@ -56,8 +52,7 @@ public class IconPickerIndex
                 State = IndexState.INDEXED;
                 onFinish();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 DalamudApi.PluginLog.Error($"Failed to index icons\n{ex}");
             }
 
@@ -66,8 +61,7 @@ public class IconPickerIndex
 
     public List<IconInfoCategoryGroup> CategoryRoots() => iconInfoGroupForCategory.Values.ToList();
 
-    public List<IconInfo> All(IconInfoCategory? category = null)
-    {
+    public List<IconInfo> All(IconInfoCategory? category = null) {
         if (State != IndexState.INDEXED) { return new(); }
         if (category == null) { return iconInfos.Values.ToList(); }
 
@@ -78,8 +72,7 @@ public class IconPickerIndex
             ?? new();
     }
 
-    public List<IconInfo> NameSearch(string needle, IconInfoCategory? category = null)
-    {
+    public List<IconInfo> NameSearch(string needle, IconInfoCategory? category = null) {
         if (State != IndexState.INDEXED) { return new(); }
         if (needle.Length < 2) { return new(); }
 
@@ -88,11 +81,9 @@ public class IconPickerIndex
         var searchHaystack = All(category);
 
         IEnumerable<(IconInfo, int)> results = searchHaystack
-            .Select<IconInfo, (IconInfo, int)?>(icon =>
-            {
+            .Select<IconInfo, (IconInfo, int)?>(icon => {
                 if (icon.IconId.ToString() == searchNeedle) { return (icon, 0); }
-                foreach (var searchName in icon.SearchNames)
-                {
+                foreach (var searchName in icon.SearchNames) {
                     if (searchName.ToLowerInvariant() == searchNeedle) { return (icon, 1); }
                     if (searchName.Split(" ").Any(word => word == searchNeedle)) { return (icon, 2); }
                     if (searchName.Contains(searchNeedle)) { return (icon, 3); }
@@ -108,46 +99,36 @@ public class IconPickerIndex
             .ToList();
     }
 
-    private void AddOrMergeIconInfo(IconInfo iconInfo)
-    {
+    private void AddOrMergeIconInfo(IconInfo iconInfo) {
         IconInfo? existingIconInfo;
-        if (iconInfos.TryGetValue(iconInfo.IconId, out existingIconInfo))
-        {
+        if (iconInfos.TryGetValue(iconInfo.IconId, out existingIconInfo)) {
             existingIconInfo.AddNames(iconInfo.Names);
             existingIconInfo.AddCategories(iconInfo.Categories);
         }
-        else
-        {
+        else {
             existingIconInfo = iconInfo;
             this.iconInfos.Add(iconInfo.IconId, iconInfo);
         }
     }
 
-    private void ComputeValidIconIds()
-    {
-        foreach (var iconId in iconRange)
-        {
+    private void ComputeValidIconIds() {
+        foreach (var iconId in iconRange) {
             if (iconRangeNullValues.Contains(iconId)) { continue; }
 
-            if (!DalamudApi.TextureProvider.TryGetIconPath((uint)iconId, out var _))
-            {
+            if (!DalamudApi.TextureProvider.TryGetIconPath((uint)iconId, out var _)) {
                 continue;
             }
 
-            var iconInfo = new IconInfo
-            {
+            var iconInfo = new IconInfo {
                 IconId = (uint)iconId
             };
             iconInfos.Add(iconInfo.IconId, iconInfo);
         }
     }
 
-    private void IndexIcons()
-    {
-        foreach (var iconInfo in iconInfos.Values)
-        {
-            foreach (var category in iconInfo.Categories)
-            {
+    private void IndexIcons() {
+        foreach (var iconInfo in iconInfos.Values) {
+            foreach (var category in iconInfo.Categories) {
                 // The "Top Level" category and all subcategories should point to the same group.
                 var categoryGroup = iconInfoGroupForCategory.GetOrAdd(
                     category.TopLevel(),
@@ -160,8 +141,7 @@ public class IconPickerIndex
     }
 
     /// Assumes that `IndexIconIds` has already been run
-    private void ApplyHardcodedCategories()
-    {
+    private void ApplyHardcodedCategories() {
         // First add the categories to the correct icons.
         ApplyIconCategory(1..100, "System");
         ApplyIconCategory(100..4_000, "Actions", "Class/Job");
@@ -272,15 +252,12 @@ public class IconPickerIndex
         ApplyIconCategory(210_100..229_962, "Statuses");
     }
 
-    private void ApplyIconCategory(Range range, string category, string? subcategory = null)
-    {
-        foreach (var iconId in range.Enumerate())
-        {
+    private void ApplyIconCategory(Range range, string category, string? subcategory = null) {
+        foreach (var iconId in range.Enumerate()) {
             var iconInfo = iconInfos.GetValueOrDefault((uint)iconId);
             if (iconInfo == null) { continue; }
 
-            var categorisedIconInfo = new IconInfo
-            {
+            var categorisedIconInfo = new IconInfo {
                 IconId = (uint)iconId,
             };
             categorisedIconInfo.AddCategory(new IconInfoCategory(category, subcategory));
@@ -288,8 +265,7 @@ public class IconPickerIndex
         }
     }
 
-    private void ApplyGamedataIconInfo()
-    {
+    private void ApplyGamedataIconInfo() {
         // Ignored: Addon / AddonTransient
         // Ignored: "AnimaWeaponIcon"?
         // Ignored: "CharaMakeCustomize"
@@ -632,20 +608,17 @@ public class IconPickerIndex
         );
     }
 
-    private void IndexWeird()
-    {
+    private void IndexWeird() {
     }
 
     private void ApplyIconNamesFrom<Row>(
         Func<Row, IEnumerable<uint>> icons,
         Func<Row, IEnumerable<ReadOnlySeString>> names
-    ) where Row : struct, IExcelRow<Row>
-    {
+    ) where Row : struct, IExcelRow<Row> {
         var excelSheet = DalamudApi.DataManager.GetExcelSheet<Row>();
         if (excelSheet == null) { return; }
 
-        foreach (var row in excelSheet)
-        {
+        foreach (var row in excelSheet) {
             var usefulNames = names(row)
                 .WithoutNull()
                 .Select(name => name.ExtractText())
@@ -656,14 +629,12 @@ public class IconPickerIndex
             var usefulIcons = icons(row)
                 .Where(icon => icon != 0);
 
-            foreach (var usefulIcon in usefulIcons)
-            {
+            foreach (var usefulIcon in usefulIcons) {
                 // If no icon info exists then this isn't a valid id
                 var existingIconInfo = iconInfos.GetValueOrDefault((uint)usefulIcon);
                 if (existingIconInfo == null) { continue; }
 
-                var iconInfo = new IconInfo
-                {
+                var iconInfo = new IconInfo {
                     IconId = usefulIcon!,
                     Names = usefulNames
                 };
@@ -676,13 +647,11 @@ public class IconPickerIndex
     private void ApplyIconNamesFromSubrow<Row>(
         Func<Row, IEnumerable<uint>> icons,
         Func<Row, IEnumerable<ReadOnlySeString>> names
-    ) where Row : struct, IExcelSubrow<Row>
-    {
+    ) where Row : struct, IExcelSubrow<Row> {
         var excelSheet = DalamudApi.DataManager.GetSubrowExcelSheet<Row>();
         if (excelSheet == null) { return; }
 
-        foreach (var row in excelSheet.SelectMany(x => x))
-        {
+        foreach (var row in excelSheet.SelectMany(x => x)) {
             var usefulNames = names(row)
                 .WithoutNull()
                 .Select(name => name.ExtractText())
@@ -693,14 +662,12 @@ public class IconPickerIndex
             var usefulIcons = icons(row)
                 .Where(icon => icon != 0);
 
-            foreach (var usefulIcon in usefulIcons)
-            {
+            foreach (var usefulIcon in usefulIcons) {
                 // If no icon info exists then this isn't a valid id
                 var existingIconInfo = iconInfos.GetValueOrDefault((uint)usefulIcon);
                 if (existingIconInfo == null) { continue; }
 
-                var iconInfo = new IconInfo
-                {
+                var iconInfo = new IconInfo {
                     IconId = usefulIcon!,
                     Names = usefulNames
                 };
@@ -713,8 +680,7 @@ public class IconPickerIndex
     private void ApplyIconNamesFromSubrow<Row>(
         Func<Row, IEnumerable<uint>> icons,
         Func<Row, IEnumerable<ReadOnlySeString?>> names
-    ) where Row : struct, IExcelSubrow<Row>
-    {
+    ) where Row : struct, IExcelSubrow<Row> {
         ApplyIconNamesFromSubrow<Row>(
             (row) => icons(row),
             (row) => names(row).WithoutNull()
@@ -725,8 +691,7 @@ public class IconPickerIndex
     private void ApplyIconNamesFrom<Row>(
         Func<Row, uint> icon,
         Func<Row, IEnumerable<ReadOnlySeString?>> names
-    ) where Row : struct, IExcelRow<Row>
-    {
+    ) where Row : struct, IExcelRow<Row> {
         ApplyIconNamesFrom<Row>(
             (row) => new[] { icon(row) },
             (row) => names(row).WithoutNull()
@@ -736,14 +701,12 @@ public class IconPickerIndex
     private void ApplyIconNamesFrom<Row>(
         Func<Row, uint> icon,
         Func<Row, IEnumerable<ReadOnlySeString>> names
-    ) where Row : struct, IExcelRow<Row>
-    {
+    ) where Row : struct, IExcelRow<Row> {
         ApplyIconNamesFrom((row) => new[] { icon(row) }, names);
     }
 }
 
-public class IconInfo
-{
+public class IconInfo {
     public required uint IconId { get; init; }
 
     /// The names/descriptions that refer to this IconId.
@@ -751,11 +714,9 @@ public class IconInfo
     /// By convention this must always have at least one element, and the names
     /// should be ordered by "specificity", with the first name being the "best"
     private List<string> _names = new();
-    public List<string> Names
-    {
+    public List<string> Names {
         get { return _names; }
-        init
-        {
+        init {
             _names = value;
             SearchNames = value.Select(name => name.ToLowerInvariant()).ToList();
         }
@@ -767,10 +728,8 @@ public class IconInfo
     /// The Categories that this Icon belongs to.
     public List<IconInfoCategory> Categories { get; private set; } = new();
 
-    public void AddNames(IEnumerable<string> names)
-    {
-        foreach (var name in names)
-        {
+    public void AddNames(IEnumerable<string> names) {
+        foreach (var name in names) {
             var searchName = name.ToLowerInvariant();
             if (SearchNames.Contains(searchName)) { continue; }
 
@@ -779,23 +738,19 @@ public class IconInfo
         }
     }
 
-    public void AddCategory(IconInfoCategory category)
-    {
+    public void AddCategory(IconInfoCategory category) {
         if (Categories.Contains(category)) { return; }
         Categories.Add(category);
 
         var topLevel = category.TopLevel();
-        if (topLevel != category)
-        {
+        if (topLevel != category) {
             if (Categories.Contains(topLevel)) { return; }
             Categories.Add(topLevel);
         }
     }
 
-    public void AddCategories(IEnumerable<IconInfoCategory> categories)
-    {
-        foreach (var category in categories)
-        {
+    public void AddCategories(IEnumerable<IconInfoCategory> categories) {
+        foreach (var category in categories) {
             AddCategory(category);
         }
     }
@@ -810,56 +765,48 @@ public record class IconInfoCategory(
 {
     public IconInfoCategory TopLevel() => new IconInfoCategory(Name, SubcategoryName: null);
 
-    public static Comparer<IconInfoCategory> NameComparer => ComparerExt.Compose(
-        Comparer<IconInfoCategory>.Create((a, b) => a.Name.CompareTo(b.Name)),
-        Comparer<IconInfoCategory>.Create((a, b) => a.SubcategoryName?.CompareTo(b.SubcategoryName) ?? 0)
-    );
+public static Comparer<IconInfoCategory> NameComparer => ComparerExt.Compose(
+    Comparer<IconInfoCategory>.Create((a, b) => a.Name.CompareTo(b.Name)),
+    Comparer<IconInfoCategory>.Create((a, b) => a.SubcategoryName?.CompareTo(b.SubcategoryName) ?? 0)
+);
 
-    public override string ToString()
-    {
-        if (SubcategoryName != null)
-        {
-            return $"{Name} ({SubcategoryName})";
-        }
-        else
-        {
-            return Name;
-        }
+public override string ToString() {
+    if (SubcategoryName != null) {
+        return $"{Name} ({SubcategoryName})";
     }
+    else {
+        return Name;
+    }
+}
 }
 
 /**
  * <summary>Holds a IconInfo category and all subcategories</summary>
  */
-public class IconInfoCategoryGroup
-{
+public class IconInfoCategoryGroup {
     public required IconInfoCategory Category { get; set; }
-    public SortedSet<IconInfo> IconInfos { get; private set; } = new(IconInfo.CompareById);
-    public SortedList<IconInfoCategory, SortedSet<IconInfo>> SubcategoryIconInfos = new(IconInfoCategory.NameComparer);
+public SortedSet<IconInfo> IconInfos { get; private set; } = new(IconInfo.CompareById);
+public SortedList<IconInfoCategory, SortedSet<IconInfo>> SubcategoryIconInfos = new(IconInfoCategory.NameComparer);
 
-    public void AddIconForCategory(IconInfoCategory category, IconInfo iconInfo)
-    {
-        // Icons are always added to the parent category
-        IconInfos.Add(iconInfo);
+public void AddIconForCategory(IconInfoCategory category, IconInfo iconInfo) {
+    // Icons are always added to the parent category
+    IconInfos.Add(iconInfo);
 
-        // If we have a subcategory, add to it as well
-        if (category.SubcategoryName != null)
-        {
-            var subcategoryList = SubcategoryIconInfos.GetOrAdd(category, () => new(IconInfo.CompareById));
-            subcategoryList.Add(iconInfo);
-        }
+    // If we have a subcategory, add to it as well
+    if (category.SubcategoryName != null) {
+        var subcategoryList = SubcategoryIconInfos.GetOrAdd(category, () => new(IconInfo.CompareById));
+        subcategoryList.Add(iconInfo);
     }
+}
 
-    public SortedSet<IconInfo> GetIconsForCategory(IconInfoCategory category)
-    {
-        if (Category == category) { return IconInfos; }
-        foreach (var (subcategory, subcategoryIconInfos) in SubcategoryIconInfos)
-        {
-            if (subcategory == category) { return subcategoryIconInfos; }
-        }
-        return new();
+public SortedSet<IconInfo> GetIconsForCategory(IconInfoCategory category) {
+    if (Category == category) { return IconInfos; }
+    foreach (var (subcategory, subcategoryIconInfos) in SubcategoryIconInfos) {
+        if (subcategory == category) { return subcategoryIconInfos; }
     }
+    return new();
+}
 
-    public static Comparer<IconInfoCategoryGroup> CompareByCategory =
-        Comparer<IconInfoCategoryGroup>.Create((a, b) => IconInfoCategory.NameComparer.Compare(a.Category, b.Category));
+public static Comparer<IconInfoCategoryGroup> CompareByCategory =
+    Comparer<IconInfoCategoryGroup>.Create((a, b) => IconInfoCategory.NameComparer.Compare(a.Category, b.Category));
 }

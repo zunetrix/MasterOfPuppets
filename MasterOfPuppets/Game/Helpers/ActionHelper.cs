@@ -5,12 +5,9 @@ using Lumina.Excel.Sheets;
 
 namespace MasterOfPuppets;
 
-public static class ActionHelper
-{
-    private static ExecutableAction GetExecutableAction(Action action)
-    {
-        return new ExecutableAction
-        {
+public static class ActionHelper {
+    private static ExecutableAction GetExecutableAction(Action action) {
+        return new ExecutableAction {
             ActionId = action.RowId,
             ActionName = action.Name.ToString(),
             IconId = action.Icon,
@@ -20,16 +17,14 @@ public static class ActionHelper
         };
     }
 
-    public static List<ExecutableAction> GetAllowedItems()
-    {
+    public static List<ExecutableAction> GetAllowedItems() {
         return DalamudApi.DataManager.GetExcelSheet<Action>()
             .Where(a => a.IsUnlocked())
             .Select(GetExecutableAction)
             .ToList();
     }
 
-    public static Action? GetActionByName(string actionName)
-    {
+    public static Action? GetActionByName(string actionName) {
         // returns RowId = 0 for invalid names
         var action = DalamudApi.DataManager.GetExcelSheet<Action>()!
         .FirstOrDefault(a => string.Equals(a.Name.ToString(), actionName, System.StringComparison.OrdinalIgnoreCase));
@@ -38,25 +33,21 @@ public static class ActionHelper
         return isActionFound ? action : null;
     }
 
-    public static ExecutableAction? GetExecutableActionByName(string actionName)
-    {
+    public static ExecutableAction? GetExecutableActionByName(string actionName) {
         var action = GetActionByName(actionName);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
-    private static Action? GetActionById(uint id)
-    {
+    private static Action? GetActionById(uint id) {
         return DalamudApi.DataManager.GetExcelSheet<Action>()!.GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint slotId)
-    {
+    public static ExecutableAction? GetExecutableActionById(uint slotId) {
         var action = GetActionById(slotId);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
-    public static uint GetIconId(uint item)
-    {
+    public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
         return GetActionById(item)?.Icon ?? undefinedIcon;
     }

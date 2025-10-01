@@ -1,11 +1,11 @@
-﻿using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text.RegularExpressions;
 
-using Dalamud.Plugin;
 using Dalamud.Game.Command;
 using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Plugin;
 
 using MasterOfPuppets.Ipc;
 using MasterOfPuppets.Resources;
@@ -13,8 +13,7 @@ using MasterOfPuppets.Util.ImGuiExt.AutoComplete;
 
 namespace MasterOfPuppets;
 
-public class Plugin : IDalamudPlugin
-{
+public class Plugin : IDalamudPlugin {
     internal static string Name => "Master Of Puppets";
 
     internal Configuration Config { get; }
@@ -25,8 +24,7 @@ public class Plugin : IDalamudPlugin
     internal MacroManager MacroManager { get; }
     internal CompletionIndex CompletionIndex { get; }
 
-    public Plugin(IDalamudPluginInterface pluginInterface)
-    {
+    public Plugin(IDalamudPluginInterface pluginInterface) {
         pluginInterface.Create<DalamudApi>();
         Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(DalamudApi.PluginInterface);
@@ -41,16 +39,15 @@ public class Plugin : IDalamudPlugin
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
         DalamudApi.PluginInterface.LanguageChanged += OnLanguageChange;
 
-        DalamudApi.CommandManager.AddHandler("/mop", new CommandInfo(OnCommand)
-        {
+        DalamudApi.CommandManager.AddHandler("/mop", new CommandInfo(OnCommand) {
             HelpMessage = """
             Commands:
-                /mop -> show/hide UI
-                /mop run "Macro name" -> execute macro
-                /mop stop -> stop macro execution
-                /mop queue -> show queue window
-                /mop targetmytarget
-                /mop targetclear
+                / mop->show / hide UI
+                / mop run "Macro name"->execute macro
+                / mop stop->stop macro execution
+                / mop queue->show queue window
+                / mop targetmytarget
+                / mop targetclear
             """,
         });
 
@@ -60,14 +57,12 @@ public class Plugin : IDalamudPlugin
         DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += Ui.SettingsWindow.Toggle;
         DalamudApi.PluginInterface.UiBuilder.OpenMainUi += Ui.MainWindow.Toggle;
 
-        if (Config.OpenOnStartup)
-        {
+        if (Config.OpenOnStartup) {
             Ui.MainWindow.IsOpen = true;
         }
     }
 
-    public void Dispose()
-    {
+    public void Dispose() {
         DalamudApi.PluginInterface.UiBuilder.OpenConfigUi -= Ui.SettingsWindow.Toggle;
         DalamudApi.PluginInterface.UiBuilder.OpenMainUi -= Ui.MainWindow.Toggle;
         DalamudApi.PluginInterface.UiBuilder.Draw -= Ui.Draw;
@@ -81,17 +76,14 @@ public class Plugin : IDalamudPlugin
         Ui.Dispose();
     }
 
-    private static List<string> ParseArgs(string args)
-    {
+    private static List<string> ParseArgs(string args) {
         var matches = Regex.Matches(args.ToLowerInvariant(), @"[\""].+?[\""]|[^ ]+");
         var list = new List<string>();
 
-        foreach (Match match in matches)
-        {
+        foreach (Match match in matches) {
             var value = match.Value;
 
-            if (value.StartsWith("\"") && value.EndsWith("\""))
-            {
+            if (value.StartsWith("\"") && value.EndsWith("\"")) {
                 value = value.Substring(1, value.Length - 2);
             }
 
@@ -101,19 +93,14 @@ public class Plugin : IDalamudPlugin
         return list;
     }
 
-    private void OnCommand(string command, string argsRaw)
-    {
+    private void OnCommand(string command, string argsRaw) {
         var args = ParseArgs(argsRaw);
         // DalamudApi.PluginLog.Debug($"command: {command}: {string.Join('|', args)}");
 
-        if (args.Any())
-        {
-            switch (args[0])
-            {
-                case "run":
-                    {
-                        if (args.Count <= 1)
-                        {
+        if (args.Any()) {
+            switch (args[0]) {
+                case "run": {
+                        if (args.Count <= 1) {
                             DalamudApi.ShowNotification($"Invalid arguments to run macro", NotificationType.Error, 5000);
                             return;
                         }
@@ -159,28 +146,23 @@ public class Plugin : IDalamudPlugin
                     //     break;
             }
         }
-        else
-        {
+        else {
             // no args toggle plugin window
             Ui.MainWindow.Toggle();
         }
     }
 
-    private static void OnLanguageChange(string langCode)
-    {
+    private static void OnLanguageChange(string langCode) {
         Language.Culture = new CultureInfo(langCode);
     }
 
-    private void OnLogin()
-    {
-        if (Config.OpenOnLogin)
-        {
+    private void OnLogin() {
+        if (Config.OpenOnLogin) {
             Ui.MainWindow.IsOpen = true;
         }
     }
 
-    private void OnLogout(int type, int code)
-    {
+    private void OnLogout(int type, int code) {
         Ui.MainWindow.IsOpen = false;
     }
 }
