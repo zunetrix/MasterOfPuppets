@@ -55,8 +55,7 @@ internal static class HotbarManager {
             }
 
             RaptureHotbarModule.Instance()->ExecuteSlot(RaptureHotbarModule.Instance()->Hotbars[(int)hotbarId].GetHotbarSlot(slotIndex));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while using hotbar slot {slotIndex}");
         }
     }
@@ -74,8 +73,7 @@ internal static class HotbarManager {
             }
 
             RaptureHotbarModule.Instance()->ExecuteSlot(RaptureHotbarModule.Instance()->PetHotbar.GetHotbarSlot(slotIndex));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while using pet hotbar slot {slotIndex}");
         }
     }

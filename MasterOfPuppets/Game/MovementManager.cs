@@ -32,8 +32,7 @@ public static class MovementManager {
 
         try {
             _toggleWalk(WalkStatusEnabled);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Could not execute toggle walk");
         }
     }
@@ -46,8 +45,7 @@ public static class MovementManager {
 
         try {
             _toggleWalk(WalkStatusDisabled);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Could not execute toggle walk");
         }
     }

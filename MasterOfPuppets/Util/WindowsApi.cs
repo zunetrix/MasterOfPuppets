@@ -20,8 +20,7 @@ public static class WindowsApi {
             if (!Directory.Exists(folderPath)) return;
 
             ExecuteCmd(folderPath);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e.Message);
         }
     }
@@ -31,8 +30,7 @@ public static class WindowsApi {
             if (!File.Exists(filePath)) return;
 
             ExecuteCmd(filePath);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e.Message);
         }
     }
@@ -43,8 +41,7 @@ public static class WindowsApi {
 
             var args = $"/select,\"{filePath}\"";
             ExecuteCmd("explorer.exe", args);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error($"Failed to open file location: {e.Message}");
         }
     }
@@ -52,8 +49,7 @@ public static class WindowsApi {
     public static void OpenUrl(string url) {
         try {
             ExecuteCmd(url);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e.Message);
         }
     }

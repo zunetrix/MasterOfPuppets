@@ -22,8 +22,7 @@ public static class ImGuiUtil {
             if (color != null) ImGui.PushStyleColor(ImGuiCol.Text, (Vector4)color);
             var buttonSize = size != null ? size.Value : iconButtonSize;
             return ImGui.Button($"{icon.ToIconString()}##{id}{tooltip}", buttonSize);
-        }
-        finally {
+        } finally {
             ImGui.PopFont();
             if (color != null) ImGui.PopStyleColor();
             if (tooltip != null) ToolTip(tooltip);
@@ -82,8 +81,7 @@ public static class ImGuiUtil {
                     }
 
                     ImGui.PopID();
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     DalamudApi.PluginLog.Error(e.ToString());
                 }
             }

@@ -34,8 +34,7 @@ internal class IpcProvider : IDisposable {
 
             var thread = new Thread(ProcessMessageQueue) { IsBackground = true };
             thread.Start();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, "TinyIpc init failed.");
             _initFailed = true;
         }
@@ -58,8 +57,7 @@ internal class IpcProvider : IDisposable {
                 handler(message);
             else
                 DalamudApi.PluginLog.Warning($"No handler for {message.MessageType}");
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             DalamudApi.PluginLog.Error(ex, "Error processing IPC message");
         }
     }
@@ -71,8 +69,7 @@ internal class IpcProvider : IDisposable {
                 try {
                     if (MessageBus.PublishAsync(dequeue.serialized).Wait(5000) && dequeue.includeSelf)
                         OnMessageReceived(null, new TinyMessageReceivedEventArgs(dequeue.serialized));
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     DalamudApi.PluginLog.Warning(e, "Error publishing IPC");
                 }
             }

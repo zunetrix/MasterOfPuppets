@@ -52,8 +52,7 @@ public class IconPickerDialogWindow : Window {
     private void RefreshSearch() {
         if (searchText == string.Empty) {
             searchedIconInfo = iconInfoIndex.All(selectedCategory);
-        }
-        else {
+        } else {
             searchedIconInfo = iconInfoIndex.NameSearch(searchText, selectedCategory);
         }
     }
@@ -69,8 +68,7 @@ public class IconPickerDialogWindow : Window {
         Callback = callback;
         if (!IsOpen) {
             IsOpen = true;
-        }
-        else {
+        } else {
             ImGui.SetWindowFocus(WindowName);
         }
     }
@@ -119,8 +117,7 @@ public class IconPickerDialogWindow : Window {
                 var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
                 if (iconInfoIndex.State == IconPickerIndex.IndexState.INDEXED) {
                     DrawSearchResults(iconSize, columns);
-                }
-                else {
+                } else {
                     var spinner = "|/-\\"[(int)(ImGui.GetTime() / 0.05f) % 3];
                     ImGui.Text($"Indexing... {spinner}");
                 }
@@ -180,8 +177,7 @@ public class IconPickerDialogWindow : Window {
                 if (ImGui.IsMouseDown(ImGuiMouseButton.Right)) {
                     // Icon Preview
                     ImGui.Image(icon.Handle, new Vector2(700 * ImGuiHelpers.GlobalScale));
-                }
-                else {
+                } else {
                     // Icon Details
                     ImGui.TextUnformatted($"{namedIcon.IconId}");
 
@@ -192,8 +188,7 @@ public class IconPickerDialogWindow : Window {
                             ImGui.TextUnformatted(name);
                             if (currentColumn > columns) {
                                 currentColumn = 0;
-                            }
-                            else {
+                            } else {
                                 ImGui.SameLine();
                                 currentColumn += 1;
                             }

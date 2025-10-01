@@ -50,8 +50,7 @@ public static class Chat2 {
             }
 
             uiModule->ProcessChatBoxEntry(utf8);
-        }
-        finally {
+        } finally {
             if (utf8 != null) {
                 utf8->Dtor(true);
             }

@@ -69,8 +69,7 @@ public static IEnumerable<CompletionInfo> From(ParsedCompletion completion) {
                 }
             }
         }
-    }
-    else {
+    } else {
         yield return new CompletionInfo(
             Group: completion.Group,
             GroupTitle: null, // Can't use our GroupTitle, it's just '-'

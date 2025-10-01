@@ -46,8 +46,7 @@ public static class TargetManager {
                 DalamudApi.PluginLog.Debug($"targeting: {closestMatch.Name.TextValue}");
                 DalamudApi.Targets.Target = closestMatch;
             });
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while targeting \"{targetName}\"");
         }
     }
@@ -81,8 +80,7 @@ public static class TargetManager {
                 if (closestMatch == null) return;
                 DalamudApi.Targets.Target = closestMatch;
             });
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while targeting");
         }
     }
@@ -143,8 +141,7 @@ public static class TargetManager {
                 DalamudApi.PluginLog.Debug($"targeting: {closestMatch.TargetObject.Name.TextValue}");
                 DalamudApi.Targets.Target = closestMatch.TargetObject;
             });
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error target of \"{assistName}\"");
         }
     }
@@ -154,8 +151,7 @@ public static class TargetManager {
             DalamudApi.Framework.RunOnFrameworkThread(delegate {
                 DalamudApi.Targets.Target = null;
             });
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while cleaning target");
         }
     }

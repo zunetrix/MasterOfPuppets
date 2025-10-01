@@ -16,8 +16,7 @@ public static class GameActionManager {
             DalamudApi.Framework.RunOnFrameworkThread(delegate {
                 ActionManager.Instance()->UseAction(type, actionId);
             });
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while using action {actionId}");
         }
     }

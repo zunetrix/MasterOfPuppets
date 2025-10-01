@@ -130,8 +130,7 @@ class MacroHandler {
                 if (uint.TryParse(actionIdOrName, out uint actionId)) {
                     GameActionManager.UseActionById(actionId);
                     DalamudApi.PluginLog.Debug($"[mopaction] {actionId}");
-                }
-                else {
+                } else {
                     GameActionManager.UseActionByName(actionIdOrName);
                     DalamudApi.PluginLog.Debug($"[mopaction] {actionIdOrName}");
                 }
@@ -150,8 +149,7 @@ class MacroHandler {
                     GameActionManager.UseItemById(itemId);
                     // GameActionManager.UseInventoryItemById(itemId);
                     DalamudApi.PluginLog.Debug($"[mopitem] {itemId}");
-                }
-                else {
+                } else {
                     GameActionManager.UseItemByName(itemIdOrName);
                     // GameActionManager.UseInventoryItemByName(itemIdOrName);
                     DalamudApi.PluginLog.Debug($"[mopitem] {itemIdOrName}");
@@ -206,8 +204,7 @@ class MacroHandler {
             MacroLoopQueue.Enqueue((macroId, actions, delayBetweenActions));
             CurrentActionsLoopExecutionList.AddRange(actions);
             _ = ProcessLoopQueue();
-        }
-        else {
+        } else {
             MacroQueue.Enqueue((macroId, actions, delayBetweenActions));
             CurrentActionsExecutionList.AddRange(actions);
             _ = ProcessQueue();
@@ -223,8 +220,7 @@ class MacroHandler {
                 if (_cancelTokenSource.IsCancellationRequested) break;
                 await ExecuteMacroActions(item.macroId, item.actions, item.delay, _cancelTokenSource.Token);
             }
-        }
-        finally {
+        } finally {
             this.ClearActionsExecutionList();
             _runningMacroQueue = false;
         }
@@ -239,8 +235,7 @@ class MacroHandler {
                 if (_cancelTokenSource.IsCancellationRequested) break;
                 await ExecuteMacroLoopActions(item.macroId, item.actions, item.delay, _cancelTokenSource.Token);
             }
-        }
-        finally {
+        } finally {
             this.ClearActionsLoopExecutionList();
             _runningMacroLoopQueue = false;
         }

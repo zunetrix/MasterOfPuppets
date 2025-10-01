@@ -84,8 +84,7 @@ public class MacroEditorWindow : Window {
         bool isMacroSaved;
         if (isNewMacro) {
             isMacroSaved = Plugin.MacroManager.AddMacro(MacroItem);
-        }
-        else {
+        } else {
             isMacroSaved = Plugin.MacroManager.UpdateMacro(MacroIndex, MacroItem);
         }
 

@@ -145,8 +145,7 @@ public class Plugin : IDalamudPlugin {
                     //     }
                     //     break;
             }
-        }
-        else {
+        } else {
             // no args toggle plugin window
             Ui.MainWindow.Toggle();
         }

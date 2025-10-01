@@ -173,8 +173,7 @@ public class MacroManager {
             File.WriteAllText(filePath, macroJson, Encoding.UTF8);
 
             DalamudApi.ShowNotification("Macros Exported!", NotificationType.Success, 5000);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Warning(e, "Error while exporting macros");
             DalamudApi.ShowNotification("Error while exporting macros", NotificationType.Error, 5000);
         }
@@ -192,8 +191,7 @@ public class MacroManager {
             File.WriteAllText(filePath, macroJson, Encoding.UTF8);
 
             DalamudApi.ShowNotification("Macros Exported!", NotificationType.Success, 5000);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Warning(e, "Error while exporting macros");
             DalamudApi.ShowNotification("Error while exporting macros", NotificationType.Error, 5000);
         }
@@ -207,8 +205,7 @@ public class MacroManager {
             string filePath = Path.Combine(DalamudApi.PluginInterface.ConfigDirectory.FullName, exportFileName);
 
             File.WriteAllText(filePath, macroJson, Encoding.UTF8);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Warning(e, "Error while backuping macros");
             DalamudApi.ShowNotification("Error while backuping macros", NotificationType.Error, 5000);
         }
@@ -253,8 +250,7 @@ public class MacroManager {
                         foreach (var macroImport in macrosImport) {
                             if (macroIndexMap.TryGetValue(macroImport.Name, out var idx)) {
                                 Plugin.Config.Macros[idx] = macroImport;
-                            }
-                            else {
+                            } else {
                                 Plugin.Config.Macros.Add(macroImport);
                                 macroIndexMap[macroImport.Name] = Plugin.Config.Macros.Count - 1;
                             }
@@ -279,8 +275,7 @@ public class MacroManager {
             Plugin.Config.Save();
             Plugin.IpcProvider.SyncConfiguration();
             DalamudApi.ShowNotification("Macros imported!", NotificationType.Success, 5000);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, "Error while importing macros");
             DalamudApi.ShowNotification("Error while importing macros", NotificationType.Error, 5000);
         }

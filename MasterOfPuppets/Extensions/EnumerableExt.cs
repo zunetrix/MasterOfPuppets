@@ -67,8 +67,7 @@ public static class EnumerableExt {
                 while (enum1.MoveNext()) {
                     yield return selector(enum1.Current, default(TSecond));
                 }
-            }
-            else if (!firstMoveNext && secondMoveNext) {
+            } else if (!firstMoveNext && secondMoveNext) {
                 yield return selector(default(TFirst), enum2.Current);
                 while (enum2.MoveNext()) {
                     yield return selector(default(TFirst), enum2.Current);

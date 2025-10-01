@@ -51,8 +51,7 @@ public class IconPickerIndex {
                 IndexIcons();
                 State = IndexState.INDEXED;
                 onFinish();
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 DalamudApi.PluginLog.Error($"Failed to index icons\n{ex}");
             }
 
@@ -104,8 +103,7 @@ public class IconPickerIndex {
         if (iconInfos.TryGetValue(iconInfo.IconId, out existingIconInfo)) {
             existingIconInfo.AddNames(iconInfo.Names);
             existingIconInfo.AddCategories(iconInfo.Categories);
-        }
-        else {
+        } else {
             existingIconInfo = iconInfo;
             this.iconInfos.Add(iconInfo.IconId, iconInfo);
         }
@@ -773,8 +771,7 @@ public static Comparer<IconInfoCategory> NameComparer => ComparerExt.Compose(
 public override string ToString() {
     if (SubcategoryName != null) {
         return $"{Name} ({SubcategoryName})";
-    }
-    else {
+    } else {
         return Name;
     }
 }

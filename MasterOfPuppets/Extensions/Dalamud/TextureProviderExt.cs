@@ -27,8 +27,7 @@ public static class TextureProviderExt {
     ) {
         if (self.TryGetFromGameIcon(iconId, out var iconTexture)) {
             return iconTexture;
-        }
-        else {
+        } else {
             return self.GetFromGameIcon(fallback);
         }
     }

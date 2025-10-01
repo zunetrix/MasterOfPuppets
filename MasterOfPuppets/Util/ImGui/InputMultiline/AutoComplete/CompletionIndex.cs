@@ -56,8 +56,7 @@ public class CompletionIndex {
                 RefreshCompletionIndex(completions);
                 RefreshCompletionInfoByGroupKey(completions);
                 State = IndexState.INDEXED;
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 DalamudApi.PluginLog.Error($"Failed to index completions\n{ex}");
             }
         });
