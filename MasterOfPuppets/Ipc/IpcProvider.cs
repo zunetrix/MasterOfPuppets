@@ -39,6 +39,12 @@ internal class IpcProvider : IDisposable {
             _initFailed = true;
         }
     }
+    public void Dispose() {
+        _messagesQueueRunning = false;
+        _autoResetEvent.Set();
+        _autoResetEvent.Dispose();
+        MessageBus.MessageReceived -= OnMessageReceived;
+    }
 
     private void RegisterHandlersFromType(Type type, object instance) {
         foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)) {
@@ -85,22 +91,15 @@ internal class IpcProvider : IDisposable {
         _autoResetEvent.Set();
     }
 
-    public void Dispose() {
-        _messagesQueueRunning = false;
-        _autoResetEvent.Set();
-        _autoResetEvent.Dispose();
-        MessageBus.MessageReceived -= OnMessageReceived;
-    }
-
     public void SyncConfiguration() {
         Plugin.Config.Save();
         var message = IpcMessage.Create(IpcMessageType.SyncConfiguration, Plugin.Config.JsonSerialize(), Plugin.Config.SaveConfigAfterSync.ToString()).Serialize();
         BroadCast(message, includeSelf: false);
     }
 
-    public void ExecuteTextCommand(string text) {
+    public void ExecuteTextCommand(string text, bool includeSelf = true) {
         var message = IpcMessage.Create(IpcMessageType.ExecuteTextCommand, text).Serialize();
-        BroadCast(message, includeSelf: true);
+        BroadCast(message, includeSelf);
     }
 
     public void ExecuteActionCommand(uint actionId) {
@@ -126,6 +125,11 @@ internal class IpcProvider : IDisposable {
     public void ExecuteTargetClear() {
         var message = IpcMessage.Create(IpcMessageType.ExecuteTargetClear).Serialize();
         BroadCast(message, includeSelf: true);
+    }
+
+    public void EnqueueMacroActions(string textCommand, bool includeSelf) {
+        var message = IpcMessage.Create(IpcMessageType.EnqueueMacroActions, textCommand).Serialize();
+        BroadCast(message, includeSelf: includeSelf);
     }
 
     public void SetGameSettingsObjectQuantity(SettingsDisplayObjectLimitType displayObjectLimitType) {

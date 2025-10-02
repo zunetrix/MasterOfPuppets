@@ -11,11 +11,11 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mop run <macro number> \"Macro Name\"",
             SuggestionCommand = "/mop run ",
             Example = """
-            / mop run "My macro"
-            / mop run 10
+            /mop run "My macro"
+            /mop run 10
             """,
             Notes = """
-            * This is a plugin command(works only on local clients)
+            * This is a plugin command (works only on local clients)
             """
         },
         new MopAction {
@@ -23,10 +23,10 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mop stop",
             SuggestionCommand = "/mop stop",
             Example = """
-            / mop stop
+            /mop stop
             """,
             Notes = """
-            * This is a plugin command(works only on local clients)
+            * This is a plugin command (works only on local clients)
             Stops all macro execution
             """
         },
@@ -35,10 +35,10 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mop queue",
             SuggestionCommand = "/mop queue",
             Example = """
-            / mop queue
+            /mop queue
             """,
             Notes = """
-            * This is a plugin command(works only on local clients)
+            * This is a plugin command (works only on local clients)
             Open macro queue
             """
         },
@@ -47,10 +47,10 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mop targetmytarget",
             SuggestionCommand = "/mop targetmytarget",
             Example = """
-            / mop targetmytarget
+            /mop targetmytarget
             """,
             Notes = """
-            * This is a plugin command(works only on local clients)
+            * This is a plugin command (works only on local clients)
             Useful to complete event quests
             """
         },
@@ -63,8 +63,34 @@ public static class MopMacroActionsHelper {
             /mop targetclear
             """,
             Notes = """
-            * This is a plugin command(works only on local clients)
-            Useble only in local clients to remove the target
+            * This is a plugin command (works only on local clients)
+            Remove the target
+            """
+        },
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mopbr <command>",
+            SuggestionCommand = "/mopbr ",
+            Example = """
+            /mopbr /clap
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Broadcast a command to all local clients
+            """
+        },
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mopbrn <command>",
+            SuggestionCommand = "/mopbrn ",
+            Example = """
+            /mopbrn /clap
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Broadcast a command to local clients except yourself
             """
         },
 
@@ -80,17 +106,49 @@ public static class MopMacroActionsHelper {
             moprun 10
             """,
             Notes = """
-            * This is a chat sync command
-
-            You may also use inline chat execution for single action instead of a macro
-                moprun /clap
-                moprun /cheer
-                moprun /mopaction "Action Name"
-                moprun /moptargetof "Warrior of Light@World"
+            * This is a chat sync command to execute mop macros via chat
+            """
+        },
+        new MopAction
+        {
+            Category = MopActionCategory.ChatSyncCommand,
+            TextCommand = "mopbr <command>",
+            SuggestionCommand = "mopbr ",
+            Example = """
+            Use inline chat broadcast execution for single action
+                mopbr /clap
+                mopbr /cheer
+                mopbr /mopaction "Action Name"
+                mopbr /moptargetof "Warrior of Light@World"
+            """,
+            Notes = """
+            * This is a chat sync command, broadcast a command via chat
 
             Some special game characters need to be replaced to work correctly,
             for example, <me> will be translated to the current character's name instead of being printed in the chat,
-            for the correct functioning of inline chat actions replace<> with[]
+            for the correct functioning of inline chat actions replace <> with []
+                /ac heal <me> => /ac heal [me]
+                /ac heal <t> => /ac heal [t]
+            """
+        },
+        new MopAction
+        {
+            Category = MopActionCategory.ChatSyncCommand,
+            TextCommand = "mopbrn <command>",
+            SuggestionCommand = "mopbrn ",
+            Example = """
+            Use inline chat broadcast execution for single action except yourself
+                mopbrn /clap
+                mopbrn /cheer
+                mopbrn /mopaction "Action Name"
+                mopbrn /moptargetof "Warrior of Light@World"
+            """,
+            Notes = """
+            * This is a chat sync command, broadcast a command via chat except yourself
+
+            Some special game characters need to be replaced to work correctly,
+            for example, <me> will be translated to the current character's name instead of being printed in the chat,
+            for the correct functioning of inline chat actions replace <> with []
                 /ac heal <me> => /ac heal [me]
                 /ac heal <t> => /ac heal [t]
             """
@@ -104,7 +162,6 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             * This is a chat sync command
-
             Stops all macro execution
             """
         },
@@ -116,9 +173,9 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mopwait <time>",
             SuggestionCommand = "/mopwait ",
             Example = """
-            / mopwait 3
-            / mopwait 3.5
-            / mopwait 0.5
+            /mopwait 3
+            /mopwait 3.5
+            /mopwait 0.5
             """,
             Notes = "Use to wait a certain amount of time, it accepts decimals"
         },
@@ -128,12 +185,12 @@ public static class MopMacroActionsHelper {
              SuggestionCommand = "/moploop",
              Example = """
             Run indefinitely:
-                / clap
-                / moploop
+                /clap
+                /moploop
 
             Run 3 times:
-                / clap
-                / moploop 3
+                /clap
+                /moploop 3
             """,
             Notes = """
             Use this action to loop current macro for a certain number of times or empty to run indefinitely,
@@ -145,9 +202,9 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mopmacro <macro number> \"Macro Name\"",
             SuggestionCommand = "/mopmacro ",
             Example = """
-            / clap
-            / wow
-            / mopmacro "My macro 2"
+            /clap
+            /wow
+            /mopmacro "My macro 2"
             """,
             Notes = """
             Use this to call another macro inside a macro
@@ -159,30 +216,30 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/moppetbarslot ",
             Example = """
             Rain Check:
-                / moppetbarslot 1
+                /moppetbarslot 1
 
             Umbrella Dance:
-                / moppetbarslot 2
+                /moppetbarslot 2
 
             Complete umbrella dance macro example
-                / fashion "Fat Cat Parasol"
-                / mopwait 3
-                / moppetbarslot 2
-                / mopwait 13
-                / fashion "Fat Cat Parasol"
-                / cheer
+                /fashion "Fat Cat Parasol"
+                /mopwait 3
+                /moppetbarslot 2
+                /mopwait 13
+                /fashion "Fat Cat Parasol"
+                /cheer
             Or
-                / fashion "Fat Cat Parasol"
-                / mopwait 3
-                / mopaction "Umbrella Dance"
-                / mopwait 13
-                / fashion "Fat Cat Parasol"
-                / cheer
+                /fashion "Fat Cat Parasol"
+                /mopwait 3
+                /mopaction "Umbrella Dance"
+                /mopwait 13
+                /fashion "Fat Cat Parasol"
+                /cheer
             """,
             Notes = """
             Use especial pet hotbat slots like mount specials and parasol actions
             As alternativa it can also be used with skill name
-                / mopaction "Umbrella Dance"
+                /mopaction "Umbrella Dance"
             """
         },
         new MopAction {
@@ -191,11 +248,11 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/mopaction ",
             Example = """
             Peloton:
-                / mopaction "Peloton"
-                / mopaction 7557
+                /mopaction "Peloton"
+                /mopaction 7557
 
             Umbrella Dance:
-                / mopaction "Umbrella Dance"
+                /mopaction "Umbrella Dance"
             """,
             Notes = "Similar to native game macro commands /action /ac but allows some actions that cant be used with /ac"
         },
@@ -204,18 +261,18 @@ public static class MopMacroActionsHelper {
             TextCommand = "/moptarget \"Target Name\"",
             SuggestionCommand = "/moptarget ",
             Example = """
-                / moptarget "Warrior of Light"
-                / moptarget "Cloud@Siren"
-                / moptarget "Annoying Moogle@Exodus"
+                /moptarget "Warrior of Light"
+                /moptarget "Cloud@Siren"
+                /moptarget "Annoying Moogle@Exodus"
 
             Useful for targetable emotes
-                / moptarget "Warrior of Light"
-                / mopwait 0.5
-                / dote
+                /moptarget "Warrior of Light"
+                /mopwait 0.5
+                /dote
             """,
             Notes = """
             For characters with same names in different world combine the world at end:
-            / moptarget "Warrior of Light@Jenova"
+            /moptarget "Warrior of Light@Jenova"
             """
         },
         new MopAction {
@@ -223,14 +280,14 @@ public static class MopMacroActionsHelper {
             TextCommand = "/moptargetof \"Target Name\"",
             SuggestionCommand = "/moptargetof ",
             Example = """
-                / moptargetof "Sephiroth"
+                /moptargetof "Sephiroth"
             """,
             Notes = """
             Useful for targetable emotes,
             target someone with main char then for the others use
-                / moptargetof "Main Char Name"
-                / mopwait 0.5
-                / dote
+                /moptargetof "Main Char Name"
+                /mopwait 0.5
+                /dote
             """
         },
         new MopAction {
@@ -238,12 +295,12 @@ public static class MopMacroActionsHelper {
             TextCommand = "/moptargetclear",
             SuggestionCommand = "/moptargetclear",
             Example = """
-                / moptargetclear
+                /moptargetclear
 
             Clear target after emote
-                / moptarget "Warrior of Light"
-                / dote
-                / moptargetclear
+                /moptarget "Warrior of Light"
+                /dote
+                /moptargetclear
             """,
             Notes = """
             Remove the target so that your head is not turned towards the target
@@ -254,13 +311,13 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mopitem <item id> | \"Item Name\"",
             SuggestionCommand = "/mopitem ",
             Example = """
-            / mopitem "Heavenscracker"
+            /mopitem "Heavenscracker"
 
-            / mopitem 12042
+            /mopitem 12042
 
-            / mopitem "Realm Reborn Red"
+            /mopitem "Realm Reborn Red"
 
-            / mopitem 8214
+            /mopitem 8214
             """,
             Notes = """
             Use items like fireworks and prisms,
@@ -272,13 +329,13 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mopobjectquantity <0-5>",
             SuggestionCommand = "/mopobjectquantity ",
             Example = """
-            / mopobjectquantity 3
-            / mopwait 1
-            / moptarget "Warrior of Light"
-            / mopwait 1
-            / dote
-            / mopobjectquantity 5
-            / moptargetclear
+            /mopobjectquantity 3
+            /mopwait 1
+            /moptarget "Warrior of Light"
+            /mopwait 1
+            /dote
+            /mopobjectquantity 5
+            /moptargetclear
             """,
             Notes = """
             Use to increase object limit to target someone in high populated areas and then reduce it
@@ -298,8 +355,8 @@ public static class MopMacroActionsHelper {
             TextCommand = "/fashion \"Item Name\"",
             SuggestionCommand = "/fashion ",
             Example = """
-            / fashion "Fat Cat Parasol"
-            / fashion "Archangel Wings"
+            /fashion "Fat Cat Parasol"
+            /fashion "Archangel Wings"
             """,
             Notes = """
             Equip fashion accessories
@@ -310,8 +367,8 @@ public static class MopMacroActionsHelper {
             TextCommand = "/facewear \"Item Name\"",
             SuggestionCommand = "/facewear ",
             Example = """
-            / facewear "Groovy Glasses"
-            / facewear "Pince-nez"
+            /facewear "Groovy Glasses"
+            /facewear "Pince-nez"
             """,
             Notes = """
             Equip glasses
@@ -322,8 +379,8 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mount \"Mount Name\"",
             SuggestionCommand = "/mount ",
             Example = """
-            / mount "company chocobo"
-            / mount "behemoth"
+            /mount "company chocobo"
+            /mount "behemoth"
             """,
             Notes = """
             Use mounts
@@ -334,8 +391,8 @@ public static class MopMacroActionsHelper {
             TextCommand = "/ac \"Skill Name\"",
             SuggestionCommand = "/ac ",
             Example = """
-            / ac "Peloton"
-            / action "Peloton"
+            /ac "Peloton"
+            /action "Peloton"
             """,
             Notes = """
             Use native macro actions
@@ -346,8 +403,8 @@ public static class MopMacroActionsHelper {
             TextCommand = "/gs change <gear set number>",
             SuggestionCommand = "/gs change ",
             Example = """
-            / gs change 1
-            / gs change 3
+            /gs change 1
+            /gs change 3
             """,
             Notes = """
             Switch gear sets
@@ -355,13 +412,13 @@ public static class MopMacroActionsHelper {
         }
     };
 
-public static List<string> GetSuggestionCommands() {
-    return Actions
-        .Select(a => a.SuggestionCommand)
-        .Where(s => !string.IsNullOrWhiteSpace(s))
-        .Distinct()
-        .ToList();
-}
+    public static List<string> GetSuggestionCommands() {
+        return Actions
+            .Select(a => a.SuggestionCommand)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct()
+            .ToList();
+    }
 }
 
 public class MopAction {

@@ -36,13 +36,15 @@ internal class ChatWatcher : IDisposable {
         XivChatType.CrossLinkShell8,
     };
 
-    private readonly Dictionary<string, Action<string[]>> CommandHandlers;
+    private readonly Dictionary<string, Action<string[], string>> CommandHandlers;
 
     public ChatWatcher(Plugin plugin) {
         Plugin = plugin;
         CommandHandlers = new(StringComparer.OrdinalIgnoreCase) {
             ["moprun"] = HandleRunMacro,
-            ["mopstop"] = HandleStopMacroExecution
+            ["mopstop"] = HandleStopMacroExecution,
+            ["mopbr"] = HandleBroadcastCommandExecution,
+            ["mopbrn"] = HandleBroadcastNotMeCommandExecution,
         };
 
         DalamudApi.ChatGui.ChatMessage += OnChatMessage;
@@ -103,10 +105,10 @@ internal class ChatWatcher : IDisposable {
         string command = parsedArgs[0].ToLower();
         string[] args = parsedArgs.Skip(1).ToArray();
 
-        DalamudApi.PluginLog.Debug($"OnChatMessage: [{command}]: {string.Join("|", args)}");
+        // DalamudApi.PluginLog.Debug($"OnChatMessage: [{command}]: {string.Join("|", args)}");
 
         if (CommandHandlers.TryGetValue(command, out var action)) {
-            action.Invoke(args);
+            action.Invoke(args, sender.ToString());
             // prevent show chat text
             // isHandled = true;
         }
@@ -117,23 +119,8 @@ internal class ChatWatcher : IDisposable {
         Chat.SendMessage(message);
     }
 
-    private void HandleRunMacro(string[] args) {
+    private void HandleRunMacro(string[] args, string senderName) {
         if (args.Length < 1) return;
-
-        // inline execution direct command
-        if (args[0].StartsWith("/", StringComparison.OrdinalIgnoreCase)) {
-            // string[] tokens = { "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]", "[8]", "[t]", "[me]", "[tt]" };
-            // replace to the original game tokens that canot be sent via chat <me> will be translated to the char name
-            args[0] = Regex.Replace(
-                args[0],
-                @"\[(1|2|3|4|5|6|7|8|t|me|tt)\]",
-                m => $"<{m.Groups[1].Value}>",
-                RegexOptions.IgnoreCase
-            );
-
-            Plugin.MacroHandler.EnqueueMacroActions("mop-inline-macro", actions: args, Plugin.Config.DelayBetweenActions);
-            return;
-        }
 
         // macro execution
         string macroNameOrIndex = args[0];
@@ -149,9 +136,44 @@ internal class ChatWatcher : IDisposable {
         var message = $"/p mopstop";
         Chat.SendMessage(message);
     }
-
-    private void HandleStopMacroExecution(string[] args) {
+    private void HandleStopMacroExecution(string[] args, string senderName) {
         Plugin.IpcProvider.StopMacroExecution();
+    }
+
+    private string NormalizeChatTextCommand(string textCommand) {
+        // string[] tokens = { "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]", "[8]", "[t]", "[me]", "[tt]" };
+        // replace to the original game tokens that canot be sent via chat <me> will be translated to the char name
+        return Regex.Replace(
+            textCommand,
+            @"\[(1|2|3|4|5|6|7|8|t|me|tt)\]",
+            m => $"<{m.Groups[1].Value}>",
+            RegexOptions.IgnoreCase
+        );
+    }
+
+    private void HandleBroadcastCommandExecution(string[] args, string senderName) {
+        if (args.Length < 1) return;
+        var textCommand = args[0];
+
+        if (textCommand.StartsWith("/", StringComparison.OrdinalIgnoreCase)) {
+            textCommand = NormalizeChatTextCommand(textCommand);
+            Plugin.MacroHandler.EnqueueMacroActions("#mopbr-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
+            return;
+        }
+    }
+
+    private void HandleBroadcastNotMeCommandExecution(string[] args, string senderName) {
+        if (args.Length < 1) return;
+        var playerName = DalamudApi.ClientState.LocalPlayer?.Name.ToString();
+        if (string.Equals(playerName, senderName, StringComparison.OrdinalIgnoreCase)) return;
+
+        var textCommand = args[0];
+
+        if (textCommand.StartsWith("/", StringComparison.OrdinalIgnoreCase)) {
+            textCommand = NormalizeChatTextCommand(textCommand);
+            Plugin.MacroHandler.EnqueueMacroActions("#mopbrn-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
+            return;
+        }
     }
 }
 

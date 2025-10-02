@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MasterOfPuppets;
 
-class MacroHandler {
+public class MacroHandler : IDisposable {
     private Plugin Plugin { get; }
 
     private readonly ConcurrentQueue<(string macroId, string[] actions, double delay)> MacroQueue = new();
@@ -388,5 +388,9 @@ class MacroHandler {
 
         this.ClearActionsExecutionList();
         this.ClearActionsLoopExecutionList();
+    }
+
+    public void Dispose() {
+        StopMacroQueueExecution();
     }
 }

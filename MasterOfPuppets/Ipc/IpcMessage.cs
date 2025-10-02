@@ -1,34 +1,24 @@
-using System;
-using System.Diagnostics;
-
 using ProtoBuf;
 
 namespace MasterOfPuppets.Ipc;
 
 [ProtoContract]
 internal class IpcMessage {
-    [ProtoMember(1)]
-    public IpcMessageType MessageType { get; init; }
-    [ProtoMember(2)]
-    public long BroadcasterId { get; init; }
-    [ProtoMember(3)]
-    public long PartyId { get; init; }
-    [ProtoMember(4)]
-    public int ProcessId { get; init; }
-    [ProtoMember(5)]
-    public DateTime TimeStamp { get; init; }
-    [ProtoMember(6)]
-    public byte[] Data { get; init; }
-    [ProtoMember(7)]
-    public string[] StringData { get; init; }
-    private static readonly int processId = Process.GetCurrentProcess().Id;
+    [ProtoMember(1)] public IpcMessageType MessageType { get; init; }
+    [ProtoMember(2)] public long BroadcasterId { get; init; }
+    // [ProtoMember(3)] public long PartyId { get; init; }
+    // [ProtoMember(4)] public int ProcessId { get; init; }
+    // [ProtoMember(5)] public DateTime TimeStamp { get; init; }
+    [ProtoMember(3)] public byte[] Data { get; init; }
+    [ProtoMember(4)] public string[] StringData { get; init; }
+    // private static readonly int processId = Process.GetCurrentProcess().Id;
 
     public IpcMessage(IpcMessageType messageType, byte[] data, params string[] stringData) {
         MessageType = messageType;
         BroadcasterId = (long)DalamudApi.ClientState.LocalContentId;
-        PartyId = DalamudApi.PartyList.PartyId;
-        ProcessId = processId;
-        TimeStamp = DateTime.Now;
+        // PartyId = DalamudApi.PartyList.PartyId;
+        // ProcessId = processId;
+        // TimeStamp = DateTime.Now;
         Data = data;
         StringData = stringData;
     }
@@ -53,6 +43,4 @@ internal class IpcMessage {
     }
 
     public T DataStruct<T>() where T : unmanaged => Data.ToStructUnmanaged<T>();
-
-    public override string ToString() => $"{nameof(IpcMessage)}:{TimeStamp:O}:{MessageType}:{BroadcasterId:X}:{PartyId:X}:{Data?.Length}:{StringData?.Length}";
 }

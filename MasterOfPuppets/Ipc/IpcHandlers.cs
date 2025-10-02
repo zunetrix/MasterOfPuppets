@@ -32,7 +32,8 @@ internal class IpcHandlers {
     [IpcHandle(IpcMessageType.ExecuteTextCommand)]
     private void HandleExecuteTextCommand(IpcMessage message) {
         var textCommand = message.StringData[0];
-        DalamudApi.Framework.RunOnTick(() => Chat.SendMessage(textCommand));
+        Chat.SendMessage(textCommand);
+        // DalamudApi.Framework.RunOnTick(() => Chat.SendMessage(textCommand));
     }
 
     [IpcHandle(IpcMessageType.ExecuteActionCommand)]
@@ -78,5 +79,11 @@ internal class IpcHandlers {
     private void HandleRunMacro(IpcMessage message) {
         int macroIndex = message.DataStruct<int>();
         Plugin.MacroHandler.ExecuteMacro(macroIndex);
+    }
+
+    [IpcHandle(IpcMessageType.EnqueueMacroActions)]
+    private void HandleEnqueueMacroActions(IpcMessage message) {
+        var textCommand = message.StringData[0];
+        Plugin.MacroHandler.EnqueueMacroActions("#mop-inline-macro", actions: [textCommand], delayBetweenActions: 0);
     }
 }
