@@ -219,18 +219,6 @@ public static class ImGuiUtil {
 
     public static Vector2 GetWindowContentRegion() => ImGui.GetWindowContentRegionMax() - ImGui.GetWindowContentRegionMin();
 
-    public static ImGui.ImGuiInputTextCallbackDelegate CallbackCharFilterFn(Func<char, bool> predicate) {
-        unsafe {
-            return (ref ImGuiInputTextCallbackData ev) => {
-                return predicate((char)ev.EventChar) ? 0 : 1;
-            };
-        }
-    }
-
-    public static bool IsNotNull(this ImGuiPayloadPtr payload) {
-        return !payload.IsNull;
-    }
-
     /// <summary>
     /// Returns the screen position of the text at `textPos` in `text` assuming it was drawn in
     /// an InputTextMultiline

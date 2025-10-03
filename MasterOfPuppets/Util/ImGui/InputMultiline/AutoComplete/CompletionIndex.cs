@@ -31,7 +31,10 @@ public class CompletionIndex {
         if (State != IndexState.INDEXED) { return new List<CompletionInfo>(); }
         if (prefix == string.Empty) { return new List<CompletionInfo>(); }
 
-        return CompletionsByText.StartsWith(prefix.ToLower()).SelectMany(c => c.Value);
+        // return CompletionsByText.StartsWith(prefix.ToLower()).SelectMany(c => c.Value);
+        return CompletionsByText
+        .Where(c => c.Key.IndexOf(prefix, StringComparison.OrdinalIgnoreCase) >= 0)
+        .SelectMany(c => c.Value);
     }
 
     public CompletionInfo? ById(uint group, uint key) {
@@ -80,10 +83,10 @@ public class CompletionIndex {
             // 49, // mount
             56, // actions skills
             69, // blue mage
-            62, // text command
+            //62, // text command
         };
 
-        return DalamudApi.DataManager.GetExcelSheet<Completion>()
+        var completionInfo = DalamudApi.DataManager.GetExcelSheet<Completion>()
              .Where(raw => allowedGroups.Contains(raw.Group))
              .Select(raw => ParsedCompletion.From(raw))
              .SelectMany<ParsedCompletion, CompletionInfo>(parsed => CompletionInfo.From(parsed))
@@ -93,7 +96,39 @@ public class CompletionIndex {
                  }
                  return info;
              })
+            .Concat(EmoteHelper.GetAllowedItems().Select(x => {
+                var completion = new CompletionInfo(
+                            Group: 0,
+                            GroupTitle: "Emotes",
+                            Key: x.ActionId,
+                            SeString: x.TextCommand,
+                            HelpText: x.ActionName
+                        );
+                return completion;
+            }))
+            .Concat(ItemHelper.GetAllowedItems().Select(x => {
+                var completion = new CompletionInfo(
+                        Group: 1,
+                        GroupTitle: "Items",
+                        Key: x.ActionId,
+                        SeString: x.TextCommand,
+                        HelpText: x.ActionName
+                    );
+                return completion;
+            }))
+             .Concat(MopMacroActionsHelper.Actions.Select((x, idx) => {
+                 var completion = new CompletionInfo(
+                         Group: 2,
+                         GroupTitle: x.Category.ToString(),
+                         Key: (uint)idx,
+                         SeString: x.SuggestionCommand,
+                         HelpText: $"{x.Example} \n {x.Notes}"
+                     );
+                 return completion;
+             }))
             .ToList();
+
+        return completionInfo;
     }
 
     private void RefreshCompletionIndex(IEnumerable<CompletionInfo> completions) {

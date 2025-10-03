@@ -27,101 +27,109 @@ public record class CompletionInfo(
     /// displayed to the user.
     /// </summary>
     ReadOnlySeString? HelpText
-)
-{
+) {
     public string GroupTitleString => (GroupTitle?.ExtractText() ?? "").Trim(' ', '.');
 
-public static IEnumerable<CompletionInfo> From(ParsedCompletion completion) {
-    if (completion.LookupTable != null) {
-        var table = DalamudApi.DataManager.GetExcelSheet<RawRow>(name: completion.LookupTable.TableName);
+    public static IEnumerable<CompletionInfo> From(ParsedCompletion completion) {
+        if (completion.LookupTable != null) {
+            var table = DalamudApi.DataManager.GetExcelSheet<RawRow>(name: completion.LookupTable.TableName);
 
-        var rowRanges = completion.LookupTable.Entries.OfType<ParsedCompletion.Lookup.Entry.RowRange>().ToList();
-        if (rowRanges.Count == 0) {
-            // If we have no ranges, we want the entire table
-            rowRanges.Add(new ParsedCompletion.Lookup.Entry.RowRange(
-                StartRow: 0,
-                EndRow: (uint)(table.Count - 1)
-            ));
-        }
+            var rowRanges = completion.LookupTable.Entries.OfType<ParsedCompletion.Lookup.Entry.RowRange>().ToList();
+            if (rowRanges.Count == 0) {
+                // If we have no ranges, we want the entire table
+                rowRanges.Add(new ParsedCompletion.Lookup.Entry.RowRange(
+                    StartRow: 0,
+                    EndRow: (uint)(table.Count - 1)
+                ));
+            }
 
-        foreach (var rowRange in rowRanges) {
-            for (var rowId = rowRange.StartRow; rowId <= rowRange.EndRow; ++rowId) {
-                var row = table.GetRowOrDefault(rowId);
-                if (row == null) { continue; }
+            foreach (var rowRange in rowRanges) {
+                for (var rowId = rowRange.StartRow; rowId <= rowRange.EndRow; ++rowId) {
+                    var row = table.GetRowOrDefault(rowId);
+                    if (row == null) { continue; }
 
-                // Some columns have repeated data, for example  `/fashionguide` is in both the `name` and `alias`
-                // columns.
-                //
-                // We want to de-dup them since they produce identical CompletionInfo.
-                var visited = new HashSet<ReadOnlySeString>();
-                foreach (var col in completion.LookupTable.TableNameColumns) {
-                    var text = row.Value.ReadStringColumn((int)col);
-                    if (text == "") { continue; }
-                    if (visited.Contains(text)) { continue; }
-                    visited.Add(text);
-                    yield return new CompletionInfo(
-                        Group: completion.Group,
-                        GroupTitle: null, // Can't use our GroupTitle, it's just '-'
-                        Key: row.Value.RowId,
-                        SeString: text,
-                        HelpText: GetHelpText(completion.LookupTable.TableName, rowId)
-                    );
+                    // Some columns have repeated data, for example  `/fashionguide` is in both the `name` and `alias`
+                    // columns.
+                    //
+                    // We want to de-dup them since they produce identical CompletionInfo.
+                    var visited = new HashSet<ReadOnlySeString>();
+                    foreach (var col in completion.LookupTable.TableNameColumns) {
+                        var text = row.Value.ReadStringColumn((int)col);
+                        if (text == "") { continue; }
+                        if (visited.Contains(text)) { continue; }
+                        visited.Add(text);
+
+                        yield return new CompletionInfo(
+                                    Group: completion.Group,
+                                    GroupTitle: null, // Can't use our GroupTitle, it's just '-'
+                                    Key: row.Value.RowId,
+                                    SeString: BuildCommandString(text, completion.Group),
+                                    HelpText: GetHelpText(completion.LookupTable.TableName, rowId)
+                                );
+                    }
                 }
             }
-        }
-    } else {
-        yield return new CompletionInfo(
-            Group: completion.Group,
-            GroupTitle: null, // Can't use our GroupTitle, it's just '-'
-            Key: completion.RowId,
-            SeString: completion.Text,
-            HelpText: null
-        );
-    }
-}
-
-private static ReadOnlySeString? GetHelpText(string table, uint rowId) {
-    if (TryGetRowByName<TextCommand>(table, rowId, out var textCommand)) { return textCommand.Description; }
-    if (TryGetRowByName<PetAction>(table, rowId, out var petAction)) { return petAction.Description; }
-    if (TryGetRowByName<GuardianDeity>(table, rowId, out var gd)) { return gd.Description; }
-    if (TryGetRowByName<GeneralAction>(table, rowId, out var ga)) { return ga.Description; }
-    if (TryGetTransientRowByName<ActionTransient>(table, rowId, out var action)) { return action.Description; }
-    if (TryGetRowByName<CraftAction>(table, rowId, out var craftAction)) { return craftAction.Description; }
-    if (TryGetRowByName<BuddyAction>(table, rowId, out var buddyAction)) { return buddyAction.Description; }
-    if (TryGetRowByName<MainCommand>(table, rowId, out var mainCommand)) { return mainCommand.Description; }
-    if (TryGetTransientRowByName<CompanionTransient>(table, rowId, out var companion)) { return companion.Tooltip; }
-    if (TryGetRowByName<MKDSupportJob>(table, rowId, out var occJob)) { return occJob.Unknown3; }
-
-    return null;
-}
-
-private static bool TryGetRowByName<T>(
-    string tableName,
-    uint rowId,
-    [MaybeNullWhen(false)] out T row
-) where T : struct, IExcelRow<T> {
-    if (tableName == typeof(T).Name) {
-        if (DalamudApi.DataManager.GetExcelSheet<T>().TryGetRow(rowId, out var rowInner)) {
-            row = rowInner;
-            return true;
+        } else {
+            yield return new CompletionInfo(
+                Group: completion.Group,
+                GroupTitle: null, // Can't use our GroupTitle, it's just '-'
+                Key: completion.RowId,
+                SeString: completion.Text,
+                HelpText: null
+            );
         }
     }
-    row = default(T);
-    return false;
-}
 
-private static bool TryGetTransientRowByName<T>(
-    string tableName,
-    uint rowId,
-    [MaybeNullWhen(false)] out T row
-) where T : struct, IExcelRow<T> {
-    if ($"{tableName}Transient" == typeof(T).Name) {
-        if (DalamudApi.DataManager.GetExcelSheet<T>().TryGetRow(rowId, out var rowInner)) {
-            row = rowInner;
-            return true;
-        }
+    private static string BuildCommandString(ReadOnlySeString text, uint group) {
+        return group switch {
+            56 => $"/ac \"{text}\"",
+            69 => $"/blueaction \"{text}\"",
+            _ => text.ExtractText()
+        };
     }
-    row = default(T);
-    return false;
-}
+
+    private static ReadOnlySeString? GetHelpText(string table, uint rowId) {
+        if (TryGetRowByName<TextCommand>(table, rowId, out var textCommand)) { return textCommand.Description; }
+        if (TryGetRowByName<PetAction>(table, rowId, out var petAction)) { return petAction.Description; }
+        if (TryGetRowByName<GuardianDeity>(table, rowId, out var gd)) { return gd.Description; }
+        if (TryGetRowByName<GeneralAction>(table, rowId, out var ga)) { return ga.Description; }
+        if (TryGetTransientRowByName<ActionTransient>(table, rowId, out var action)) { return action.Description; }
+        if (TryGetRowByName<CraftAction>(table, rowId, out var craftAction)) { return craftAction.Description; }
+        if (TryGetRowByName<BuddyAction>(table, rowId, out var buddyAction)) { return buddyAction.Description; }
+        if (TryGetRowByName<MainCommand>(table, rowId, out var mainCommand)) { return mainCommand.Description; }
+        if (TryGetTransientRowByName<CompanionTransient>(table, rowId, out var companion)) { return companion.Tooltip; }
+        if (TryGetRowByName<MKDSupportJob>(table, rowId, out var occJob)) { return occJob.Unknown3; }
+
+        return null;
+    }
+
+    private static bool TryGetRowByName<T>(
+        string tableName,
+        uint rowId,
+        [MaybeNullWhen(false)] out T row
+    ) where T : struct, IExcelRow<T> {
+        if (tableName == typeof(T).Name) {
+            if (DalamudApi.DataManager.GetExcelSheet<T>().TryGetRow(rowId, out var rowInner)) {
+                row = rowInner;
+                return true;
+            }
+        }
+        row = default(T);
+        return false;
+    }
+
+    private static bool TryGetTransientRowByName<T>(
+        string tableName,
+        uint rowId,
+        [MaybeNullWhen(false)] out T row
+    ) where T : struct, IExcelRow<T> {
+        if ($"{tableName}Transient" == typeof(T).Name) {
+            if (DalamudApi.DataManager.GetExcelSheet<T>().TryGetRow(rowId, out var rowInner)) {
+                row = rowInner;
+                return true;
+            }
+        }
+        row = default(T);
+        return false;
+    }
 }

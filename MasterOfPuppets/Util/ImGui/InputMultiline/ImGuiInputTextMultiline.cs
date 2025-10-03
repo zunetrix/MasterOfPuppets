@@ -35,8 +35,7 @@ public class ImGuiInputTextMultiline {
 
         var text = input;
 
-        ImGui.ImGuiInputTextCallbackDelegate decoratedCallback = (scoped ref ImGuiInputTextCallbackData data) =>
-        {
+        ImGui.ImGuiInputTextCallbackDelegate decoratedCallback = (scoped ref ImGuiInputTextCallbackData data) => {
             // var result = callback(ref data);
             // var result = ref data;
 
@@ -79,7 +78,6 @@ public class ImGuiInputTextMultiline {
         }
 
         // var focused = ImGui.IsItemFocused();
-
         while (AutoCompletePopup.CompletionEvents.TryDequeue(out var completion)) {
             if (!previousEditWord.HasValue) { break; }
             var (editStart, editEnd) = previousEditWord.Value;

@@ -155,5 +155,4 @@ public static class TargetManager {
             DalamudApi.PluginLog.Error(e, $"Error while cleaning target");
         }
     }
-
 }

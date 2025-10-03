@@ -82,6 +82,7 @@ public class MacroImportExportWindow : Window {
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }, exportFolder);
+            // ImGui.SetNextWindowFocus();
         }
         ImGui.PopStyleColor(3);
 
@@ -93,6 +94,11 @@ public class MacroImportExportWindow : Window {
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
         ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
         if (ImGui.Button("Export Selected Macros")) {
+            if (Plugin.MacroManager.SelectedMacrosIndexes.Count == 0) {
+                Chat.PrintError("No macros selected to export");
+                return;
+            }
+
             var exportFolder = Plugin.Config.MacroExportPath.IsNullOrEmpty() ?
                         DalamudApi.PluginInterface.ConfigDirectory.FullName : Plugin.Config.MacroExportPath;
 

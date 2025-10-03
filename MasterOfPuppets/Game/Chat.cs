@@ -157,5 +157,9 @@ public static class Chat {
             Marshal.FreeHGlobal(this.textPtr);
         }
     }
+
+    public static void PrintError(string message) {
+        DalamudApi.ChatGui.PrintError($"[MoP] {message}");
+    }
 }
 

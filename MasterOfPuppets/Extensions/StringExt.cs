@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace MasterOfPuppets.Extensions;
@@ -48,5 +49,9 @@ public static class StringExt {
 
     public static int MaxLineLength(this string self) {
         return Enumerable.Max(self.Split("\n").Select(s => s.Count()));
+    }
+
+    internal static bool ContainsIgnoreCase(this string haystack, string needle) {
+        return CultureInfo.InvariantCulture.CompareInfo.IndexOf(haystack, needle, CompareOptions.IgnoreCase) >= 0;
     }
 }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
@@ -12,6 +13,7 @@ using Dalamud.Interface.Windowing;
 
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
+using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
@@ -61,6 +63,7 @@ internal class DebugWindow : Window {
         DrawHotbarDebugTab();
         DrawPetHotbarDebugTab();
         DrawElementsDebugTab();
+        DrawFontAwesomeIconsDebugTab();
 
         ImGui.EndTabBar();
     }
@@ -495,17 +498,14 @@ internal class DebugWindow : Window {
         if (InputTextMultiline.Draw(
             "###MacroContent",
             ref _inputTextContent,
-            ushort.MaxValue, // Allow for many lines, since we chunk them by blocks of 15 for execution/binding.
+            ushort.MaxValue,
             new Vector2(
                 MathF.Min(ImGui.GetContentRegionAvail().X, 500f * ImGuiHelpers.GlobalScale),
                 ImGui.GetTextLineHeight() * 20
             ),
-        // Don't allow lines that are longer then the max line length
         ImGuiInputTextFlags.None
-        // ImGuiUtil.CallbackCharFilterFn(_ => _inputTextContent.Length() < 181)
         )) {
             // DalamudApi.PluginLog.Warning($"{_inputTextContent}");
-            // Macro.Lines = lines;
         }
     }
 
@@ -522,7 +522,74 @@ internal class DebugWindow : Window {
 
             // SearchableCombo();
 
+
             ImGui.EndTabItem();
         }
+    }
+
+    private void DrawFontAwesomeIconsDebugTab() {
+        if (ImGui.BeginTabItem($"FontAwesome Icons###FontAwesomeIconsDebugTab")) {
+            DrawFontAwesomeIconBrowser();
+            ImGui.EndTabItem();
+        }
+    }
+
+    static readonly (FontAwesomeIcon icon, string name)[] glyphs =
+        Enumerable.Range(0xF000, 4095)
+        .Select(i => ((FontAwesomeIcon)i, ((FontAwesomeIcon)i).ToString()))
+        .Where(i => i.Item2.Any(char.IsLetter)) // remove unknown icons
+        .ToArray();
+
+    private static (FontAwesomeIcon icon, string name)[] searchedGlyphs = glyphs;
+    private static string searchedString = "";
+
+    private static void DrawFontAwesomeIconBrowser() {
+        ImGui.Spacing();
+
+        if (ImGui.InputTextWithHint("##FontAwesomeSearchInput", "Search", ref searchedString, 100)) {
+            if (!string.IsNullOrWhiteSpace(searchedString)) {
+                searchedGlyphs = glyphs.Where(i => i.name.ContainsIgnoreCase(searchedString)).ToArray();
+            } else {
+                searchedGlyphs = glyphs;
+            }
+        }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        ImGui.PushFont(UiBuilder.IconFont);
+        var windowWidth = ImGui.GetWindowWidth() - 60 * ImGui.GetIO().FontGlobalScale;
+        var lineLength = 0f;
+
+        foreach (var icon in searchedGlyphs) {
+            ImGui.TextUnformatted(icon.icon.ToIconString());
+
+            if (ImGui.IsItemHovered()) {
+                ImGui.BeginTooltip();
+                ImGui.SetWindowFontScale(3);
+                ImGui.TextUnformatted(icon.icon.ToIconString());
+                ImGui.SetWindowFontScale(1);
+                ImGui.PushFont(UiBuilder.DefaultFont);
+                ImGui.TextUnformatted($"{icon.name}\n{(int)icon.icon}\n0x{(int)icon.icon:X}");
+                ImGui.EndTooltip();
+                ImGui.PopFont();
+            }
+
+            if (ImGui.IsItemClicked()) {
+                ImGui.SetClipboardText($"(FontAwesomeIcon){(int)icon.Item1}");
+            }
+
+            if (lineLength < windowWidth) {
+                lineLength += 30 * ImGui.GetIO().FontGlobalScale;
+                ImGui.SameLine(lineLength);
+            } else {
+                lineLength = 0;
+                ImGui.Dummy(new Vector2(0, 10 * ImGui.GetIO().FontGlobalScale));
+            }
+        }
+
+        ImGui.PopFont();
     }
 }

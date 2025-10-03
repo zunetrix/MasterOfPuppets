@@ -128,7 +128,7 @@ internal class MainWindow : Window {
 
                 // -----------------------
 
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.FileExport, $"##MacroImportExportMenu")) {
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.ExchangeAlt, $"##MacroImportExportMenu")) {
                     Ui.MacroImportExportWindow.Toggle();
                 }
                 ImGui.SameLine();

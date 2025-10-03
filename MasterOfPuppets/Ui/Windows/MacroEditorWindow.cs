@@ -22,9 +22,6 @@ public class MacroEditorWindow : Window {
     private int SelectedCommandIndex = 0;
     private bool EditingExistingMacro = false;
     private readonly ImGuiInputTextMultiline InputTextMultiline;
-    private List<string> _suggestions = [];
-    private string _currentWord = string.Empty;
-    private string _lastWord = string.Empty;
 
     public MacroEditorWindow(Plugin plugin) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow") {
         Plugin = plugin;
@@ -57,10 +54,6 @@ public class MacroEditorWindow : Window {
         EditingExistingMacro = false;
         MacroIndex = Plugin.MacroManager.GetMacrosCount();
         SelectedCommandIndex = 0;
-
-        _suggestions = [];
-        _currentWord = string.Empty;
-        _lastWord = string.Empty;
     }
 
     public void EditMacro(int macroIndex) {
@@ -234,10 +227,10 @@ public class MacroEditorWindow : Window {
         DrawCommandEditor(SelectedCommandIndex);
     }
 
-    private void DrawCommandEditor(int commandIndex) {
+    private void DrawCharacterAssignList(int commandIndex) {
         var usedCids = MacroItem.Commands?
-        .SelectMany(c => c.Cids)
-        .ToHashSet() ?? new HashSet<ulong>();
+     .SelectMany(c => c.Cids)
+     .ToHashSet() ?? new HashSet<ulong>();
 
         var availableCharacters = Plugin.Config.Characters
         .Where(character => !usedCids.Contains(character.Cid))
@@ -336,8 +329,15 @@ public class MacroEditorWindow : Window {
 
         ImGui.Spacing();
         ImGui.Spacing();
-        ImGui.TextUnformatted(Language.ActionsTitle);
+    }
 
+    private void DrawCommandEditor(int commandIndex) {
+
+        DrawCharacterAssignList(commandIndex);
+
+        ImGui.TextUnformatted(Language.ActionsTitle);
+        ImGuiUtil.HelpMarker("Press TAB to autocomplete");
+        ImGui.Spacing();
 
         if (InputTextMultiline.Draw(
             $"##InputActionCommand_{commandIndex}",
@@ -347,55 +347,9 @@ public class MacroEditorWindow : Window {
                 MathF.Min(ImGui.GetContentRegionAvail().X, 500f * ImGuiHelpers.GlobalScale),
                 ImGui.GetTextLineHeight() * 20
             ),
-        // Don't allow lines that are longer then the max line length
-        ImGuiInputTextFlags.None
-        // ImGuiUtil.CallbackCharFilterFn(_ => _inputTextContent.Length() < 181)
+            ImGuiInputTextFlags.None
         )) {
-            // DalamudApi.PluginLog.Warning($"{_inputTextContent}");
-            // Macro.Lines = lines;
-        }
-
-
-        // if (ImGui.InputTextMultiline($"##InputAction_command_{commandIndex}", ref MacroItem.Commands[commandIndex].Actions, 65535, new Vector2(-1, 200)))
-        // {
-        //     _currentWord = GetCurrentWord(MacroItem.Commands[commandIndex].Actions);
-
-        //     // prevent suggestions for new line
-        //     if (string.IsNullOrWhiteSpace(_currentWord))
-        //     {
-        //         _suggestions.Clear();
-        //         _lastWord = string.Empty;
-        //     }
-        // }
-
-        if (!string.IsNullOrWhiteSpace(_currentWord) && _currentWord != _lastWord) {
-            _suggestions = MopMacroActionsHelper.Actions
-                .Select(x => x.SuggestionCommand)
-                .Concat(EmoteHelper.GetAllowedItems().Select(x => x.TextCommand))
-                .Concat(ItemHelper.GetAllowedItems().Select(x => x.TextCommand))
-                .Where(s => s.Contains(_currentWord, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            _lastWord = _currentWord;
-        }
-
-        if (_suggestions.Any()) {
-            ImGui.Spacing();
-            ImGui.Spacing();
-
-            ImGui.BeginChild($"##AutoCompleteChild_{commandIndex}", new Vector2(-1, 150), true);
-            int? selectedIndex = null;
-            for (int i = 0; i < _suggestions.Count; i++) {
-                if (ImGui.Selectable(_suggestions[i]))
-                    selectedIndex = i;
-            }
-
-            if (selectedIndex.HasValue) {
-                ReplaceCurrentWord(ref MacroItem.Commands[commandIndex].Actions, _currentWord, _suggestions[selectedIndex.Value]);
-                _suggestions.Clear();
-                _lastWord = string.Empty;
-            }
-            ImGui.EndChild();
+            // DalamudApi.PluginLog.Debug($"{_inputTextContent}");
         }
 
         ImGui.Spacing();
@@ -403,27 +357,5 @@ public class MacroEditorWindow : Window {
 
         ImGui.EndChild();
         ImGui.EndGroup();
-    }
-
-    private string GetCurrentWord(string text) {
-        if (string.IsNullOrEmpty(text))
-            return "";
-
-        var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-        var lastLine = lines.Length > 0 ? lines[^1] : "";
-
-        if (string.IsNullOrWhiteSpace(lastLine))
-            return "";
-
-        var tokens = lastLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        return tokens.Length > 0 ? tokens[^1] : "";
-    }
-
-    private void ReplaceCurrentWord(ref string text, string oldWord, string newWord) {
-        if (string.IsNullOrEmpty(oldWord)) return;
-        int index = text.LastIndexOf(oldWord, StringComparison.OrdinalIgnoreCase);
-        if (index >= 0) {
-            text = text.Substring(0, index) + newWord + text.Substring(index + oldWord.Length);
-        }
     }
 }

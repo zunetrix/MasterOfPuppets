@@ -110,7 +110,7 @@ public class AutoCompletePopup {
             ImGui.SetNextItemWidth(windowWidth - (ImGui.GetStyle().FramePadding.X * 8));
 
             float defaultHeight = ImGui.GetTextLineHeight() + ImGui.GetStyle().FramePadding.Y * 2;
-            ImGui.BeginChild("##AutoCompleteFilterInputFixedHeight", ImGuiHelpers.ScaledVector2(-1, defaultHeight), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+            // ImGui.BeginChild("##AutoCompleteFilterInputFixedHeight", ImGuiHelpers.ScaledVector2(-1, defaultHeight), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
             if (
                 ImGui.InputTextWithHint(
                     "##AutoCompleteFilterInput",
@@ -125,7 +125,7 @@ public class AutoCompletePopup {
                 Completions = Plugin.CompletionIndex.Search(_autoCompleteFilter).ToList();
                 SelectedCompletionIndex = 0;
             }
-            ImGui.EndChild();
+            // ImGui.EndChild();
 
 
             if (ImGui.IsWindowAppearing()) {
@@ -155,7 +155,7 @@ public class AutoCompletePopup {
             }
 
             var selectedCompletion = SelectedCompletion;
-            ImGui.BeginChild("##AutoCompleteCompletionsTableScrollableContent", ImGuiHelpers.ScaledVector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+            // ImGui.BeginChild("##AutoCompleteCompletionsTableScrollableContent", ImGuiHelpers.ScaledVector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
             if (ImGui.BeginTable("###AutoCompleteCompletionsTable", 2)) {
                 ImGui.TableSetupColumn("Completion", ImGuiTableColumnFlags.WidthFixed, longestCompletionWidth);
                 ImGui.TableSetupColumn("Group", ImGuiTableColumnFlags.WidthFixed, longestGroupWidth);
@@ -249,7 +249,7 @@ public class AutoCompletePopup {
                     }
                 }
             }
-            ImGui.EndChild();
+            // ImGui.EndChild();
 
             ImGui.EndPopup();
         }
