@@ -13,5 +13,6 @@ public enum IpcMessageType {
     ExecuteTargetMyTarget,
     ExecuteTargetClear,
     EnqueueMacroActions,
+    EnqueueCharacterMacroActions,
     SetGameSettingsObjectQuantity
 }

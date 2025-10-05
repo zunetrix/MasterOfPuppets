@@ -93,6 +93,19 @@ public static class MopMacroActionsHelper {
             Broadcast a command to local clients except yourself
             """
         },
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mopbrc \"Character Name\" <command>",
+            SuggestionCommand = "/mopbrc \"\"",
+            Example = """
+            /mopbrc "Character Name" /clap
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Broadcast a command to local clients to a specific character
+            """
+        },
 
         // ---------------------------
 
@@ -145,6 +158,28 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             * This is a chat sync command, broadcast a command via chat except yourself
+
+            Some special game characters need to be replaced to work correctly,
+            for example, <me> will be translated to the current character's name instead of being printed in the chat,
+            for the correct functioning of inline chat actions replace <> with []
+                /ac heal <me> => /ac heal [me]
+                /ac heal <t> => /ac heal [t]
+            """
+        },
+        new MopAction
+        {
+            Category = MopActionCategory.ChatSyncCommand,
+            TextCommand = "mopbrc \"Character Name\" <command>",
+            SuggestionCommand = "mopbrc ",
+            Example = """
+            Use inline chat broadcast execution for single action to specific character
+                mopbrc "Character Name" /clap
+                mopbrc "Character Name" /cheer
+                mopbrc "Character Name" /mopaction "Action Name"
+                mopbrc "Character Name" /moptargetof "Warrior of Light@World"
+            """,
+            Notes = """
+            * This is a chat sync command, broadcast a command via chat to specific character
 
             Some special game characters need to be replaced to work correctly,
             for example, <me> will be translated to the current character's name instead of being printed in the chat,

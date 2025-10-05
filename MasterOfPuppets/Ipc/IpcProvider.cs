@@ -39,6 +39,7 @@ internal class IpcProvider : IDisposable {
             _initFailed = true;
         }
     }
+
     public void Dispose() {
         _messagesQueueRunning = false;
         _autoResetEvent.Set();
@@ -130,6 +131,10 @@ internal class IpcProvider : IDisposable {
     public void EnqueueMacroActions(string textCommand, bool includeSelf) {
         var message = IpcMessage.Create(IpcMessageType.EnqueueMacroActions, textCommand).Serialize();
         BroadCast(message, includeSelf: includeSelf);
+    }
+    public void EnqueueCharacterMacroActions(string textCommand, string characterName) {
+        var message = IpcMessage.Create(IpcMessageType.EnqueueCharacterMacroActions, textCommand, characterName).Serialize();
+        BroadCast(message);
     }
 
     public void SetGameSettingsObjectQuantity(SettingsDisplayObjectLimitType displayObjectLimitType) {

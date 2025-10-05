@@ -4,7 +4,7 @@
         <TargetFramework>net9-windows</TargetFramework>
         <RootNamespace>MasterOfPuppets</RootNamespace>
         <AssemblyName>MasterOfPuppets</AssemblyName>
-        <Version>1.0.0.49</Version>
+        <Version>1.0.0.50</Version>
         <LangVersion>latest</LangVersion>
         <Nullable>disable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -14,26 +14,31 @@
         <!-- <UseWpf>true</UseWpf> -->
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
-        <Version>1.0.0.49</Version>
+        <Version>1.0.0.50</Version>
         <DefineConstants>DEBUG</DefineConstants>
         <AssemblyName>MasterOfPuppets</AssemblyName>
     </PropertyGroup>
+
     <PropertyGroup>
         <DalamudLibPath>$(AppData)\XIVLauncher\addon\Hooks\dev</DalamudLibPath>
     </PropertyGroup>
+
     <PropertyGroup
         Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
         <DalamudLibPath>$(DALAMUD_HOME)</DalamudLibPath>
     </PropertyGroup>
+
     <PropertyGroup Condition="'$(IsCI)' == 'true'">
         <DalamudLibPath>$(HOME)/dalamud</DalamudLibPath>
     </PropertyGroup>
+
     <ItemGroup>
         <EmbeddedResource Update="Resources\Language.resx">
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>Language.Designer.cs</LastGenOutput>
         </EmbeddedResource>
     </ItemGroup>
+
     <ItemGroup>
         <Reference Include="Dalamud">
             <HintPath>$(DalamudLibPath)\Dalamud.dll</HintPath>

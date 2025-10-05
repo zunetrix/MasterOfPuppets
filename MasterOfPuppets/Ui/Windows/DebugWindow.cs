@@ -33,6 +33,7 @@ internal class DebugWindow : Window {
     private static int _hoveredItem;
     private static readonly Dictionary<string, (bool toogle, bool wasEnterClickedLastTime)> _comboDic = [];
     private readonly ImGuiInputTextMultiline InputTextMultiline;
+    private readonly ImGuiModalDialog ImGuiModalDialog = new("##ConfirmModal", new Vector2(400, 200));
 
     public DebugWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name} Debug###DebugWindow") {
         Plugin = plugin;
@@ -464,7 +465,6 @@ internal class DebugWindow : Window {
     }
 
     private void DrawConfirmModalDialog() {
-        // modal confirmation
         if (ImGui.Button("Delete"))
             ImGui.OpenPopup("##DeleteConfirmPopup");
 
@@ -476,7 +476,6 @@ internal class DebugWindow : Window {
             ImGui.Text("All those beautiful files will be deleted.\nThis operation cannot be undone!");
             ImGui.Separator();
 
-            // Checkbox "Don't ask me next time"
             bool dontAskNextTime = false;
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
             ImGui.Checkbox("Don't ask me next time", ref dontAskNextTime);
@@ -520,8 +519,24 @@ internal class DebugWindow : Window {
 
             DrawMultilineInput();
 
-            // SearchableCombo();
+            ImGuiModalDialog.Draw();
 
+            // SearchableCombo();
+            if (ImGui.Button("Modal")) {
+                ImGuiModalDialog.Show(
+                    "Confirm",
+                    "Confirm Delete?",
+                    ("YES", () => {
+                        // DO DELETE
+                        DalamudApi.ShowNotification("Item deleted", NotificationType.Success, 3000);
+                    }
+                ),
+                    ("NO", () => {
+                        // DO NOTHING
+                    }
+                )
+                );
+            }
 
             ImGui.EndTabItem();
         }
@@ -541,7 +556,7 @@ internal class DebugWindow : Window {
         .ToArray();
 
     private static (FontAwesomeIcon icon, string name)[] searchedGlyphs = glyphs;
-    private static string searchedString = "";
+    private static string searchedString = string.Empty;
 
     private static void DrawFontAwesomeIconBrowser() {
         ImGui.Spacing();

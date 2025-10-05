@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
+
+using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
 
@@ -45,6 +46,7 @@ internal class ChatWatcher : IDisposable {
             ["mopstop"] = HandleStopMacroExecution,
             ["mopbr"] = HandleBroadcastCommandExecution,
             ["mopbrn"] = HandleBroadcastNotMeCommandExecution,
+            ["mopbrc"] = HandleBroadcastCharacterCommandExecution,
         };
 
         DalamudApi.ChatGui.ChatMessage += OnChatMessage;
@@ -52,34 +54,6 @@ internal class ChatWatcher : IDisposable {
 
     public void Dispose() {
         DalamudApi.ChatGui.ChatMessage -= OnChatMessage;
-    }
-
-    private List<string> ParseChatArgs(string args) {
-        var list = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(args))
-            return list;
-
-        // preserve args with double quotes as one argument
-        var matches = Regex.Matches(args, @"[\""].+?[\""]|[^ ]+");
-        foreach (Match match in matches) {
-            list.Add(match.Value);
-        }
-
-        // inline execution
-        if (list.Count > 1 && list[1].StartsWith("/")) {
-            string combined = string.Join(" ", list.Skip(1));
-            return new List<string> { list[0], combined };
-        }
-
-        // normal macro name
-        for (int i = 1; i < list.Count; i++) {
-            if (list[i].StartsWith("\"") && list[i].EndsWith("\"")) {
-                list[i] = list[i].Substring(1, list[i].Length - 2);
-            }
-        }
-
-        return list;
     }
 
     private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
@@ -99,7 +73,7 @@ internal class ChatWatcher : IDisposable {
             return;
         }
 
-        var parsedArgs = ParseChatArgs(messageString);
+        var parsedArgs = ArgumentParser.ParseChatArgs(messageString);
         if (!parsedArgs.Any()) return;
 
         string command = parsedArgs[0].ToLower();
@@ -120,7 +94,10 @@ internal class ChatWatcher : IDisposable {
     }
 
     private void HandleRunMacro(string[] args, string senderName) {
-        if (args.Length < 1) return;
+        if (args.Length < 1) {
+            DalamudApi.ChatGui.PrintError($"Invalid command arguments expected 1 <macro name>");
+            return;
+        }
 
         // macro execution
         string macroNameOrIndex = args[0];
@@ -140,40 +117,41 @@ internal class ChatWatcher : IDisposable {
         Plugin.IpcProvider.StopMacroExecution();
     }
 
-    private string NormalizeChatTextCommand(string textCommand) {
-        // string[] tokens = { "[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]", "[8]", "[t]", "[me]", "[tt]" };
-        // replace to the original game tokens that canot be sent via chat <me> will be translated to the char name
-        return Regex.Replace(
-            textCommand,
-            @"\[(1|2|3|4|5|6|7|8|t|me|tt)\]",
-            m => $"<{m.Groups[1].Value}>",
-            RegexOptions.IgnoreCase
-        );
-    }
-
     private void HandleBroadcastCommandExecution(string[] args, string senderName) {
-        if (args.Length < 1) return;
-        var textCommand = args[0];
-
-        if (textCommand.StartsWith("/", StringComparison.OrdinalIgnoreCase)) {
-            textCommand = NormalizeChatTextCommand(textCommand);
-            Plugin.MacroHandler.EnqueueMacroActions("#mopbr-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
+        if (args.Length < 1) {
+            DalamudApi.ChatGui.PrintError($"Invalid command arguments expected 1 <command>");
             return;
         }
+
+        var textCommand = args[0];
+        Plugin.MacroHandler.EnqueueMacroActions("#mopbr-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
     }
 
     private void HandleBroadcastNotMeCommandExecution(string[] args, string senderName) {
-        if (args.Length < 1) return;
-        var playerName = DalamudApi.ClientState.LocalPlayer?.Name.ToString();
-        if (string.Equals(playerName, senderName, StringComparison.OrdinalIgnoreCase)) return;
-
-        var textCommand = args[0];
-
-        if (textCommand.StartsWith("/", StringComparison.OrdinalIgnoreCase)) {
-            textCommand = NormalizeChatTextCommand(textCommand);
-            Plugin.MacroHandler.EnqueueMacroActions("#mopbrn-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
+        if (args.Length < 1) {
+            DalamudApi.ChatGui.PrintError($"Invalid command arguments expected 1 <command>");
             return;
         }
+
+        var localPlayerName = DalamudApi.ClientState.LocalPlayer?.Name.ToString();
+        if (string.Equals(localPlayerName, senderName, StringComparison.OrdinalIgnoreCase)) return;
+
+        var textCommand = args[0];
+        Plugin.MacroHandler.EnqueueMacroActions("#mopbrn-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
+    }
+
+    private void HandleBroadcastCharacterCommandExecution(string[] args, string senderName) {
+        if (args.Length < 2) {
+            DalamudApi.ChatGui.PrintError($"Invalid command arguments expected 2 \"Character Name\" <command>");
+            return;
+        }
+
+        var characterName = args[0];
+        var textCommand = args[1];
+        var localPlayerName = DalamudApi.ClientState.LocalPlayer?.Name.ToString();
+        if (!string.Equals(localPlayerName, characterName, StringComparison.OrdinalIgnoreCase)) return;
+
+        Plugin.MacroHandler.EnqueueMacroActions("#mopbrc-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
     }
 }
 

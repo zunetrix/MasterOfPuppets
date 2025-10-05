@@ -30,37 +30,32 @@ public class MacroManager {
         return macroIndex != -1;
     }
 
-    public bool AddMacro(Macro macro) {
+    public void AddMacro(Macro macro) {
         if (this.ContainsMacroName(macro.Name)) {
-            DalamudApi.ShowNotification($"Macro name ({macro.Name}) already exists", NotificationType.Error, 5000);
-            return false;
+            throw new ArgumentException($"A macro named \"{macro.Name}\" already exists");
         }
 
         macro.SanitizeActions();
         Plugin.Config.Macros.Add(macro);
 
-        DalamudApi.ShowNotification($"Macro saved", NotificationType.Success, 5000);
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();
-
-        return true;
     }
 
-    public bool UpdateMacro(int macroIdx, Macro macro) {
-        int existingMacroIndex = Plugin.Config.Macros.FindIndex(m => string.Equals(m.Name, macro.Name, StringComparison.OrdinalIgnoreCase));
-        if (existingMacroIndex != macroIdx) {
-            DalamudApi.ShowNotification($"Macro name ({macro.Name}) already exists", NotificationType.Error, 5000);
-            return false;
+    public void UpdateMacro(int macroIdx, Macro macro) {
+        bool hasMacroName = Plugin.Config.Macros
+        .Where((m, idx) => idx != macroIdx) // ignore current item name
+        .Any(m => string.Equals(m.Name, macro.Name, StringComparison.OrdinalIgnoreCase));
+
+        if (hasMacroName) {
+            throw new ArgumentException($"A macro named \"{macro.Name}\" already exists");
         }
 
         macro.SanitizeActions();
         Plugin.Config.Macros[macroIdx] = macro;
 
-
-        DalamudApi.ShowNotification($"Macro updated", NotificationType.Success, 5000);
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();
-        return true;
     }
 
     public Macro GetMacroByIndex(int macroIndex) {

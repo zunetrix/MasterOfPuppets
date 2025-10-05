@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -207,6 +208,51 @@ public static class ImGuiUtil {
         ImGui.GetWindowDrawList().PathStroke(ColorUtil.Vector4ToUint(color), ImDrawFlags.None, thickness);
 
         ImGui.PopID();
+    }
+
+    public static T EnumRadioButtons<T>(T currentValue, string label = "", float itemWidth = 0) where T : Enum {
+        var values = Enum.GetValues(typeof(T)).Cast<T>();
+        var names = Enum.GetNames(typeof(T));
+        var result = currentValue;
+
+        if (!string.IsNullOrEmpty(label)) {
+            ImGui.TextUnformatted(label);
+            ImGui.SameLine();
+        }
+
+        for (var i = 0; i < values.Count(); i++) {
+            if (i > 0)
+                ImGui.SameLine();
+
+            if (itemWidth > 0)
+                ImGui.SetNextItemWidth(itemWidth);
+
+            if (ImGui.RadioButton(names[i], EqualityComparer<T>.Default.Equals(currentValue, values.ElementAt(i))))
+                result = values.ElementAt(i);
+        }
+        return result;
+    }
+
+    public static bool EnumCheckboxes<T>(ref List<T> selectedValues, IEnumerable<T>? excludeValues = null) where T : Enum {
+        var values = Enum.GetValues(typeof(T)).Cast<T>();
+        var names = Enum.GetNames(typeof(T));
+        var changed = false;
+
+        for (var i = 0; i < values.Count(); i++) {
+            var currentValue = values.ElementAt(i);
+            if (excludeValues?.Contains(currentValue) == true)
+                continue;
+
+            var isSelected = selectedValues.Contains(currentValue);
+            if (ImGui.Checkbox(names[i], ref isSelected)) {
+                changed = true;
+                if (isSelected)
+                    selectedValues.Add(currentValue);
+                else
+                    selectedValues.Remove(currentValue);
+            }
+        }
+        return changed;
     }
 
     // ------------------------

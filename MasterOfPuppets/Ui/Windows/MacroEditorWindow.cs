@@ -22,6 +22,7 @@ public class MacroEditorWindow : Window {
     private int SelectedCommandIndex = 0;
     private bool EditingExistingMacro = false;
     private readonly ImGuiInputTextMultiline InputTextMultiline;
+    private readonly ImGuiModalDialog ImGuiModalDialog = new("##MacroEditorModalDialog");
 
     public MacroEditorWindow(Plugin plugin) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow") {
         Plugin = plugin;
@@ -38,15 +39,17 @@ public class MacroEditorWindow : Window {
     }
 
     public override void OnClose() {
-        var isMacroSaved = false;
         if (Plugin.Config.AutoSaveMacro && EditingExistingMacro) {
-            isMacroSaved = SaveMacro();
+            bool isMacroSaved = SaveMacro();
+
+            if (!isMacroSaved) {
+                IsOpen = true;
+                return;
+            }
         }
 
-        if (isMacroSaved) {
-            RessetState();
-            base.OnClose();
-        }
+        RessetState();
+        base.OnClose();
     }
 
     private void RessetState() {
@@ -59,7 +62,7 @@ public class MacroEditorWindow : Window {
     public void EditMacro(int macroIndex) {
         RessetState();
 
-        MacroItem = Plugin.MacroManager.GetMacroByIndex(macroIndex);
+        MacroItem = Plugin.MacroManager.GetMacroByIndex(macroIndex).Clone();
         MacroIndex = macroIndex;
         EditingExistingMacro = true;
 
@@ -74,17 +77,25 @@ public class MacroEditorWindow : Window {
     private bool SaveMacro() {
         var isNewMacro = MacroIndex == Plugin.MacroManager.GetMacrosCount();
 
-        bool isMacroSaved;
-        if (isNewMacro) {
-            isMacroSaved = Plugin.MacroManager.AddMacro(MacroItem);
-        } else {
-            isMacroSaved = Plugin.MacroManager.UpdateMacro(MacroIndex, MacroItem);
+        try {
+            if (isNewMacro) {
+                Plugin.MacroManager.AddMacro(MacroItem);
+                DalamudApi.ShowNotification($"Macro saved", NotificationType.Success, 5000);
+                return true;
+            } else {
+                Plugin.MacroManager.UpdateMacro(MacroIndex, MacroItem);
+                DalamudApi.ShowNotification($"Macro updated", NotificationType.Success, 5000);
+                return true;
+            }
+
+        } catch (Exception error) {
+            ImGuiModalDialog.Show("Error", error.Message, ("OK", () => { }));
+            return false;
         }
-
-        return isMacroSaved;
     }
-
     public override void Draw() {
+        ImGuiModalDialog.Draw();
+
         ImGui.BeginChild("##MacroEditorHeaderFixedHeight", ImGuiHelpers.ScaledVector2(-1, 90), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         DrawHeader();
         ImGui.EndChild();
@@ -103,8 +114,9 @@ public class MacroEditorWindow : Window {
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonSuccessHovered);
         ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonSuccessActive);
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Save, $"##SaveMacroBtn", Language.SaveMacroBtn)) {
-            SaveMacro();
-            this.IsOpen = false;
+            if (SaveMacro()) {
+                this.IsOpen = false;
+            }
         }
         ImGui.PopStyleColor(3);
 

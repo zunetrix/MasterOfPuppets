@@ -86,4 +86,18 @@ internal class IpcHandlers {
         var textCommand = message.StringData[0];
         Plugin.MacroHandler.EnqueueMacroActions("#mop-inline-macro", actions: [textCommand], delayBetweenActions: 0);
     }
+
+    [IpcHandle(IpcMessageType.EnqueueCharacterMacroActions)]
+    private void HandleEnqueueCharacterMacroActions(IpcMessage message) {
+        if (message.StringData.Length < 2) return;
+
+        var textCommand = message.StringData[0];
+        var characterName = message.StringData[1];
+
+        DalamudApi.Framework.RunOnTick(() => {
+            var localPlayerName = DalamudApi.ClientState.LocalPlayer?.Name.ToString();
+            if (!string.Equals(localPlayerName, characterName, StringComparison.OrdinalIgnoreCase)) return;
+            Plugin.MacroHandler.EnqueueMacroActions("#mop-inline-macro-char", actions: [textCommand], delayBetweenActions: 0);
+        });
+    }
 }

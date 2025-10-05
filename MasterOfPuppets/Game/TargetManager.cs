@@ -43,7 +43,7 @@ public static class TargetManager {
 
                 if (closestMatch == null) return;
 
-                DalamudApi.PluginLog.Debug($"targeting: {closestMatch.Name.TextValue}");
+                // DalamudApi.PluginLog.Debug($"targeting: {closestMatch.Name.TextValue}");
                 DalamudApi.Targets.Target = closestMatch;
             });
         } catch (Exception e) {
