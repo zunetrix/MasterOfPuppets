@@ -247,7 +247,20 @@ public static class MopMacroActionsHelper {
         },
         new MopAction {
             Category = MopActionCategory.MacroAction,
-            TextCommand = "/moppetbarslot <slot number>",
+            TextCommand = "/mophotbar <bar number 1-10> <slot number 1-12>",
+            SuggestionCommand = "/mophotbar ",
+            Example = """
+                /mophotbar 1 1
+                /mophotbar 5 4
+
+            """,
+            Notes = """
+            Use actions assigned to a hotbar slot
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/moppetbarslot <slot number 1-12>",
             SuggestionCommand = "/moppetbarslot ",
             Example = """
             Rain Check:

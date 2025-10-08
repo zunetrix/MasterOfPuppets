@@ -69,7 +69,7 @@ public class EmotesWindow : Window {
         ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{emote.ActionName}");
+        ImGui.TextUnformatted($"{emote.ActionName} ({emote.ActionId})");
         if (ImGui.IsItemClicked()) {
             ImGui.SetClipboardText($"{emote.ActionName}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);

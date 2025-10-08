@@ -91,9 +91,6 @@ public class IconPickerDialogWindow : Window {
 
             ImGui.SameLine();
             ImGui.Checkbox("Show Icon Tags", ref showIconNames);
-            if (ImGui.IsItemHovered()) {
-                ImGui.SetTooltip("WARNING: Icon tags may contain spoilers! Use at your own risk.");
-            }
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();

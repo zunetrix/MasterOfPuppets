@@ -3,6 +3,8 @@ using System.Linq;
 
 using Lumina.Excel.Sheets;
 
+using MasterOfPuppets.Util;
+
 namespace MasterOfPuppets;
 
 public static class EmoteHelper {

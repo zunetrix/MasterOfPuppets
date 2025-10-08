@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace MasterOfPuppets;
@@ -48,5 +49,9 @@ public static class MovementManager {
         } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Could not execute toggle walk");
         }
+    }
+
+    public static void MoveTo(Vector3 destination) {
+        //
     }
 }

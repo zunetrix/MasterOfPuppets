@@ -4,22 +4,20 @@ using System.Runtime.InteropServices;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
-using Lumina.Excel.Sheets;
-
 using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureHotbarModule;
 
 namespace MasterOfPuppets;
 
 internal static class HotbarManager {
-    private static unsafe void ExecuteHotbarAction(HotbarSlotType commandType, uint commandId) {
+    public static unsafe void ExecuteHotbarAction(HotbarSlotType commandType, uint commandId) {
         var hotbarModulePtr = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule();
-        var hotbars = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule()->Hotbars;
-        if (hotbars.IsEmpty) return;
+        // var hotbars = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule()->Hotbars;
+        // if (hotbars.IsEmpty) return;
 
-        var hotbar = hotbars[1];
-        if (hotbar.Slots.IsEmpty) return;
+        // var hotbar = hotbars[1];
+        // if (hotbar.Slots.IsEmpty) return;
 
-        var slot1 = hotbar.GetHotbarSlot(0);
+        // var slot1 = hotbar.GetHotbarSlot(0);
         // var slot2 = hotbar.GetHotbarSlot(1);
 
         var slot = new HotbarSlot {
@@ -35,32 +33,66 @@ internal static class HotbarManager {
         Marshal.FreeHGlobal(ptr);
     }
 
-    public static unsafe void ExecuteHotbarActionBySlotIndex(uint hotbarId, uint slotIndex) {
+    // public static unsafe void SetHotbarEmoteAction(uint hotbarIndex, uint slotIndex, uint actionId) {
+    //     try {
+    //         RaptureHotbarModule.Instance()->SetAndSaveSlot(hotbarIndex, slotIndex, HotbarSlotType.Emote, actionId);
+    //     } catch (Exception e) {
+    //         DalamudApi.PluginLog.Error(e, $"Error while using hotbar slot {slotIndex}");
+    //     }
+    // }
+
+    public static unsafe void ExecuteHotbarEmoteAction(uint commandId) {
         try {
+            ExecuteHotbarAction(HotbarSlotType.Emote, commandId);
+        } catch (Exception e) {
+            DalamudApi.PluginLog.Error(e, $"Error while using hotbar action {commandId}");
+        }
+    }
+
+    public static unsafe void ExecuteHotbarActionByIndex(uint hotbarIndex, uint slotIndex) {
+        try {
+            // bars indexes = 0-17
+            // bar slots 1-15
+
+            // settings bars indexes 1-10
+            // settings bar slots 1-12
+
             // var hotbarModulePtr = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule();
             // var hotbars = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule()->Hotbars;
+            var maxHotBars = 10;
+            var maxHotBarSlots = 12;
+            bool isValidHotbar = hotbarIndex >= 0 && hotbarIndex <= maxHotBars;
+            bool isValidHotBarSlot = slotIndex >= 0 || slotIndex <= maxHotBarSlots;
+            if (!isValidHotBarSlot || !isValidHotbar) {
+                DalamudApi.PluginLog.Debug($"Invalid Hotbars args {hotbarIndex}, {slotIndex}");
+                return;
+            }
+
             if (RaptureHotbarModule.Instance()->Hotbars.IsEmpty) {
                 DalamudApi.PluginLog.Debug($"Invalid Hotbars");
                 return;
             }
 
-            if (RaptureHotbarModule.Instance()->Hotbars[(int)hotbarId].Slots.IsEmpty) {
+            if (RaptureHotbarModule.Instance()->Hotbars[(int)hotbarIndex].Slots.IsEmpty) {
                 DalamudApi.PluginLog.Debug($"Invalid Hotbar Slots");
                 return;
             }
 
-            if (RaptureHotbarModule.Instance()->Hotbars[(int)hotbarId].GetHotbarSlot(slotIndex) == null) {
+            if (RaptureHotbarModule.Instance()->Hotbars[(int)hotbarIndex].GetHotbarSlot(slotIndex) == null) {
                 DalamudApi.PluginLog.Debug($"Invalid hotbar slot {slotIndex}");
                 return;
             }
 
-            RaptureHotbarModule.Instance()->ExecuteSlot(RaptureHotbarModule.Instance()->Hotbars[(int)hotbarId].GetHotbarSlot(slotIndex));
+            DalamudApi.Framework.RunOnFrameworkThread(delegate {
+                RaptureHotbarModule.Instance()->ExecuteSlot(RaptureHotbarModule.Instance()->Hotbars[(int)hotbarIndex].GetHotbarSlot(slotIndex));
+            });
+
         } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while using hotbar slot {slotIndex}");
         }
     }
 
-    public static unsafe void ExecutePetHotbarActionBySlotIndex(uint slotIndex) {
+    public static unsafe void ExecutePetHotbarActionByIndex(uint slotIndex) {
         try {
             if (RaptureHotbarModule.Instance()->PetHotbar.Slots.IsEmpty) {
                 DalamudApi.PluginLog.Debug($"Invalid Pet Hotbars Slots");

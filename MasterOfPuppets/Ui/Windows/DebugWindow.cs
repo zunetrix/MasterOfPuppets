@@ -137,23 +137,31 @@ internal class DebugWindow : Window {
                 }
             }
 
+            if (ImGui.Button("ExecuteHotbarAction (sit anywhere 96)")) {
+                HotbarManager.ExecuteHotbarEmoteAction(96);
+            }
+
+            if (ImGui.Button("ExecuteHotbarAction (sleep anywhere pose 99)")) {
+                HotbarManager.ExecuteHotbarEmoteAction(99);
+            }
+
             if (ImGui.Button("ExecuteActionCommand Umbrella Dance")) {
                 Plugin.IpcProvider.ExecuteActionCommand(30868);
                 DalamudApi.ShowNotification($"ExecuteActionCommand", NotificationType.Info, 5000);
             }
 
             if (ImGui.Button("ExecuteHotbarActionBySlotIndex(1, 5)")) {
-                HotbarManager.ExecuteHotbarActionBySlotIndex(1, 5);
+                HotbarManager.ExecuteHotbarActionByIndex(1, 5);
                 DalamudApi.ShowNotification($"ExecuteHotbarActionBySlotIndex", NotificationType.Info, 5000);
             }
 
             if (ImGui.Button("ExecutePetHotbarActionBySlotIndex(0)")) {
-                HotbarManager.ExecutePetHotbarActionBySlotIndex(0);
+                HotbarManager.ExecutePetHotbarActionByIndex(0);
                 DalamudApi.ShowNotification($"ExecutePetHotbarActionBySlotIndex", NotificationType.Info, 5000);
             }
 
             if (ImGui.Button("ExecutePetHotbarActionBySlotIndex(1)")) {
-                HotbarManager.ExecutePetHotbarActionBySlotIndex(1);
+                HotbarManager.ExecutePetHotbarActionByIndex(1);
                 DalamudApi.ShowNotification($"ExecuteHotbarActionBySlotIndex", NotificationType.Info, 5000);
             }
 
@@ -259,7 +267,7 @@ internal class DebugWindow : Window {
                             ImGui.TextUnformatted($"{slot.IconId}");
                             ImGui.Image(icon, iconSize);
                             if (ImGui.IsItemClicked()) {
-                                HotbarManager.ExecuteHotbarActionBySlotIndex((uint)hotbarIndex, (uint)slotIndex);
+                                HotbarManager.ExecuteHotbarActionByIndex((uint)hotbarIndex, (uint)slotIndex);
                             }
                             ImGuiUtil.ToolTip(Language.ClickToExecute);
 
@@ -323,7 +331,7 @@ internal class DebugWindow : Window {
                         ImGui.TextUnformatted($"{slot.IconId}");
                         ImGui.Image(icon, iconSize);
                         if (ImGui.IsItemClicked()) {
-                            HotbarManager.ExecutePetHotbarActionBySlotIndex((uint)slotIndex);
+                            HotbarManager.ExecutePetHotbarActionByIndex((uint)slotIndex);
                         }
                         ImGuiUtil.ToolTip(Language.ClickToExecute);
 
@@ -550,7 +558,7 @@ internal class DebugWindow : Window {
     }
 
     static readonly (FontAwesomeIcon icon, string name)[] glyphs =
-        Enumerable.Range(0xF000, 4095)
+        Enumerable.Range(0xE000, 0xF000)
         .Select(i => ((FontAwesomeIcon)i, ((FontAwesomeIcon)i).ToString()))
         .Where(i => i.Item2.Any(char.IsLetter)) // remove unknown icons
         .ToArray();

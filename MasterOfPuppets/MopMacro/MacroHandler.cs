@@ -185,14 +185,61 @@ public class MacroHandler : IDisposable {
                 }
 
                 var realSlotIndex = slotIndex - 1;
-                var maxHotBarSlots = 15;
-                if (realSlotIndex < 0 || realSlotIndex > maxHotBarSlots) {
-                    DalamudApi.PluginLog.Warning($"[moppetbarslot] invalid slot {slotIndex}");
+                // var maxHotBarSlots = 15;
+                // if (realSlotIndex < 0 || realSlotIndex > maxHotBarSlots) {
+                //     DalamudApi.PluginLog.Warning($"[moppetbarslot] invalid slot {slotIndex}");
+                //     return;
+                // }
+
+                HotbarManager.ExecutePetHotbarActionByIndex((uint)realSlotIndex);
+                DalamudApi.PluginLog.Debug($"[moppetbarslot] {slotIndex}");
+                await Task.CompletedTask;
+            },
+
+            ["mophotbar"] = async (macroId, args, token) => {
+                if (string.IsNullOrWhiteSpace(args)) {
+                    DalamudApi.PluginLog.Warning($"[mophotbar] missing arguments");
                     return;
                 }
 
-                HotbarManager.ExecutePetHotbarActionBySlotIndex((uint)realSlotIndex);
-                DalamudApi.PluginLog.Debug($"[moppetbarslot] {slotIndex}");
+                var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                if (parts.Length < 2) {
+                    DalamudApi.PluginLog.Warning($"[mophotbar] expected 2 arguments, got {parts.Length}: \"{args}\"");
+                    return;
+                }
+
+                if (!int.TryParse(parts[0], out int hotbarIndex) || !int.TryParse(parts[1], out int slotIndex)) {
+                    DalamudApi.PluginLog.Warning($"[mophotbar] invalid numbers: \"{args}\"");
+                    return;
+                }
+
+                int realHotbarIndex = hotbarIndex - 1;
+                int realSlotIndex = slotIndex - 1;
+
+                if (realHotbarIndex < 0 || realSlotIndex < 0) {
+                    DalamudApi.PluginLog.Warning($"[mophotbar] invalid index (must be >= 1): \"{args}\"");
+                    return;
+                }
+
+                HotbarManager.ExecuteHotbarActionByIndex((uint)realHotbarIndex, (uint)realSlotIndex);
+                DalamudApi.PluginLog.Debug($"[mophotbar] {realHotbarIndex} {realSlotIndex}");
+                await Task.CompletedTask;
+            },
+
+            ["mophotbaremote"] = async (macroId, args, token) => {
+                if (string.IsNullOrWhiteSpace(args)) {
+                    DalamudApi.PluginLog.Warning($"[mophotbaremote] missing arguments");
+                    return;
+                }
+
+                if (!int.TryParse(args, out int actionId)) {
+                    DalamudApi.PluginLog.Warning($"[mophotbaremote] invalid numbers: \"{args}\"");
+                    return;
+                }
+
+                HotbarManager.ExecuteHotbarEmoteAction((uint)actionId);
+                DalamudApi.PluginLog.Debug($"[mophotbaremote] {actionId}");
                 await Task.CompletedTask;
             },
         };
