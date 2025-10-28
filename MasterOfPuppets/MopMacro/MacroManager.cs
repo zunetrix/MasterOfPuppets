@@ -103,7 +103,7 @@ public class MacroManager {
         if (!int.TryParse(macroNameOrNumber, out var macroIndexArg) && macroIndexByName == -1) {
             DalamudApi.PluginLog.Error($"Invalid macro name or number {macroNameOrNumber}");
             DalamudApi.ShowNotification($"Invalid macro name or number", NotificationType.Error, 5000);
-            throw new ArgumentException($"Invalid macro name or numnber {macroNameOrNumber}");
+            throw new ArgumentException($"Invalid macro name or number {macroNameOrNumber}");
         }
 
         // user input 1 index based

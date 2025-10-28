@@ -60,10 +60,9 @@ public class PluginCommandManager : IDisposable {
         DalamudApi.CommandManager.RemoveHandler("/mopbrc");
     }
 
-
     private void OnMainCommand(string command, string arguments) {
         var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
-        // DalamudApi.PluginLog.Debug($"command: {command}: {string.Join('|', parsedArgs)}");
+        // DalamudApi.PluginLog.Debug($"command: [{command}] {string.Join('|', parsedArgs)}");
 
         if (parsedArgs.Any()) {
             var subcommand = parsedArgs[0];

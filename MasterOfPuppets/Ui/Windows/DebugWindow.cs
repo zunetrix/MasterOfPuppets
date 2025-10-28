@@ -144,6 +144,9 @@ internal class DebugWindow : Window {
             if (ImGui.Button("ExecuteHotbarAction (sleep anywhere pose 99)")) {
                 HotbarManager.ExecuteHotbarEmoteAction(99);
             }
+            if (ImGui.Button("ExecuteHotbarAction (sleep / wake anywhere)")) {
+                HotbarManager.ExecuteHotbarEmoteAction(88);
+            }
 
             if (ImGui.Button("ExecuteActionCommand Umbrella Dance")) {
                 Plugin.IpcProvider.ExecuteActionCommand(30868);
@@ -207,8 +210,25 @@ internal class DebugWindow : Window {
                 DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
             }
 
+            if (ImGui.Button("Print Hotbar")) {
+                PrintHotbar();
+            }
+
             ImGui.EndTabItem();
         }
+    }
+
+    private unsafe void PrintHotbar() {
+        var hotbars = RaptureHotbarModule.Instance()->Hotbars;
+        for (var hotbarIndex = 0; hotbarIndex < hotbars.Length; hotbarIndex++) {
+            var hotbar = hotbars[hotbarIndex];
+
+            for (var slotIndex = 0; slotIndex < hotbar.Slots.Length; slotIndex++) {
+                var slot = hotbar.Slots[slotIndex];
+                DalamudApi.PluginLog.Debug($" bar[{hotbarIndex},{slotIndex}] {slot.CommandType} - ({slot.ApparentSlotType}) - {slot.CommandId} - ({slot.ApparentActionId})");
+            }
+        }
+
     }
 
     private unsafe void DrawHotbarDebugTab() {

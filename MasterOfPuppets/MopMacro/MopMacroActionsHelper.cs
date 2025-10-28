@@ -97,7 +97,7 @@ public static class MopMacroActionsHelper {
         {
             Category = MopActionCategory.PluginCommand,
             TextCommand = "/mopbrc \"Character Name\" <command>",
-            SuggestionCommand = "/mopbrc \"\"",
+            SuggestionCommand = "/mopbrc ",
             Example = """
             /mopbrc "Character Name" /clap
             """,
@@ -288,6 +288,91 @@ public static class MopMacroActionsHelper {
             Use especial pet hotbat slots like mount specials and parasol actions
             As alternativa it can also be used with skill name
                 /mopaction "Umbrella Dance"
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mophotbaremote <emote ID>",
+            SuggestionCommand = "/mophotbaremote ",
+            Example = """
+            Sleep / wake
+                /mophotbaremote 88
+
+            Sit <pose 1>
+                /mophotbaremote 95
+
+            Sit <pose 2>
+                /mophotbaremote 96
+
+            -----------------------------
+
+            Sit on groud <pose 1>
+                /mophotbaremote 97
+
+            Sit on groud <pose 2>
+                /mophotbaremote 98
+
+            Sit on groud <pose 3>
+                /mophotbaremote 117
+
+            Stand up from groundsit
+                /mophotbaremote 53
+
+            -----------------------------
+
+            Sleep / wake (Gpose)
+                /mophotbaremote 99
+
+            -----------------------------
+
+            Change <Pose 1>
+                /mophotbaremote 91
+
+            Change <Pose 2>
+                /mophotbaremote 92
+
+            Change <Pose 3>
+                /mophotbaremote 107
+
+            Change <Pose 4>
+                /mophotbaremote 108
+
+            Change <Pose 5>
+                /mophotbaremote 218
+
+            Change <Pose 6>
+                /mophotbaremote 219
+
+            -----------------------------
+
+            Chair Sit <pose 1>
+                /mophotbaremote 95
+
+            Chair Sit <pose 2>
+                /mophotbaremote 96
+
+            Chair Sit <pose 3>
+                /mophotbaremote 254
+
+            Chair Sit <pose 4>
+                /mophotbaremote 255
+
+            Stand up from chairsit
+                /mophotbaremote 51
+
+            -----------------------------
+
+            Umbrella <Pose 1>
+                /mophotbaremote 243
+
+            Umbrella <Pose 2>
+                /mophotbaremote 244
+
+            Umbrella <Pose 3>
+                /mophotbaremote 253
+            """,
+            Notes = """
+            Use emotes as if they were assigned to a hotbar slot, works with hidden emotes like sleep / wake or sit anywhere (beware using unknown emote ID may crash game)
             """
         },
         new MopAction {
