@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -107,19 +108,30 @@ public static class ArgumentParser {
 
         input = input.Trim();
 
-        // no quote/subcommand treat as a single argument
         if (!input.Contains('"') && !input.Contains('/')) {
+            int spaceCount = input.Count(c => c == ' ');
+            if (spaceCount == 0) {
+                result.Add(input);
+                return result;
+            }
+            if (spaceCount == 1) {
+                // split 2 parts
+                var parts = input.Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                result.AddRange(parts);
+                return result;
+            }
+
+            // 2+ spaces
             result.Add(input);
             return result;
         }
 
-        // Split tokens: quoted or unquoted, preserving quoted sections
+        // Tokenize: quoted or unquoted, preserving quoted sections
+        var rawMatches = Regex.Matches(input, "\"[^\"]*\"|[^ ]+");
         var tokens = new List<string>();
-        var matches = Regex.Matches(input, @"[\""].+?[\""]|[^ ]+");
-
-        foreach (Match m in matches) {
+        foreach (Match m in rawMatches) {
             string token = m.Value;
-            if (token.StartsWith("\"") && token.EndsWith("\""))
+            if (token.StartsWith("\"") && token.EndsWith("\"") && token.Length >= 2)
                 token = token.Substring(1, token.Length - 2);
             tokens.Add(token);
         }
@@ -128,7 +140,8 @@ public static class ArgumentParser {
         int slashIndex = tokens.FindIndex(t => t.StartsWith("/"));
         if (slashIndex != -1) {
             // rebuild original input to preserve quotes
-            var slashMatch = Regex.Matches(input, @"[\""].+?[\""]|[^ ]+")[slashIndex];
+            var matchesCollection = Regex.Matches(input, "\"[^\"]*\"|[^ ]+");
+            var slashMatch = matchesCollection[slashIndex];
             string rest = input.Substring(slashMatch.Index).TrimStart();
 
             tokens = tokens.Take(slashIndex).ToList();

@@ -113,6 +113,7 @@ internal class ChatWatcher : IDisposable {
         var message = $"/p mopstop";
         Chat.SendMessage(message);
     }
+
     private void HandleStopMacroExecution(string[] args, string senderName) {
         Plugin.IpcProvider.StopMacroExecution();
     }

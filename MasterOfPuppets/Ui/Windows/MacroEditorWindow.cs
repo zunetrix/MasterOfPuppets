@@ -241,8 +241,8 @@ public class MacroEditorWindow : Window {
 
     private void DrawCharacterAssignList(int commandIndex) {
         var usedCids = MacroItem.Commands?
-     .SelectMany(c => c.Cids)
-     .ToHashSet() ?? new HashSet<ulong>();
+        .SelectMany(c => c.Cids)
+        .ToHashSet() ?? new HashSet<ulong>();
 
         var availableCharacters = Plugin.Config.Characters
         .Where(character => !usedCids.Contains(character.Cid))

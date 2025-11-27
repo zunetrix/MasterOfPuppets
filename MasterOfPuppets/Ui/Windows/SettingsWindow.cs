@@ -278,7 +278,7 @@ public class SettingsWindow : Window {
 
                 ImGui.TextUnformatted("Chat Command Sender Whitelist");
                 if (ImGui.BeginListBox("##ChatCommandSenderWhitelist", new Vector2(-1, 100))) {
-                    foreach (var senderName in Plugin.Config.ChatCommandSenderWhitelist) {
+                    foreach (var senderName in Plugin.Config.ChatCommandSenderWhitelist.ToList()) {
                         if (ImGui.Selectable(senderName, false)) {
                             if (ImGui.GetIO().KeyCtrl) {
                                 Plugin.Config.ChatCommandSenderWhitelist.Remove(senderName);

@@ -1,10 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+    <!-- Project settings -->
     <PropertyGroup>
         <TargetFramework>net9-windows</TargetFramework>
         <RootNamespace>MasterOfPuppets</RootNamespace>
         <AssemblyName>MasterOfPuppets</AssemblyName>
-        <Version>1.0.0.52</Version>
+        <Version>1.0.0.53</Version>
         <LangVersion>latest</LangVersion>
         <Nullable>disable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -13,8 +14,9 @@
         <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
         <!-- <UseWpf>true</UseWpf> -->
     </PropertyGroup>
+
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
-        <Version>1.0.0.52</Version>
+        <Version>1.0.0.53</Version>
         <DefineConstants>DEBUG</DefineConstants>
         <AssemblyName>MasterOfPuppets</AssemblyName>
     </PropertyGroup>
@@ -39,6 +41,12 @@
         </EmbeddedResource>
     </ItemGroup>
 
+    <!-- Assets -->
+    <!-- <ItemGroup>
+        <Content Include="Assets\**\*.png" CopyToOutputDirectory="Always"/>
+    </ItemGroup> -->
+
+    <!-- NuGet dependencies -->
     <ItemGroup>
         <Reference Include="Dalamud">
             <HintPath>$(DalamudLibPath)\Dalamud.dll</HintPath>
