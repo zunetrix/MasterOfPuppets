@@ -254,50 +254,7 @@ public class MainWindow : Window {
         // align right
         float spacing = ImGui.GetStyle().ItemSpacing.X;
         float buttonWidth = ImGui.GetFrameHeight();
-        // int buttonCount = 6;
         float marginRight = 15f * ImGuiHelpers.GlobalScale;
-        // float totalButtonsWidth = (buttonWidth * buttonCount) + (spacing * (buttonCount - 1)) + marginRight;
-
-        // ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
-        // ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowEmotesBtn", Language.ShowEmotesBtn))
-        // {
-        //     Ui.EmotesWindow.Toggle();
-        // }
-
-        // ImGui.SameLine();
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Umbrella, $"##ShowFashionAccessoriesBtn", Language.ShowFashionAccessoriesBtn))
-        // {
-        //     Ui.FashionAccessoriesWindow.Toggle();
-        // }
-
-        // ImGui.SameLine();
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Glasses, $"##ShowFacewearBtn", Language.ShowFacewearBtn))
-        // {
-        //     Ui.FacewearWindow.Toggle();
-        // }
-
-        // ImGui.SameLine();
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Horse, $"##ShowMountBtn", Language.ShowMountBtn))
-        // {
-        //     Ui.MountWindow.Toggle();
-        // }
-
-        // ImGui.SameLine();
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Cat, $"##ShowMinionBtn", Language.ShowMinionBtn))
-        // {
-        //     Ui.MinionWindow.Toggle();
-        // }
-
-        // ImGui.SameLine();
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##ShowItemBtn", Language.ShowItemBtn))
-        // {
-        //     Ui.ItemWindow.Toggle();
-        // }
-
-        // ImGui.Spacing();
-        // ImGui.Separator();
-        // ImGui.Spacing();
 
         ImGui.TextUnformatted(Language.MacroListTitle);
 

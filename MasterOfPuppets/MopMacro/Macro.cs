@@ -87,7 +87,7 @@ public class Macro {
     public Vector4 Color = new Vector4(1f, 1f, 1f, 1f);
 
     [JsonPropertyName("iconId")]
-    public uint IconId = 60042;
+    public uint IconId = 0;
 
     [JsonPropertyName("commands")]
     public List<Command> Commands;

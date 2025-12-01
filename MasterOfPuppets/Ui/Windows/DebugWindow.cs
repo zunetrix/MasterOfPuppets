@@ -67,6 +67,7 @@ public class DebugWindow : Window {
         DrawPetHotbarDebugTab();
         DrawElementsDebugTab();
         DrawFontAwesomeIconsDebugTab();
+        DrawMacroTreeDebugTab();
 
         ImGui.EndTabBar();
     }
@@ -650,5 +651,59 @@ public class DebugWindow : Window {
         }
 
         ImGui.PopFont();
+    }
+
+    private void DrawMacroTreeDebugTab() {
+        if (ImGui.BeginTabItem($"Macro Tree###DrawMacroTreeDebugTab")) {
+            var tree = BuildTree(Plugin.Config.Macros);
+            DrawFolder(tree);
+
+            ImGui.EndTabItem();
+        }
+    }
+
+    public static MacroFolder BuildTree(List<Macro> macros) {
+        var root = new MacroFolder { Name = "/" };
+
+        foreach (var macro in macros) {
+            var current = root;
+            var parts = macro.Path.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var p in parts) {
+                var next = current.Children.FirstOrDefault(x => x.Name == p);
+                if (next == null) {
+                    next = new MacroFolder { Name = p };
+                    current.Children.Add(next);
+                }
+                current = next;
+            }
+
+            current.Macros.Add(macro);
+        }
+
+        return root;
+    }
+
+    public static void DrawFolder(MacroFolder folder) {
+        bool isRootFolder = folder.Name == "/";
+
+        if (!isRootFolder) {
+            if (!ImGui.TreeNode(folder.Name))
+                return;
+        }
+
+        // subfolders
+        foreach (var child in folder.Children.OrderBy(c => c.Name)) {
+            DrawFolder(child);
+        }
+
+        // macros
+        foreach (var macro in folder.Macros.OrderBy(m => m.Name)) {
+            if (ImGui.Selectable(macro.Name)) {
+                // do click
+            }
+        }
+
+        ImGui.TreePop();
     }
 }

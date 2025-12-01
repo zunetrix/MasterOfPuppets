@@ -67,6 +67,7 @@ public class PluginUi : IDisposable {
     public void Draw() {
         // var player = DalamudApi.Objects.LocalPlayer;
         // if (player == null) return;
+
         WindowSystem.Draw();
     }
 }

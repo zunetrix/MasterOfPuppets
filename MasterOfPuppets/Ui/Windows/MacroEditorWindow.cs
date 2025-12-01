@@ -157,6 +157,7 @@ public class MacroEditorWindow : Window {
         ImGui.BeginGroup();
         {
             DrawMacroIconPicker();
+            ImGuiUtil.ToolTip($"Click to select icon");
         }
         ImGui.EndGroup();
 
