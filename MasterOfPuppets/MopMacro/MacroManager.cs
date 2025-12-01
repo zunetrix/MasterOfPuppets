@@ -35,6 +35,7 @@ public class MacroManager {
             throw new ArgumentException($"A macro named \"{macro.Name}\" already exists");
         }
 
+        macro.NormalizePath();
         macro.SanitizeActions();
         Plugin.Config.Macros.Add(macro);
 
@@ -51,6 +52,7 @@ public class MacroManager {
             throw new ArgumentException($"A macro named \"{macro.Name}\" already exists");
         }
 
+        macro.NormalizePath();
         macro.SanitizeActions();
         Plugin.Config.Macros[macroIdx] = macro;
         Plugin.Config.Save();

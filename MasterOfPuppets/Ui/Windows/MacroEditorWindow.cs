@@ -132,9 +132,45 @@ public class MacroEditorWindow : Window {
             Plugin.IpcProvider.SyncConfiguration();
         }
 
-        ImGui.TextUnformatted(Language.MacroPathLabel);
-        ImGui.Spacing();
-        ImGui.InputText("##MacroPathInput", ref MacroItem.Path);
+        ImGui.BeginGroup();
+        {
+            ImGui.TextUnformatted(Language.MacroPathLabel);
+            ImGui.Spacing();
+            ImGui.InputText("##MacroPathInput", ref MacroItem.Path);
+        }
+        ImGui.EndGroup();
+
+        ImGui.SameLine();
+
+        // folder list
+        var macroFolders = Plugin.Config.Macros
+        .Select(m => m.Path)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(p => p)
+        .ToList();
+
+        float totalWidth = ImGui.GetContentRegionAvail().X;
+        float folderListWidth = totalWidth * 0.6f;
+
+        ImGui.BeginGroup();
+        {
+            ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+            ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
+            ImGui.PushItemWidth(folderListWidth);
+            ImGui.NewLine();
+            if (ImGui.BeginCombo($"##MacroFolderList", "Select folder")) {
+                foreach (var macroFolder in macroFolders) {
+                    if (ImGui.Selectable($"{macroFolder}", false)) {
+                        MacroItem.Path = macroFolder;
+                    }
+                }
+                ImGui.EndCombo();
+            }
+            ImGui.PopItemWidth();
+            ImGui.PopStyleVar();
+            ImGui.PopStyleColor();
+        }
+        ImGui.EndGroup();
 
         ImGui.BeginGroup();
         {
@@ -144,7 +180,7 @@ public class MacroEditorWindow : Window {
             ImGui.ColorEdit4("##MacroColorInput", ref MacroItem.Color, ImGuiColorEditFlags.NoAlpha | ImGuiColorEditFlags.NoLabel);
             ImGui.SameLine();
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetMacroColorBtn", "Reset")) {
-                MacroItem.Color = default;
+                MacroItem.Color = Style.Colors.White;
             }
             ImGui.PopItemWidth();
         }

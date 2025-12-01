@@ -23,6 +23,7 @@ public class MainWindow : Window {
 
     private string _macroSearchString = string.Empty;
     private readonly List<int> MacroListSearchedIndexes = new();
+    private string _selectedFolderPath = "/";
 
     internal MainWindow(Plugin plugin, PluginUi ui) : base(Plugin.Name) {
         Plugin = plugin;
@@ -80,7 +81,8 @@ public class MainWindow : Window {
         ImGui.EndChild();
 
         ImGui.BeginChild("##MopMacroListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawMacrosTable();
+        DrawMacroPanels();
+        // DrawMacrosTable();
         ImGui.EndChild();
 
         ImGui.EndDisabled();
@@ -441,19 +443,99 @@ public class MainWindow : Window {
         ImGui.PopID();
     }
 
-    private void DrawMacrosTable() {
+    // private void DrawMacrosTable() {
+    //     var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
+    //     var noSearchResults = MacroListSearchedIndexes.Count == 0;
+    //     if (isFiltered && noSearchResults) {
+    //         ImGuiUtil.DrawColoredBanner("Nothing found", Style.Colors.Red);
+    //     }
+
+    //     var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
+    //             ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
+    //     var tableColumnCount = 5;
+    //     var itemCount = isFiltered ? MacroListSearchedIndexes.Count : Plugin.Config.Macros.Count;
+
+    //     if (ImGui.BeginTable("##MacrosTable", tableColumnCount, tableFlags)) {
+    //         ImGui.TableSetupColumn("##CheckMacro", ImGuiTableColumnFlags.WidthFixed);
+    //         ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed);
+    //         ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
+    //         ImGui.TableSetupColumn("Macro", ImGuiTableColumnFlags.WidthStretch);
+    //         ImGui.TableSetupColumn("Options", ImGuiTableColumnFlags.WidthFixed);
+
+    //         ImGuiListClipperPtr clipper;
+    //         unsafe {
+    //             clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
+    //         }
+
+    //         clipper.Begin(itemCount);
+
+    //         while (clipper.Step()) {
+    //             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+    //                 if (i >= itemCount) break;
+    //                 int realIndex = isFiltered ? MacroListSearchedIndexes[i] : i;
+    //                 if (realIndex >= Plugin.Config.Macros.Count) continue;
+
+    //                 DrawMacroEntry(realIndex);
+    //             }
+    //         }
+    //         clipper.End();
+    //         ImGui.EndTable();
+    //     }
+
+    //     ImGui.Spacing();
+    //     ImGui.Spacing();
+    //     ImGui.Spacing();
+    // }
+
+    public static MacroFolder BuildMacroTree(List<Macro> macros) {
+        var root = new MacroFolder { Name = "/" };
+
+        foreach (var macro in macros) {
+            var current = root;
+            var parts = macro.Path.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var p in parts) {
+                var next = current.Children.FirstOrDefault(x => x.Name == p);
+                if (next == null) {
+                    next = new MacroFolder { Name = p };
+                    current.Children.Add(next);
+                }
+                current = next;
+            }
+
+            current.Macros.Add(macro);
+        }
+
+        return root;
+    }
+
+    private void DrawMacrosTableFiltered(string folderPath) {
+        // Determine visible macro indexes based on search and folder filter
         var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
-        var noSearchResults = MacroListSearchedIndexes.Count == 0;
-        if (isFiltered && noSearchResults) {
+        var baseIndexes = isFiltered
+            ? MacroListSearchedIndexes.ToList()
+            : Enumerable.Range(0, Plugin.Config.Macros.Count).ToList();
+
+        List<int> visibleIndexes;
+        if (string.IsNullOrEmpty(folderPath) || folderPath == "/") {
+            visibleIndexes = baseIndexes;
+        } else {
+            visibleIndexes = baseIndexes
+                .Where(idx => Plugin.Config.Macros[idx].Path != null &&
+                              Plugin.Config.Macros[idx].Path.StartsWith(folderPath, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        if (isFiltered && visibleIndexes.Count == 0) {
             ImGuiUtil.DrawColoredBanner("Nothing found", Style.Colors.Red);
         }
 
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                 ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 5;
-        var itemCount = isFiltered ? MacroListSearchedIndexes.Count : Plugin.Config.Macros.Count;
+        var itemCount = visibleIndexes.Count;
 
-        if (ImGui.BeginTable("##MacrosTable", tableColumnCount, tableFlags)) {
+        if (ImGui.BeginTable("##MacrosTableFiltered", tableColumnCount, tableFlags)) {
             ImGui.TableSetupColumn("##CheckMacro", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
@@ -470,7 +552,7 @@ public class MainWindow : Window {
             while (clipper.Step()) {
                 for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
                     if (i >= itemCount) break;
-                    int realIndex = isFiltered ? MacroListSearchedIndexes[i] : i;
+                    var realIndex = visibleIndexes[i];
                     if (realIndex >= Plugin.Config.Macros.Count) continue;
 
                     DrawMacroEntry(realIndex);
@@ -483,6 +565,67 @@ public class MainWindow : Window {
         ImGui.Spacing();
         ImGui.Spacing();
         ImGui.Spacing();
+    }
+
+    private void DrawFolder(MacroFolder folder, string currentPath) {
+        foreach (var child in folder.Children.OrderBy(c => c.Name)) {
+            var childPath = (currentPath == "/") ? $"/{child.Name}/" : $"{currentPath}{child.Name}/";
+            var isSelected = _selectedFolderPath == childPath;
+            var hasSubFolders = child.Children != null && child.Children.Count > 0;
+
+            if (isSelected) {
+                ImGui.PushStyleColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered);
+                ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered);
+                ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
+            }
+
+            // Flags: expand on arrow, full width, and mark selected visually
+            var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick | ImGuiTreeNodeFlags.SpanAvailWidth;
+            if (isSelected) flags |= ImGuiTreeNodeFlags.Selected;
+
+            if (hasSubFolders) {
+                // draw folder node (shows arrow). clicking anywhere selects, arrow toggles open
+                var nodeOpened = ImGui.TreeNodeEx($"{child.Name}##{childPath}", flags);
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Left) && !ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
+                    _selectedFolderPath = childPath;
+                }
+
+                if (nodeOpened) {
+                    // subfolders
+                    DrawFolder(child, childPath);
+                    ImGui.TreePop();
+                }
+            } else {
+                // leaf folder (no subfolders)
+                if (ImGui.Selectable($"{child.Name}##{childPath}", isSelected))
+                    _selectedFolderPath = childPath;
+            }
+
+            if (isSelected)
+                ImGui.PopStyleColor(3);
+        }
+    }
+
+    private void DrawMacroPanels() {
+        // left panel fixed width tree
+        var leftWidth = ImGuiHelpers.ScaledVector2(200, -1);
+        ImGui.BeginChild("##MacroTree", leftWidth, true);
+        ImGui.TextUnformatted("Folders");
+        ImGui.Separator();
+
+        if (ImGui.Selectable("All", _selectedFolderPath == "/"))
+            _selectedFolderPath = "/";
+
+        var tree = BuildMacroTree(Plugin.Config.Macros);
+        DrawFolder(tree, "/");
+        ImGui.EndChild();
+
+        ImGui.SameLine();
+
+        // right panel: filtered list
+        ImGui.BeginChild("##MacroList", new Vector2(0, -1), false, ImGuiWindowFlags.HorizontalScrollbar);
+        DrawMacrosTableFiltered(_selectedFolderPath);
+        ImGui.EndChild();
     }
 
     internal void UpdateWindowConfig() {

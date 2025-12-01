@@ -3,6 +3,7 @@ using System.Linq;
 using System.Numerics;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 public class Character {
     [JsonPropertyName("cid")]
@@ -110,6 +111,19 @@ public class Macro {
             IconId = this.IconId,
             Commands = this.Commands.Select(cmd => cmd.CloneWithoutCharacters()).ToList(),
         };
+    }
+
+    public void NormalizePath() {
+        if (string.IsNullOrWhiteSpace(this.Path.Trim())) {
+            this.Path = "/";
+            return;
+        }
+
+        var normalizedPath = this.Path.Replace('\\', '/').Trim();
+        normalizedPath = Regex.Replace(normalizedPath, "/+", "/");
+        if (!normalizedPath.StartsWith("/")) normalizedPath = "/" + normalizedPath;
+        if (!normalizedPath.EndsWith("/")) normalizedPath += "/";
+        this.Path = normalizedPath;
     }
 
     public string[] GetCidActions(ulong cid) =>
