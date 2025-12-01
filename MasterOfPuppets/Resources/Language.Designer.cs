@@ -22,28 +22,23 @@ using System;
 [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
 [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
 [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-internal class Language
-{
+internal class Language {
 
     private static global::System.Resources.ResourceManager resourceMan;
 
     private static global::System.Globalization.CultureInfo resourceCulture;
 
     [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-    internal Language()
-    {
+    internal Language() {
     }
 
     /// <summary>
     ///   Returns the cached ResourceManager instance used by this class.
     /// </summary>
     [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-    internal static global::System.Resources.ResourceManager ResourceManager
-    {
-        get
-        {
-            if (object.ReferenceEquals(resourceMan, null))
-            {
+    internal static global::System.Resources.ResourceManager ResourceManager {
+        get {
+            if (object.ReferenceEquals(resourceMan, null)) {
                 global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MasterOfPuppets.Resources.Language", typeof(Language).Assembly);
                 resourceMan = temp;
             }
@@ -56,14 +51,11 @@ internal class Language
     ///   resource lookups using this strongly typed resource class.
     /// </summary>
     [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-    internal static global::System.Globalization.CultureInfo Culture
-    {
-        get
-        {
+    internal static global::System.Globalization.CultureInfo Culture {
+        get {
             return resourceCulture;
         }
-        set
-        {
+        set {
             resourceCulture = value;
         }
     }
@@ -71,10 +63,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to {0} is not close enough to examine..
     /// </summary>
-    internal static string ExamineErrorToast
-    {
-        get
-        {
+    internal static string ExamineErrorToast {
+        get {
             return ResourceManager.GetString("ExamineErrorToast", resourceCulture);
         }
     }
@@ -82,10 +72,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Click to link, Alt-click to examine, or right click to target..
     /// </summary>
-    internal static string MainHelpExamine
-    {
-        get
-        {
+    internal static string MainHelpExamine {
+        get {
             return ResourceManager.GetString("MainHelpExamine", resourceCulture);
         }
     }
@@ -93,10 +81,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Click to link or right click to target..
     /// </summary>
-    internal static string MainHelpNoExamine
-    {
-        get
-        {
+    internal static string MainHelpNoExamine {
+        get {
             return ResourceManager.GetString("MainHelpNoExamine", resourceCulture);
         }
     }
@@ -104,10 +90,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Targeting you.
     /// </summary>
-    internal static string MainTargetingYou
-    {
-        get
-        {
+    internal static string MainTargetingYou {
+        get {
             return ResourceManager.GetString("MainTargetingYou", resourceCulture);
         }
     }
@@ -115,10 +99,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Poll frequency in milliseconds.
     /// </summary>
-    internal static string SettingsAdvancedPollFrequency
-    {
-        get
-        {
+    internal static string SettingsAdvancedPollFrequency {
+        get {
             return ResourceManager.GetString("SettingsAdvancedPollFrequency", resourceCulture);
         }
     }
@@ -126,10 +108,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Advanced.
     /// </summary>
-    internal static string SettingsAdvancedTab
-    {
-        get
-        {
+    internal static string SettingsAdvancedTab {
+        get {
             return ResourceManager.GetString("SettingsAdvancedTab", resourceCulture);
         }
     }
@@ -137,10 +117,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Open examine window on Alt-click.
     /// </summary>
-    internal static string SettingsBehaviourExamineEnabled
-    {
-        get
-        {
+    internal static string SettingsBehaviourExamineEnabled {
+        get {
             return ResourceManager.GetString("SettingsBehaviourExamineEnabled", resourceCulture);
         }
     }
@@ -148,10 +126,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Focus target on hover.
     /// </summary>
-    internal static string SettingsBehaviourFocusHover
-    {
-        get
-        {
+    internal static string SettingsBehaviourFocusHover {
+        get {
             return ResourceManager.GetString("SettingsBehaviourFocusHover", resourceCulture);
         }
     }
@@ -159,10 +135,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Behaviour.
     /// </summary>
-    internal static string SettingsBehaviourTab
-    {
-        get
-        {
+    internal static string SettingsBehaviourTab {
+        get {
             return ResourceManager.GetString("SettingsBehaviourTab", resourceCulture);
         }
     }
@@ -170,10 +144,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Log alliance members.
     /// </summary>
-    internal static string SettingsFilterLogAlliance
-    {
-        get
-        {
+    internal static string SettingsFilterLogAlliance {
+        get {
             return ResourceManager.GetString("SettingsFilterLogAlliance", resourceCulture);
         }
     }
@@ -181,10 +153,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Log targeters engaged in combat.
     /// </summary>
-    internal static string SettingsFilterLogCombat
-    {
-        get
-        {
+    internal static string SettingsFilterLogCombat {
+        get {
             return ResourceManager.GetString("SettingsFilterLogCombat", resourceCulture);
         }
     }
@@ -192,10 +162,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Log party members.
     /// </summary>
-    internal static string SettingsFilterLogParty
-    {
-        get
-        {
+    internal static string SettingsFilterLogParty {
+        get {
             return ResourceManager.GetString("SettingsFilterLogParty", resourceCulture);
         }
     }
@@ -203,10 +171,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Log yourself.
     /// </summary>
-    internal static string SettingsFilterLogSelf
-    {
-        get
-        {
+    internal static string SettingsFilterLogSelf {
+        get {
             return ResourceManager.GetString("SettingsFilterLogSelf", resourceCulture);
         }
     }
@@ -214,10 +180,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Filters.
     /// </summary>
-    internal static string SettingsFilterTab
-    {
-        get
-        {
+    internal static string SettingsFilterTab {
+        get {
             return ResourceManager.GetString("SettingsFilterTab", resourceCulture);
         }
     }
@@ -225,10 +189,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Number of previous targeters to keep.
     /// </summary>
-    internal static string SettingsHistoryAmount
-    {
-        get
-        {
+    internal static string SettingsHistoryAmount {
+        get {
             return ResourceManager.GetString("SettingsHistoryAmount", resourceCulture);
         }
     }
@@ -236,10 +198,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Show previous targeters.
     /// </summary>
-    internal static string SettingsHistoryEnabled
-    {
-        get
-        {
+    internal static string SettingsHistoryEnabled {
+        get {
             return ResourceManager.GetString("SettingsHistoryEnabled", resourceCulture);
         }
     }
@@ -247,10 +207,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Record history when window is closed.
     /// </summary>
-    internal static string SettingsHistoryRecordClosed
-    {
-        get
-        {
+    internal static string SettingsHistoryRecordClosed {
+        get {
             return ResourceManager.GetString("SettingsHistoryRecordClosed", resourceCulture);
         }
     }
@@ -258,10 +216,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to History.
     /// </summary>
-    internal static string SettingsHistoryTab
-    {
-        get
-        {
+    internal static string SettingsHistoryTab {
+        get {
             return ResourceManager.GetString("SettingsHistoryTab", resourceCulture);
         }
     }
@@ -269,10 +225,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Show timestamps.
     /// </summary>
-    internal static string SettingsHistoryTimestamps
-    {
-        get
-        {
+    internal static string SettingsHistoryTimestamps {
+        get {
             return ResourceManager.GetString("SettingsHistoryTimestamps", resourceCulture);
         }
     }
@@ -280,10 +234,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Mark your target.
     /// </summary>
-    internal static string SettingsMarkersMarkTarget
-    {
-        get
-        {
+    internal static string SettingsMarkersMarkTarget {
+        get {
             return ResourceManager.GetString("SettingsMarkersMarkTarget", resourceCulture);
         }
     }
@@ -291,10 +243,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Target mark colour.
     /// </summary>
-    internal static string SettingsMarkersMarkTargetColour
-    {
-        get
-        {
+    internal static string SettingsMarkersMarkTargetColour {
+        get {
             return ResourceManager.GetString("SettingsMarkersMarkTargetColour", resourceCulture);
         }
     }
@@ -302,10 +252,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Mark targeting you.
     /// </summary>
-    internal static string SettingsMarkersMarkTargeting
-    {
-        get
-        {
+    internal static string SettingsMarkersMarkTargeting {
+        get {
             return ResourceManager.GetString("SettingsMarkersMarkTargeting", resourceCulture);
         }
     }
@@ -313,10 +261,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Targeting mark colour.
     /// </summary>
-    internal static string SettingsMarkersMarkTargetingColour
-    {
-        get
-        {
+    internal static string SettingsMarkersMarkTargetingColour {
+        get {
             return ResourceManager.GetString("SettingsMarkersMarkTargetingColour", resourceCulture);
         }
     }
@@ -324,10 +270,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Targeting mark size.
     /// </summary>
-    internal static string SettingsMarkersMarkTargetingSize
-    {
-        get
-        {
+    internal static string SettingsMarkersMarkTargetingSize {
+        get {
             return ResourceManager.GetString("SettingsMarkersMarkTargetingSize", resourceCulture);
         }
     }
@@ -335,10 +279,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Target mark size.
     /// </summary>
-    internal static string SettingsMarkersMarkTargetSize
-    {
-        get
-        {
+    internal static string SettingsMarkersMarkTargetSize {
+        get {
             return ResourceManager.GetString("SettingsMarkersMarkTargetSize", resourceCulture);
         }
     }
@@ -346,10 +288,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Markers.
     /// </summary>
-    internal static string SettingsMarkersTab
-    {
-        get
-        {
+    internal static string SettingsMarkersTab {
+        get {
             return ResourceManager.GetString("SettingsMarkersTab", resourceCulture);
         }
     }
@@ -357,10 +297,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Cooldown for sound (seconds).
     /// </summary>
-    internal static string SettingsSoundCooldown
-    {
-        get
-        {
+    internal static string SettingsSoundCooldown {
+        get {
             return ResourceManager.GetString("SettingsSoundCooldown", resourceCulture);
         }
     }
@@ -368,10 +306,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Default.
     /// </summary>
-    internal static string SettingsSoundDefaultDevice
-    {
-        get
-        {
+    internal static string SettingsSoundDefaultDevice {
+        get {
             return ResourceManager.GetString("SettingsSoundDefaultDevice", resourceCulture);
         }
     }
@@ -379,10 +315,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Play sound when targeted.
     /// </summary>
-    internal static string SettingsSoundEnabled
-    {
-        get
-        {
+    internal static string SettingsSoundEnabled {
+        get {
             return ResourceManager.GetString("SettingsSoundEnabled", resourceCulture);
         }
     }
@@ -390,10 +324,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Invalid device.
     /// </summary>
-    internal static string SettingsSoundInvalidDevice
-    {
-        get
-        {
+    internal static string SettingsSoundInvalidDevice {
+        get {
             return ResourceManager.GetString("SettingsSoundInvalidDevice", resourceCulture);
         }
     }
@@ -401,10 +333,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Output device.
     /// </summary>
-    internal static string SettingsSoundOutputDevice
-    {
-        get
-        {
+    internal static string SettingsSoundOutputDevice {
+        get {
             return ResourceManager.GetString("SettingsSoundOutputDevice", resourceCulture);
         }
     }
@@ -412,10 +342,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Path to audio file.
     /// </summary>
-    internal static string SettingsSoundPath
-    {
-        get
-        {
+    internal static string SettingsSoundPath {
+        get {
             return ResourceManager.GetString("SettingsSoundPath", resourceCulture);
         }
     }
@@ -423,10 +351,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Leave this blank to use a built-in sound..
     /// </summary>
-    internal static string SettingsSoundPathHelp
-    {
-        get
-        {
+    internal static string SettingsSoundPathHelp {
+        get {
             return ResourceManager.GetString("SettingsSoundPathHelp", resourceCulture);
         }
     }
@@ -434,10 +360,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Play sound when window is closed.
     /// </summary>
-    internal static string SettingsSoundPlayWhenClosed
-    {
-        get
-        {
+    internal static string SettingsSoundPlayWhenClosed {
+        get {
             return ResourceManager.GetString("SettingsSoundPlayWhenClosed", resourceCulture);
         }
     }
@@ -445,10 +369,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Sound.
     /// </summary>
-    internal static string SettingsSoundTab
-    {
-        get
-        {
+    internal static string SettingsSoundTab {
+        get {
             return ResourceManager.GetString("SettingsSoundTab", resourceCulture);
         }
     }
@@ -456,10 +378,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Volume of sound.
     /// </summary>
-    internal static string SettingsSoundVolume
-    {
-        get
-        {
+    internal static string SettingsSoundVolume {
+        get {
             return ResourceManager.GetString("SettingsSoundVolume", resourceCulture);
         }
     }
@@ -469,10 +389,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Allow closing the main window with the escape key.
     /// </summary>
-    internal static string SettingsWindowAllowCloseWithEscape
-    {
-        get
-        {
+    internal static string SettingsWindowAllowCloseWithEscape {
+        get {
             return ResourceManager.GetString("SettingsWindowAllowCloseWithEscape", resourceCulture);
         }
     }
@@ -480,10 +398,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Allow moving the main window.
     /// </summary>
-    internal static string SettingsWindowAllowMovement
-    {
-        get
-        {
+    internal static string SettingsWindowAllowMovement {
+        get {
             return ResourceManager.GetString("SettingsWindowAllowMovement", resourceCulture);
         }
     }
@@ -491,10 +407,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Allow resizing the main window.
     /// </summary>
-    internal static string SettingsWindowAllowResize
-    {
-        get
-        {
+    internal static string SettingsWindowAllowResize {
+        get {
             return ResourceManager.GetString("SettingsWindowAllowResize", resourceCulture);
         }
     }
@@ -502,10 +416,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Open on login.
     /// </summary>
-    internal static string SettingsWindowOpenLogin
-    {
-        get
-        {
+    internal static string SettingsWindowOpenLogin {
+        get {
             return ResourceManager.GetString("SettingsWindowOpenLogin", resourceCulture);
         }
     }
@@ -513,10 +425,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Show window while in combat.
     /// </summary>
-    internal static string SettingsWindowShowCombat
-    {
-        get
-        {
+    internal static string SettingsWindowShowCombat {
+        get {
             return ResourceManager.GetString("SettingsWindowShowCombat", resourceCulture);
         }
     }
@@ -524,10 +434,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Show settings button.
     /// </summary>
-    internal static string SettingsWindowShowConfigButton
-    {
-        get
-        {
+    internal static string SettingsWindowShowConfigButton {
+        get {
             return ResourceManager.GetString("SettingsWindowShowConfigButton", resourceCulture);
         }
     }
@@ -535,10 +443,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Show window while in cutscenes.
     /// </summary>
-    internal static string SettingsWindowShowCutscene
-    {
-        get
-        {
+    internal static string SettingsWindowShowCutscene {
+        get {
             return ResourceManager.GetString("SettingsWindowShowCutscene", resourceCulture);
         }
     }
@@ -546,10 +452,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Show window while in instance.
     /// </summary>
-    internal static string SettingsWindowShowInstance
-    {
-        get
-        {
+    internal static string SettingsWindowShowInstance {
+        get {
             return ResourceManager.GetString("SettingsWindowShowInstance", resourceCulture);
         }
     }
@@ -557,10 +461,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Window.
     /// </summary>
-    internal static string SettingsWindowTab
-    {
-        get
-        {
+    internal static string SettingsWindowTab {
+        get {
             return ResourceManager.GetString("SettingsWindowTab", resourceCulture);
         }
     }
@@ -568,10 +470,8 @@ internal class Language
     /// <summary>
     ///   Looks up a localized string similar to Could not play sound file: {0}.
     /// </summary>
-    internal static string SoundChatError
-    {
-        get
-        {
+    internal static string SoundChatError {
+        get {
             return ResourceManager.GetString("SoundChatError", resourceCulture);
         }
     }
@@ -581,381 +481,288 @@ internal class Language
 
 
 
-    internal static string SettingsTitle
-    {
-        get
-        {
+    internal static string SettingsTitle {
+        get {
             return ResourceManager.GetString("SettingsTitle", resourceCulture);
         }
     }
-    internal static string MacroEditorTitle
-    {
-        get
-        {
+    internal static string MacroEditorTitle {
+        get {
             return ResourceManager.GetString("MacroEditorTitle", resourceCulture);
         }
     }
-    internal static string AddMacroBtn
-    {
-        get
-        {
+    internal static string AddMacroBtn {
+        get {
             return ResourceManager.GetString("AddMacroBtn", resourceCulture);
         }
     }
-    internal static string EditMacroBtn
-    {
-        get
-        {
+    internal static string EditMacroBtn {
+        get {
             return ResourceManager.GetString("EditMacroBtn", resourceCulture);
         }
     }
-    internal static string DeleteInstructionTooltip
-    {
-        get
-        {
+    internal static string DeleteInstructionTooltip {
+        get {
             return ResourceManager.GetString("DeleteInstructionTooltip", resourceCulture);
         }
     }
-    internal static string DeleteSelectedMacrosBtn
-    {
-        get
-        {
+    internal static string DeleteSelectedMacrosBtn {
+        get {
             return ResourceManager.GetString("DeleteSelectedMacrosBtn", resourceCulture);
         }
     }
-    internal static string SaveMacroBtn
-    {
-        get
-        {
+    internal static string SaveMacroBtn {
+        get {
             return ResourceManager.GetString("SaveMacroBtn", resourceCulture);
         }
     }
-    internal static string RunMacroBtn
-    {
-        get
-        {
+    internal static string RunMacroBtn {
+        get {
             return ResourceManager.GetString("RunMacroBtn", resourceCulture);
         }
     }
-    internal static string MacroTextInputLabel
-    {
-        get
-        {
+    internal static string MacroTextInputLabel {
+        get {
             return ResourceManager.GetString("MacroTextInputLabel", resourceCulture);
         }
     }
-    internal static string CharactersLabel
-    {
-        get
-        {
+    internal static string CharactersLabel {
+        get {
             return ResourceManager.GetString("CharactersLabel", resourceCulture);
         }
     }
-    internal static string MacroListTitle
-    {
-        get
-        {
+    internal static string MacroListTitle {
+        get {
             return ResourceManager.GetString("MacroListTitle", resourceCulture);
         }
     }
-    internal static string MacroNameLabel
-    {
-        get
-        {
+    internal static string MacroNameLabel {
+        get {
             return ResourceManager.GetString("MacroNameLabel", resourceCulture);
         }
     }
-    internal static string SettingsWindowOpenOnStartup
-    {
-        get
-        {
+    internal static string MacroColorLabel {
+        get {
+            return ResourceManager.GetString("MacroColorLabel", resourceCulture);
+        }
+    }
+    internal static string MacroPathLabel {
+        get {
+            return ResourceManager.GetString("MacroPathLabel", resourceCulture);
+        }
+    }
+    internal static string MacroIconLabel {
+        get {
+            return ResourceManager.GetString("MacroIconLabel", resourceCulture);
+        }
+    }
+    internal static string SettingsWindowOpenOnStartup {
+        get {
             return ResourceManager.GetString("SettingsWindowOpenOnStartup", resourceCulture);
         }
     }
-    internal static string SettingsGeneralTab
-    {
-        get
-        {
+    internal static string SettingsGeneralTab {
+        get {
             return ResourceManager.GetString("SettingsGeneralTab", resourceCulture);
         }
     }
-    internal static string CloneMacroBtn
-    {
-        get
-        {
+    internal static string CloneMacroBtn {
+        get {
             return ResourceManager.GetString("CloneMacroBtn", resourceCulture);
         }
     }
-    internal static string StopMacroExecutionBtn
-    {
-        get
-        {
+    internal static string StopMacroExecutionBtn {
+        get {
             return ResourceManager.GetString("StopMacroExecutionBtn", resourceCulture);
         }
     }
-    internal static string MacroSearchInputLabel
-    {
-        get
-        {
+    internal static string MacroSearchInputLabel {
+        get {
             return ResourceManager.GetString("MacroSearchInputLabel", resourceCulture);
         }
     }
-    internal static string SearchInputLabel
-    {
-        get
-        {
+    internal static string SearchInputLabel {
+        get {
             return ResourceManager.GetString("SearchInputLabel", resourceCulture);
         }
     }
-    internal static string ShowMacroQueueBtn
-    {
-        get
-        {
+    internal static string ShowMacroQueueBtn {
+        get {
             return ResourceManager.GetString("ShowMacroQueueBtn", resourceCulture);
         }
     }
-    internal static string ShowEmotesBtn
-    {
-        get
-        {
+    internal static string ShowEmotesBtn {
+        get {
             return ResourceManager.GetString("ShowEmotesBtn", resourceCulture);
         }
     }
-    internal static string EmotesTitle
-    {
-        get
-        {
+    internal static string EmotesTitle {
+        get {
             return ResourceManager.GetString("EmotesTitle", resourceCulture);
         }
     }
-    internal static string MacroQueueTitle
-    {
-        get
-        {
+    internal static string MacroQueueTitle {
+        get {
             return ResourceManager.GetString("MacroQueueTitle", resourceCulture);
         }
     }
-    internal static string MacroImportExportTitle
-    {
-        get
-        {
+    internal static string MacroImportExportTitle {
+        get {
             return ResourceManager.GetString("MacroImportExportTitle", resourceCulture);
         }
     }
-    internal static string ShowCharactersBtn
-    {
-        get
-        {
+    internal static string ShowCharactersBtn {
+        get {
             return ResourceManager.GetString("ShowCharactersBtn", resourceCulture);
         }
     }
-    internal static string SettingsWindowSaveConfigAfterSync
-    {
-        get
-        {
+    internal static string SettingsWindowSaveConfigAfterSync {
+        get {
             return ResourceManager.GetString("SettingsWindowSaveConfigAfterSync", resourceCulture);
         }
     }
-    internal static string SettingsWindowSyncClients
-    {
-        get
-        {
+    internal static string SettingsWindowSyncClients {
+        get {
             return ResourceManager.GetString("SettingsWindowSyncClients", resourceCulture);
         }
     }
-    internal static string SettingsGameSettingsTab
-    {
-        get
-        {
+    internal static string SettingsGameSettingsTab {
+        get {
             return ResourceManager.GetString("SettingsGameSettingsTab", resourceCulture);
         }
     }
-    internal static string FashionAccessoriesTitle
-    {
-        get
-        {
+    internal static string FashionAccessoriesTitle {
+        get {
             return ResourceManager.GetString("FashionAccessoriesTitle", resourceCulture);
         }
     }
-    internal static string FacewearTitle
-    {
-        get
-        {
+    internal static string FacewearTitle {
+        get {
             return ResourceManager.GetString("FacewearTitle", resourceCulture);
         }
     }
-    internal static string MountTitle
-    {
-        get
-        {
+    internal static string MountTitle {
+        get {
             return ResourceManager.GetString("MountTitle", resourceCulture);
         }
     }
-    internal static string ShowFashionAccessoriesBtn
-    {
-        get
-        {
+    internal static string ShowFashionAccessoriesBtn {
+        get {
             return ResourceManager.GetString("ShowFashionAccessoriesBtn", resourceCulture);
         }
     }
-    internal static string ShowFacewearBtn
-    {
-        get
-        {
+    internal static string ShowFacewearBtn {
+        get {
             return ResourceManager.GetString("ShowFacewearBtn", resourceCulture);
         }
     }
-    internal static string ShowMountBtn
-    {
-        get
-        {
+    internal static string ShowMountBtn {
+        get {
             return ResourceManager.GetString("ShowMountBtn", resourceCulture);
         }
     }
-    internal static string GroupsLabel
-    {
-        get
-        {
+    internal static string GroupsLabel {
+        get {
             return ResourceManager.GetString("GroupsLabel", resourceCulture);
         }
     }
-    internal static string MinionTitle
-    {
-        get
-        {
+    internal static string MinionTitle {
+        get {
             return ResourceManager.GetString("MinionTitle", resourceCulture);
         }
     }
-    internal static string ShowMinionBtn
-    {
-        get
-        {
+    internal static string ShowMinionBtn {
+        get {
             return ResourceManager.GetString("ShowMinionBtn", resourceCulture);
         }
     }
-    internal static string ShowItemBtn
-    {
-        get
-        {
+    internal static string ShowItemBtn {
+        get {
             return ResourceManager.GetString("ShowItemBtn", resourceCulture);
         }
     }
-    internal static string ItemTitle
-    {
-        get
-        {
+    internal static string ItemTitle {
+        get {
             return ResourceManager.GetString("ItemTitle", resourceCulture);
         }
     }
-    internal static string ShowMacroHelpBtn
-    {
-        get
-        {
+    internal static string ShowMacroHelpBtn {
+        get {
             return ResourceManager.GetString("ShowMacroHelpBtn", resourceCulture);
         }
     }
-    internal static string ActionsTitle
-    {
-        get
-        {
+    internal static string ActionsTitle {
+        get {
             return ResourceManager.GetString("ActionsTitle", resourceCulture);
         }
     }
-    internal static string OpenPluginFolder
-    {
-        get
-        {
+    internal static string OpenPluginFolder {
+        get {
             return ResourceManager.GetString("OpenPluginFolder", resourceCulture);
         }
     }
-    internal static string OpenPluginConfigFile
-    {
-        get
-        {
+    internal static string OpenPluginConfigFile {
+        get {
             return ResourceManager.GetString("OpenPluginConfigFile", resourceCulture);
         }
     }
-    internal static string SettingsWindowUseChatSync
-    {
-        get
-        {
+    internal static string SettingsWindowUseChatSync {
+        get {
             return ResourceManager.GetString("SettingsWindowUseChatSync", resourceCulture);
         }
     }
-    internal static string SettingsChatSyncTab
-    {
-        get
-        {
+    internal static string SettingsChatSyncTab {
+        get {
             return ResourceManager.GetString("SettingsChatSyncTab", resourceCulture);
         }
     }
-    internal static string ExportMacroBtn
-    {
-        get
-        {
+    internal static string ExportMacroBtn {
+        get {
             return ResourceManager.GetString("ExportMacroBtn", resourceCulture);
         }
     }
-    internal static string ImportMacroBtn
-    {
-        get
-        {
+    internal static string ImportMacroBtn {
+        get {
             return ResourceManager.GetString("ImportMacroBtn", resourceCulture);
         }
     }
-    internal static string SettingsWindowUseChatCommandSenderWhitelist
-    {
-        get
-        {
+    internal static string SettingsWindowUseChatCommandSenderWhitelist {
+        get {
             return ResourceManager.GetString("SettingsWindowUseChatCommandSenderWhitelist", resourceCulture);
         }
     }
-    internal static string ClipboardCopyMessage
-    {
-        get
-        {
+    internal static string ClipboardCopyMessage {
+        get {
             return ResourceManager.GetString("ClipboardCopyMessage", resourceCulture);
         }
     }
-    internal static string RemoveAllBtn
-    {
-        get
-        {
+    internal static string RemoveAllBtn {
+        get {
             return ResourceManager.GetString("RemoveAllBtn", resourceCulture);
         }
     }
-    internal static string SettingsWindowAutoSaveMacro
-    {
-        get
-        {
+    internal static string SettingsWindowAutoSaveMacro {
+        get {
             return ResourceManager.GetString("SettingsWindowAutoSaveMacro", resourceCulture);
         }
     }
-    internal static string DismissBtn
-    {
-        get
-        {
+    internal static string DismissBtn {
+        get {
             return ResourceManager.GetString("DismissBtn", resourceCulture);
         }
     }
-    internal static string ClickToExecute
-    {
-        get
-        {
+    internal static string ClickToExecute {
+        get {
             return ResourceManager.GetString("ClickToExecute", resourceCulture);
         }
     }
-    internal static string ClickToCopy
-    {
-        get
-        {
+    internal static string ClickToCopy {
+        get {
             return ResourceManager.GetString("ClickToCopy", resourceCulture);
         }
     }
-    internal static string MacroExportPath
-    {
-        get
-        {
+    internal static string MacroExportPath {
+        get {
             return ResourceManager.GetString("MacroExportPath", resourceCulture);
         }
     }

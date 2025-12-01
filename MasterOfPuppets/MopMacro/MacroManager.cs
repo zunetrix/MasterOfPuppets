@@ -53,7 +53,6 @@ public class MacroManager {
 
         macro.SanitizeActions();
         Plugin.Config.Macros[macroIdx] = macro;
-
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();
     }

@@ -21,7 +21,7 @@ public static class TargetManager {
                 // find target by name
                 IGameObject closestMatch = null;
                 var closestDistance = float.MaxValue;
-                var player = DalamudApi.ClientState.LocalPlayer;
+                var player = DalamudApi.Objects.LocalPlayer;
                 if (player == null) return;
 
                 foreach (var actor in DalamudApi.Objects) {
@@ -57,7 +57,7 @@ public static class TargetManager {
                 // find target by object id
                 IGameObject closestMatch = null;
                 var closestDistance = float.MaxValue;
-                var player = DalamudApi.ClientState.LocalPlayer;
+                var player = DalamudApi.Objects.LocalPlayer;
                 if (player == null) return;
 
                 foreach (var actor in DalamudApi.Objects) {
@@ -96,7 +96,7 @@ public static class TargetManager {
                 // find target by name
                 IGameObject closestMatch = null;
                 var closestDistance = float.MaxValue;
-                var player = DalamudApi.ClientState.LocalPlayer;
+                var player = DalamudApi.Objects.LocalPlayer;
                 if (player == null) return;
 
                 // foreach (var assistActor in DalamudApi.Objects.Where(o => o.ObjectKind == ObjectKind.Player))
@@ -133,7 +133,7 @@ public static class TargetManager {
                 if (closestMatch == null) return;
                 if (closestMatch.TargetObject == null
                     || !((GameObjectStruct*)closestMatch.TargetObject.Address)->GetIsTargetable()
-                    // || closestMatch.TargetObjectId == DalamudApi.ClientState.LocalPlayer.GameObjectId
+                    // || closestMatch.TargetObjectId == DalamudApi.Objects.LocalPlayer.GameObjectId
                     ) {
                     return;
                 }
@@ -146,7 +146,7 @@ public static class TargetManager {
         }
     }
 
-    public static unsafe void TargetClear() {
+    public static void TargetClear() {
         try {
             DalamudApi.Framework.RunOnFrameworkThread(delegate {
                 DalamudApi.Targets.Target = null;

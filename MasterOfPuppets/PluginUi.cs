@@ -4,7 +4,7 @@ using Dalamud.Interface.Windowing;
 
 namespace MasterOfPuppets;
 
-internal class PluginUi : IDisposable {
+public class PluginUi : IDisposable {
     private Plugin Plugin { get; }
 
     private WindowSystem WindowSystem { get; } = new();
@@ -29,7 +29,7 @@ internal class PluginUi : IDisposable {
 
         MainWindow = new MainWindow(Plugin, this);
         SettingsWindow = new SettingsWindow(Plugin);
-        MacroEditorWindow = new MacroEditorWindow(Plugin);
+        MacroEditorWindow = new MacroEditorWindow(Plugin, this);
         MacroQueueWindow = new MacroQueueWindow(Plugin);
         CharactersWindow = new CharactersWindow(Plugin);
         EmotesWindow = new EmotesWindow(Plugin);
@@ -42,7 +42,6 @@ internal class PluginUi : IDisposable {
         MacroImportExportWindow = new MacroImportExportWindow(Plugin);
         IconPickerDialogWindow = new IconPickerDialogWindow();
         DebugWindow = new DebugWindow(Plugin, this);
-
 
         WindowSystem.AddWindow(MainWindow);
         WindowSystem.AddWindow(SettingsWindow);
@@ -66,9 +65,8 @@ internal class PluginUi : IDisposable {
     }
 
     public void Draw() {
-        var player = DalamudApi.ClientState.LocalPlayer;
-        if (player == null) return;
-
+        // var player = DalamudApi.Objects.LocalPlayer;
+        // if (player == null) return;
         WindowSystem.Draw();
     }
 }

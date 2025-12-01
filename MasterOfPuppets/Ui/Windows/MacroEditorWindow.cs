@@ -10,6 +10,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Extensions;
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -17,6 +18,7 @@ namespace MasterOfPuppets;
 
 public class MacroEditorWindow : Window {
     private Plugin Plugin { get; }
+    private PluginUi Ui { get; }
     private Macro MacroItem = new() { Commands = new List<Command>() };
     private int MacroIndex;
     private int SelectedCommandIndex = 0;
@@ -24,13 +26,14 @@ public class MacroEditorWindow : Window {
     private readonly ImGuiInputTextMultiline InputTextMultiline;
     private readonly ImGuiModalDialog ImGuiModalDialog = new("##MacroEditorModalDialog");
 
-    public MacroEditorWindow(Plugin plugin) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow") {
+    public MacroEditorWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow") {
         Plugin = plugin;
+        Ui = ui;
         InputTextMultiline = new ImGuiInputTextMultiline(plugin);
 
-        Size = ImGuiHelpers.ScaledVector2(650, 600);
-        SizeCondition = ImGuiCond.FirstUseEver;
-        // SizeCondition = ImGuiCond.Always;
+        Size = ImGuiHelpers.ScaledVector2(650, 700);
+        // SizeCondition = ImGuiCond.FirstUseEver;
+        SizeCondition = ImGuiCond.Always;
         Flags = ImGuiWindowFlags.NoResize;
     }
 
@@ -93,10 +96,11 @@ public class MacroEditorWindow : Window {
             return false;
         }
     }
+
     public override void Draw() {
         ImGuiModalDialog.Draw();
 
-        ImGui.BeginChild("##MacroEditorHeaderFixedHeight", ImGuiHelpers.ScaledVector2(-1, 90), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginChild("##MacroEditorHeaderFixedHeight", ImGuiHelpers.ScaledVector2(-1, 200), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         DrawHeader();
         ImGui.EndChild();
 
@@ -107,7 +111,7 @@ public class MacroEditorWindow : Window {
 
     private void DrawHeader() {
         ImGui.Text(Language.MacroNameLabel);
-        ImGui.InputText("##InputMacroName", ref MacroItem.Name);
+        ImGui.InputText("##MacroNameInput", ref MacroItem.Name);
 
         ImGui.SameLine();
         ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonSuccessnNormal);
@@ -127,6 +131,34 @@ public class MacroEditorWindow : Window {
             Plugin.Config.AutoSaveMacro = autoSaveMacro;
             Plugin.IpcProvider.SyncConfiguration();
         }
+
+        ImGui.TextUnformatted(Language.MacroPathLabel);
+        ImGui.Spacing();
+        ImGui.InputText("##MacroPathInput", ref MacroItem.Path);
+
+        ImGui.BeginGroup();
+        {
+            ImGui.Spacing();
+            ImGui.TextUnformatted(Language.MacroColorLabel);
+            ImGui.PushItemWidth(300);
+            ImGui.ColorEdit4("##MacroColorInput", ref MacroItem.Color, ImGuiColorEditFlags.NoAlpha | ImGuiColorEditFlags.NoLabel);
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetMacroColorBtn", "Reset")) {
+                MacroItem.Color = default;
+            }
+            ImGui.PopItemWidth();
+        }
+        ImGui.EndGroup();
+
+        ImGui.SameLine();
+        ImGui.Dummy(ImGuiHelpers.ScaledVector2(20));
+        ImGui.SameLine();
+
+        ImGui.BeginGroup();
+        {
+            DrawMacroIconPicker();
+        }
+        ImGui.EndGroup();
 
         ImGui.Spacing();
         ImGui.Separator();
@@ -369,5 +401,29 @@ public class MacroEditorWindow : Window {
 
         ImGui.EndChild();
         ImGui.EndGroup();
+    }
+
+    private void DrawMacroIconPicker() {
+        ImGui.TextUnformatted(Language.MacroIconLabel);
+        var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
+        // uint undefinedIconId = 60042;
+        // var icon = DalamudApi.TextureProvider.GetFromGameIcon(MacroItem.IconId).GetWrapOrEmpty().Handle;
+        var icon = DalamudApi.TextureProvider.GetMacroIcon(MacroItem.IconId).GetWrapOrEmpty().Handle;
+        // ImGui.Image(icon, iconSize);
+
+        var drawList = ImGui.GetWindowDrawList();
+        Vector2 pos = ImGui.GetCursorScreenPos();
+        Vector2 size = iconSize;
+        ImGui.Image(icon, size);
+        uint borderColor = ImGui.ColorConvertFloat4ToU32(Style.Components.TooltipBorderColor);
+        float thickness = 1f;
+        drawList.AddRect(pos, pos + size, borderColor, 0f, ImDrawFlags.None, thickness);
+
+        if (ImGui.IsItemClicked()) {
+            Ui.IconPickerDialogWindow.Open(MacroItem.IconId, (selectedIconId) => {
+                MacroItem.IconId = selectedIconId;
+                // DalamudApi.PluginLog.Debug($"selectedIconId: {selectedIconId}");
+            });
+        }
     }
 }

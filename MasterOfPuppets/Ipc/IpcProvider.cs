@@ -114,9 +114,9 @@ internal class IpcProvider : IDisposable {
     }
 
     public void ExecuteTargetMyTarget() {
-        if (DalamudApi.ClientState.LocalPlayer == null) return;
-        // string asssistCharacterName = DalamudApi.ClientState.LocalPlayer.Name.TextValue;
-        var assitTargetObjectId = DalamudApi.ClientState.LocalPlayer.TargetObjectId;
+        if (DalamudApi.Objects.LocalPlayer == null) return;
+        // string asssistCharacterName = DalamudApi.Player.CharacterName;
+        var assitTargetObjectId = DalamudApi.Objects.LocalPlayer.TargetObjectId;
         if (assitTargetObjectId == 0) return;
 
         var message = IpcMessage.Create(IpcMessageType.ExecuteTargetMyTarget, assitTargetObjectId).Serialize();

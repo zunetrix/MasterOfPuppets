@@ -7,11 +7,11 @@ using Dalamud.Utility;
 namespace MasterOfPuppets.Extensions.Dalamud;
 
 public static class PartyListExt {
-    public static IPartyMember? GetMeAsPartyMember(this IPartyList partyList) => partyList.IsInParty() ? partyList.FirstOrDefault(i => i.ContentId == (long)DalamudApi.ClientState.LocalContentId) : null;
+    public static IPartyMember? GetMeAsPartyMember(this IPartyList partyList) => partyList.IsInParty() ? partyList.FirstOrDefault(i => i.ContentId == (long)DalamudApi.Player.ContentId) : null;
     public static IPartyMember? GetPartyLeader(this IPartyList partyList) => partyList.IsInParty() ? partyList[(int)partyList.PartyLeaderIndex] : null;
     public static bool IsInParty(this IPartyList partyList) => partyList?.Length > 1;
     public static bool IsPartyLeader(this IPartyMember member) => DalamudApi.PartyList.IsInParty() && member != null && member.ContentId == DalamudApi.PartyList.GetPartyLeader()?.ContentId;
-    public static bool IsPartyLeader(this IPartyList partyList) => partyList.IsInParty() && (long)DalamudApi.ClientState.LocalContentId == partyList.GetPartyLeader()?.ContentId;
+    public static bool IsPartyLeader(this IPartyList partyList) => partyList.IsInParty() && (long)DalamudApi.Player.ContentId == partyList.GetPartyLeader()?.ContentId;
     public static IPartyMember? GetPartyMemberFromCid(this IPartyList partyList, long cid) => partyList.FirstOrDefault(i => i.ContentId == cid);
 
     public static (ulong Cid, string Name, string World) GetPartyMemberData(this IPartyMember member) {

@@ -14,7 +14,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-internal class MainWindow : Window {
+public class MainWindow : Window {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
     public bool IsVisible { get; private set; }
@@ -377,15 +377,23 @@ internal class MainWindow : Window {
         ImGui.TextUnformatted($"{macroIdx + 1:000}");
 
         ImGui.TableNextColumn();
+        var icon = DalamudApi.TextureProvider.GetFromGameIcon(macro.IconId).GetWrapOrEmpty().Handle;
+        var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
+        ImGui.Image(icon, iconSize);
+
+        ImGui.TableNextColumn();
+        ImGui.PushStyleColor(ImGuiCol.Text, macro.Color);
         ImGui.Selectable($"{macro.Name}");
+        ImGui.PopStyleColor();
         ImGuiUtil.ToolTip("Drag to reorder");
 
         if (ImGui.BeginDragDropSource()) {
             unsafe {
                 ImGui.SetDragDropPayload("DND_MACROS_TABLE", new ReadOnlySpan<byte>(&macroIdx, sizeof(int)), ImGuiCond.None);
+                ImGui.PushStyleColor(ImGuiCol.Text, macro.Color);
                 ImGui.Button($"({macroIdx + 1}) {macro.Name}");
+                ImGui.PopStyleColor();
             }
-
             // PluginLog.Warning($"Drag start [{i}]");
             ImGui.EndDragDropSource();
         }
@@ -485,12 +493,13 @@ internal class MainWindow : Window {
 
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                 ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
-        var tableColumnCount = 4;
+        var tableColumnCount = 5;
         var itemCount = isFiltered ? MacroListSearchedIndexes.Count : Plugin.Config.Macros.Count;
 
         if (ImGui.BeginTable("##MacrosTable", tableColumnCount, tableFlags)) {
             ImGui.TableSetupColumn("##CheckMacro", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Macro", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("Options", ImGuiTableColumnFlags.WidthFixed);
 

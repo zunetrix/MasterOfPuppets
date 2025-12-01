@@ -15,7 +15,7 @@ internal class IpcMessage {
 
     public IpcMessage(IpcMessageType messageType, byte[] data, params string[] stringData) {
         MessageType = messageType;
-        BroadcasterId = (long)DalamudApi.ClientState.LocalContentId;
+        BroadcasterId = (long)DalamudApi.Player.ContentId;
         // PartyId = DalamudApi.PartyList.PartyId;
         // ProcessId = processId;
         // TimeStamp = DateTime.Now;

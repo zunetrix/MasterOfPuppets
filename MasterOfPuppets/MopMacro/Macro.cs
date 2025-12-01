@@ -1,6 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 public class Character {
@@ -67,7 +68,6 @@ public class Command {
         this.Actions = string.Join("\n", lines);
     }
 
-
     public string[] GetActionList() {
         string[] actionList = this.Actions.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
         .Where(line => line.Length > 0 && !line.StartsWith("#")).ToArray();
@@ -80,12 +80,24 @@ public class Macro {
     [JsonPropertyName("name")]
     public string Name;
 
+    [JsonPropertyName("path")]
+    public string Path = "/";
+
+    [JsonPropertyName("color")]
+    public Vector4 Color = new Vector4(1f, 1f, 1f, 1f);
+
+    [JsonPropertyName("iconId")]
+    public uint IconId = 60042;
+
     [JsonPropertyName("commands")]
     public List<Command> Commands;
 
     public Macro Clone() {
         return new Macro {
             Name = this.Name,
+            Path = this.Path,
+            Color = this.Color,
+            IconId = this.IconId,
             Commands = this.Commands.Select(cmd => cmd.Clone()).ToList(),
         };
     }
@@ -93,6 +105,9 @@ public class Macro {
     public Macro CloneWithoutCharacters() {
         return new Macro {
             Name = this.Name,
+            Path = this.Path,
+            Color = this.Color,
+            IconId = this.IconId,
             Commands = this.Commands.Select(cmd => cmd.CloneWithoutCharacters()).ToList(),
         };
     }

@@ -16,11 +16,12 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-internal class DebugWindow : Window {
+public class DebugWindow : Window {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
     private FileDialogManager FileDialogManager { get; }
@@ -28,6 +29,7 @@ internal class DebugWindow : Window {
     private uint _macroIconId = 60042;
     private static string _inputTextContent = string.Empty;
     private static string _targetName = string.Empty;
+    private static int _macroIdx = 0;
     private static string _search = string.Empty;
     private static HashSet<object>? _filtered;
     private static int _hoveredItem;
@@ -77,6 +79,11 @@ internal class DebugWindow : Window {
             ImGui.Separator();
             ImGui.Spacing();
 
+            ImGui.InputInt("##MacroIndexInput", ref _macroIdx);
+            ImGui.SameLine();
+            if (ImGui.Button("Print Macro")) {
+                DalamudApi.PluginLog.Warning($"{Plugin.Config.Macros[_macroIdx].JsonSerialize()}");
+            }
 
             ImGui.InputTextWithHint("##TargetNameDebugInput", "Target name", ref _targetName, 255, ImGuiInputTextFlags.AutoSelectAll);
             ImGui.SameLine();
@@ -212,6 +219,15 @@ internal class DebugWindow : Window {
 
             if (ImGui.Button("Print Hotbar")) {
                 PrintHotbar();
+            }
+
+            if (ImGui.Button("Reset Macros Color To White")) {
+                for (var i = 0; i < Plugin.Config.Macros.Count; i++) {
+                    Plugin.Config.Macros[i].Color = new Vector4(1f, 1f, 1f, 1f);
+                }
+
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
             }
 
             ImGui.EndTabItem();

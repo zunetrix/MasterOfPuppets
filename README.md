@@ -16,3 +16,14 @@ dotnet build -c Release
 ```sh
 dotnet test ./MasterOfPuppetsTests/
 ```
+
+TODO:
+ - moploop block:
+
+```
+start code no loop
+
+/moploopstart
+loop code
+/moploopend
+```
