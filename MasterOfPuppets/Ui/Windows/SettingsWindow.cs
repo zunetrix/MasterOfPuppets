@@ -107,6 +107,14 @@ public class SettingsWindow : Window {
                 Plugin.IpcProvider.SyncConfiguration();
             }
 
+            var allowCloseWithEscape = Plugin.Config.AllowCloseWithEscape;
+            if (ImGui.Checkbox(Language.SettingsWindowAllowCloseWithEscape, ref allowCloseWithEscape)) {
+                Plugin.Config.AllowCloseWithEscape = allowCloseWithEscape;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+                Plugin.Ui.MainWindow.UpdateWindowConfig();
+            }
+
             // var showSettingsButton = Plugin.Config.ShowSettingsButton;
             // if (ImGui.Checkbox(Language.SettingsWindowShowConfigButton, ref showSettingsButton))
             // {
@@ -129,13 +137,6 @@ public class SettingsWindow : Window {
             //     Plugin.Config.Save();
             // }
 
-            // var allowCloseWithEscape = Plugin.Config.AllowCloseWithEscape;
-            // if (ImGui.Checkbox(Language.SettingsWindowAllowCloseWithEscape, ref allowCloseWithEscape))
-            // {
-            //     Plugin.Config.AllowCloseWithEscape = allowCloseWithEscape;
-            //     Plugin.Config.Save();
-            //     Plugin.Ui.MainWindow.UpdateConfig();
-            // }
             ImGuiGroupPanel.EndGroupPanel();
 
             ImGui.Spacing();

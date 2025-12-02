@@ -92,6 +92,7 @@ internal class Configuration : IPluginConfiguration {
         SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;
         OpenOnStartup = newPluginConfig.OpenOnStartup;
         OpenOnLogin = newPluginConfig.OpenOnLogin;
+        AllowCloseWithEscape = newPluginConfig.AllowCloseWithEscape;
     }
 
     public void AddCharacter(Character character) {
