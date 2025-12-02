@@ -25,6 +25,17 @@ public class MacroManager {
         return Plugin.Config.Macros.Count;
     }
 
+    public List<string> GetAllTags() {
+        return Plugin.Config.Macros
+            .Where(m => m.Tags != null)
+            .SelectMany(m => m.Tags)
+            .Select(t => (t ?? string.Empty).Trim())
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(t => t)
+            .ToList();
+    }
+
     public bool ContainsMacroName(string macroName) {
         int macroIndex = Plugin.Config.Macros.FindIndex(macro => string.Equals(macro.Name, macroName, StringComparison.OrdinalIgnoreCase));
         return macroIndex != -1;
@@ -35,7 +46,6 @@ public class MacroManager {
             throw new ArgumentException($"A macro named \"{macro.Name}\" already exists");
         }
 
-        macro.NormalizePath();
         macro.SanitizeActions();
         Plugin.Config.Macros.Add(macro);
 
@@ -52,7 +62,6 @@ public class MacroManager {
             throw new ArgumentException($"A macro named \"{macro.Name}\" already exists");
         }
 
-        macro.NormalizePath();
         macro.SanitizeActions();
         Plugin.Config.Macros[macroIdx] = macro;
         Plugin.Config.Save();

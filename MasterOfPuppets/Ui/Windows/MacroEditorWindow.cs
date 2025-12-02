@@ -23,15 +23,23 @@ public class MacroEditorWindow : Window {
     private int MacroIndex;
     private int SelectedCommandIndex = 0;
     private bool EditingExistingMacro = false;
+    private string TagName = string.Empty;
+
+    private List<string> MacrosTags = new();
+
     private readonly ImGuiInputTextMultiline InputTextMultiline;
     private readonly ImGuiModalDialog ImGuiModalDialog = new("##MacroEditorModalDialog");
+
+    private void UpdateMacrosTags() {
+        MacrosTags = Plugin.MacroManager.GetAllTags();
+    }
 
     public MacroEditorWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow") {
         Plugin = plugin;
         Ui = ui;
         InputTextMultiline = new ImGuiInputTextMultiline(plugin);
 
-        Size = ImGuiHelpers.ScaledVector2(650, 700);
+        Size = ImGuiHelpers.ScaledVector2(650, 730);
         // SizeCondition = ImGuiCond.FirstUseEver;
         SizeCondition = ImGuiCond.Always;
         Flags = ImGuiWindowFlags.NoResize;
@@ -39,6 +47,7 @@ public class MacroEditorWindow : Window {
 
     public override void PreDraw() {
         base.PreDraw();
+        UpdateMacrosTags();
     }
 
     public override void OnClose() {
@@ -56,10 +65,11 @@ public class MacroEditorWindow : Window {
     }
 
     private void RessetState() {
-        MacroItem = new() { Commands = new List<Command>() };
+        MacroItem = new() { Commands = new List<Command>(), Tags = new List<string>() };
         EditingExistingMacro = false;
         MacroIndex = Plugin.MacroManager.GetMacrosCount();
         SelectedCommandIndex = 0;
+        TagName = string.Empty;
     }
 
     public void EditMacro(int macroIndex) {
@@ -100,13 +110,111 @@ public class MacroEditorWindow : Window {
     public override void Draw() {
         ImGuiModalDialog.Draw();
 
-        ImGui.BeginChild("##MacroEditorHeaderFixedHeight", ImGuiHelpers.ScaledVector2(-1, 200), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginChild("##MacroEditorHeaderFixedHeight", ImGuiHelpers.ScaledVector2(-1, 240), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         DrawHeader();
         ImGui.EndChild();
 
         ImGui.BeginChild("##MacroEditorListScrollableContent", ImGuiHelpers.ScaledVector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
         DrawCommandList();
         ImGui.EndChild();
+    }
+
+    private void DrawIconColorPicker() {
+        // color / icon
+        ImGui.BeginGroup();
+        {
+            ImGui.Spacing();
+            ImGui.TextUnformatted(Language.MacroColorLabel);
+            ImGui.PushItemWidth(250);
+            ImGui.ColorEdit4("##MacroColorInput", ref MacroItem.Color, ImGuiColorEditFlags.NoAlpha | ImGuiColorEditFlags.NoLabel);
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetMacroColorBtn", "Reset")) {
+                MacroItem.Color = Style.Colors.White;
+            }
+            ImGui.PopItemWidth();
+        }
+        ImGui.EndGroup();
+
+        ImGui.SameLine();
+        ImGui.Dummy(ImGuiHelpers.ScaledVector2(10));
+        ImGui.SameLine();
+
+        ImGui.BeginGroup();
+        {
+            DrawMacroIconPicker();
+            ImGuiUtil.ToolTip($"Click to select icon");
+        }
+        ImGui.EndGroup();
+    }
+
+    private void DrawTagsManager() {
+        // tags
+        float totalWidth = ImGui.GetContentRegionAvail().X;
+        float tagsListWidth = totalWidth * 0.5f;
+        float tagsComboWidth = totalWidth * 0.5f - ImGui.GetStyle().ItemSpacing.X - 20 * ImGuiHelpers.GlobalScale;
+        ImGui.BeginGroup();
+        {
+            ImGui.BeginChild($"##MacroTagsListChild", new Vector2(tagsListWidth, 150), true);
+            ImGui.TextUnformatted(Language.MacroTagsLabel);
+
+            if (ImGui.BeginListBox($"##MacroTagsList", new Vector2(-1, -1))) {
+                for (var tagIndex = 0; tagIndex < MacroItem.Tags.Count; tagIndex++) {
+                    if (ImGui.Selectable($"{MacroItem.Tags[tagIndex]}", false)) {
+                        if (ImGui.GetIO().KeyCtrl) {
+                            MacroItem.Tags.RemoveAt(tagIndex);
+                            UpdateMacrosTags();
+                        }
+                    }
+                    ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                }
+                ImGui.EndListBox();
+            }
+            ImGui.EndChild();
+        }
+        ImGui.EndGroup();
+
+        ImGui.SameLine();
+        ImGui.Dummy(ImGuiHelpers.ScaledVector2(5));
+        ImGui.SameLine();
+
+        ImGui.BeginGroup();
+        {
+            ImGui.Text("Tag Name");
+            ImGui.PushItemWidth(tagsComboWidth - 80);
+            ImGui.InputText("##TagNameInput", ref TagName);
+            ImGui.PopItemWidth();
+
+            ImGui.SameLine();
+
+            if (ImGui.Button("Add Tag##AddTagBtn")) {
+                if (!string.IsNullOrWhiteSpace(TagName)) {
+                    MacroItem.Tags.AddUnique(TagName.Trim());
+                    TagName = string.Empty;
+                    UpdateMacrosTags();
+                }
+            }
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+
+            ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+            ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
+            ImGui.PushItemWidth(tagsComboWidth);
+            if (ImGui.BeginCombo($"##MacroTagsSelectList", "Select tag to add")) {
+                foreach (var macroTag in MacrosTags) {
+                    if (ImGui.Selectable($"{macroTag}", false)) {
+                        MacroItem.Tags.AddUnique(macroTag);
+                    }
+                }
+                ImGui.EndCombo();
+            }
+            ImGui.PopItemWidth();
+            ImGui.PopStyleVar();
+            ImGui.PopStyleColor();
+
+            DrawIconColorPicker();
+        }
+        ImGui.EndGroup();
     }
 
     private void DrawHeader() {
@@ -132,70 +240,9 @@ public class MacroEditorWindow : Window {
             Plugin.IpcProvider.SyncConfiguration();
         }
 
-        ImGui.BeginGroup();
-        {
-            ImGui.TextUnformatted(Language.MacroPathLabel);
-            ImGui.Spacing();
-            ImGui.InputText("##MacroPathInput", ref MacroItem.Path);
-        }
-        ImGui.EndGroup();
+        ImGui.Spacing();
 
-        ImGui.SameLine();
-
-        // folder list
-        var macroFolders = Plugin.Config.Macros
-        .Select(m => m.Path)
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .OrderBy(p => p)
-        .ToList();
-
-        float totalWidth = ImGui.GetContentRegionAvail().X;
-        float folderListWidth = totalWidth * 0.6f;
-
-        ImGui.BeginGroup();
-        {
-            ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-            ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-            ImGui.PushItemWidth(folderListWidth);
-            ImGui.NewLine();
-            if (ImGui.BeginCombo($"##MacroFolderList", "Select folder")) {
-                foreach (var macroFolder in macroFolders) {
-                    if (ImGui.Selectable($"{macroFolder}", false)) {
-                        MacroItem.Path = macroFolder;
-                    }
-                }
-                ImGui.EndCombo();
-            }
-            ImGui.PopItemWidth();
-            ImGui.PopStyleVar();
-            ImGui.PopStyleColor();
-        }
-        ImGui.EndGroup();
-
-        ImGui.BeginGroup();
-        {
-            ImGui.Spacing();
-            ImGui.TextUnformatted(Language.MacroColorLabel);
-            ImGui.PushItemWidth(300);
-            ImGui.ColorEdit4("##MacroColorInput", ref MacroItem.Color, ImGuiColorEditFlags.NoAlpha | ImGuiColorEditFlags.NoLabel);
-            ImGui.SameLine();
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetMacroColorBtn", "Reset")) {
-                MacroItem.Color = Style.Colors.White;
-            }
-            ImGui.PopItemWidth();
-        }
-        ImGui.EndGroup();
-
-        ImGui.SameLine();
-        ImGui.Dummy(ImGuiHelpers.ScaledVector2(20));
-        ImGui.SameLine();
-
-        ImGui.BeginGroup();
-        {
-            DrawMacroIconPicker();
-            ImGuiUtil.ToolTip($"Click to select icon");
-        }
-        ImGui.EndGroup();
+        DrawTagsManager();
 
         ImGui.Spacing();
         ImGui.Separator();

@@ -81,8 +81,8 @@ public class Macro {
     [JsonPropertyName("name")]
     public string Name;
 
-    [JsonPropertyName("path")]
-    public string Path = "/";
+    [JsonPropertyName("tags")]
+    public List<string> Tags = new List<string>();
 
     [JsonPropertyName("color")]
     public Vector4 Color = new Vector4(1f, 1f, 1f, 1f);
@@ -96,7 +96,7 @@ public class Macro {
     public Macro Clone() {
         return new Macro {
             Name = this.Name,
-            Path = this.Path,
+            Tags = this.Tags,
             Color = this.Color,
             IconId = this.IconId,
             Commands = this.Commands.Select(cmd => cmd.Clone()).ToList(),
@@ -106,24 +106,11 @@ public class Macro {
     public Macro CloneWithoutCharacters() {
         return new Macro {
             Name = this.Name,
-            Path = this.Path,
+            Tags = this.Tags,
             Color = this.Color,
             IconId = this.IconId,
             Commands = this.Commands.Select(cmd => cmd.CloneWithoutCharacters()).ToList(),
         };
-    }
-
-    public void NormalizePath() {
-        if (string.IsNullOrWhiteSpace(this.Path.Trim())) {
-            this.Path = "/";
-            return;
-        }
-
-        var normalizedPath = this.Path.Replace('\\', '/').Trim();
-        normalizedPath = Regex.Replace(normalizedPath, "/+", "/");
-        if (!normalizedPath.StartsWith("/")) normalizedPath = "/" + normalizedPath;
-        if (!normalizedPath.EndsWith("/")) normalizedPath += "/";
-        this.Path = normalizedPath;
     }
 
     public string[] GetCidActions(ulong cid) =>

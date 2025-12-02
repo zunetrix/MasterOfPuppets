@@ -23,7 +23,8 @@ public class MainWindow : Window {
 
     private string _macroSearchString = string.Empty;
     private readonly List<int> MacroListSearchedIndexes = new();
-    private string _selectedFolderPath = "/";
+    private readonly HashSet<string> _selectedTags = new(StringComparer.OrdinalIgnoreCase);
+    private bool _filterNoTags = false;
 
     internal MainWindow(Plugin plugin, PluginUi ui) : base(Plugin.Name) {
         Plugin = plugin;
@@ -339,6 +340,7 @@ public class MainWindow : Window {
         var icon = DalamudApi.TextureProvider.GetFromGameIcon(macro.IconId).GetWrapOrEmpty().Handle;
         var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
         ImGui.Image(icon, iconSize);
+        ImGuiUtil.ToolTip($"{string.Join("\n", macro.Tags)}");
 
         ImGui.TableNextColumn();
         ImGui.PushStyleColor(ImGuiCol.Text, macro.Color);
@@ -487,42 +489,32 @@ public class MainWindow : Window {
     //     ImGui.Spacing();
     // }
 
-    public static MacroFolder BuildMacroTree(List<Macro> macros) {
-        var root = new MacroFolder { Name = "/" };
-
-        foreach (var macro in macros) {
-            var current = root;
-            var parts = macro.Path.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var p in parts) {
-                var next = current.Children.FirstOrDefault(x => x.Name == p);
-                if (next == null) {
-                    next = new MacroFolder { Name = p };
-                    current.Children.Add(next);
-                }
-                current = next;
-            }
-
-            current.Macros.Add(macro);
-        }
-
-        return root;
-    }
-
-    private void DrawMacrosTableFiltered(string folderPath) {
-        // Determine visible macro indexes based on search and folder filter
+    private void DrawMacrosTableFiltered() {
+        // Determine visible macro indexes based on search
         var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
         var baseIndexes = isFiltered
             ? MacroListSearchedIndexes.ToList()
             : Enumerable.Range(0, Plugin.Config.Macros.Count).ToList();
 
         List<int> visibleIndexes;
-        if (string.IsNullOrEmpty(folderPath) || folderPath == "/") {
+        if (_filterNoTags) {
+            visibleIndexes = baseIndexes
+                .Where(idx => {
+                    var tags = Plugin.Config.Macros[idx].Tags;
+                    return tags == null || tags.Count == 0;
+                })
+                .ToList();
+        } else if (_selectedTags.Count == 0) {
             visibleIndexes = baseIndexes;
         } else {
             visibleIndexes = baseIndexes
-                .Where(idx => Plugin.Config.Macros[idx].Path != null &&
-                              Plugin.Config.Macros[idx].Path.StartsWith(folderPath, StringComparison.OrdinalIgnoreCase))
+                .Where(idx => {
+                    var tags = Plugin.Config.Macros[idx].Tags ?? new List<string>();
+                    if (tags.Count == 0) return false;
+                    // compare normalized trimmed tags
+                    var normalized = tags.Select(t => (t ?? string.Empty).Trim()).ToList();
+                    return _selectedTags.All(sel => normalized.Any(t => string.Equals(t, sel, StringComparison.OrdinalIgnoreCase)));
+                })
                 .ToList();
         }
 
@@ -567,64 +559,76 @@ public class MainWindow : Window {
         ImGui.Spacing();
     }
 
-    private void DrawFolder(MacroFolder folder, string currentPath) {
-        foreach (var child in folder.Children.OrderBy(c => c.Name)) {
-            var childPath = (currentPath == "/") ? $"/{child.Name}/" : $"{currentPath}{child.Name}/";
-            var isSelected = _selectedFolderPath == childPath;
-            var hasSubFolders = child.Children != null && child.Children.Count > 0;
-
-            if (isSelected) {
-                ImGui.PushStyleColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered);
-                ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered);
-                ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
-            }
-
-            // Flags: expand on arrow, full width, and mark selected visually
-            var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick | ImGuiTreeNodeFlags.SpanAvailWidth;
-            if (isSelected) flags |= ImGuiTreeNodeFlags.Selected;
-
-            if (hasSubFolders) {
-                // draw folder node (shows arrow). clicking anywhere selects, arrow toggles open
-                var nodeOpened = ImGui.TreeNodeEx($"{child.Name}##{childPath}", flags);
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Left) && !ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
-                    _selectedFolderPath = childPath;
-                }
-
-                if (nodeOpened) {
-                    // subfolders
-                    DrawFolder(child, childPath);
-                    ImGui.TreePop();
-                }
-            } else {
-                // leaf folder (no subfolders)
-                if (ImGui.Selectable($"{child.Name}##{childPath}", isSelected))
-                    _selectedFolderPath = childPath;
-            }
-
-            if (isSelected)
-                ImGui.PopStyleColor(3);
-        }
-    }
-
     private void DrawMacroPanels() {
         // left panel fixed width tree
         var leftWidth = ImGuiHelpers.ScaledVector2(200, -1);
-        ImGui.BeginChild("##MacroTree", leftWidth, true);
-        ImGui.TextUnformatted("Folders");
+        ImGui.BeginChild("##MacroTags", leftWidth, true);
+        ImGui.TextUnformatted(Language.MacroTagsLabel);
         ImGui.Separator();
 
-        if (ImGui.Selectable("All", _selectedFolderPath == "/"))
-            _selectedFolderPath = "/";
+        var allTags = Plugin.MacroManager.GetAllTags();
 
-        var tree = BuildMacroTree(Plugin.Config.Macros);
-        DrawFolder(tree, "/");
+        ImGui.BeginGroup();
+        {
+            if (ImGui.Button("Select All##SelectAllTagsBtn")) {
+                _filterNoTags = false;
+                _selectedTags.Clear();
+                foreach (var t in allTags) _selectedTags.Add(t);
+            }
+
+            ImGui.SameLine();
+
+            var pushedNoTags = false;
+            if (_filterNoTags) {
+                ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
+                ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
+                ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
+                pushedNoTags = true;
+            }
+            if (ImGui.Button("No Tags##SelectNoTagsBtn")) {
+                _selectedTags.Clear();
+                _filterNoTags = true;
+            }
+            if (pushedNoTags)
+                ImGui.PopStyleColor(3);
+
+            ImGui.SameLine();
+
+            if (ImGui.Button("Clear##ClearAllTagsBtn")) {
+                _selectedTags.Clear();
+                _filterNoTags = false;
+            }
+        }
+        ImGui.EndGroup();
+        ImGui.Spacing();
+        // tag list
+        ImGui.PushStyleColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered);
+        ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered);
+        ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
+        if (ImGui.BeginListBox("##TagsListBox", new Vector2(-1, -1))) {
+            for (int i = 0; i < allTags.Count; i++) {
+                var tag = allTags[i];
+                var isSelected = _selectedTags.Contains(tag);
+                var count = Plugin.Config.Macros
+                    .Count(m => (m.Tags ?? new List<string>()).Any(t => string.Equals(t?.Trim(), tag, StringComparison.OrdinalIgnoreCase)));
+
+                var label = $"{tag} ({count})##tag_{i}";
+                if (ImGui.Selectable(label, isSelected, ImGuiSelectableFlags.SpanAllColumns)) {
+                    _filterNoTags = false;
+                    if (isSelected) _selectedTags.Remove(tag);
+                    else _selectedTags.Add(tag);
+                }
+            }
+            ImGui.EndListBox();
+        }
+        ImGui.PopStyleColor(3);
         ImGui.EndChild();
 
         ImGui.SameLine();
 
         // right panel: filtered list
         ImGui.BeginChild("##MacroList", new Vector2(0, -1), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawMacrosTableFiltered(_selectedFolderPath);
+        DrawMacrosTableFiltered();
         ImGui.EndChild();
     }
 

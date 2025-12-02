@@ -546,9 +546,9 @@ internal class Language {
             return ResourceManager.GetString("MacroColorLabel", resourceCulture);
         }
     }
-    internal static string MacroPathLabel {
+    internal static string MacroTagsLabel {
         get {
-            return ResourceManager.GetString("MacroPathLabel", resourceCulture);
+            return ResourceManager.GetString("MacroTagsLabel", resourceCulture);
         }
     }
     internal static string MacroIconLabel {

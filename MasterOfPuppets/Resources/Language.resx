@@ -206,8 +206,8 @@ Right-Click to copy command</value>
     <data name="MacroIconLabel" xml:space="preserve">
         <value>Macro Icon</value>
     </data>
-    <data name="MacroPathLabel" xml:space="preserve">
-        <value>Macro Folder</value>
+    <data name="MacroTagsLabel" xml:space="preserve">
+        <value>Macro Tags</value>
     </data>
     <data name="CharactersLabel" xml:space="preserve">
         <value>Characters</value>
