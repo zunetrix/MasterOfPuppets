@@ -8,6 +8,8 @@ using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
+using Dalamud.Interface.Components;
+
 
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Extensions.Dalamud;
@@ -126,7 +128,9 @@ public class MacroEditorWindow : Window {
             ImGui.Spacing();
             ImGui.TextUnformatted(Language.MacroColorLabel);
             ImGui.PushItemWidth(250);
-            ImGui.ColorEdit4("##MacroColorInput", ref MacroItem.Color, ImGuiColorEditFlags.NoAlpha | ImGuiColorEditFlags.NoLabel);
+
+            MacroItem.Color = ImGuiComponents.ColorPickerWithPalette(1, "##MacroColorInput", MacroItem.Color);
+            // ImGui.ColorEdit4("##MacroColorInput", ref MacroItem.Color, ImGuiColorEditFlags.NoAlpha | ImGuiColorEditFlags.NoLabel);
             ImGui.SameLine();
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetMacroColorBtn", "Reset")) {
                 MacroItem.Color = Style.Colors.White;

@@ -90,7 +90,7 @@ public class EmotesWindow : Window {
         ImGui.PopID();
     }
 
-    private unsafe void DrawEmoteTable() {
+    private void DrawEmoteTable() {
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
         var tableColumnCount = 4;

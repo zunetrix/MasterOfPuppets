@@ -10,7 +10,7 @@ namespace MasterOfPuppets.Util.ImGuiExt;
 public static class ImGuiGroupPanel {
     static readonly Stack<RectF> s_GroupPanelLabelStack = new Stack<RectF>();
 
-    public static unsafe void BeginGroupPanel(string name) {
+    public static void BeginGroupPanel(string name) {
         BeginGroupPanel(name, -Vector2.One);
     }
 

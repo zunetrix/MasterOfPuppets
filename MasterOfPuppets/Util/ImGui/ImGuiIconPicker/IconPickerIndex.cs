@@ -54,7 +54,6 @@ public class IconPickerIndex {
             } catch (Exception ex) {
                 DalamudApi.PluginLog.Error($"Failed to index icons\n{ex}");
             }
-
         });
     }
 
@@ -606,9 +605,6 @@ public class IconPickerIndex {
         );
     }
 
-    private void IndexWeird() {
-    }
-
     private void ApplyIconNamesFrom<Row>(
         Func<Row, IEnumerable<uint>> icons,
         Func<Row, IEnumerable<ReadOnlySeString>> names
@@ -685,7 +681,6 @@ public class IconPickerIndex {
         );
     }
 
-
     private void ApplyIconNamesFrom<Row>(
         Func<Row, uint> icon,
         Func<Row, IEnumerable<ReadOnlySeString?>> names
@@ -759,22 +754,21 @@ public class IconInfo {
 public record class IconInfoCategory(
     string Name,
     string? SubcategoryName = null
-)
-{
+) {
     public IconInfoCategory TopLevel() => new IconInfoCategory(Name, SubcategoryName: null);
 
-public static Comparer<IconInfoCategory> NameComparer => ComparerExt.Compose(
-    Comparer<IconInfoCategory>.Create((a, b) => a.Name.CompareTo(b.Name)),
-    Comparer<IconInfoCategory>.Create((a, b) => a.SubcategoryName?.CompareTo(b.SubcategoryName) ?? 0)
-);
+    public static Comparer<IconInfoCategory> NameComparer => ComparerExt.Compose(
+        Comparer<IconInfoCategory>.Create((a, b) => a.Name.CompareTo(b.Name)),
+        Comparer<IconInfoCategory>.Create((a, b) => a.SubcategoryName?.CompareTo(b.SubcategoryName) ?? 0)
+    );
 
-public override string ToString() {
-    if (SubcategoryName != null) {
-        return $"{Name} ({SubcategoryName})";
-    } else {
-        return Name;
+    public override string ToString() {
+        if (SubcategoryName != null) {
+            return $"{Name} ({SubcategoryName})";
+        } else {
+            return Name;
+        }
     }
-}
 }
 
 /**
@@ -782,28 +776,28 @@ public override string ToString() {
  */
 public class IconInfoCategoryGroup {
     public required IconInfoCategory Category { get; set; }
-public SortedSet<IconInfo> IconInfos { get; private set; } = new(IconInfo.CompareById);
-public SortedList<IconInfoCategory, SortedSet<IconInfo>> SubcategoryIconInfos = new(IconInfoCategory.NameComparer);
+    public SortedSet<IconInfo> IconInfos { get; private set; } = new(IconInfo.CompareById);
+    public SortedList<IconInfoCategory, SortedSet<IconInfo>> SubcategoryIconInfos = new(IconInfoCategory.NameComparer);
 
-public void AddIconForCategory(IconInfoCategory category, IconInfo iconInfo) {
-    // Icons are always added to the parent category
-    IconInfos.Add(iconInfo);
+    public void AddIconForCategory(IconInfoCategory category, IconInfo iconInfo) {
+        // Icons are always added to the parent category
+        IconInfos.Add(iconInfo);
 
-    // If we have a subcategory, add to it as well
-    if (category.SubcategoryName != null) {
-        var subcategoryList = SubcategoryIconInfos.GetOrAdd(category, () => new(IconInfo.CompareById));
-        subcategoryList.Add(iconInfo);
+        // If we have a subcategory, add to it as well
+        if (category.SubcategoryName != null) {
+            var subcategoryList = SubcategoryIconInfos.GetOrAdd(category, () => new(IconInfo.CompareById));
+            subcategoryList.Add(iconInfo);
+        }
     }
-}
 
-public SortedSet<IconInfo> GetIconsForCategory(IconInfoCategory category) {
-    if (Category == category) { return IconInfos; }
-    foreach (var (subcategory, subcategoryIconInfos) in SubcategoryIconInfos) {
-        if (subcategory == category) { return subcategoryIconInfos; }
+    public SortedSet<IconInfo> GetIconsForCategory(IconInfoCategory category) {
+        if (Category == category) { return IconInfos; }
+        foreach (var (subcategory, subcategoryIconInfos) in SubcategoryIconInfos) {
+            if (subcategory == category) { return subcategoryIconInfos; }
+        }
+        return new();
     }
-    return new();
-}
 
-public static Comparer<IconInfoCategoryGroup> CompareByCategory =
-    Comparer<IconInfoCategoryGroup>.Create((a, b) => IconInfoCategory.NameComparer.Compare(a.Category, b.Category));
+    public static Comparer<IconInfoCategoryGroup> CompareByCategory =
+        Comparer<IconInfoCategoryGroup>.Create((a, b) => IconInfoCategory.NameComparer.Compare(a.Category, b.Category));
 }
