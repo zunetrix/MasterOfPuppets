@@ -112,9 +112,9 @@ public class MacroEditorWindow : Window {
     public override void Draw() {
         ImGuiModalDialog.Draw();
 
-        ImGui.BeginChild("##MacroEditorHeaderFixedHeight", ImGuiHelpers.ScaledVector2(-1, 240), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginGroup();
         DrawHeader();
-        ImGui.EndChild();
+        ImGui.EndGroup();
 
         ImGui.BeginChild("##MacroEditorListScrollableContent", ImGuiHelpers.ScaledVector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
         DrawCommandList();

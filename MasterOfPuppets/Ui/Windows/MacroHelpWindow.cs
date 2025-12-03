@@ -32,9 +32,9 @@ public class MacroHelpWindow : Window {
     }
 
     public override void Draw() {
-        ImGui.BeginChild("##MacroHelpHeaderFixedHeight", new Vector2(-1, 45 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginGroup();
         DrawHeader();
-        ImGui.EndChild();
+        ImGui.EndGroup();
 
         ImGui.BeginChild("##MacroHelpListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
         DrawMacroHelpList();

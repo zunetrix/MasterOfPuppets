@@ -42,9 +42,9 @@ public class FashionAccessoriesWindow : Window {
     }
 
     public override void Draw() {
-        ImGui.BeginChild("##FashionHeaderFixedHeight", new Vector2(-1, 70 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginGroup();
         DrawHeader();
-        ImGui.EndChild();
+        ImGui.EndGroup();
 
         ImGui.BeginChild("##FashionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
         DrawFashionTable();

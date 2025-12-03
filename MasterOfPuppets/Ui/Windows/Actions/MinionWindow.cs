@@ -42,9 +42,9 @@ public class MinionWindow : Window {
     }
 
     public override void Draw() {
-        ImGui.BeginChild("##MinionHeaderFixedHeight", new Vector2(-1, 55 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginGroup();
         DrawHeader();
-        ImGui.EndChild();
+        ImGui.EndGroup();
 
         ImGui.BeginChild("##MinionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
         DrawMinionTable();

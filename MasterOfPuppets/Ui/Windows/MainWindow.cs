@@ -77,9 +77,9 @@ public class MainWindow : Window {
         ImGui.BeginDisabled(Ui.MacroEditorWindow.IsOpen);
         DrawMenuBar();
 
-        ImGui.BeginChild("##MopHeaderFixedHeight", new Vector2(-1, 60 * ImGuiHelpers.GlobalScale), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        ImGui.BeginGroup();
         DrawMacroHeader();
-        ImGui.EndChild();
+        ImGui.EndGroup();
 
         ImGui.BeginChild("##MopMacroListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
         DrawMacroPanels();
