@@ -6,6 +6,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Resources;
@@ -46,81 +47,83 @@ public class MinionWindow : Window {
         DrawHeader();
         ImGui.EndGroup();
 
-        ImGui.BeginChild("##MinionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawMinionTable();
+        ImGui.BeginChild("##MinionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
+        DrawMinionGird();
+        // DrawMinionTable();
         ImGui.EndChild();
     }
 
-    private void DrawMinionEntry(int actionIndex, ExecutableAction minion) {
-        ImGui.PushID(actionIndex);
-        ImGui.TableNextRow();
-        ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{actionIndex + 1:000}");
+    // table layout
+    // private void DrawMinionEntry(int actionIndex, ExecutableAction minion) {
+    //     ImGui.PushID(actionIndex);
+    //     ImGui.TableNextRow();
+    //     ImGui.TableNextColumn();
+    //     ImGui.TextUnformatted($"{actionIndex + 1:000}");
 
-        ImGui.TableNextColumn();
-        var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId).GetWrapOrEmpty().Handle;
-        var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
+    //     ImGui.TableNextColumn();
+    //     var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId).GetWrapOrEmpty().Handle;
+    //     var iconSize = ImGuiHelpers.ScaledVector2(48, 48);
 
-        ImGui.Image(icon, iconSize);
-        if (ImGui.IsItemClicked()) {
-            Plugin.IpcProvider.ExecuteTextCommand(minion.TextCommand);
-        }
-        ImGuiUtil.ToolTip(Language.ClickToExecute);
+    //     ImGui.Image(icon, iconSize);
+    //     if (ImGui.IsItemClicked()) {
+    //         Plugin.IpcProvider.ExecuteTextCommand(minion.TextCommand);
+    //     }
+    //     ImGuiUtil.ToolTip(Language.ClickToExecute);
 
-        ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{minion.ActionName}");
-        if (ImGui.IsItemClicked()) {
-            ImGui.SetClipboardText($"{minion.ActionName}");
-            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-        }
-        ImGuiUtil.ToolTip(Language.ClickToCopy);
+    //     ImGui.TableNextColumn();
+    //     ImGui.TextUnformatted($"{minion.ActionName}");
+    //     if (ImGui.IsItemClicked()) {
+    //         ImGui.SetClipboardText($"{minion.ActionName}");
+    //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+    //     }
+    //     ImGuiUtil.ToolTip(Language.ClickToCopy);
 
-        ImGui.TableNextColumn();
-        ImGui.TextUnformatted(minion.TextCommand);
-        if (ImGui.IsItemClicked()) {
-            ImGui.SetClipboardText(minion.TextCommand);
-            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-        }
-        ImGuiUtil.ToolTip(Language.ClickToCopy);
+    //     ImGui.TableNextColumn();
+    //     ImGui.TextUnformatted(minion.TextCommand);
+    //     if (ImGui.IsItemClicked()) {
+    //         ImGui.SetClipboardText(minion.TextCommand);
+    //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+    //     }
+    //     ImGuiUtil.ToolTip(Language.ClickToCopy);
 
-        ImGui.PopID();
-    }
+    //     ImGui.PopID();
+    // }
 
-    private unsafe void DrawMinionTable() {
-        var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
-               ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
-        var tableColumnCount = 4;
+    // private void DrawMinionTable() {
+    //     var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
+    //            ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
+    //     var tableColumnCount = 4;
 
-        var isFiltered = !string.IsNullOrEmpty(_searchString);
-        var itemCount = isFiltered ? ListSearchedIndexes.Count : UnlockedActions.Count;
+    //     var isFiltered = !string.IsNullOrEmpty(_searchString);
+    //     var itemCount = isFiltered ? ListSearchedIndexes.Count : UnlockedActions.Count;
 
-        if (ImGui.BeginTable("##MountTable", tableColumnCount, tableFlags)) {
-            ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 1.0f);
-            ImGui.TableSetupColumn("Text Commands", ImGuiTableColumnFlags.WidthStretch);
+    //     if (ImGui.BeginTable("##MountTable", tableColumnCount, tableFlags)) {
+    //         ImGui.TableSetupColumn("  ", ImGuiTableColumnFlags.WidthFixed);
+    //         ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
+    //         ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 1.0f);
+    //         ImGui.TableSetupColumn("Text Commands", ImGuiTableColumnFlags.WidthStretch);
 
-            ImGuiListClipperPtr clipper;
-            unsafe {
-                clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
-            }
+    //         ImGuiListClipperPtr clipper;
+    //         unsafe {
+    //             clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
+    //         }
 
-            clipper.Begin(itemCount);
+    //         clipper.Begin(itemCount);
 
-            while (clipper.Step()) {
-                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-                    if (i >= itemCount) break;
-                    int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
-                    if (realIndex >= UnlockedActions.Count) continue;
+    //         while (clipper.Step()) {
+    //             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+    //                 if (i >= itemCount) break;
+    //                 int realIndex = isFiltered ? ListSearchedIndexes[i] : i;
+    //                 if (realIndex >= UnlockedActions.Count) continue;
 
-                    DrawMinionEntry(realIndex, UnlockedActions[realIndex]);
-                }
-            }
+    //                 DrawMinionEntry(realIndex, UnlockedActions[realIndex]);
+    //             }
+    //         }
 
-            clipper.End();
-            ImGui.EndTable();
-        }
-    }
+    //         clipper.End();
+    //         ImGui.EndTable();
+    //     }
+    // }
 
     private void Search() {
         ListSearchedIndexes.Clear();
@@ -138,8 +141,8 @@ public class MinionWindow : Window {
         ImGui.TextUnformatted($"{Language.MinionTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
-        Click on icon to execute
-        Click on command to copy
+        Click on icon to execute (broadcast)
+        Right click to copy command
         """);
 
         ImGui.Spacing();
@@ -156,5 +159,62 @@ public class MinionWindow : Window {
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+    }
+
+    public void DrawMinionGird() {
+        float iconSize = 48 * ImGuiHelpers.GlobalScale;
+
+        if (ImGui.BeginTable("##MinionTable", 1, ImGuiTableFlags.Resizable)) {
+            ImGui.TableSetupColumn("Icons", ImGuiTableColumnFlags.WidthStretch);
+
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+
+            ImGui.TableNextColumn();
+            using (ImRaii.Child("Search##MinionIconList")) {
+                var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
+                DrawIconGrid(iconSize, columns);
+            }
+
+            ImGui.EndTable();
+        }
+    }
+
+    private void DrawIconGrid(float iconSize, int columns) {
+        var lineHeight = iconSize + ImGui.GetStyle().ItemSpacing.Y;
+
+        List<ExecutableAction> itemsToDraw;
+        if (string.IsNullOrEmpty(_searchString)) {
+            itemsToDraw = UnlockedActions;
+        } else {
+            itemsToDraw = ListSearchedIndexes
+                .Where(i => i >= 0 && i < UnlockedActions.Count)
+                .Select(i => UnlockedActions[i])
+                .ToList();
+        }
+
+        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction minion) => {
+            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId)!.GetWrapOrEmpty();
+            var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId).GetWrapOrEmpty().Handle;
+            ImGui.Image(
+                icon.Handle,
+                new Vector2(iconSize),
+                new Vector2(0.0f, 0.0f),
+                new Vector2(1.0f, 1.0f)
+            );
+            ImGuiUtil.ToolTip($"""
+            {minion.ActionName} ({minion.ActionId})
+            Icon: {minion.IconId}
+
+            Command:
+            {minion.TextCommand}
+            """);
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+                ImGui.SetClipboardText(minion.TextCommand);
+                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+            } else if (ImGui.IsItemClicked(ImGuiMouseButton.Left)) {
+                Plugin.IpcProvider.ExecuteTextCommand(minion.TextCommand);
+            }
+        }, columns, lineHeight);
     }
 }

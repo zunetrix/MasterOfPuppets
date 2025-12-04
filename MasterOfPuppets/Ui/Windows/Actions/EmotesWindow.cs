@@ -53,6 +53,18 @@ public class EmotesWindow : Window {
         ImGui.EndChild();
     }
 
+    private void Search() {
+        ListSearchedIndexes.Clear();
+
+        ListSearchedIndexes.AddRange(
+            UnlockedActions
+            .Select((item, index) => new { item, index })
+            .Where(x => x.item.ActionName.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            .Select(x => x.index)
+            .ToList()
+        );
+    }
+
     // table layout
     // private void DrawEmoteEntry(int actionIndex, ExecutableAction emote) {
     //     ImGui.PushID(actionIndex);
@@ -130,18 +142,6 @@ public class EmotesWindow : Window {
     //     }
     // }
 
-    private void Search() {
-        ListSearchedIndexes.Clear();
-
-        ListSearchedIndexes.AddRange(
-            UnlockedActions
-            .Select((item, index) => new { item, index })
-            .Where(x => x.item.ActionName.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            .Select(x => x.index)
-            .ToList()
-        );
-    }
-
     private void DrawHeader() {
         ImGui.TextUnformatted($"{Language.EmotesTitle} (unlocked)");
         ImGui.SameLine();
@@ -171,7 +171,7 @@ public class EmotesWindow : Window {
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##IconList")) {
+            using (ImRaii.Child("Search##EmoteIconList")) {
                 var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
                 DrawIconGrid(iconSize, columns);
             }
