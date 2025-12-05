@@ -209,7 +209,7 @@ public class ItemWindow : Window {
                 ImGui.SetClipboardText(item.TextCommand);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             } else if (ImGui.IsItemClicked(ImGuiMouseButton.Left)) {
-                Plugin.IpcProvider.ExecuteTextCommand(item.TextCommand);
+                Plugin.IpcProvider.ExecuteItemCommand(item.ActionId);
             }
         }, columns, lineHeight);
     }
