@@ -44,7 +44,6 @@ public static class ItemHelper {
             ClientLanguage.English => Language.English,
             _ => Language.English
         };
-        DalamudApi.PluginLog.Warning($"clientLanguage: ({clientLanguage})");
 
         // returns RowId = 0 for invalid names
         var item = DalamudApi.DataManager.Excel.GetSheet<Item>(clientLanguage)

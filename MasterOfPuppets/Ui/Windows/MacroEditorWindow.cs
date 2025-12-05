@@ -42,9 +42,9 @@ public class MacroEditorWindow : Window {
         InputTextMultiline = new ImGuiInputTextMultiline(plugin);
 
         Size = ImGuiHelpers.ScaledVector2(650, 730);
-        // SizeCondition = ImGuiCond.FirstUseEver;
-        SizeCondition = ImGuiCond.Always;
-        Flags = ImGuiWindowFlags.NoResize;
+        SizeCondition = ImGuiCond.FirstUseEver;
+        // SizeCondition = ImGuiCond.Always;
+        // Flags = ImGuiWindowFlags.NoResize;
     }
 
     public override void PreDraw() {
@@ -477,7 +477,7 @@ public class MacroEditorWindow : Window {
             ushort.MaxValue,
             new Vector2(
                 MathF.Min(ImGui.GetContentRegionAvail().X, 500f * ImGuiHelpers.GlobalScale),
-                ImGui.GetTextLineHeight() * 20
+                ImGui.GetTextLineHeight() * 11 // line count
             ),
             ImGuiInputTextFlags.None
         )) {

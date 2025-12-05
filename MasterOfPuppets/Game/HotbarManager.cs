@@ -41,7 +41,7 @@ internal static class HotbarManager {
     //     }
     // }
 
-    public static unsafe void ExecuteHotbarEmoteAction(uint commandId) {
+    public static void ExecuteHotbarEmoteAction(uint commandId) {
         try {
             ExecuteHotbarAction(HotbarSlotType.Emote, commandId);
         } catch (Exception e) {
