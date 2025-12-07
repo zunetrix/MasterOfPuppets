@@ -272,21 +272,21 @@ public class MainWindow : Window {
         float marginRight = 15f * ImGuiHelpers.GlobalScale;
 
         // ImGui.TextUnformatted(Language.MacroListTitle);
-
-        if (ImGui.InputTextWithHint("##MacroSearchInput", Language.MacroSearchInputLabel, ref _macroSearchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
-            SearchMacro();
-        }
-
-        int buttonMacroCount = 4;
-        float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
-        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
-
         // toggle left tags panel show/hide
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Tags, $"##ToggleMacroTagsPanelBtn", Language.ToggleMacroTagsPanelBtn)) {
             _showTagsPanel = !_showTagsPanel;
         }
 
         ImGui.SameLine();
+
+        if (ImGui.InputTextWithHint("##MacroSearchInput", Language.MacroSearchInputLabel, ref _macroSearchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
+            SearchMacro();
+        }
+
+        int buttonMacroCount = 3;
+        float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
+        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
+
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddMacroBtn", Language.AddMacroBtn)) {
             Ui.MacroEditorWindow.AddNewMacro();
         }
@@ -655,6 +655,7 @@ public class MainWindow : Window {
     }
 
     private void DrawLeftPanel() {
+        var allTags = Plugin.MacroManager.GetAllTags();
         // layout helpers
         var totalAvail = ImGui.GetContentRegionAvail().X;
         var minPanelPx = 120f * ImGuiHelpers.GlobalScale;
@@ -665,20 +666,23 @@ public class MainWindow : Window {
         // left panel fixed width tree
         ImGui.BeginChild("##MacroTags", ImGuiHelpers.ScaledVector2(_leftPanelWidth, -1), true);
         ImGui.TextUnformatted(Language.MacroTagsLabel);
-        ImGui.Separator();
 
-        var allTags = Plugin.MacroManager.GetAllTags();
+        int buttonMacroCount = 3;
+        float buttonWidth = ImGui.GetFrameHeight();
+        float spacing = ImGui.GetStyle().ItemSpacing.X;
+        float marginRight = 15f * ImGuiHelpers.GlobalScale;
+        float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
+        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
 
         ImGui.BeginGroup();
         {
-            if (ImGui.Button("Select All##SelectAllTagsBtn")) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, $"##SelectAllTagsBtn", "Filter all tags")) {
                 _filterNoTags = false;
                 _selectedTags.Clear();
                 foreach (var t in allTags) _selectedTags.Add(t);
             }
 
             ImGui.SameLine();
-
             var pushedNoTags = false;
             if (_filterNoTags) {
                 ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
@@ -686,21 +690,50 @@ public class MainWindow : Window {
                 ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
                 pushedNoTags = true;
             }
-            if (ImGui.Button("No Tags##SelectNoTagsBtn")) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.FilterCircleXmark, $"##SelectNoTagsBtn", "Filter macros without tags")) {
                 _selectedTags.Clear();
-                _filterNoTags = true;
+                _filterNoTags = !_filterNoTags;
             }
             if (pushedNoTags)
                 ImGui.PopStyleColor(3);
 
             ImGui.SameLine();
-
-            if (ImGui.Button("Clear##ClearAllTagsBtn")) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Eraser, $"##ClearAllTagsBtn", "Clear filter")) {
                 _selectedTags.Clear();
                 _filterNoTags = false;
             }
+
+            // if (ImGui.Button("Select All##SelectAllTagsBtn")) {
+            //     _filterNoTags = false;
+            //     _selectedTags.Clear();
+            //     foreach (var t in allTags) _selectedTags.Add(t);
+            // }
+
+            // ImGui.SameLine();
+            // var pushedNoTags = false;
+            // if (_filterNoTags) {
+            //     ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
+            //     ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
+            //     ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
+            //     pushedNoTags = true;
+            // }
+            // if (ImGui.Button("No Tags##SelectNoTagsBtn")) {
+            //     _selectedTags.Clear();
+            //     _filterNoTags = true;
+            // }
+            // if (pushedNoTags)
+            //     ImGui.PopStyleColor(3);
+
+            // ImGui.SameLine();
+            // if (ImGui.Button("Clear##ClearAllTagsBtn")) {
+            //     _selectedTags.Clear();
+            //     _filterNoTags = false;
+            // }
         }
         ImGui.EndGroup();
+
+        ImGui.Separator();
+
         ImGui.Spacing();
         // tag list
         ImGui.PushStyleColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered);
@@ -761,12 +794,14 @@ public class MainWindow : Window {
             TitleBarButtons.Add(new TitleBarButton() {
                 AvailableClickthrough = false,
                 Icon = FontAwesomeIcon.Cog,
+                ShowTooltip = () => ImGuiUtil.ToolTip(Language.SettingsTitle),
                 Click = _ => Ui.SettingsWindow.Toggle()
             });
 
             TitleBarButtons.Add(new TitleBarButton() {
                 AvailableClickthrough = false,
                 Icon = FontAwesomeIcon.Heart,
+                ShowTooltip = () => ImGuiUtil.ToolTip("Discord"),
                 // Click = _ => Ui.SettingsWindow.Toggle()
             });
 
@@ -774,6 +809,7 @@ public class MainWindow : Window {
             TitleBarButtons.Add(new TitleBarButton() {
                 AvailableClickthrough = false,
                 Icon = FontAwesomeIcon.Bug,
+                ShowTooltip = () => ImGuiUtil.ToolTip("Debug"),
                 Click = _ => Ui.DebugWindow.Toggle()
             });
 #endif
