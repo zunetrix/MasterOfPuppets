@@ -1,7 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Globalization;
 
 using Dalamud.Utility;
 
@@ -9,9 +11,9 @@ using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
 
-using MasterOfPuppets.Extensions;
-
 using FFXIVAction = Lumina.Excel.Sheets.Action;
+
+using MasterOfPuppets.Extensions;
 
 namespace MasterOfPuppets.Util.ImGuiIconPicker;
 
@@ -21,13 +23,13 @@ namespace MasterOfPuppets.Util.ImGuiIconPicker;
 /// but it covers most of the game icons.
 public class IconPickerIndex {
     /// The full range of icons that we will try and explore.
-    private List<int> iconRange = Enumerable.Range(0, 250000).ToList();
+    private readonly List<int> iconRange = Enumerable.Range(0, 250000).ToList();
 
     /// The range of icons within iconRange that should be ignored (because they cause exceptions).
     private readonly HashSet<int> iconRangeNullValues = Enumerable.Range(170000, 9999).ToHashSet();
 
-    private SortedList<uint, IconInfo> iconInfos = new();
-    private SortedList<IconInfoCategory, IconInfoCategoryGroup> iconInfoGroupForCategory = new(IconInfoCategory.NameComparer);
+    private readonly SortedList<uint, IconInfo> iconInfos = new();
+    private readonly SortedList<IconInfoCategory, IconInfoCategoryGroup> iconInfoGroupForCategory = new(IconInfoCategory.NameComparer);
 
     public enum IndexState {
         UNINDEXED,
@@ -74,7 +76,7 @@ public class IconPickerIndex {
         if (State != IndexState.INDEXED) { return new(); }
         if (needle.Length < 2) { return new(); }
 
-        var searchNeedle = needle.ToLowerInvariant();
+        var searchNeedle = IconInfo.NormalizeForSearch(needle);
 
         var searchHaystack = All(category);
 
@@ -625,7 +627,7 @@ public class IconPickerIndex {
 
             foreach (var usefulIcon in usefulIcons) {
                 // If no icon info exists then this isn't a valid id
-                var existingIconInfo = iconInfos.GetValueOrDefault((uint)usefulIcon);
+                var existingIconInfo = iconInfos.GetValueOrDefault(usefulIcon);
                 if (existingIconInfo == null) { continue; }
 
                 var iconInfo = new IconInfo {
@@ -721,13 +723,24 @@ public class IconInfo {
     /// The Categories that this Icon belongs to.
     public List<IconInfoCategory> Categories { get; private set; } = new();
 
+    public static string NormalizeForSearch(string input) {
+        return string.Concat(
+            input.Normalize(NormalizationForm.FormD)
+                .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+        ).ToLowerInvariant();
+    }
+
     public void AddNames(IEnumerable<string> names) {
         foreach (var name in names) {
-            var searchName = name.ToLowerInvariant();
-            if (SearchNames.Contains(searchName)) { continue; }
+            var normalizedName = NormalizeForSearch(name);
+
+            // Check if this name already exists (O(1) lookup in HashSet)
+            if (SearchNames.Contains(normalizedName)) {
+                continue;
+            }
 
             Names.Add(name);
-            SearchNames.Add(searchName);
+            SearchNames.Add(normalizedName);
         }
     }
 
