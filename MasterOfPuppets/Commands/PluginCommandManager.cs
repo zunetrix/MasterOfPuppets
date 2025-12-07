@@ -20,9 +20,15 @@ public class PluginCommandManager : IDisposable {
                 /mop -> show / hide UI
                 /mop run "Macro name" -> execute macro
                 /mop stop -> stop macro execution
-                /mop queue -> show queue window
-                /mop targetmytarget
-                /mop targetclear
+                /mop queue -> toggle queue window
+                /mop emote -> toggle emote window
+                /mop fashion -> toggle fashion window
+                /mop facewear -> toggle facewear window
+                /mop mount -> toggle mount window
+                /mop minion -> shtoggleow minion window
+                /mop item -> toggle item window
+                /mop targetmytarget -> make all clients target your current target
+                /mop targetclear - > clear all targets
             """,
         });
 
@@ -83,16 +89,33 @@ public class PluginCommandManager : IDisposable {
                     Plugin.IpcProvider.StopMacroExecution();
                     break;
 
-                case "queue":
-                    Plugin.Ui.MacroQueueWindow.Toggle();
-                    break;
-
                 case "targetmytarget":
                     Plugin.IpcProvider.ExecuteTargetMyTarget();
                     break;
 
                 case "targetclear":
                     Plugin.IpcProvider.ExecuteTargetClear();
+                    break;
+                case "queue":
+                    Plugin.Ui.MacroQueueWindow.Toggle();
+                    break;
+                case "emote":
+                    Plugin.Ui.EmotesWindow.Toggle();
+                    break;
+                case "fashion":
+                    Plugin.Ui.FashionAccessoriesWindow.Toggle();
+                    break;
+                case "facewear":
+                    Plugin.Ui.FacewearWindow.Toggle();
+                    break;
+                case "mount":
+                    Plugin.Ui.MountWindow.Toggle();
+                    break;
+                case "minion":
+                    Plugin.Ui.MinionWindow.Toggle();
+                    break;
+                case "item":
+                    Plugin.Ui.ItemWindow.Toggle();
                     break;
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");

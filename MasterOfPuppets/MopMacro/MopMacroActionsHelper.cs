@@ -39,7 +39,7 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Open macro queue
+            Open macro queue window
             """
         },
         new MopAction {

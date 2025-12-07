@@ -18,19 +18,21 @@ public class MainWindow : Window {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
     public bool IsVisible { get; private set; }
-    // private static readonly Version Version = typeof(MainWindow).Assembly.GetName().Version;
+    private static readonly Version Version = typeof(MainWindow).Assembly.GetName().Version;
     // private static readonly string VersionString = Version?.ToString();
 
     private string _macroSearchString = string.Empty;
     private readonly List<int> MacroListSearchedIndexes = new();
     private readonly HashSet<string> _selectedTags = new(StringComparer.OrdinalIgnoreCase);
     private bool _filterNoTags = false;
+    private float _leftPanelWidth = 200f;
+    private bool _showTagsPanel = true;
 
-    internal MainWindow(Plugin plugin, PluginUi ui) : base(Plugin.Name) {
+    internal MainWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name}") {
         Plugin = plugin;
         Ui = ui;
 
-        Size = ImGuiHelpers.ScaledVector2(300, 250);
+        Size = ImGuiHelpers.ScaledVector2(600, 400);
         SizeCondition = ImGuiCond.FirstUseEver;
         UpdateWindowConfig();
     }
@@ -247,10 +249,19 @@ public class MainWindow : Window {
                 Plugin.Ui.MacroHelpWindow.Toggle();
             }
 
+            var versionText = $"v{Version}";
+            var textSize = ImGui.CalcTextSize(versionText);
+            var padding = ImGui.GetStyle().FramePadding.X + 5;
+            var regionMaxX = ImGui.GetWindowContentRegionMax().X;
+            // align to right
+            ImGui.SameLine(regionMaxX - textSize.X - (padding * 2));
+            ImGui.TextUnformatted(versionText);
+
             ImGui.EndMenuBar();
-            ImGui.PopStyleVar();
-            ImGui.PopStyleColor();
         }
+
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
     }
 
     private void DrawMacroHeader() {
@@ -259,16 +270,22 @@ public class MainWindow : Window {
         float buttonWidth = ImGui.GetFrameHeight();
         float marginRight = 15f * ImGuiHelpers.GlobalScale;
 
-        ImGui.TextUnformatted(Language.MacroListTitle);
+        // ImGui.TextUnformatted(Language.MacroListTitle);
 
         if (ImGui.InputTextWithHint("##MacroSearchInput", Language.MacroSearchInputLabel, ref _macroSearchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             SearchMacro();
         }
 
-        int buttonMacroCount = 3;
+        int buttonMacroCount = 4;
         float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
-
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
+
+        // toggle left tags panel show/hide
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Tags, $"##ToggleMacroTagsPanelBtn", Language.ToggleMacroTagsPanelBtn)) {
+            _showTagsPanel = !_showTagsPanel;
+        }
+
+        ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddMacroBtn", Language.AddMacroBtn)) {
             Ui.MacroEditorWindow.AddNewMacro();
         }
@@ -299,6 +316,7 @@ public class MainWindow : Window {
         if (ImGuiUtil.IconButton(FontAwesomeIcon.List, $"##ShowMacroQueueBtn", Language.ShowMacroQueueBtn)) {
             Ui.MacroQueueWindow.Toggle();
         }
+
 
         ImGui.Spacing();
         ImGui.Spacing();
@@ -560,9 +578,26 @@ public class MainWindow : Window {
     }
 
     private void DrawMacroPanels() {
+
+        if (_showTagsPanel) {
+            DrawLeftPanel();
+        }
+
+        ImGui.SameLine();
+
+        DrawRightPanel();
+    }
+
+    private void DrawLeftPanel() {
+        // layout helpers
+        var totalAvail = ImGui.GetContentRegionAvail().X;
+        var minPanelPx = 120f * ImGuiHelpers.GlobalScale;
+        var maxPanelPx = Math.Max(minPanelPx, totalAvail - minPanelPx);
+        // clamp stored width to available range
+        _leftPanelWidth = MathF.Max(minPanelPx, MathF.Min(_leftPanelWidth, maxPanelPx));
+
         // left panel fixed width tree
-        var leftWidth = ImGuiHelpers.ScaledVector2(200, -1);
-        ImGui.BeginChild("##MacroTags", leftWidth, true);
+        ImGui.BeginChild("##MacroTags", ImGuiHelpers.ScaledVector2(_leftPanelWidth, -1), true);
         ImGui.TextUnformatted(Language.MacroTagsLabel);
         ImGui.Separator();
 
@@ -624,8 +659,28 @@ public class MainWindow : Window {
         ImGui.PopStyleColor(3);
         ImGui.EndChild();
 
+        // SPLITTER
         ImGui.SameLine();
 
+        // splitter visual: thin invisible button
+        var splitterId = "##MacroTagsSplitter";
+        var splitterWidth = 6f * ImGuiHelpers.GlobalScale;
+        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
+        ImGui.InvisibleButton(splitterId, new Vector2(splitterWidth, -1));
+        if (ImGui.IsItemHovered())
+            ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
+
+        // dragging behavior: adjust _leftPanelWidth by mouse delta while dragging
+        if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+            var io = ImGui.GetIO();
+            _leftPanelWidth += io.MouseDelta.X;
+            // clamp while dragging
+            _leftPanelWidth = MathF.Max(minPanelPx, MathF.Min(_leftPanelWidth, maxPanelPx));
+        }
+        ImGui.PopStyleVar();
+    }
+
+    private void DrawRightPanel() {
         // right panel: filtered list
         ImGui.BeginChild("##MacroList", new Vector2(0, -1), false, ImGuiWindowFlags.HorizontalScrollbar);
         DrawMacrosTableFiltered();

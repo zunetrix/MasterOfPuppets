@@ -591,6 +591,11 @@ internal class Language {
             return ResourceManager.GetString("ShowMacroQueueBtn", resourceCulture);
         }
     }
+    internal static string ToggleMacroTagsPanelBtn {
+        get {
+            return ResourceManager.GetString("ToggleMacroTagsPanelBtn", resourceCulture);
+        }
+    }
     internal static string ShowEmotesBtn {
         get {
             return ResourceManager.GetString("ShowEmotesBtn", resourceCulture);

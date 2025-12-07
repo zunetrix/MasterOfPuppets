@@ -173,7 +173,7 @@ public class IconPickerDialogWindow : Window {
 
                 if (ImGui.IsMouseDown(ImGuiMouseButton.Right)) {
                     // Icon Preview
-                    ImGui.Image(icon.Handle, new Vector2(700 * ImGuiHelpers.GlobalScale));
+                    ImGui.Image(icon.Handle, new Vector2(400 * ImGuiHelpers.GlobalScale));
                 } else {
                     // Icon Details
                     ImGui.TextUnformatted($"{namedIcon.IconId}");
