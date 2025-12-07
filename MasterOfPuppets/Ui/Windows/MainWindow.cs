@@ -10,6 +10,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
@@ -606,6 +607,12 @@ public class MainWindow : Window {
                     Plugin.MacroManager.ClearMacroSelection();
             }
 
+            // checkbox border
+            var min = ImGui.GetItemRectMin();
+            var max = ImGui.GetItemRectMax();
+            var dl = ImGui.GetWindowDrawList();
+            dl.AddRect(min, max, ImGui.ColorConvertFloat4ToU32(Style.Components.TooltipBorderColor), 0f, ImDrawFlags.None, 1.0f);
+
             ImGui.TableSetColumnIndex(1);
             ImGui.TextUnformatted("#");
 
@@ -802,7 +809,7 @@ public class MainWindow : Window {
                 AvailableClickthrough = false,
                 Icon = FontAwesomeIcon.Heart,
                 ShowTooltip = () => ImGuiUtil.ToolTip("Discord"),
-                // Click = _ => Ui.SettingsWindow.Toggle()
+                Click = _ => WindowsApi.OpenUrl("https://discord.gg/BTsHyBzGsN")
             });
 
 #if DEBUG
