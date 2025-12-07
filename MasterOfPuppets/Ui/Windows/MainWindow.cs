@@ -27,6 +27,7 @@ public class MainWindow : Window {
     private bool _filterNoTags = false;
     private float _leftPanelWidth = 200f;
     private bool _showTagsPanel = true;
+    private bool _isGlobalMacroCheckboxChecked = false;
 
     internal MainWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name}") {
         Plugin = plugin;
@@ -358,13 +359,48 @@ public class MainWindow : Window {
         var icon = DalamudApi.TextureProvider.GetFromGameIcon(macro.IconId).GetWrapOrEmpty().Handle;
         var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
         ImGui.Image(icon, iconSize);
-        ImGuiUtil.ToolTip($"{string.Join("\n", macro.Tags)}");
+        if (macro.Tags.Count > 0) {
+            ImGuiUtil.ToolTip($"{string.Join("\n", macro.Tags)}");
+        }
 
         ImGui.TableNextColumn();
         ImGui.PushStyleColor(ImGuiCol.Text, macro.Color);
         ImGui.Selectable($"{macro.Name}");
         ImGui.PopStyleColor();
-        ImGuiUtil.ToolTip("Drag to reorder");
+
+        // context menu
+        ImGui.OpenPopupOnItemClick("ContextMenuMacro", ImGuiPopupFlags.MouseButtonRight);
+
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
+        if (ImGui.BeginPopup("ContextMenuMacro")) {
+            if (ImGui.MenuItem($"{Language.CloneMacroBtn}##CloneMacro_{macroIdx}")) {
+                Plugin.MacroManager.CloneMacro(macroIdx);
+                Plugin.IpcProvider.SyncConfiguration();
+                DalamudApi.ShowNotification("Macro cloned", NotificationType.Info, 5000);
+            }
+
+            if (ImGui.MenuItem($"{Language.ExportMacroBtn}##ExportMacro_{macroIdx}")) {
+                var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: false);
+                ImGui.SetClipboardText(macroExportData);
+                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+            }
+
+            if (ImGui.MenuItem($"{Language.ExportMacroBtn} (include CIDs)##ExportMacroCids_{macroIdx}")) {
+                var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: true);
+                ImGui.SetClipboardText(macroExportData);
+                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+            }
+
+            ImGui.EndPopup();
+        }
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
+
+        ImGuiUtil.ToolTip("""
+        Right click for more options
+        Drag to reorder
+        """);
 
         if (ImGui.BeginDragDropSource()) {
             unsafe {
@@ -413,28 +449,29 @@ public class MainWindow : Window {
             }
         }
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowUpRightFromSquare, $"##ExportMacro_{macroIdx}", Language.ExportMacroBtn)) {
-            var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: false);
-            ImGui.SetClipboardText(macroExportData);
-            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-        }
-        ImGui.OpenPopupOnItemClick("ContextMenuExportMacro", ImGuiPopupFlags.MouseButtonRight);
+        // ImGui.SameLine();
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowUpRightFromSquare, $"##ExportMacro_{macroIdx}", Language.ExportMacroBtn)) {
+        //     var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: false);
+        //     ImGui.SetClipboardText(macroExportData);
+        //     DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+        // }
+        // ImGui.OpenPopupOnItemClick("ContextMenuExportMacro", ImGuiPopupFlags.MouseButtonRight);
 
-        if (ImGui.BeginPopup("ContextMenuExportMacro")) {
-            if (ImGui.MenuItem("Export with characters")) {
-                var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: true);
-                ImGui.SetClipboardText(macroExportData);
-                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-            }
-            ImGui.EndPopup();
-        }
+        // if (ImGui.BeginPopup("ContextMenuExportMacro")) {
+        //     if (ImGui.MenuItem("Export with characters")) {
+        //         var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: true);
+        //         ImGui.SetClipboardText(macroExportData);
+        //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+        //     }
+        //     ImGui.EndPopup();
+        // }
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CloneMacro_{macroIdx}", Language.CloneMacroBtn)) {
-            Plugin.MacroManager.CloneMacro(macroIdx);
-            Plugin.IpcProvider.SyncConfiguration();
-        }
+        // ImGui.SameLine();
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CloneMacro_{macroIdx}", Language.CloneMacroBtn)) {
+        //     Plugin.MacroManager.CloneMacro(macroIdx);
+        //     Plugin.IpcProvider.SyncConfiguration();
+        // }
+
 
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Edit, $"##EditMacro_{macroIdx}", Language.EditMacroBtn)) {
@@ -448,6 +485,8 @@ public class MainWindow : Window {
         }
         ImGui.OpenPopupOnItemClick("ContextMenuRunMacro", ImGuiPopupFlags.MouseButtonRight);
 
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
         if (ImGui.BeginPopup("ContextMenuRunMacro")) {
             if (ImGui.MenuItem("Copy Run Command")) {
                 ImGui.SetClipboardText($"/mop run \"{macro.Name}\"");
@@ -459,6 +498,8 @@ public class MainWindow : Window {
             }
             ImGui.EndPopup();
         }
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
 
         ImGui.PopID();
     }
@@ -541,7 +582,8 @@ public class MainWindow : Window {
         }
 
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
-                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
+                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV; // ImGuiTableFlags.Resizable;
+
         var tableColumnCount = 5;
         var itemCount = visibleIndexes.Count;
 
@@ -551,6 +593,30 @@ public class MainWindow : Window {
             ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Macro", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("Options", ImGuiTableColumnFlags.WidthFixed);
+
+            // ImGui.TableHeadersRow();
+            // header
+            ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
+
+            ImGui.TableSetColumnIndex(0);
+            if (ImGui.Checkbox($"##GlobalMacroCheckbox", ref _isGlobalMacroCheckboxChecked)) {
+                if (_isGlobalMacroCheckboxChecked)
+                    Plugin.MacroManager.SelectAllMacros();
+                else
+                    Plugin.MacroManager.ClearMacroSelection();
+            }
+
+            ImGui.TableSetColumnIndex(1);
+            ImGui.TextUnformatted("#");
+
+            ImGui.TableSetColumnIndex(2);
+            ImGui.TextUnformatted("Icon");
+
+            ImGui.TableSetColumnIndex(3);
+            ImGui.TextUnformatted(Language.MacroNameLabel);
+
+            ImGui.TableSetColumnIndex(4);
+            ImGui.TextUnformatted("Options");
 
             ImGuiListClipperPtr clipper;
             unsafe {

@@ -17,6 +17,18 @@ public class MacroManager {
     // public List<Macro> Macros { get; set; } = new();
     public HashSet<int> SelectedMacrosIndexes = new();
 
+    public void SelectAllMacros() {
+        SelectedMacrosIndexes.Clear();
+
+        for (int i = 0; i < Plugin.Config.Macros.Count; i++) {
+            SelectedMacrosIndexes.Add(i);
+        }
+    }
+
+    public void ClearMacroSelection() {
+        SelectedMacrosIndexes.Clear();
+    }
+
     public MacroManager(Plugin plugin) {
         Plugin = plugin;
     }

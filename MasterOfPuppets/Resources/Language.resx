@@ -309,7 +309,7 @@ Right-Click to copy command</value>
         <value>Game Settings</value>
     </data>
     <data name="ExportMacroBtn" xml:space="preserve">
-        <value>Export Macro (right click for more options)</value>
+        <value>Export Macro</value>
     </data>
     <data name="ImportMacroBtn" xml:space="preserve">
         <value>Import Macro From Clipboard</value>
