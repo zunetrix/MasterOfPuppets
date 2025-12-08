@@ -161,7 +161,7 @@ public class IconPickerDialogWindow : Window {
     private void DrawSearchResults(float iconSize, int columns) {
         var lineHeight = iconSize + ImGui.GetStyle().ItemSpacing.Y;
         ImGuiClip.ClippedDraw(searchedIconInfo, (namedIcon) => {
-            var icon = DalamudApi.TextureProvider.GetFromGameIcon(namedIcon.IconId)!.GetWrapOrEmpty();
+            var icon = DalamudApi.TextureProvider.GetFromGameIcon(namedIcon.IconId).GetWrapOrEmpty();
             ImGui.Image(
                 icon.Handle,
                 new Vector2(iconSize),

@@ -7,6 +7,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Extensions;
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
@@ -214,7 +215,30 @@ public class SettingsWindow : Window {
 
             ImGui.Spacing();
             ImGui.Spacing();
+
+            var selectedPrefix = Plugin.Config.DefaultChatSyncPrefix;
+            ImGui.TextUnformatted(Language.SettingsWindowDefaultChatSyncPrefix);
+            if (ImGui.BeginCombo("##DefaultChatPrefix", selectedPrefix)) {
+                foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes) {
+                    string prefix = chatType.ToChatPrefix();
+
+                    bool isSelected = selectedPrefix == prefix;
+                    if (ImGui.Selectable(prefix, isSelected)) {
+                        Plugin.Config.DefaultChatSyncPrefix = prefix;
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+                }
+
+                ImGui.EndCombo();
+            }
+            ImGuiUtil.HelpMarker("Default chat prefix used when running macros from the list");
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+
             ImGui.Separator();
+
             ImGui.Spacing();
             ImGui.Spacing();
 
@@ -224,8 +248,7 @@ public class SettingsWindow : Window {
                     // foreach (XivChatType chatType in Enum.GetValues(typeof(XivChatType)))
                     foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes.Except(Plugin.Config.ListenedChatTypes)) {
                         // var displayName = $"{chatType} ({(int)chatType})";
-                        var displayName = $"{chatType}";
-                        if (ImGui.Selectable(displayName, false)) {
+                        if (ImGui.Selectable($"{chatType}", false)) {
                             Plugin.Config.ListenedChatTypes.Add(chatType);
                             Plugin.IpcProvider.SyncConfiguration();
                         }

@@ -189,7 +189,7 @@ public class FacewearWindow : Window {
         }
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction facewear) => {
-            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(facewear.IconId)!.GetWrapOrEmpty();
+            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(facewear.IconId.GetWrapOrEmpty();
             var icon = DalamudApi.TextureProvider.GetFromGameIcon(facewear.IconId).GetWrapOrEmpty().Handle;
             ImGui.Image(
                 icon.Handle,

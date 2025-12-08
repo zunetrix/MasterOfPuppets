@@ -229,7 +229,7 @@ public class FashionAccessoriesWindow : Window {
         }
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction fashionAccessorie) => {
-            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(fashionAccessorie.IconId)!.GetWrapOrEmpty();
+            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(fashionAccessorie.IconId).GetWrapOrEmpty();
             var icon = DalamudApi.TextureProvider.GetFromGameIcon(fashionAccessorie.IconId).GetWrapOrEmpty().Handle;
             ImGui.Image(
                 icon.Handle,

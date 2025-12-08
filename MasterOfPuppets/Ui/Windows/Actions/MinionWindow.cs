@@ -194,7 +194,7 @@ public class MinionWindow : Window {
         }
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction minion) => {
-            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId)!.GetWrapOrEmpty();
+            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId).GetWrapOrEmpty();
             var icon = DalamudApi.TextureProvider.GetFromGameIcon(minion.IconId).GetWrapOrEmpty().Handle;
             ImGui.Image(
                 icon.Handle,

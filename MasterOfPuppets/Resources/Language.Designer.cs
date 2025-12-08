@@ -736,6 +736,11 @@ internal class Language {
             return ResourceManager.GetString("SettingsWindowUseChatCommandSenderWhitelist", resourceCulture);
         }
     }
+    internal static string SettingsWindowDefaultChatSyncPrefix {
+        get {
+            return ResourceManager.GetString("SettingsWindowDefaultChatSyncPrefix", resourceCulture);
+        }
+    }
     internal static string ClipboardCopyMessage {
         get {
             return ResourceManager.GetString("ClipboardCopyMessage", resourceCulture);

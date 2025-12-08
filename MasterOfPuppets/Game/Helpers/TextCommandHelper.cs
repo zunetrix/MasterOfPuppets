@@ -28,7 +28,7 @@ public static class TextCommandHelper {
 
     public static TextCommand? GetTextCommandByName(string textCommandName) {
         // returns RowId = 0 for invalid names
-        var textcommand = DalamudApi.DataManager.GetExcelSheet<TextCommand>()!
+        var textcommand = DalamudApi.DataManager.GetExcelSheet<TextCommand>()
         .FirstOrDefault(a => string.Equals(a.Command.ToString(), textCommandName, System.StringComparison.OrdinalIgnoreCase));
 
         var isTextCommandFound = textcommand.RowId != 0;

@@ -199,7 +199,7 @@ public class MountWindow : Window {
         }
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction mount) => {
-            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(mount.IconId)!.GetWrapOrEmpty();
+            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(mount.IconId).GetWrapOrEmpty();
             var icon = DalamudApi.TextureProvider.GetFromGameIcon(mount.IconId).GetWrapOrEmpty().Handle;
             ImGui.Image(
                 icon.Handle,

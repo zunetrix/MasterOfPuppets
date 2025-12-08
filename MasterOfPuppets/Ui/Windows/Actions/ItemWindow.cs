@@ -190,7 +190,7 @@ public class ItemWindow : Window {
         }
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction item) => {
-            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(item.IconId)!.GetWrapOrEmpty();
+            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(item.IconId).GetWrapOrEmpty();
             var icon = DalamudApi.TextureProvider.GetFromGameIcon(item.IconId).GetWrapOrEmpty().Handle;
             ImGui.Image(
                 icon.Handle,

@@ -18,7 +18,7 @@ public static class FashionAccessoriesHelper {
 
     public static List<ExecutableAction> GetAllowedItems() {
         var excludedIds = new uint[] { 32 };
-        return DalamudApi.DataManager.GetExcelSheet<Ornament>()!
+        return DalamudApi.DataManager.GetExcelSheet<Ornament>()
             .Where(o => o.IsUnlocked() && !excludedIds.Contains(o.RowId) && !string.IsNullOrEmpty(o.Singular.ToString()))
             .Select(GetExecutableAction)
             .ToList();

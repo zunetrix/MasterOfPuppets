@@ -37,6 +37,7 @@ internal class Configuration : IPluginConfiguration {
     public HashSet<XivChatType> ListenedChatTypes { get; set; } = new();
     public bool UseChatCommandSenderWhitelist { get; set; } = false;
     public List<string> ChatCommandSenderWhitelist { get; set; } = new();
+    public string DefaultChatSyncPrefix { get; set; } = "/p";
 
 
     // Interface
@@ -87,6 +88,7 @@ internal class Configuration : IPluginConfiguration {
         ListenedChatTypes = newPluginConfig.ListenedChatTypes;
         UseChatCommandSenderWhitelist = newPluginConfig.UseChatCommandSenderWhitelist;
         ChatCommandSenderWhitelist = newPluginConfig.ChatCommandSenderWhitelist;
+        DefaultChatSyncPrefix = newPluginConfig.DefaultChatSyncPrefix;
 
         DelayBetweenActions = newPluginConfig.DelayBetweenActions;
         SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;

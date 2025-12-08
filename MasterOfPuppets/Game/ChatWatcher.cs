@@ -88,11 +88,6 @@ internal class ChatWatcher : IDisposable {
         }
     }
 
-    public void SendChatRunMacro(string macroName) {
-        var message = $"/p moprun {macroName}";
-        Chat.SendMessage(message);
-    }
-
     private void HandleRunMacro(string[] args, string senderName) {
         if (args.Length < 1) {
             DalamudApi.ChatGui.PrintError($"Invalid command arguments expected 1 <macro name>");

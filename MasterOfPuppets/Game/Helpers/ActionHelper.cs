@@ -26,7 +26,7 @@ public static class ActionHelper {
 
     public static Action? GetActionByName(string actionName) {
         // returns RowId = 0 for invalid names
-        var action = DalamudApi.DataManager.GetExcelSheet<Action>()!
+        var action = DalamudApi.DataManager.GetExcelSheet<Action>()
         .FirstOrDefault(a => string.Equals(a.Name.ToString(), actionName, System.StringComparison.OrdinalIgnoreCase));
 
         var isActionFound = action.RowId != 0;
@@ -39,7 +39,7 @@ public static class ActionHelper {
     }
 
     private static Action? GetActionById(uint id) {
-        return DalamudApi.DataManager.GetExcelSheet<Action>()!.GetRowOrDefault(id);
+        return DalamudApi.DataManager.GetExcelSheet<Action>().GetRowOrDefault(id);
     }
 
     public static ExecutableAction? GetExecutableActionById(uint slotId) {

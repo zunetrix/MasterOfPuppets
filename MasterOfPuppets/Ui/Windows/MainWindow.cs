@@ -234,6 +234,7 @@ public class MainWindow : Window {
                 if (ImGui.Selectable("Target My Target")) {
                     Plugin.IpcProvider.ExecuteTargetMyTarget();
                 }
+
                 // -----------------------
 
                 if (ImGuiUtil.IconButton(FontAwesomeIcon.Times, $"##ExecuteTargetClearCommand")) {
@@ -242,6 +243,16 @@ public class MainWindow : Window {
                 ImGui.SameLine();
                 if (ImGui.Selectable("Target Clear")) {
                     Plugin.IpcProvider.ExecuteTargetClear();
+                }
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowRight, $"##ExecuteAbandonDutyCommand")) {
+                    Plugin.IpcProvider.ExecuteAbandonDuty();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable("Abandon Duty")) {
+                    Plugin.IpcProvider.ExecuteAbandonDuty();
                 }
 
                 ImGui.EndMenu();
@@ -267,6 +278,8 @@ public class MainWindow : Window {
     }
 
     private void DrawMacroHeader() {
+        DrawConflictingPluginAlert();
+
         // align right
         float spacing = ImGui.GetStyle().ItemSpacing.X;
         float buttonWidth = ImGui.GetFrameHeight();
@@ -493,9 +506,16 @@ public class MainWindow : Window {
                 ImGui.SetClipboardText($"/mop run \"{macro.Name}\"");
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             }
+
             if (ImGui.MenuItem("Copy Chat Sync Command")) {
-                ImGui.SetClipboardText($"moprun \"{macro.Name}\"");
+                var macroRunMessage = $"{Plugin.Config.DefaultChatSyncPrefix} moprun \"{macro.Name}\"";
+                ImGui.SetClipboardText(macroRunMessage);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+            }
+
+            if (ImGui.MenuItem("Run Chat Sync Command")) {
+                var macroRunMessage = $"{Plugin.Config.DefaultChatSyncPrefix} moprun \"{macro.Name}\"";
+                Chat.SendMessage(macroRunMessage);
             }
             ImGui.EndPopup();
         }
@@ -509,7 +529,7 @@ public class MainWindow : Window {
     //     var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
     //     var noSearchResults = MacroListSearchedIndexes.Count == 0;
     //     if (isFiltered && noSearchResults) {
-    //         ImGuiUtil.DrawColoredBanner("Nothing found", Style.Colors.Red);
+    //         ImGuiUtil.DrawColoredBanner("Your search did not match any result", Style.Colors.Red);
     //     }
 
     //     var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
@@ -578,15 +598,15 @@ public class MainWindow : Window {
                 .ToList();
         }
 
-        if (isFiltered && visibleIndexes.Count == 0) {
-            ImGuiUtil.DrawColoredBanner("Nothing found", Style.Colors.Red);
-        }
-
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                 ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV; // ImGuiTableFlags.Resizable;
 
         var tableColumnCount = 5;
         var itemCount = visibleIndexes.Count;
+
+        if (isFiltered && itemCount == 0) {
+            ImGuiUtil.DrawColoredBanner("Your search did not match any result", Style.Colors.Red);
+        }
 
         if (ImGui.BeginTable("##MacrosTableFiltered", tableColumnCount, tableFlags)) {
             ImGui.TableSetupColumn("##CheckMacro", ImGuiTableColumnFlags.WidthFixed);
@@ -595,9 +615,9 @@ public class MainWindow : Window {
             ImGui.TableSetupColumn("Macro", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("Options", ImGuiTableColumnFlags.WidthFixed);
 
-            // ImGui.TableHeadersRow();
             // header
-            ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
+            // ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
+            ImGui.TableNextRow();
 
             ImGui.TableSetColumnIndex(0);
             if (ImGui.Checkbox($"##GlobalMacroCheckbox", ref _isGlobalMacroCheckboxChecked)) {
@@ -614,16 +634,20 @@ public class MainWindow : Window {
             dl.AddRect(min, max, ImGui.ColorConvertFloat4ToU32(Style.Components.TooltipBorderColor), 0f, ImDrawFlags.None, 1.0f);
 
             ImGui.TableSetColumnIndex(1);
-            ImGui.TextUnformatted("#");
+            ImGui.TableHeader("#");
+            // ImGui.TextUnformatted("#");
 
             ImGui.TableSetColumnIndex(2);
-            ImGui.TextUnformatted("Icon");
+            ImGui.TableHeader("Icon");
+            // ImGui.TextUnformatted("Icon");
 
             ImGui.TableSetColumnIndex(3);
-            ImGui.TextUnformatted(Language.MacroNameLabel);
+            ImGui.TableHeader(Language.MacroNameLabel);
+            // ImGui.TextUnformatted(Language.MacroNameLabel);
 
             ImGui.TableSetColumnIndex(4);
-            ImGui.TextUnformatted("Options");
+            ImGui.TableHeader("Options");
+            // ImGui.TextUnformatted("Options");
 
             ImGuiListClipperPtr clipper;
             unsafe {
@@ -674,11 +698,11 @@ public class MainWindow : Window {
         ImGui.BeginChild("##MacroTags", ImGuiHelpers.ScaledVector2(_leftPanelWidth, -1), true);
         ImGui.TextUnformatted(Language.MacroTagsLabel);
 
-        int buttonMacroCount = 3;
+        int buttonFilterCount = 2;
         float buttonWidth = ImGui.GetFrameHeight();
         float spacing = ImGui.GetStyle().ItemSpacing.X;
-        float marginRight = 15f * ImGuiHelpers.GlobalScale;
-        float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
+        float marginRight = 10f * ImGuiHelpers.GlobalScale;
+        float totalButtonsMacroWidth = (buttonWidth * buttonFilterCount) + (spacing * (buttonFilterCount - 1)) + marginRight;
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
 
         ImGui.BeginGroup();
@@ -697,10 +721,10 @@ public class MainWindow : Window {
                 ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
                 pushedNoTags = true;
             }
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.FilterCircleXmark, $"##SelectNoTagsBtn", "Filter macros without tags")) {
-                _selectedTags.Clear();
-                _filterNoTags = !_filterNoTags;
-            }
+            // if (ImGuiUtil.IconButton(FontAwesomeIcon.FilterCircleXmark, $"##SelectNoTagsBtn", "Filter macros without tags")) {
+            //     _selectedTags.Clear();
+            //     _filterNoTags = !_filterNoTags;
+            // }
             if (pushedNoTags)
                 ImGui.PopStyleColor(3);
 
@@ -746,29 +770,43 @@ public class MainWindow : Window {
         ImGui.PushStyleColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered);
         ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered);
         ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
-        if (ImGui.BeginListBox("##TagsListBox", new Vector2(-1, -1))) {
-            for (int i = 0; i < allTags.Count; i++) {
-                var tag = allTags[i];
-                var isSelected = _selectedTags.Contains(tag);
-                var count = Plugin.Config.Macros
-                    .Count(m => (m.Tags ?? new List<string>()).Any(t => string.Equals(t?.Trim(), tag, StringComparison.OrdinalIgnoreCase)));
 
-                var label = $"{tag} ({count})##tag_{i}";
-                if (ImGui.Selectable(label, isSelected, ImGuiSelectableFlags.SpanAllColumns)) {
-                    _filterNoTags = false;
-                    if (isSelected) _selectedTags.Remove(tag);
-                    else _selectedTags.Add(tag);
-                }
+        int noTagCount = Plugin.Config.Macros.Count(m => m.Tags == null || m.Tags.Count == 0);
+
+        bool isNoTagSelected = _filterNoTags;
+        if (ImGui.Selectable($"No Tags ({noTagCount})##tag_notag", isNoTagSelected)) {
+            _selectedTags.Clear();
+            _filterNoTags = !_filterNoTags;
+        }
+
+        ImGui.Separator();
+
+        for (int i = 0; i < allTags.Count; i++) {
+            var tag = allTags[i];
+            var isSelected = _selectedTags.Contains(tag);
+
+            var count = Plugin.Config.Macros
+                .Count(m => (m.Tags ?? new List<string>())
+                    .Any(t => string.Equals(t, tag, StringComparison.OrdinalIgnoreCase)));
+
+            var label = $"{tag} ({count})##tag_{i}";
+
+            if (ImGui.Selectable(label, isSelected, ImGuiSelectableFlags.SpanAllColumns)) {
+                _filterNoTags = false;
+
+                if (isSelected)
+                    _selectedTags.Remove(tag);
+                else
+                    _selectedTags.Add(tag);
             }
-            ImGui.EndListBox();
         }
         ImGui.PopStyleColor(3);
         ImGui.EndChild();
 
-        // SPLITTER
+        // splitter resizable
         ImGui.SameLine();
 
-        // splitter visual: thin invisible button
+        // thin invisible button
         var splitterId = "##MacroTagsSplitter";
         var splitterWidth = 6f * ImGuiHelpers.GlobalScale;
         ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
@@ -821,5 +859,22 @@ public class MainWindow : Window {
             });
 #endif
         }
+    }
+
+    public void DrawConflictingPluginAlert() {
+        var conflictPluginName = GetConflictingPluginName();
+        if (!string.IsNullOrEmpty(conflictPluginName))
+            ImGuiUtil.DrawColoredBanner($"Conflicting Plugin Detected: {conflictPluginName}", Style.Colors.Red);
+    }
+
+    public string? GetConflictingPluginName() {
+        var conflictingPluginNames = new[] { "WrathCombo", "RotationSolver" };
+
+        var plugin = DalamudApi.PluginInterface.InstalledPlugins
+            .FirstOrDefault(p =>
+                p.IsLoaded &&
+                conflictingPluginNames.Contains(p.InternalName, StringComparer.OrdinalIgnoreCase));
+
+        return plugin?.InternalName;
     }
 }

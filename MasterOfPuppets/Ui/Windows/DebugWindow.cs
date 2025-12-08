@@ -71,6 +71,15 @@ public class DebugWindow : Window {
         ImGui.EndTabBar();
     }
 
+    public bool IsConflictingPluginDetected() {
+        var conflictingPluginNames = new[] { "WrathCombo", "RotationSolver" };
+
+        return DalamudApi.PluginInterface.InstalledPlugins
+            .Any(plugin =>
+                plugin.IsLoaded &&
+                conflictingPluginNames.Contains(plugin.InternalName, StringComparer.OrdinalIgnoreCase));
+    }
+
     private void DrawGeneralDebugTab() {
         if (ImGui.BeginTabItem($"General###GeneralDebugTab")) {
             ImGui.TextUnformatted("Actions Test");
@@ -125,11 +134,11 @@ public class DebugWindow : Window {
             }
 
             if (ImGui.Button("Chat SendChatRunMacro(2)")) {
-                Plugin.ChatWatcher.SendChatRunMacro("2");
+                Chat.SendMessage($"/p moprun 2");
             }
 
             if (ImGui.Button("Chat SendChatRunMacro(Parasol action 1)")) {
-                Plugin.ChatWatcher.SendChatRunMacro("\"Parasol action 1\"");
+                Chat.SendMessage($"\"Parasol action 1\"");
             }
 
             if (ImGui.Button("Chat SendChatStopMacroExecution")) {
@@ -179,9 +188,15 @@ public class DebugWindow : Window {
                 GameActionManager.UseItemByName("Heavenscracker");
                 DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
             }
+
             if (ImGui.Button("UseActionByName(Peloton)")) {
                 GameActionManager.UseActionByName("Peloton");
                 DalamudApi.ShowNotification($"UseActionByName", NotificationType.Info, 5000);
+            }
+
+            if (ImGui.Button("UseGeneralActionById(23) unmount")) {
+                GameActionManager.UseGeneralActionById(23);
+                DalamudApi.ShowNotification($"UseGeneralActionById", NotificationType.Info, 5000);
             }
 
             if (ImGui.Button("Broadcast ExecuteItemCommand")) {
@@ -197,12 +212,17 @@ public class DebugWindow : Window {
             if (ImGui.Button("UseItemById(5893)")) {
                 uint lominsanSparklere = 5893;
                 GameActionManager.UseItemById(lominsanSparklere);
+
                 DalamudApi.ShowNotification($"UseItemById", NotificationType.Info, 5000);
             }
             if (ImGui.Button("Broadcast UseItemById(5893)")) {
                 uint lominsanSparklere = 5893;
                 Plugin.IpcProvider.ExecuteItemCommand(lominsanSparklere);
                 DalamudApi.ShowNotification($"Broadcast UseItemById(5893)", NotificationType.Info, 5000);
+            }
+
+            if (ImGui.Button("Abandon Duty")) {
+                GameFunctions.AbandonDuty();
             }
             // unsafe
             // {

@@ -194,7 +194,7 @@ public class EmotesWindow : Window {
         }
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction emote) => {
-            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(emote.IconId)!.GetWrapOrEmpty();
+            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(emote.IconId).GetWrapOrEmpty();
             var icon = DalamudApi.TextureProvider.GetFromGameIcon(emote.IconId).GetWrapOrEmpty().Handle;
             ImGui.Image(
                 icon.Handle,

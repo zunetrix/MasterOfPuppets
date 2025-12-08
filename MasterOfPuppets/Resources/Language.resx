@@ -317,6 +317,9 @@ Right-Click to copy command</value>
     <data name="SettingsWindowUseChatCommandSenderWhitelist" xml:space="preserve">
         <value>Use Chat Command Sender Whitelist</value>
     </data>
+    <data name="SettingsWindowDefaultChatSyncPrefix" xml:space="preserve">
+        <value>Default Chat Sync Prefix</value>
+    </data>
     <data name="ClipboardCopyMessage" xml:space="preserve">
         <value>Copied to clipboard</value>
     </data>
