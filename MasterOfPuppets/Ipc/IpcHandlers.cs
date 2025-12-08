@@ -41,6 +41,11 @@ internal class IpcHandlers {
         GameActionManager.UseActionById(message.DataStruct<uint>());
     }
 
+    [IpcHandle(IpcMessageType.ExecuteGeneralActionCommand)]
+    private void HandleExecuteGeneralActionCommand(IpcMessage message) {
+        GameActionManager.UseGeneralActionById(message.DataStruct<uint>());
+    }
+
     [IpcHandle(IpcMessageType.ExecuteItemCommand)]
     private unsafe void HandleExecuteItemCommand(IpcMessage message) {
         uint itemId = message.DataStruct<uint>();
@@ -56,6 +61,11 @@ internal class IpcHandlers {
     [IpcHandle(IpcMessageType.ExecuteTargetClear)]
     private void HandleExecuteTargetClear(IpcMessage message) {
         TargetManager.TargetClear();
+    }
+
+    [IpcHandle(IpcMessageType.ExecuteAbandonDuty)]
+    private void HandleExecuteAbandonDuty(IpcMessage message) {
+        GameFunctions.AbandonDuty();
     }
 
     [IpcHandle(IpcMessageType.SetGameSettingsObjectQuantity)]

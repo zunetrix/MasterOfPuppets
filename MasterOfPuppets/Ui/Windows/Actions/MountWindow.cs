@@ -150,6 +150,17 @@ public class MountWindow : Window {
             Search();
         }
 
+        ImGui.SameLine();
+        var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
+        var unmount = GeneralActionHelper.GetExecutableActionById(23);
+        var unmountIcon = DalamudApi.TextureProvider.GetFromGameIcon(unmount.IconId).GetWrapOrEmpty().Handle;
+
+        ImGui.Image(unmountIcon, iconSize);
+        if (ImGui.IsItemClicked()) {
+            Plugin.IpcProvider.ExecuteActionCommand(unmount.ActionId);
+        }
+        ImGuiUtil.ToolTip($"{Language.ClickToExecute} (unmount)");
+
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();

@@ -9,9 +9,11 @@ public enum IpcMessageType {
     SyncConfiguration,
     ExecuteTextCommand,
     ExecuteActionCommand,
+    ExecuteGeneralActionCommand,
     ExecuteItemCommand,
     ExecuteTargetMyTarget,
     ExecuteTargetClear,
+    ExecuteAbandonDuty,
     EnqueueMacroActions,
     EnqueueCharacterMacroActions,
     SetGameSettingsObjectQuantity

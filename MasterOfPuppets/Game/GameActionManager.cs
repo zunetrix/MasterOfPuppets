@@ -72,6 +72,8 @@ public static class GameActionManager {
         //     ActionManager.Instance()->UseAction(ActionType.Item, actionId, extraParam: 65535);
         // });
 
+        // AgentInventoryContext.Instance()->UseItem(actionId);
+
         DalamudApi.Framework.RunOnTick(delegate {
             ActionManager.Instance()->UseAction(ActionType.Item, actionId, extraParam: 65535);
         }, delayTicks: 3);

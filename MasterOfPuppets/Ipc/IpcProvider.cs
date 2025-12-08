@@ -108,6 +108,11 @@ internal class IpcProvider : IDisposable {
         BroadCast(message, includeSelf: true);
     }
 
+    public void ExecuteGeneralActionCommand(uint actionId) {
+        var message = IpcMessage.Create(IpcMessageType.ExecuteGeneralActionCommand, actionId).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
     public void ExecuteItemCommand(uint itemId) {
         var message = IpcMessage.Create(IpcMessageType.ExecuteItemCommand, itemId).Serialize();
         BroadCast(message, includeSelf: true);
@@ -125,6 +130,11 @@ internal class IpcProvider : IDisposable {
 
     public void ExecuteTargetClear() {
         var message = IpcMessage.Create(IpcMessageType.ExecuteTargetClear).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
+    public void ExecuteAbandonDuty() {
+        var message = IpcMessage.Create(IpcMessageType.ExecuteAbandonDuty).Serialize();
         BroadCast(message, includeSelf: true);
     }
 
