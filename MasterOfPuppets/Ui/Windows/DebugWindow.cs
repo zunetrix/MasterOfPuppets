@@ -113,6 +113,10 @@ public class DebugWindow : Window {
                 Plugin.IpcProvider.ExecuteTargetMyTarget();
             }
 
+            if (ImGui.Button("Target My Minion")) {
+                TargetManager.TargetMyMinion();
+            }
+
             if (ImGui.Button("Enable Walk")) {
                 MovementManager.EnableWalk();
             }

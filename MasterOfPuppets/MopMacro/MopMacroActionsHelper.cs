@@ -298,12 +298,6 @@ public static class MopMacroActionsHelper {
             Sleep / wake
                 /mophotbaremote 88
 
-            Sit <pose 1>
-                /mophotbaremote 95
-
-            Sit <pose 2>
-                /mophotbaremote 96
-
             -----------------------------
 
             Sit on groud <pose 1>
@@ -437,6 +431,17 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             Remove the target so that your head is not turned towards the target
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/moptargetmyminion",
+            SuggestionCommand = "/moptargetmyminion",
+            Example = """
+                /moptargetmyminion
+            """,
+            Notes = """
+            Target your current minion
             """
         },
         new MopAction {

@@ -158,6 +158,12 @@ public class MacroHandler : IDisposable {
                 await Task.CompletedTask;
             },
 
+            ["moptargetmyminion"] = async (macroId, args, token) => {
+                TargetManager.TargetMyMinion();
+                DalamudApi.PluginLog.Debug($"[moptargetmyminion]");
+                await Task.CompletedTask;
+            },
+
             ["moptarget"] = async (macroId, args, token) => {
                 string targetName = args.Trim().Trim('"');
                 TargetManager.TargetByName(targetName);

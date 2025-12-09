@@ -1,9 +1,15 @@
 using System;
+using System.Linq;
 using System.Numerics;
 
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
+
+using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+
+using MasterOfPuppets.Util;
 
 using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 
@@ -153,6 +159,32 @@ public static class TargetManager {
             });
         } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while cleaning target");
+        }
+    }
+
+    public static unsafe void TargetMyMinion() {
+        try {
+            DalamudApi.Framework.RunOnFrameworkThread(delegate {
+                var localPlayer = DalamudApi.Objects.LocalPlayer;
+                if (localPlayer == null) return;
+
+                var c = (BattleChara*)localPlayer.Address;
+                if (c == null) return;
+
+                var minion = c->CompanionData.CompanionObject;
+                if (minion == null) return;
+
+                if (minion->Character.BaseId == 0) return;
+
+                var minionObj = DalamudApi.Objects
+                    .FirstOrDefault(o => o.Address == (nint)minion);
+
+                if (minionObj == null) return;
+
+                DalamudApi.Targets.Target = minionObj;
+            });
+        } catch (Exception e) {
+            DalamudApi.PluginLog.Error(e, $"Error while targeting my minion");
         }
     }
 }
