@@ -713,20 +713,20 @@ public class MainWindow : Window {
                 foreach (var t in allTags) _selectedTags.Add(t);
             }
 
-            ImGui.SameLine();
-            var pushedNoTags = false;
-            if (_filterNoTags) {
-                ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-                ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-                ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-                pushedNoTags = true;
-            }
+            // ImGui.SameLine();
+            // var pushedNoTags = false;
+            // if (_filterNoTags) {
+            //     ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
+            //     ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
+            //     ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
+            //     pushedNoTags = true;
+            // }
             // if (ImGuiUtil.IconButton(FontAwesomeIcon.FilterCircleXmark, $"##SelectNoTagsBtn", "Filter macros without tags")) {
             //     _selectedTags.Clear();
             //     _filterNoTags = !_filterNoTags;
             // }
-            if (pushedNoTags)
-                ImGui.PopStyleColor(3);
+            // if (pushedNoTags)
+            //     ImGui.PopStyleColor(3);
 
             ImGui.SameLine();
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Eraser, $"##ClearAllTagsBtn", "Clear filter")) {
@@ -868,7 +868,7 @@ public class MainWindow : Window {
     }
 
     public string? GetConflictingPluginName() {
-        var conflictingPluginNames = new[] { "WrathCombo", "RotationSolver" };
+        var conflictingPluginNames = new[] { "WrathCombo", "RotationSolver", "BossMod" };
 
         var plugin = DalamudApi.PluginInterface.InstalledPlugins
             .FirstOrDefault(p =>

@@ -11,7 +11,7 @@ namespace MasterOfPuppets;
 /// <summary>
 /// A class containing chat functionality
 /// </summary>
-public static class Chat2 {
+public static class ChatBox {
     /// <summary>
     /// <para>
     /// Send a given message to the chat box. <b>This can send chat to the server.</b>

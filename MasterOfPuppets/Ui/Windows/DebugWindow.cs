@@ -72,7 +72,7 @@ public class DebugWindow : Window {
     }
 
     public bool IsConflictingPluginDetected() {
-        var conflictingPluginNames = new[] { "WrathCombo", "RotationSolver" };
+        var conflictingPluginNames = new[] { "WrathCombo", "RotationSolver", "BossMod" };
 
         return DalamudApi.PluginInterface.InstalledPlugins
             .Any(plugin =>
