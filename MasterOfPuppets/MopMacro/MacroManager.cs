@@ -39,7 +39,7 @@ public class MacroManager {
 
     public List<string> GetAllTags() {
         return Plugin.Config.Macros
-            .Where(m => m.Tags != null)
+            .Where(m => m.Tags.Count > 0)
             .SelectMany(m => m.Tags)
             .Select(t => (t ?? string.Empty).Trim())
             .Where(t => !string.IsNullOrWhiteSpace(t))
@@ -91,7 +91,7 @@ public class MacroManager {
     public void DeleteMacro(int itemIndex) {
         var isEmptyList = Plugin.Config.Macros == null || Plugin.Config.Macros.Count == 0;
         var isValidIndex = Plugin.Config.Macros.IndexExists(itemIndex);
-        ;
+
         if (isEmptyList || !isValidIndex)
             return;
 
@@ -155,6 +155,11 @@ public class MacroManager {
     public void ImportMacroFromString(string compressedMacroString) {
         string macroString = Compressor.DecompressString(compressedMacroString);
         var newMacro = macroString.JsonDeserialize<Macro>();
+
+        if (newMacro == null) {
+            throw new ArgumentException("Invalid macro data");
+        }
+
         Plugin.Config.Macros.Add(newMacro);
     }
 
@@ -239,13 +244,13 @@ public class MacroManager {
 
             if (!includeCids) {
                 macrosImport = macrosImport
-                   .Select(macro => macro.CloneWithoutCharacters())
-                   .ToList();
+                .Select(macro => macro.CloneWithoutCharacters())
+                .ToList();
             }
 
             var macroIndexMap = Plugin.Config.Macros
-                          .Select((m, i) => new { m.Name, Index = i })
-                          .ToDictionary(x => x.Name, x => x.Index, StringComparer.OrdinalIgnoreCase);
+                .Select((m, i) => new { m.Name, Index = i })
+                .ToDictionary(x => x.Name, x => x.Index, StringComparer.OrdinalIgnoreCase);
 
             switch (importMode) {
                 case MacroImportMode.AppendAll:

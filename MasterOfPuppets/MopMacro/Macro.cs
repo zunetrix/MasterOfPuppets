@@ -51,7 +51,7 @@ public class Command {
             .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)
             .Select(line => line.Trim())
             .Where(line => !string.IsNullOrWhiteSpace(line))
-            .Select(line => System.Text.RegularExpressions.Regex.Replace(line, @"\s+", " "))
+            .Select(line => Regex.Replace(line, @"\s+", " "))
             .ToList();
 
         lines = lines
@@ -79,7 +79,7 @@ public class Command {
 
 public class Macro {
     [JsonPropertyName("name")]
-    public string Name;
+    public string Name = string.Empty;
 
     [JsonPropertyName("tags")]
     public List<string> Tags = new List<string>();
@@ -91,7 +91,7 @@ public class Macro {
     public uint IconId = 0;
 
     [JsonPropertyName("commands")]
-    public List<Command> Commands;
+    public List<Command> Commands = new List<Command>();
 
     public Macro Clone() {
         return new Macro {

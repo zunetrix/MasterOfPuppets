@@ -21,7 +21,7 @@ namespace MasterOfPuppets;
 public class MacroEditorWindow : Window {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
-    private Macro MacroItem = new() { Commands = new List<Command>() };
+    private Macro MacroItem = new();
     private int MacroIndex;
     private int SelectedCommandIndex = 0;
     private bool EditingExistingMacro = false;
@@ -32,8 +32,8 @@ public class MacroEditorWindow : Window {
     private readonly ImGuiInputTextMultiline InputTextMultiline;
     private readonly ImGuiModalDialog ImGuiModalDialog = new("##MacroEditorModalDialog");
 
-    private void UpdateMacrosTags() {
-        MacrosTags = Plugin.MacroManager.GetAllTags();
+    private void RefreshMacrosTags() {
+        MacrosTags = Plugin.MacroManager.GetAllTags().ToList();
     }
 
     public MacroEditorWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name} {Language.MacroEditorTitle}###MacroEditorWindow") {
@@ -49,7 +49,7 @@ public class MacroEditorWindow : Window {
 
     public override void PreDraw() {
         base.PreDraw();
-        UpdateMacrosTags();
+        RefreshMacrosTags();
     }
 
     public override void OnClose() {
@@ -67,7 +67,7 @@ public class MacroEditorWindow : Window {
     }
 
     private void RessetState() {
-        MacroItem = new() { Commands = new List<Command>(), Tags = new List<string>() };
+        MacroItem = new();
         EditingExistingMacro = false;
         MacroIndex = Plugin.MacroManager.GetMacrosCount();
         SelectedCommandIndex = 0;
@@ -166,7 +166,7 @@ public class MacroEditorWindow : Window {
                     if (ImGui.Selectable($"{MacroItem.Tags[tagIndex]}", false)) {
                         if (ImGui.GetIO().KeyCtrl) {
                             MacroItem.Tags.RemoveAt(tagIndex);
-                            UpdateMacrosTags();
+                            RefreshMacrosTags();
                         }
                     }
                     ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
@@ -194,7 +194,7 @@ public class MacroEditorWindow : Window {
                 if (!string.IsNullOrWhiteSpace(TagName)) {
                     MacroItem.Tags.AddUnique(TagName.Trim());
                     TagName = string.Empty;
-                    UpdateMacrosTags();
+                    RefreshMacrosTags();
                 }
             }
 

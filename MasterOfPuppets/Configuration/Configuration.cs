@@ -69,6 +69,8 @@ internal class Configuration : IPluginConfiguration {
         if (string.IsNullOrWhiteSpace(cofigurationJson)) return;
 
         var newPluginConfig = cofigurationJson.JsonDeserialize<Configuration>();
+        if (newPluginConfig == null) return;
+
         // macro
         Macros = newPluginConfig.Macros;
         Characters = newPluginConfig.Characters;
