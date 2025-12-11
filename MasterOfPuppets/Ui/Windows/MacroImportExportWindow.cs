@@ -135,14 +135,14 @@ public class MacroImportExportWindow : Window {
         ImGuiUtil.HelpMarker("""
         AppendAll:
             Imports all macros from the source.
-            Macros with the same name will be duplicated.
+            Macros with the same name will be duplicated with appended (copy) in the name.
 
         AppendNew:
             Imports only macros that don't already exist in your list.
             Macros with the same name are ignored.
 
         Merge:
-            Adds new macros(those with names not in your list) and replaces existing ones with the same name.
+            Adds new macros (those with names not in your list) and replaces existing ones with the same name.
 
         ReplaceExisting:
             Replaces macros in your list that have the same name, but ignores any new ones from the import source.

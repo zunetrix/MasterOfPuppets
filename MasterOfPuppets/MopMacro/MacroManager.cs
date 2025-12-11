@@ -252,19 +252,28 @@ public class MacroManager {
                 .Select((m, i) => new { m.Name, Index = i })
                 .ToDictionary(x => x.Name, x => x.Index, StringComparer.OrdinalIgnoreCase);
 
+            void AddImportedMacro(Macro macro) {
+                int newIndex = Plugin.Config.Macros.Count;
+                Plugin.Config.Macros.Add(macro);
+                macroIndexMap[macro.Name] = newIndex;
+            }
+
             switch (importMode) {
                 case MacroImportMode.AppendAll:
-                    Plugin.Config.Macros.AddRange(macrosImport);
+                    foreach (var macroImport in macrosImport) {
+                        if (macroIndexMap.ContainsKey(macroImport.Name)) {
+                            macroImport.Name = $"{macroImport.Name} (copy)";
+                        }
+
+                        AddImportedMacro(macroImport);
+                    }
                     break;
 
                 case MacroImportMode.AppendNew:
                     foreach (var macroImport in macrosImport) {
-                        if (macroIndexMap.TryGetValue(macroImport.Name, out var idx))
-                            continue;
-
-                        Plugin.Config.Macros.Add(macroImport);
-                        macroIndexMap[macroImport.Name] = Plugin.Config.Macros.Count - 1;
-
+                        if (!macroIndexMap.ContainsKey(macroImport.Name)) {
+                            AddImportedMacro(macroImport);
+                        }
                     }
                     break;
 
@@ -273,8 +282,7 @@ public class MacroManager {
                             if (macroIndexMap.TryGetValue(macroImport.Name, out var idx)) {
                                 Plugin.Config.Macros[idx] = macroImport;
                             } else {
-                                Plugin.Config.Macros.Add(macroImport);
-                                macroIndexMap[macroImport.Name] = Plugin.Config.Macros.Count - 1;
+                                AddMacro(macroImport);
                             }
                         }
                     }
