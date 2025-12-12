@@ -253,7 +253,9 @@ public class EmotesWindow : Window {
 
         List<ExecutableAction> itemsToDraw;
         bool allFiltersEnabled = _showGeneralEmotes && _showExpressionsEmotes && _showInternalEmotes;
-        if (ListSearchedIndexes.Count == 0 && allFiltersEnabled) {
+        bool hasSearch = !string.IsNullOrWhiteSpace(_searchString);
+
+        if (!hasSearch && allFiltersEnabled && ListSearchedIndexes.Count == 0) {
             itemsToDraw = UnlockedActions;
         } else {
             itemsToDraw = ListSearchedIndexes
