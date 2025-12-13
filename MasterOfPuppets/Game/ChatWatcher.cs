@@ -144,8 +144,8 @@ internal class ChatWatcher : IDisposable {
 
         var characterName = args[0];
         var textCommand = args[1];
-        var localPlayerName = DalamudApi.Player.CharacterName;
-        if (!string.Equals(localPlayerName, characterName, StringComparison.OrdinalIgnoreCase)) return;
+        var localPlayerName = $"{DalamudApi.Player.CharacterName}@{DalamudApi.Player.HomeWorld.Value.Name}";
+        if (!localPlayerName.Contains(characterName, StringComparison.InvariantCultureIgnoreCase)) return;
 
         Plugin.MacroHandler.EnqueueMacroActions("#mopbrc-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
     }
