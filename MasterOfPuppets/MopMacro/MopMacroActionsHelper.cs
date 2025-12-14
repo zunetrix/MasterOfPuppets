@@ -8,7 +8,7 @@ public static class MopMacroActionsHelper {
     {
         new MopAction {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop run <macro number> \"Macro Name\"",
+            TextCommand = "/mop run <\"Macro Name\" | macro number>",
             SuggestionCommand = "/mop run ",
             Example = """
             /mop run "My macro"

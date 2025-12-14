@@ -22,9 +22,6 @@
             Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
 
-    <data name="SettingsMarkersTab" xml:space="preserve">
-        <value>Markers</value>
-    </data>
     <data name="SettingsMarkersMarkTarget" xml:space="preserve">
         <value>Mark your target</value>
     </data>
@@ -171,6 +168,9 @@
     </data>
     <data name="MacroImportExportTitle" xml:space="preserve">
         <value>Macro Import Export</value>
+    </data>
+    <data name="MacroBatchEditorTitle" xml:space="preserve">
+        <value>Macro Batch Editor</value>
     </data>
     <data name="AddMacroBtn" xml:space="preserve">
         <value>Add New Macro</value>
@@ -340,5 +340,8 @@ Right-Click to copy command</value>
     </data>
     <data name="MacroExportPath" xml:space="preserve">
         <value>Export Directory</value>
+    </data>
+    <data name="MacroBackup" xml:space="preserve">
+        <value>Backup Macros</value>
     </data>
 </root>

@@ -286,15 +286,6 @@ internal class Language {
     }
 
     /// <summary>
-    ///   Looks up a localized string similar to Markers.
-    /// </summary>
-    internal static string SettingsMarkersTab {
-        get {
-            return ResourceManager.GetString("SettingsMarkersTab", resourceCulture);
-        }
-    }
-
-    /// <summary>
     ///   Looks up a localized string similar to Cooldown for sound (seconds).
     /// </summary>
     internal static string SettingsSoundCooldown {
@@ -616,6 +607,11 @@ internal class Language {
             return ResourceManager.GetString("MacroImportExportTitle", resourceCulture);
         }
     }
+    internal static string MacroBatchEditorTitle {
+        get {
+            return ResourceManager.GetString("MacroBatchEditorTitle", resourceCulture);
+        }
+    }
     internal static string ShowCharactersBtn {
         get {
             return ResourceManager.GetString("ShowCharactersBtn", resourceCulture);
@@ -774,6 +770,11 @@ internal class Language {
     internal static string MacroExportPath {
         get {
             return ResourceManager.GetString("MacroExportPath", resourceCulture);
+        }
+    }
+    internal static string MacroBackup {
+        get {
+            return ResourceManager.GetString("MacroBackup", resourceCulture);
         }
     }
 }

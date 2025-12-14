@@ -5,6 +5,7 @@ using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 using Dalamud.Utility;
@@ -21,6 +22,7 @@ public class CharactersWindow : Window {
 
     private string _tmpGroupName = string.Empty;
     private int _selectedCidGroupIndex { get; set; } = 0;
+    public HashSet<ulong> _copiedCids = new();
 
     public CharactersWindow(Plugin plugin) : base($"{Plugin.Name} Characters###CharactersWindow") {
         Plugin = plugin;
@@ -102,6 +104,11 @@ public class CharactersWindow : Window {
 
         Drag to reorder
         """);
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetCopiedCidsBtn", "Reset Copied")) {
+            ResetCopiedCids();
+        }
 
         ImGui.Spacing();
         ImGui.Spacing();
@@ -185,7 +192,20 @@ public class CharactersWindow : Window {
                 // ImGui.EndDisabled();
 
                 // ImGui.SameLine();
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{i}", Language.DeleteInstructionTooltip)) {
+                bool alreadyCopied = _copiedCids.Contains(characters[i].Cid);
+
+                var buttonColor = alreadyCopied
+                    ? Style.Colors.Green
+                    : Style.Colors.White;
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CopyCharacterName_{characters[i].Cid}", "Copy Name", buttonColor)) {
+                    ImGui.SetClipboardText(characters[i].Name);
+                    _copiedCids.Add(characters[i].Cid);
+                    DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                }
+
+                ImGui.SameLine();
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{characters[i].Cid}", Language.DeleteInstructionTooltip)) {
                     if (ImGui.GetIO().KeyCtrl) {
                         Plugin.Config.RemoveCharacter(characters[i].Cid);
                         Plugin.IpcProvider.SyncConfiguration();
@@ -331,5 +351,9 @@ public class CharactersWindow : Window {
             }
             ImGui.EndListBox();
         }
+    }
+
+    private void ResetCopiedCids() {
+        _copiedCids = new();
     }
 }

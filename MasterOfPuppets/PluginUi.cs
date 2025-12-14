@@ -11,6 +11,7 @@ public class PluginUi : IDisposable {
     public MainWindow MainWindow { get; }
     public SettingsWindow SettingsWindow { get; }
     public MacroEditorWindow MacroEditorWindow { get; }
+    public MacroBatchEditorWindow MacroBatchEditorWindow { get; }
     public MacroQueueWindow MacroQueueWindow { get; }
     public CharactersWindow CharactersWindow { get; }
     public EmotesWindow EmotesWindow { get; }
@@ -30,6 +31,7 @@ public class PluginUi : IDisposable {
         MainWindow = new MainWindow(Plugin, this);
         SettingsWindow = new SettingsWindow(Plugin);
         MacroEditorWindow = new MacroEditorWindow(Plugin, this);
+        MacroBatchEditorWindow = new MacroBatchEditorWindow(Plugin);
         MacroQueueWindow = new MacroQueueWindow(Plugin);
         CharactersWindow = new CharactersWindow(Plugin);
         EmotesWindow = new EmotesWindow(Plugin);
@@ -46,6 +48,7 @@ public class PluginUi : IDisposable {
         WindowSystem.AddWindow(MainWindow);
         WindowSystem.AddWindow(SettingsWindow);
         WindowSystem.AddWindow(MacroEditorWindow);
+        WindowSystem.AddWindow(MacroBatchEditorWindow);
         WindowSystem.AddWindow(MacroQueueWindow);
         WindowSystem.AddWindow(CharactersWindow);
         WindowSystem.AddWindow(EmotesWindow);

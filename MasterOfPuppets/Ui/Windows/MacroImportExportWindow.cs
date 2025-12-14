@@ -40,7 +40,26 @@ public class MacroImportExportWindow : Window {
         ImGui.TextUnformatted(Plugin.Config.MacroExportPath.EllipsisPath(50));
 
         ImGui.SameLine();
-        ImGui.Dummy(ImGuiHelpers.ScaledVector2(10));
+        ImGui.Dummy(ImGuiHelpers.ScaledVector2(5));
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Folder, "##SetExportFolderBtn", "Set Export Folder")) {
+            FileDialogManager.OpenFolderDialog(
+                title: "Select Folder",
+                startPath: Plugin.Config.MacroExportPath,
+                callback: (result, selectedPath) => {
+                    if (!result) return;
+                    if (!Path.Exists(Plugin.Config.MacroExportPath)) return;
+                    Plugin.Config.MacroExportPath = selectedPath;
+                    Plugin.IpcProvider.SyncConfiguration();
+                });
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ReseExportFolderBtn", "Reset")) {
+            Plugin.Config.MacroExportPath = DalamudApi.PluginInterface.ConfigDirectory.FullName;
+            Plugin.IpcProvider.SyncConfiguration();
+        }
 
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.FolderOpen, "##OpenExportFolderBtn", "Open Export Folder")) {

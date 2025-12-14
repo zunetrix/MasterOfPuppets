@@ -80,12 +80,43 @@ public class MacroManager {
         Plugin.IpcProvider.SyncConfiguration();
     }
 
-    public Macro GetMacroByIndex(int macroIndex) {
-        if (!Plugin.Config.Macros.IndexExists(macroIndex)) {
-            throw new ArgumentException("Invalid macro index");
+    public int ReplaceInSelectedMacros(string find, string replace, bool ignoreCase = false) {
+        if (string.IsNullOrWhiteSpace(find))
+            return 0;
+
+        var comparison = ignoreCase
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+        int affectedMacros = 0;
+
+        foreach (var index in SelectedMacrosIndexes) {
+            if (index < 0 || index >= Plugin.Config.Macros.Count)
+                continue;
+
+            var macro = Plugin.Config.Macros[index];
+            bool macroChanged = false;
+
+            foreach (var command in macro.Commands) {
+                if (string.IsNullOrEmpty(command.Actions))
+                    continue;
+
+                if (command.Actions.IndexOf(find, comparison) >= 0) {
+                    command.Actions = command.Actions.Replace(find, replace, comparison);
+                    DalamudApi.PluginLog.Debug($"Replace in macro ({macro.Name}): {find}, {replace}");
+                    macroChanged = true;
+                }
+            }
+
+            if (macroChanged)
+                affectedMacros++;
         }
 
-        return Plugin.Config.Macros[macroIndex];
+        if (affectedMacros > 0) {
+            Plugin.Config.Save();
+            DalamudApi.ShowNotification($"Replaced {find} by {replace} in {affectedMacros} macros", NotificationType.Info, 5000);
+        }
+        return affectedMacros;
     }
 
     public void DeleteMacro(int itemIndex) {
@@ -96,7 +127,23 @@ public class MacroManager {
             return;
 
         Plugin.Config.Macros.RemoveAt(itemIndex);
+        Plugin.Config.Save();
+    }
 
+    public void DeleteSelectedMacros() {
+        if (SelectedMacrosIndexes == null || SelectedMacrosIndexes.Count == 0)
+            return;
+
+        // remove in reverse order
+        var indexesToRemove = SelectedMacrosIndexes.OrderByDescending(i => i).ToList();
+
+        foreach (var index in indexesToRemove) {
+            if (Plugin.Config.Macros.IndexExists(index)) {
+                Plugin.Config.Macros.RemoveAt(index);
+            }
+        }
+
+        SelectedMacrosIndexes.Clear();
         Plugin.Config.Save();
     }
 
@@ -117,6 +164,14 @@ public class MacroManager {
     public void MoveMacroToIndex(int itemIndex, int targetIndex) {
         Plugin.Config.Macros.MoveItemToIndex(itemIndex, targetIndex);
         Plugin.Config.Save();
+    }
+
+    public Macro GetMacroByIndex(int macroIndex) {
+        if (!Plugin.Config.Macros.IndexExists(macroIndex)) {
+            throw new ArgumentException("Invalid macro index");
+        }
+
+        return Plugin.Config.Macros[macroIndex];
     }
 
     public int FindMacroIndex(string macroNameOrNumber) {
@@ -161,23 +216,6 @@ public class MacroManager {
         }
 
         Plugin.Config.Macros.Add(newMacro);
-    }
-
-    public void DeleteSelectedMacros() {
-        if (SelectedMacrosIndexes == null || SelectedMacrosIndexes.Count == 0)
-            return;
-
-        // remove in reverse order
-        var indexesToRemove = SelectedMacrosIndexes.OrderByDescending(i => i).ToList();
-
-        foreach (var index in indexesToRemove) {
-            if (Plugin.Config.Macros.IndexExists(index)) {
-                Plugin.Config.Macros.RemoveAt(index);
-            }
-        }
-
-        SelectedMacrosIndexes.Clear();
-        Plugin.Config.Save();
     }
 
     public void ExportSelectedMacrosToFile(string filePath, bool includeCids = false) {

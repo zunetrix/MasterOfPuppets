@@ -19,6 +19,7 @@ public static class GameSettingsManager {
         var gameConfig = Framework.Instance()->SystemConfig.SystemConfigBase.ConfigBase.ConfigEntry;
         uint displayObjectLimit = gameConfig[(int)ConfigOption.DisplayObjectLimitType].Value.UInt;
         uint displayObjectLimit2 = gameConfig[(int)ConfigOption.DisplayObjectLimitType2].Value.UInt;
+        var alwaysInput = gameConfig[(int)ConfigOption.AlwaysInput].Value.UInt;
 
         DalamudApi.PluginLog.Warning($"DisplayObjectLimit {displayObjectLimit}");
         DalamudApi.PluginLog.Warning($"DisplayObjectLimit {displayObjectLimit2}");

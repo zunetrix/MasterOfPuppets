@@ -152,6 +152,25 @@ public class MainWindow : Window {
                 if (ImGui.Selectable(Language.ImportMacroBtn)) {
                     ImportMacroFromClipboard();
                 }
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.FilePen, $"##MacroBatchEditorMenu")) {
+                    Ui.MacroBatchEditorWindow.Toggle();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.MacroBatchEditorTitle)) {
+                    Ui.MacroBatchEditorWindow.Toggle();
+                }
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.FileArchive, $"##MacroBackupMenu")) {
+                    Plugin.MacroManager.BackupMacros();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.MacroBackup)) {
+                    Plugin.MacroManager.BackupMacros();
+                }
 
                 // -----------------------
 
