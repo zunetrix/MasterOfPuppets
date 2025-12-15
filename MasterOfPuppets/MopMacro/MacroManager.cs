@@ -265,6 +265,7 @@ public class MacroManager {
             string filePath = Path.Combine(DalamudApi.PluginInterface.ConfigDirectory.FullName, exportFileName);
 
             File.WriteAllText(filePath, macroJson, Encoding.UTF8);
+            DalamudApi.ShowNotification($"Macro backup success: {exportFileName}", NotificationType.Success, 5000);
         } catch (Exception e) {
             DalamudApi.PluginLog.Warning(e, "Error while backuping macros");
             DalamudApi.ShowNotification("Error while backuping macros", NotificationType.Error, 5000);
