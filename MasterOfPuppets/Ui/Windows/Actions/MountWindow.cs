@@ -157,7 +157,7 @@ public class MountWindow : Window {
 
         ImGui.Image(unmountIcon, iconSize);
         if (ImGui.IsItemClicked()) {
-            Plugin.IpcProvider.ExecuteActionCommand(unmount.ActionId);
+            Plugin.IpcProvider.ExecuteGeneralActionCommand(unmount.ActionId);
         }
         ImGuiUtil.ToolTip($"{Language.ClickToExecute} (unmount)");
 
