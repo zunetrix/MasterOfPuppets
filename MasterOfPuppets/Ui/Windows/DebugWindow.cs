@@ -18,6 +18,7 @@ using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
+using MasterOfPuppets.Movement;
 
 namespace MasterOfPuppets;
 
@@ -27,9 +28,13 @@ public class DebugWindow : Window {
     private FileDialogManager FileDialogManager { get; }
 
     private uint _macroIconId = 60042;
-    private static string _inputTextContent = string.Empty;
+    private static string _inputMacroContent = string.Empty;
     private static string _targetName = string.Empty;
+    private static string _xInput = "0";
+    private static string _yInput = "0";
+    private static string _zInput = "0";
     private static int _macroIdx = 0;
+    private static string _targetNameMoveTo = string.Empty;
     private static string _search = string.Empty;
     private static HashSet<object>? _filtered;
     private static int _hoveredItem;
@@ -65,6 +70,7 @@ public class DebugWindow : Window {
         DrawGeneralDebugTab();
         DrawHotbarDebugTab();
         DrawPetHotbarDebugTab();
+        DrawMovementDebugTab();
         DrawElementsDebugTab();
         DrawFontAwesomeIconsDebugTab();
 
@@ -115,14 +121,6 @@ public class DebugWindow : Window {
 
             if (ImGui.Button("Target My Minion")) {
                 TargetManager.TargetMyMinion();
-            }
-
-            if (ImGui.Button("Enable Walk")) {
-                MovementManager.EnableWalk();
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Disable Walk")) {
-                MovementManager.DisableWalk();
             }
 
             if (ImGui.Button("Get Object Quantity")) {
@@ -268,7 +266,112 @@ public class DebugWindow : Window {
                 DalamudApi.PluginLog.Debug($" bar[{hotbarIndex},{slotIndex}] {slot.CommandType} - ({slot.ApparentSlotType}) - {slot.CommandId} - ({slot.ApparentActionId})");
             }
         }
+    }
 
+    private void DrawMovementDebugTab() {
+        if (ImGui.BeginTabItem($"Movement###MovementDebugTab")) {
+            ImGui.TextUnformatted("Move");
+
+            ImGui.BeginGroup();
+            {
+                ImGui.TextUnformatted("X");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(60);
+                ImGui.InputTextWithHint("(+Left -Right)##xInput", "X", ref _xInput, 10, ImGuiInputTextFlags.AutoSelectAll);
+
+                ImGui.Spacing();
+                ImGui.TextUnformatted("Y");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(60);
+                ImGui.InputTextWithHint("(+Fly Up | -Fly Down)##yInput", "Y", ref _yInput, 10, ImGuiInputTextFlags.AutoSelectAll);
+
+                ImGui.Spacing();
+                ImGui.TextUnformatted("Z");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(60);
+                ImGui.InputTextWithHint("(+Forward | -Back)##zInput", "Z", ref _zInput, 10, ImGuiInputTextFlags.AutoSelectAll);
+
+                ImGui.Spacing();
+                ImGui.Spacing();
+                if (ImGui.Button("Move")) {
+                    var offsetXYZ = new Vector3(
+                     float.Parse(_xInput, System.Globalization.CultureInfo.InvariantCulture),
+                     float.Parse(_yInput, System.Globalization.CultureInfo.InvariantCulture),
+                     float.Parse(_zInput, System.Globalization.CultureInfo.InvariantCulture));
+
+                    Plugin.AsyncMove.MoveToCommand(offsetXYZ);
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Reset")) {
+                    _xInput = "0";
+                    _yInput = "0";
+                    _zInput = "0";
+                }
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                if (ImGui.Button("Move To Target")) {
+                    var targetPosition = TargetManager.GetTargetPosition();
+                    if (targetPosition == null) return;
+
+                    Plugin.AsyncMove.MoveToCommand(targetPosition.Value, relativeToPlayer: false);
+                }
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                ImGui.TextUnformatted("Move To Character");
+                ImGui.InputTextWithHint("##MoveToCharacterNameInput", "Target name", ref _targetNameMoveTo, 255, ImGuiInputTextFlags.AutoSelectAll);
+                ImGui.SameLine();
+                if (ImGui.Button("Move to Character")) {
+                    var targetPosition = GameFunctions.GetCharacterPositionByName(_targetNameMoveTo);
+                    if (targetPosition == null) return;
+
+                    Plugin.AsyncMove.MoveToCommand(targetPosition.Value, relativeToPlayer: false);
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Get Target Name")) {
+                    _targetNameMoveTo = DalamudApi.Objects.LocalPlayer.TargetObject?.Name.TextValue ?? string.Empty;
+                }
+
+                ImGui.Spacing();
+                ImGui.TextUnformatted($"Player Position X:{DalamudApi.Objects.LocalPlayer.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.Position.Z}");
+                ImGui.TextUnformatted($"Target Position X:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Z}");
+            }
+            ImGui.EndGroup();
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+            //     //                    +Z
+            //     //                     |
+            //     //                     |
+            //     //                     |
+            //     //       +X -----------+----------- -X
+            //     //                     |
+            //     //                     |
+            //     //                     |
+            //     //                    -Z
+            //     //                    /
+            //     //                   /
+            //     //                  /
+            //     //              +Y / (fly up)
+
+            //     //               -Y (fly down)
+
+            if (ImGui.Button("Enable Walk")) {
+                MovementFunctions.EnableWalk();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Disable Walk")) {
+                MovementFunctions.DisableWalk();
+            }
+
+            ImGui.EndTabItem();
+        }
     }
 
     private unsafe void DrawHotbarDebugTab() {
@@ -564,7 +667,7 @@ public class DebugWindow : Window {
     private void DrawMultilineInput() {
         if (InputTextMultiline.Draw(
             "###MacroContent",
-            ref _inputTextContent,
+            ref _inputMacroContent,
             ushort.MaxValue,
             new Vector2(
                 MathF.Min(ImGui.GetContentRegionAvail().X, 500f * ImGuiHelpers.GlobalScale),
@@ -572,7 +675,7 @@ public class DebugWindow : Window {
             ),
         ImGuiInputTextFlags.None
         )) {
-            // DalamudApi.PluginLog.Warning($"{_inputTextContent}");
+            // DalamudApi.PluginLog.Warning($"{_inputMacroContent}");
         }
     }
 

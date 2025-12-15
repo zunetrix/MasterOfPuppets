@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,15 +5,16 @@ using Dalamud.Configuration;
 using Dalamud.Game.Text;
 using Dalamud.Plugin;
 
+using Newtonsoft.Json;
+
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
 
-[Serializable]
 internal class Configuration : IPluginConfiguration {
     public int Version { get; set; } = 1;
-    private IDalamudPluginInterface Interface { get; set; } = null!;
+    private IDalamudPluginInterface PluginInterface { get; set; } = null!;
 
     public bool SyncClients { get; set; } = true;
     // for individual Config file accounts
@@ -50,12 +50,29 @@ internal class Configuration : IPluginConfiguration {
     public bool ShowSettingsButton { get; set; } = true;
     public bool AllowCloseWithEscape { get; set; } = false;
 
+    // Movement
+    [Newtonsoft.Json.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool AlignCameraToMovement { get; set; } = true;
+    [Newtonsoft.Json.JsonIgnore]
+    public float AlignCameraHeight { get; set; } = -15;
+    [Newtonsoft.Json.JsonIgnore]
+    public float StuckTolerance { get; set; } = 0.05f;
+    [Newtonsoft.Json.JsonIgnore]
+    public bool StopOnStuck { get; set; } = false;
+    [Newtonsoft.Json.JsonIgnore]
+    public bool RetryOnStuck { get; set; } = false;
+    [Newtonsoft.Json.JsonIgnore]
+    public int StuckTimeoutMs { get; set; } = 500;
+    [Newtonsoft.Json.JsonIgnore]
+    public bool CancelMoveOnUserInput { get; set; } = false;
+
     public void Initialize(IDalamudPluginInterface pluginInterface) {
-        Interface = pluginInterface;
+        PluginInterface = pluginInterface;
     }
 
     public void Save() {
-        Interface.SavePluginConfig(this);
+        PluginInterface.SavePluginConfig(this);
     }
 
     public void ResetData() {

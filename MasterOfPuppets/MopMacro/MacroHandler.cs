@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -246,6 +247,25 @@ public class MacroHandler : IDisposable {
 
                 HotbarManager.ExecuteHotbarEmoteAction((uint)actionId);
                 DalamudApi.PluginLog.Debug($"[mophotbaremote] {actionId}");
+                await Task.CompletedTask;
+            },
+
+            ["mopmove"] = async (macroId, args, token) => {
+                if (string.IsNullOrWhiteSpace(args)) return;
+                var argParts = args.Split(" ");
+                if (argParts.Length != 3) return;
+
+                if (!float.TryParse(argParts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
+                || !float.TryParse(argParts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
+                || !float.TryParse(argParts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
+                    DalamudApi.PluginLog.Warning($"[mopmove] invalid argument parse: \"{args}\"");
+                    return;
+                }
+
+                var offsetXYZ = new Vector3(x, y, z);
+                Plugin.AsyncMove.MoveToCommand(offsetXYZ);
+
+                DalamudApi.PluginLog.Debug($"[mopmove] {x}, {y}, {z}");
                 await Task.CompletedTask;
             },
         };

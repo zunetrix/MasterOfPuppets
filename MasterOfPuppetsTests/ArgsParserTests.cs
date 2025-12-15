@@ -23,6 +23,7 @@ public class ArgsParserTests
     [InlineData("mopbr /command param", "mopbr", "/command param")]
     [InlineData("mopbr /command \"param with space\"", "mopbr", "/command \"param with space\"")]
     [InlineData("mopbr /ac heal [t]", "mopbr", "/ac heal <t>")]
+    [InlineData("mopbr /mopmove 10.01 11.02 12.03", "mopbr", "/mopmove 10.01 11.02 12.03")]
     [InlineData("mopbrc \"Character Name\" /command", "mopbrc", "Character Name", "/command")]
     [InlineData("mopbrc \"Character Name\" /command \"param with space\"", "mopbrc", "Character Name", "/command \"param with space\"")]
     public void ParseChatArgs_ReturnsExpectedTokens(string input, params string[] expected)
@@ -42,6 +43,7 @@ public class ArgsParserTests
     [InlineData("run \"Macro Name\"", "run", "Macro Name")]
     [InlineData("run 1", "run", "1")]
     [InlineData("run \"1\"", "run", "1")]
+    [InlineData("move \"10.01 11.02 12.03\"", "move", "10.01 11.02 12.03")]
 
     // /mopbr
     [InlineData("text with space", "text with space")]
@@ -49,6 +51,7 @@ public class ArgsParserTests
     [InlineData("/clap", "/clap")]
     [InlineData("/moptarget \"Character Name\"", "/moptarget \"Character Name\"")]
     [InlineData("/ac heal <t>", "/ac heal <t>")]
+
 
     // /mopbrc
     [InlineData("\"Character Name\" /clap", "Character Name", "/clap")]

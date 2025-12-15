@@ -1,5 +1,7 @@
 using System;
+using System.Globalization;
 using System.Linq;
+using System.Numerics;
 
 using Dalamud.Game.Command;
 using Dalamud.Interface.ImGuiNotification;
@@ -116,6 +118,49 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "item":
                     Plugin.Ui.ItemWindow.Toggle();
+                    break;
+                case "move": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ShowNotification($"Invalid arguments to move", NotificationType.Error, 5000);
+                            return;
+                        }
+
+                        var argParts = parsedArgs[1].Split(" ");
+                        if (argParts.Length != 3) {
+                            DalamudApi.PluginLog.Debug($"Invalid coord amount expected x y z {parsedArgs[1]}");
+                            return;
+                        }
+
+                        if (!float.TryParse(argParts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
+                        || !float.TryParse(argParts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
+                        || !float.TryParse(argParts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
+                            DalamudApi.PluginLog.Warning($"[mopmove] invalid argument float parse: \"{parsedArgs[1]}\"");
+                            return;
+                        }
+
+                        var offsetXYZ = new Vector3(x, y, z);
+                        Plugin.AsyncMove.MoveToCommand(offsetXYZ);
+                    }
+                    break;
+                case "movetotarget": {
+                        var targetPosition = TargetManager.GetTargetPosition();
+                        if (targetPosition == null) return;
+
+                        Plugin.AsyncMove.MoveToCommand(targetPosition.Value, relativeToPlayer: false);
+                    }
+                    break;
+                case "movetocharacter": {
+                        if (parsedArgs.Count <= 1) {
+                            DalamudApi.ShowNotification($"Invalid arguments expected character name", NotificationType.Error, 5000);
+                            return;
+                        }
+
+                        var characterName = parsedArgs[1];
+                        var targetPosition = GameFunctions.GetCharacterPositionByName(characterName);
+                        if (targetPosition == null) return;
+
+                        Plugin.AsyncMove.MoveToCommand(targetPosition.Value, relativeToPlayer: false);
+                    }
                     break;
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");

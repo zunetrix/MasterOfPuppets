@@ -18,7 +18,9 @@ dotnet test ./MasterOfPuppetsTests/
 ```
 
 TODO:
- - moploop block:
+ - moploop block (start end):
+ - add chat watcher init to prevent register on chat game listener if use chat option is disabled
+ - refactor macro commands to individual handlers
 
 ```
 start code no loop

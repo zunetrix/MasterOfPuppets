@@ -6,10 +6,7 @@ using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-
-using MasterOfPuppets.Util;
 
 using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 
@@ -185,6 +182,20 @@ public static class TargetManager {
             });
         } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error while targeting my minion");
+        }
+    }
+
+    public static Vector3? GetTargetPosition() {
+        try {
+            var player = DalamudApi.Objects.LocalPlayer;
+            if (player == null) return null;
+            if (player.TargetObject == null) return null;
+
+            var targetPosition = player.TargetObject.Position;
+            return targetPosition;
+        } catch (Exception e) {
+            DalamudApi.PluginLog.Error(e, $"Error while geting target position");
+            return null;
         }
     }
 }
