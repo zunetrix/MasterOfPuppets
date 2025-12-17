@@ -19,6 +19,7 @@ using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 using MasterOfPuppets.Movement;
+using Dalamud.Interface.ImGuiSeStringRenderer;
 
 namespace MasterOfPuppets;
 
@@ -26,6 +27,7 @@ public class DebugWindow : Window {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
     private FileDialogManager FileDialogManager { get; }
+    private readonly TextAnimator _textAnimator = new TextAnimator();
 
     private uint _macroIconId = 60042;
     private static string _inputMacroContent = string.Empty;
@@ -103,7 +105,7 @@ public class DebugWindow : Window {
             ImGui.InputTextWithHint("##TargetNameDebugInput", "Target name", ref _targetName, 255, ImGuiInputTextFlags.AutoSelectAll);
             ImGui.SameLine();
             if (ImGui.Button("Target")) {
-                TargetManager.TargetByName(_targetName);
+                TargetManager.TargetObject(_targetName);
             }
 
             ImGui.SameLine();
@@ -186,19 +188,19 @@ public class DebugWindow : Window {
                 DalamudApi.ShowNotification($"ExecuteHotbarActionBySlotIndex", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("UseItemByName(Heavenscracker)")) {
-                GameActionManager.UseItemByName("Heavenscracker");
-                DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
+            if (ImGui.Button("UseItem(Heavenscracker)")) {
+                GameActionManager.UseItem("Heavenscracker");
+                DalamudApi.ShowNotification($"UseItem", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("UseActionByName(Peloton)")) {
-                GameActionManager.UseActionByName("Peloton");
-                DalamudApi.ShowNotification($"UseActionByName", NotificationType.Info, 5000);
+            if (ImGui.Button("UseAction(\"Peloton\")")) {
+                GameActionManager.UseAction("Peloton");
+                DalamudApi.ShowNotification($"UseAction", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("UseGeneralActionById(23) unmount")) {
-                GameActionManager.UseGeneralActionById(23);
-                DalamudApi.ShowNotification($"UseGeneralActionById", NotificationType.Info, 5000);
+            if (ImGui.Button("UseGeneralAction(23) unmount")) {
+                GameActionManager.UseGeneralAction(23);
+                DalamudApi.ShowNotification($"UseGeneralAction", NotificationType.Info, 5000);
             }
 
             if (ImGui.Button("Broadcast ExecuteItemCommand")) {
@@ -206,21 +208,21 @@ public class DebugWindow : Window {
                 DalamudApi.ShowNotification($"ExecuteItemCommand", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("UseItemByName(Lominsan Sparkler)")) {
-                GameActionManager.UseItemByName("Lominsan Sparkler");
-                DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
+            if (ImGui.Button("UseItem(Lominsan Sparkler)")) {
+                GameActionManager.UseItem("Lominsan Sparkler");
+                DalamudApi.ShowNotification($"UseItem", NotificationType.Info, 5000);
             }
 
-            if (ImGui.Button("UseItemById(5893)")) {
+            if (ImGui.Button("UseItem(5893)")) {
                 uint lominsanSparklere = 5893;
-                GameActionManager.UseItemById(lominsanSparklere);
+                GameActionManager.UseItem(lominsanSparklere);
 
-                DalamudApi.ShowNotification($"UseItemById", NotificationType.Info, 5000);
+                DalamudApi.ShowNotification($"UseItem", NotificationType.Info, 5000);
             }
-            if (ImGui.Button("Broadcast UseItemById(5893)")) {
+            if (ImGui.Button("Broadcast UseItem(5893)")) {
                 uint lominsanSparklere = 5893;
                 Plugin.IpcProvider.ExecuteItemCommand(lominsanSparklere);
-                DalamudApi.ShowNotification($"Broadcast UseItemById(5893)", NotificationType.Info, 5000);
+                DalamudApi.ShowNotification($"Broadcast UseItem(5893)", NotificationType.Info, 5000);
             }
 
             if (ImGui.Button("Abandon Duty")) {
@@ -232,11 +234,11 @@ public class DebugWindow : Window {
             // }
 
             if (ImGui.Button("Use Invalid Item name")) {
-                var item = ItemHelper.GetExecutableActionByName("Lominsan Sparkler Flare");
+                var item = ItemHelper.GetExecutableAction("Lominsan Sparkler Flare");
                 DalamudApi.PluginLog.Warning($"item: {item?.ActionName}");
 
-                GameActionManager.UseItemByName("Lominsan Sparkler Flare");
-                DalamudApi.ShowNotification($"UseItemByName", NotificationType.Info, 5000);
+                GameActionManager.UseItem("Lominsan Sparkler Flare");
+                DalamudApi.ShowNotification($"UseItem", NotificationType.Info, 5000);
             }
 
             if (ImGui.Button("Print Hotbar")) {
@@ -299,7 +301,7 @@ public class DebugWindow : Window {
                      float.Parse(_yInput, System.Globalization.CultureInfo.InvariantCulture),
                      float.Parse(_zInput, System.Globalization.CultureInfo.InvariantCulture));
 
-                    Plugin.AsyncMove.MoveToCommand(offsetXYZ);
+                    Plugin.MovementManager.MoveToRelativePosition(offsetXYZ);
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Reset")) {
@@ -313,10 +315,18 @@ public class DebugWindow : Window {
                 ImGui.Spacing();
 
                 if (ImGui.Button("Move To Target")) {
-                    var targetPosition = TargetManager.GetTargetPosition();
-                    if (targetPosition == null) return;
+                    var targetObjectId = TargetManager.GetTargetObjectId();
+                    if (targetObjectId == null) return;
 
-                    Plugin.AsyncMove.MoveToCommand(targetPosition.Value, relativeToPlayer: false);
+                    Plugin.MovementManager.MoveToObject(targetObjectId.Value);
+                }
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                if (ImGui.Button("Stop Move")) {
+                    Plugin.MovementManager.StopMove();
                 }
 
                 ImGui.Spacing();
@@ -327,10 +337,7 @@ public class DebugWindow : Window {
                 ImGui.InputTextWithHint("##MoveToCharacterNameInput", "Target name", ref _targetNameMoveTo, 255, ImGuiInputTextFlags.AutoSelectAll);
                 ImGui.SameLine();
                 if (ImGui.Button("Move to Character")) {
-                    var targetPosition = GameFunctions.GetCharacterPositionByName(_targetNameMoveTo);
-                    if (targetPosition == null) return;
-
-                    Plugin.AsyncMove.MoveToCommand(targetPosition.Value, relativeToPlayer: false);
+                    Plugin.MovementManager.MoveToObject(_targetNameMoveTo);
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Get Target Name")) {
@@ -363,11 +370,11 @@ public class DebugWindow : Window {
             //     //               -Y (fly down)
 
             if (ImGui.Button("Enable Walk")) {
-                MovementFunctions.EnableWalk();
+                MovementManager.EnableWalk();
             }
             ImGui.SameLine();
             if (ImGui.Button("Disable Walk")) {
-                MovementFunctions.DisableWalk();
+                MovementManager.DisableWalk();
             }
 
             ImGui.EndTabItem();
@@ -691,6 +698,15 @@ public class DebugWindow : Window {
             DrawMultilineInput();
 
             ImGuiModalDialog.Draw();
+
+            ImGui.Text(_textAnimator.GetAnimatedText("Test rainbow name colors"));
+
+            ImGuiHelpers.SeStringWrapped(
+                _textAnimator.GetAnimatedText("Test rainbow name colors"),
+                new SeStringDrawParams() {
+                    WrapWidth = 600 * ImGuiHelpers.GlobalScale
+                }
+            );
 
             // SearchableCombo();
             if (ImGui.Button("Modal")) {
