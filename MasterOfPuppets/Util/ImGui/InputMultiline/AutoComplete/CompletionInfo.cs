@@ -61,7 +61,7 @@ public record class CompletionInfo(
 
                         yield return new CompletionInfo(
                                     Group: completion.Group,
-                                    GroupTitle: null, // Can't use our GroupTitle, it's just '-'
+                                    GroupTitle: null, // Can't use GroupTitle, it's just '-'
                                     Key: row.Value.RowId,
                                     SeString: BuildCommandString(text, completion.Group),
                                     HelpText: GetHelpText(completion.LookupTable.TableName, rowId)
@@ -82,6 +82,7 @@ public record class CompletionInfo(
 
     private static string BuildCommandString(ReadOnlySeString text, uint group) {
         return group switch {
+            55 => $"/gaction \"{text}\"",
             56 => $"/ac \"{text}\"",
             69 => $"/blueaction \"{text}\"",
             _ => text.ExtractText()

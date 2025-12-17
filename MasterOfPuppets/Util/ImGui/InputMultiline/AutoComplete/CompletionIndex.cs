@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using KTrie;
@@ -23,6 +23,18 @@ public class CompletionIndex {
     private readonly Dictionary<uint, Completion> CompletionGroupsById = new();
     private readonly TrieDictionary<List<CompletionInfo>> CompletionsByText = new();
     private readonly Dictionary<(uint, uint), CompletionInfo> CompletionInfoByGroupKey = new();
+
+    private static readonly IReadOnlySet<int> AllowedCompletionGroups =
+        new HashSet<int>
+        {
+            // 49, // mount
+            55, // general actions
+            56, // actions skills
+            59, // pet actions
+            69, // blue mage
+            // 65, // minon
+            // 62, // text command
+        };
 
     public enum IndexState { UNINDEXED, INDEXING, INDEXED }
     public IndexState State { get; private set; } = IndexState.UNINDEXED;
@@ -67,11 +79,11 @@ public class CompletionIndex {
 
     private void RefreshCompletionGroupIndex() {
         var completionGroups = DalamudApi.DataManager.GetExcelSheet<Completion>()
-            .Where(c => {
-                var lookupTable = c.LookupTable.ExtractText();
-
-                return lookupTable != "";
-            });
+        .Where(c => AllowedCompletionGroups.Contains(c.Group))
+        .Where(c => {
+            var lookupTable = c.LookupTable.ExtractText();
+            return lookupTable != "";
+        });
 
         foreach (var cg in completionGroups) {
             CompletionGroupsById[cg.Group] = cg;
@@ -79,15 +91,10 @@ public class CompletionIndex {
     }
 
     private List<CompletionInfo> AllCompletionInfo() {
-        var allowedGroups = new[] {
-            // 49, // mount
-            56, // actions skills
-            69, // blue mage
-            //62, // text command
-        };
+
 
         var completionInfo = DalamudApi.DataManager.GetExcelSheet<Completion>()
-             .Where(raw => allowedGroups.Contains(raw.Group))
+             .Where(raw => AllowedCompletionGroups.Contains(raw.Group))
              .Select(raw => ParsedCompletion.From(raw))
              .SelectMany<ParsedCompletion, CompletionInfo>(parsed => CompletionInfo.From(parsed))
              .Select(info => {

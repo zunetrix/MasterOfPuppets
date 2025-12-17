@@ -23,7 +23,7 @@ namespace MasterOfPuppets.Util.ImGuiExt;
 public class AutoCompletePopup {
     private Plugin Plugin { get; }
 
-    private string name = $"##AutoCompletePopup";
+    private readonly string name = $"##AutoCompletePopup";
     private uint? id;
 
     private string _autoCompleteFilter = "";
@@ -152,10 +152,7 @@ public class AutoCompletePopup {
             }
         }
 
-
         DrawCompletionResults(longestCompletionWidth, longestGroupWidth);
-
-
     }
 
     private void DrawCompletionResults(float longestCompletionWidth, float longestGroupWidth) {
@@ -241,7 +238,7 @@ public class AutoCompletePopup {
                         if (selectionMidpoint.X <= ImGui.GetWindowViewport().Size.X / 2.0f) {
                             var tooltipX = max.X + scrollbarPad;
                             ImGui.SetNextWindowPos(new Vector2(tooltipX, min.Y));
-                        } else if (LastCompletionTooltipSize.HasValue) { // Otherwise...
+                        } else if (LastCompletionTooltipSize.HasValue) {
                             var tooltipX = min.X - LastCompletionTooltipSize.Value.X - scrollbarPad;
                             ImGui.SetNextWindowPos(new Vector2(tooltipX, min.Y));
                         }
