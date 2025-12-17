@@ -26,7 +26,7 @@ public static class TextCommandHelper {
             .ToList();
     }
 
-    public static TextCommand? GetTextCommandByName(string textCommandName) {
+    public static TextCommand? GetTextCommand(string textCommandName) {
         // returns RowId = 0 for invalid names
         var textcommand = DalamudApi.DataManager.GetExcelSheet<TextCommand>()
         .FirstOrDefault(a => string.Equals(a.Command.ToString(), textCommandName, System.StringComparison.OrdinalIgnoreCase));
@@ -35,8 +35,8 @@ public static class TextCommandHelper {
         return isTextCommandFound ? textcommand : null;
     }
 
-    public static ExecutableAction? GetExecutableActionByName(string textCommandName) {
-        var textCommand = GetTextCommandByName(textCommandName);
+    public static ExecutableAction? GetExecutableAction(string textCommandName) {
+        var textCommand = GetTextCommand(textCommandName);
         return textCommand == null ? null : GetExecutableAction(textCommand.Value);
     }
 }

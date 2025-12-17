@@ -128,6 +128,15 @@ internal class IpcProvider : IDisposable {
         BroadCast(message, includeSelf: false);
     }
 
+    public void ExecuteMoveToMyTarget() {
+        if (DalamudApi.Objects.LocalPlayer == null) return;
+        var assitTargetObjectId = DalamudApi.Objects.LocalPlayer.TargetObjectId;
+        if (assitTargetObjectId == 0) return;
+
+        var message = IpcMessage.Create(IpcMessageType.ExecuteMoveToMyTarget, assitTargetObjectId).Serialize();
+        BroadCast(message, includeSelf: false);
+    }
+
     public void ExecuteTargetClear() {
         var message = IpcMessage.Create(IpcMessageType.ExecuteTargetClear).Serialize();
         BroadCast(message, includeSelf: true);

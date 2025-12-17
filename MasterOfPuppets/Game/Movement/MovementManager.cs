@@ -1,0 +1,223 @@
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using System.Threading.Tasks;
+
+using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Utility.Signatures;
+using Dalamud.Game.ClientState.Objects.SubKinds;
+
+using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
+
+namespace MasterOfPuppets.Movement;
+
+public class MovementManager : IDisposable {
+    private readonly FollowPath _follow;
+    private Task<List<Vector3>>? _pendingTask;
+    private bool _pendingFly;
+    private float _pendingDestRange;
+
+    public bool TaskInProgress => _pendingTask != null;
+
+    public MovementManager(FollowPath follow) {
+        _follow = follow;
+
+        _follow.OnStuck += (dest, fly, range) => {
+            var RetryOnStuck = true;
+            // !Plugin.Config.RetryOnStuck
+            if (!RetryOnStuck)
+                return;
+
+            MoveTo(dest, fly, range);
+        };
+    }
+
+    public void Dispose() {
+        if (_pendingTask != null) {
+            if (!_pendingTask.IsCompleted)
+                _pendingTask.Wait();
+            _pendingTask.Dispose();
+            _pendingTask = null;
+        }
+    }
+
+    public void Update() {
+        if (_pendingTask != null && _pendingTask.IsCompleted) {
+            // DalamudApi.PluginLog.Information($"Pathfinding complete");
+            try {
+                _follow.Move(_pendingTask.Result, !_pendingFly, _pendingDestRange);
+            } catch (Exception ex) {
+                DalamudApi.PluginLog.Error(ex, $"Pathfinding complete");
+            }
+            _pendingTask.Dispose();
+            _pendingTask = null;
+        }
+    }
+
+    public async Task<List<Vector3>> QueryPath(Vector3 from, Vector3 to, bool flying, float range = 0) {
+        // DalamudApi.PluginLog.Debug($"Kicking off pathfind from {from} to {to}");
+
+        var path = await Task.Run(() => {
+            return new List<Vector3> { to };
+        });
+
+        // DalamudApi.PluginLog.Debug($"Pathfinding done: {path.Count} waypoints");
+        return path;
+    }
+
+    public bool MoveTo(Vector3 dest, bool fly, float range = 0) {
+        if (_pendingTask != null) {
+            // DalamudApi.PluginLog.Error($"Pathfinding task is in progress...");
+            return false;
+        }
+
+        // var toleranceStr = range > 0 ? $" within {range}y" : "";
+        // _pendingTask = _manager.QueryPath(DalamudApi.Objects.LocalPlayer?.Position ?? default, dest, fly, range: range);
+        _pendingTask = QueryPath(DalamudApi.Objects.LocalPlayer?.Position ?? default, dest, fly, range: range);
+
+        _pendingFly = fly;
+        _pendingDestRange = range;
+        return true;
+    }
+
+    // private static class Signatures {
+    //     internal const string ToggleWalk = "38 1D ?? ?? ?? ?? 75 2D";
+    // }
+
+    // // set byte 1 to walk
+    // private delegate void ToggleWalkDelegate(uint arg1);
+
+    // private static ToggleWalkDelegate? _toggleWalk { get; }
+
+    // static MovementManager() {
+    //     if (DalamudApi.SigScanner.TryScanText(Signatures.ToggleWalk, out var _toggleWalkPtr)) {
+    //         _toggleWalk = Marshal.GetDelegateForFunctionPointer<ToggleWalkDelegate>(_toggleWalkPtr);
+    //     }
+    // }
+
+    [Signature("38 1D ?? ?? ?? ?? 75 2D", ScanType = ScanType.StaticAddress)]
+    private static readonly IntPtr walkingBoolPtr = IntPtr.Zero;
+    internal static unsafe bool IsWalking {
+        get => walkingBoolPtr != IntPtr.Zero && *(bool*)walkingBoolPtr;
+        set {
+            if (walkingBoolPtr != IntPtr.Zero) {
+                if (value == *(bool*)walkingBoolPtr) return;
+                DalamudApi.PluginLog.Warning($"setting walk {value}, current {*(bool*)walkingBoolPtr}");
+                *(bool*)walkingBoolPtr = value;
+            }
+        }
+    }
+
+    public static void EnableWalk() {
+        IsWalking = true;
+    }
+
+    public static void DisableWalk() {
+        IsWalking = false;
+    }
+
+    public void MoveToCommand(Vector3 dest, Vector3 origin = new(), bool relativeToPlayer = true, bool fly = false) {
+        if (relativeToPlayer) {
+            var originActor = relativeToPlayer ? DalamudApi.Objects.LocalPlayer : null;
+            origin = originActor?.Position ?? new();
+        }
+        var offset = dest;
+
+        MoveTo(origin + offset, fly);
+    }
+
+    public static unsafe Vector3? GetObjectPosition(string objectName) {
+        if (string.IsNullOrWhiteSpace(objectName)) {
+            DalamudApi.PluginLog.Warning($"Invalid objectName: \"{objectName}\"");
+            return null;
+        }
+
+        foreach (var actor in DalamudApi.Objects) {
+            if (actor == null)
+                continue;
+
+            // base name
+            var lookupName = actor.Name.TextValue;
+            if (lookupName.Length == 0)
+                continue;
+
+            // Player: Name@World
+            if (actor.ObjectKind == ObjectKind.Player &&
+                actor is IPlayerCharacter player &&
+                player.HomeWorld.ValueNullable is { } world) {
+                lookupName = $"{lookupName}@{world.Name}";
+            }
+
+            if (!lookupName.Contains(objectName, StringComparison.InvariantCultureIgnoreCase))
+                continue;
+
+            // can target
+            try {
+                if (!((GameObjectStruct*)actor.Address)->GetIsTargetable())
+                    continue;
+            } catch {
+                continue;
+            }
+
+            return actor.Position;
+        }
+
+        return null;
+    }
+
+    public static Vector3? GetObjectPosition(ulong objectId) {
+        foreach (var actor in DalamudApi.Objects) {
+            if (actor != null && actor.GameObjectId == objectId)
+                return actor.Position;
+        }
+
+        return null;
+    }
+
+    public void MoveToObject(ulong objectId) {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            var objectPosition = GetObjectPosition(objectId);
+            if (objectPosition == null) {
+                DalamudApi.PluginLog.Debug($"MoveToObject: Could not find object {objectId}");
+                return;
+            }
+
+            MoveToCommand(objectPosition.Value, relativeToPlayer: false);
+        });
+    }
+
+    public void MoveToObject(string objectName) {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            var objectPosition = GetObjectPosition(objectName);
+            if (objectPosition == null) {
+                DalamudApi.PluginLog.Debug($"MoveToObject: Could not find object {objectName}");
+                return;
+            }
+
+            MoveToCommand(objectPosition.Value, relativeToPlayer: false);
+        });
+    }
+
+    public void MoveToRelativePosition(Vector3 position) {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            MoveToCommand(position, relativeToPlayer: true);
+        });
+    }
+
+    public void MoveToTargetPosition() {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            var targetObjectId = TargetManager.GetTargetObjectId();
+            if (targetObjectId == null) return;
+
+            MoveToObject(targetObjectId.Value);
+        });
+    }
+
+    // TODO: Find a better way to stop moving when the destination is an unreachable point
+    public void StopMove() {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            var origin = new Vector3(0, 0, 0);
+            MoveToRelativePosition(origin);
+        });
+    }
+}

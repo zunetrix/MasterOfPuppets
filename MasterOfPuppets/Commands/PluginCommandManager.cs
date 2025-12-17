@@ -139,14 +139,11 @@ public class PluginCommandManager : IDisposable {
                         }
 
                         var offsetXYZ = new Vector3(x, y, z);
-                        Plugin.AsyncMove.MoveToCommand(offsetXYZ);
+                        Plugin.MovementManager.MoveToRelativePosition(offsetXYZ);
                     }
                     break;
                 case "movetotarget": {
-                        var targetPosition = TargetManager.GetTargetPosition();
-                        if (targetPosition == null) return;
-
-                        Plugin.AsyncMove.MoveToCommand(targetPosition.Value, relativeToPlayer: false);
+                        Plugin.MovementManager.MoveToTargetPosition();
                     }
                     break;
                 case "movetocharacter": {
@@ -156,11 +153,11 @@ public class PluginCommandManager : IDisposable {
                         }
 
                         var characterName = parsedArgs[1];
-                        var targetPosition = GameFunctions.GetCharacterPositionByName(characterName);
-                        if (targetPosition == null) return;
-
-                        Plugin.AsyncMove.MoveToCommand(targetPosition.Value, relativeToPlayer: false);
+                        Plugin.MovementManager.MoveToObject(characterName);
                     }
+                    break;
+                case "movetomytarget":
+                    Plugin.IpcProvider.ExecuteMoveToMyTarget();
                     break;
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");

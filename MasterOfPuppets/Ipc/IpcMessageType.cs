@@ -12,6 +12,7 @@ public enum IpcMessageType {
     ExecuteGeneralActionCommand,
     ExecuteItemCommand,
     ExecuteTargetMyTarget,
+    ExecuteMoveToMyTarget,
     ExecuteTargetClear,
     ExecuteAbandonDuty,
     EnqueueMacroActions,

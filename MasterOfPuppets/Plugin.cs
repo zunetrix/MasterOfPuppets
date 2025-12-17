@@ -21,7 +21,7 @@ public class Plugin : IDalamudPlugin {
     internal MacroHandler MacroHandler { get; }
     internal MacroManager MacroManager { get; }
     internal CompletionIndex CompletionIndex { get; }
-    internal AsyncMoveRequest AsyncMove { get; }
+    internal MovementManager MovementManager { get; }
     internal FollowPath FollowPath { get; }
 
     public Plugin(IDalamudPluginInterface pluginInterface) {
@@ -38,7 +38,7 @@ public class Plugin : IDalamudPlugin {
         CompletionIndex = new CompletionIndex();
 
         FollowPath = new FollowPath(this);
-        AsyncMove = new AsyncMoveRequest(FollowPath);
+        MovementManager = new MovementManager(FollowPath);
 
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
         DalamudApi.PluginInterface.LanguageChanged += OnLanguageChange;
@@ -68,7 +68,7 @@ public class Plugin : IDalamudPlugin {
         ChatWatcher.Dispose();
         MacroHandler.Dispose();
         PluginCommandManager.Dispose();
-        AsyncMove.Dispose();
+        MovementManager.Dispose();
         FollowPath.Dispose();
 
         Ui.Dispose();
@@ -76,7 +76,7 @@ public class Plugin : IDalamudPlugin {
 
     private void OnFrameworkUpdate(IFramework fwk) {
         FollowPath.Update(fwk);
-        AsyncMove.Update();
+        MovementManager.Update();
     }
 
     private static void OnLanguageChange(string langCode) {
