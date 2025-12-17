@@ -24,17 +24,17 @@ public static class FashionAccessoriesHelper {
             .ToList();
     }
 
-    private static Ornament? GetOrnamentById(uint id) {
+    private static Ornament? GetOrnament(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Ornament>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint actionId) {
-        var action = GetOrnamentById(actionId);
+    public static ExecutableAction? GetExecutableAction(uint actionId) {
+        var action = GetOrnament(actionId);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
     public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
-        return GetOrnamentById(item)?.Icon ?? undefinedIcon;
+        return GetOrnament(item)?.Icon ?? undefinedIcon;
     }
 }

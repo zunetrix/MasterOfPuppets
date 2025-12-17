@@ -23,18 +23,18 @@ public static class MountHelper {
             .ToList();
     }
 
-    private static Mount? GetMountById(uint id) {
+    private static Mount? GetMount(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Mount>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint actionId) {
-        var action = GetMountById(actionId);
+    public static ExecutableAction? GetExecutableAction(uint actionId) {
+        var action = GetMount(actionId);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
     public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
-        return GetMountById(item)?.Icon ?? undefinedIcon;
+        return GetMount(item)?.Icon ?? undefinedIcon;
 
     }
 }

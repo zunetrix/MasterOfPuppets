@@ -129,10 +129,10 @@ public class MacroHandler : IDisposable {
                 }
 
                 if (uint.TryParse(actionIdOrName, out uint actionId)) {
-                    GameActionManager.UseActionById(actionId);
+                    GameActionManager.UseAction(actionId);
                     DalamudApi.PluginLog.Debug($"[mopaction] {actionId}");
                 } else {
-                    GameActionManager.UseActionByName(actionIdOrName);
+                    GameActionManager.UseAction(actionIdOrName);
                     DalamudApi.PluginLog.Debug($"[mopaction] {actionIdOrName}");
                 }
 
@@ -147,12 +147,12 @@ public class MacroHandler : IDisposable {
                 }
 
                 if (uint.TryParse(itemIdOrName, out uint itemId)) {
-                    GameActionManager.UseItemById(itemId);
-                    // GameActionManager.UseInventoryItemById(itemId);
+                    GameActionManager.UseItem(itemId);
+                    // GameActionManager.UseInventoryItem(itemId);
                     DalamudApi.PluginLog.Debug($"[mopitem] {itemId}");
                 } else {
-                    GameActionManager.UseItemByName(itemIdOrName);
-                    // GameActionManager.UseInventoryItemByName(itemIdOrName);
+                    GameActionManager.UseItem(itemIdOrName);
+                    // GameActionManager.UseInventoryItem(itemIdOrName);
                     DalamudApi.PluginLog.Debug($"[mopitem] {itemIdOrName}");
                 }
 
@@ -167,7 +167,7 @@ public class MacroHandler : IDisposable {
 
             ["moptarget"] = async (macroId, args, token) => {
                 string targetName = args.Trim().Trim('"');
-                TargetManager.TargetByName(targetName);
+                TargetManager.TargetObject(targetName);
                 DalamudApi.PluginLog.Debug($"[moptarget] {targetName}");
                 await Task.CompletedTask;
             },
@@ -252,20 +252,40 @@ public class MacroHandler : IDisposable {
 
             ["mopmove"] = async (macroId, args, token) => {
                 if (string.IsNullOrWhiteSpace(args)) return;
-                var argParts = args.Split(" ");
-                if (argParts.Length != 3) return;
+                var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length != 3) return;
 
-                if (!float.TryParse(argParts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
-                || !float.TryParse(argParts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
-                || !float.TryParse(argParts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
+                if (!float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
+                || !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
+                || !float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
                     DalamudApi.PluginLog.Warning($"[mopmove] invalid argument parse: \"{args}\"");
                     return;
                 }
 
                 var offsetXYZ = new Vector3(x, y, z);
-                Plugin.AsyncMove.MoveToCommand(offsetXYZ);
+                Plugin.MovementManager.MoveToRelativePosition(offsetXYZ);
 
                 DalamudApi.PluginLog.Debug($"[mopmove] {x}, {y}, {z}");
+                await Task.CompletedTask;
+            },
+
+            ["mopmovetotarget"] = async (macroId, args, token) => {
+                Plugin.MovementManager.MoveToTargetPosition();
+
+                DalamudApi.PluginLog.Debug($"[mopmovetotarget]");
+                await Task.CompletedTask;
+            },
+
+            ["mopmovetocharacter"] = async (macroId, args, token) => {
+                if (string.IsNullOrWhiteSpace(args)) {
+                    DalamudApi.PluginLog.Warning($"Invalid arguments expected character name");
+                    return;
+                }
+
+                var characterName = args;
+
+                Plugin.MovementManager.MoveToObject(characterName);
+                DalamudApi.PluginLog.Debug($"[mopmovetocharacter] {args}");
                 await Task.CompletedTask;
             },
         };

@@ -30,18 +30,18 @@ public static class EmoteHelper {
             .ToList();
     }
 
-    private static Emote? GetEmoteById(uint id) {
+    private static Emote? GetEmote(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Emote>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint slotId) {
-        var emote = GetEmoteById(slotId);
+    public static ExecutableAction? GetExecutableAction(uint slotId) {
+        var emote = GetEmote(slotId);
         return emote == null ? null : GetExecutableAction(emote.Value);
     }
 
     public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
-        return GetEmoteById(item)?.Icon ?? undefinedIcon;
+        return GetEmote(item)?.Icon ?? undefinedIcon;
     }
 
     private static readonly (string Name, uint Id, uint IconId)[] InternalEmoteData =

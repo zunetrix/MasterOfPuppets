@@ -4,6 +4,7 @@ using System.Linq;
 
 using Lumina.Excel.Sheets;
 using Lumina.Data;
+
 using Dalamud.Game;
 
 
@@ -36,7 +37,7 @@ public static class ItemHelper {
         .ToList();
     }
 
-    public static Item? GetItemByName(string itemName) {
+    public static Item? GetItem(string itemName) {
         var clientLanguage = DalamudApi.ClientState.ClientLanguage switch {
             ClientLanguage.Japanese => Language.Japanese,
             ClientLanguage.German => Language.German,
@@ -53,23 +54,23 @@ public static class ItemHelper {
         return isItemFound ? item : null;
     }
 
-    public static ExecutableAction? GetExecutableActionByName(string itemName) {
-        var item = GetItemByName(itemName);
+    public static ExecutableAction? GetExecutableAction(string itemName) {
+        var item = GetItem(itemName);
         return item == null ? null : GetExecutableAction(item.Value);
     }
 
-    private static Item? GetItemById(uint id) {
+    private static Item? GetItem(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Item>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint slotId) {
-        var item = GetItemById(slotId);
+    public static ExecutableAction? GetExecutableAction(uint slotId) {
+        var item = GetItem(slotId);
         return item == null ? null : GetExecutableAction(item.Value);
     }
 
     public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
-        return GetItemById(item)?.Icon ?? undefinedIcon;
+        return GetItem(item)?.Icon ?? undefinedIcon;
     }
 
     public enum ItemUICategoryEnum {

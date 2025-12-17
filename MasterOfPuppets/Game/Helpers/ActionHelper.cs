@@ -24,7 +24,7 @@ public static class ActionHelper {
             .ToList();
     }
 
-    public static Action? GetActionByName(string actionName) {
+    public static Action? GetAction(string actionName) {
         // returns RowId = 0 for invalid names
         var action = DalamudApi.DataManager.GetExcelSheet<Action>()
         .FirstOrDefault(a => string.Equals(a.Name.ToString(), actionName, System.StringComparison.OrdinalIgnoreCase));
@@ -33,22 +33,22 @@ public static class ActionHelper {
         return isActionFound ? action : null;
     }
 
-    public static ExecutableAction? GetExecutableActionByName(string actionName) {
-        var action = GetActionByName(actionName);
+    public static ExecutableAction? GetExecutableAction(string actionName) {
+        var action = GetAction(actionName);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
-    private static Action? GetActionById(uint id) {
+    private static Action? GetAction(uint id) {
         return DalamudApi.DataManager.GetExcelSheet<Action>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint slotId) {
-        var action = GetActionById(slotId);
+    public static ExecutableAction? GetExecutableAction(uint slotId) {
+        var action = GetAction(slotId);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
     public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
-        return GetActionById(item)?.Icon ?? undefinedIcon;
+        return GetAction(item)?.Icon ?? undefinedIcon;
     }
 }

@@ -152,7 +152,7 @@ public class MountWindow : Window {
 
         ImGui.SameLine();
         var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
-        var unmount = GeneralActionHelper.GetExecutableActionById(23);
+        var unmount = GeneralActionHelper.GetExecutableAction(23);
         var unmountIcon = DalamudApi.TextureProvider.GetFromGameIcon(unmount.IconId).GetWrapOrEmpty().Handle;
 
         ImGui.Image(unmountIcon, iconSize);

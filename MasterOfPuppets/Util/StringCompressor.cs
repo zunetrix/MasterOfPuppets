@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MasterOfPuppets.Util;
 
-public static class Compressor {
+public static class StringCompressor {
     public static string CompressString(string input) {
         var bytes = Encoding.UTF8.GetBytes(input);
         using var ms = new MemoryStream();

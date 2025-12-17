@@ -1,5 +1,7 @@
 using System;
 
+using MasterOfPuppets.Movement;
+
 namespace MasterOfPuppets.Ipc;
 
 [AttributeUsage(AttributeTargets.Method)]
@@ -38,24 +40,30 @@ internal class IpcHandlers {
 
     [IpcHandle(IpcMessageType.ExecuteActionCommand)]
     private void HandleExecuteActionCommand(IpcMessage message) {
-        GameActionManager.UseActionById(message.DataStruct<uint>());
+        GameActionManager.UseAction(message.DataStruct<uint>());
     }
 
     [IpcHandle(IpcMessageType.ExecuteGeneralActionCommand)]
     private void HandleExecuteGeneralActionCommand(IpcMessage message) {
-        GameActionManager.UseGeneralActionById(message.DataStruct<uint>());
+        GameActionManager.UseGeneralAction(message.DataStruct<uint>());
     }
 
     [IpcHandle(IpcMessageType.ExecuteItemCommand)]
     private unsafe void HandleExecuteItemCommand(IpcMessage message) {
         uint itemId = message.DataStruct<uint>();
-        GameActionManager.UseItemById(itemId);
+        GameActionManager.UseItem(itemId);
     }
 
     [IpcHandle(IpcMessageType.ExecuteTargetMyTarget)]
     private void HandleExecuteTargetMyTarget(IpcMessage message) {
         ulong targetObjectId = message.DataStruct<ulong>();
-        TargetManager.TargetByObjectId(targetObjectId);
+        TargetManager.TargetObject(targetObjectId);
+    }
+
+    [IpcHandle(IpcMessageType.ExecuteMoveToMyTarget)]
+    private void ExecuteMoveToMyTarget(IpcMessage message) {
+        ulong targetObjectId = message.DataStruct<ulong>();
+        Plugin.MovementManager.MoveToObject(targetObjectId);
     }
 
     [IpcHandle(IpcMessageType.ExecuteTargetClear)]

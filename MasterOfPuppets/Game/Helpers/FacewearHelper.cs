@@ -24,17 +24,17 @@ public static class FacewearHelper {
             .ToList();
     }
 
-    private static Glasses? GetFacewearById(uint id) {
+    private static Glasses? GetFacewear(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Glasses>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint actionId) {
-        var action = GetFacewearById(actionId);
+    public static ExecutableAction? GetExecutableAction(uint actionId) {
+        var action = GetFacewear(actionId);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
     public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
-        return (uint?)GetFacewearById(item)?.Icon ?? undefinedIcon;
+        return (uint?)GetFacewear(item)?.Icon ?? undefinedIcon;
     }
 }

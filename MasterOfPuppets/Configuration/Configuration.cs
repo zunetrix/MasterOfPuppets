@@ -5,8 +5,6 @@ using Dalamud.Configuration;
 using Dalamud.Game.Text;
 using Dalamud.Plugin;
 
-using Newtonsoft.Json;
-
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Util;
 
@@ -39,7 +37,6 @@ internal class Configuration : IPluginConfiguration {
     public List<string> ChatCommandSenderWhitelist { get; set; } = new();
     public string DefaultChatSyncPrefix { get; set; } = "/p";
 
-
     // Interface
     public bool OpenOnStartup { get; set; } = false;
 
@@ -52,7 +49,6 @@ internal class Configuration : IPluginConfiguration {
 
     // Movement
     [Newtonsoft.Json.JsonIgnore]
-    [System.Text.Json.Serialization.JsonIgnore]
     public bool AlignCameraToMovement { get; set; } = true;
     [Newtonsoft.Json.JsonIgnore]
     public float AlignCameraHeight { get; set; } = -15;

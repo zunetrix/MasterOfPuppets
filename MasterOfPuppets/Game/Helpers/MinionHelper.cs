@@ -23,17 +23,17 @@ public static class MinionHelper {
             .ToList();
     }
 
-    private static Companion? GetMinionById(uint id) {
+    private static Companion? GetMinion(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Companion>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint actionId) {
-        var action = GetMinionById(actionId);
+    public static ExecutableAction? GetExecutableAction(uint actionId) {
+        var action = GetMinion(actionId);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
     public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
-        return GetMinionById(item)?.Icon ?? undefinedIcon;
+        return GetMinion(item)?.Icon ?? undefinedIcon;
     }
 }

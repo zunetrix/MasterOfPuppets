@@ -21,14 +21,14 @@ public static class GameActionManager {
         }
     }
 
-    public static unsafe void UseGeneralActionById(uint actionId) {
+    public static unsafe void UseGeneralAction(uint actionId) {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
             ActionManager.Instance()->UseAction(ActionType.GeneralAction, actionId);
         });
     }
 
-    public static unsafe void UseGeneralActionByName(string actionName) {
-        var action = GeneralActionHelper.GetExecutableActionByName(actionName);
+    public static unsafe void UseGeneralAction(string actionName) {
+        var action = GeneralActionHelper.GetExecutableAction(actionName);
         if (action == null) {
             DalamudApi.PluginLog.Debug("Invalid general action name");
             return;
@@ -41,14 +41,14 @@ public static class GameActionManager {
         // DalamudApi.PluginLog.Debug($"[USE GENERL ACTION] {action.ActionId}");
     }
 
-    public static unsafe void UseActionById(uint actionId) {
+    public static unsafe void UseAction(uint actionId) {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
             ActionManager.Instance()->UseAction(ActionType.Action, actionId);
         });
     }
 
-    public static unsafe void UseActionByName(string actionName) {
-        var action = ActionHelper.GetExecutableActionByName(actionName);
+    public static unsafe void UseAction(string actionName) {
+        var action = ActionHelper.GetExecutableAction(actionName);
         if (action == null) {
             DalamudApi.PluginLog.Debug("Invalid action name");
             return;
@@ -61,7 +61,7 @@ public static class GameActionManager {
         // DalamudApi.PluginLog.Debug($"[USE ACTION] {action.ActionId}");
     }
 
-    public static unsafe void UseItemById(uint actionId) {
+    public static unsafe void UseItem(uint actionId) {
         // bool isActionOffCooldown = ActionManager.Instance()->IsActionOffCooldown(ActionType.Item, actionId);
         // var adjustedActionId = ActionManager.Instance()->GetAdjustedActionId(actionId);
         // AgentInventoryContext.Instance()->UseItem(actionId);
@@ -81,8 +81,8 @@ public static class GameActionManager {
         // DalamudApi.PluginLog.Debug($"[USE ITEM] {actionId}");
     }
 
-    public static unsafe void UseItemByName(string itemName) {
-        var item = ItemHelper.GetExecutableActionByName(itemName);
+    public static unsafe void UseItem(string itemName) {
+        var item = ItemHelper.GetExecutableAction(itemName);
         if (item == null) {
             DalamudApi.PluginLog.Debug("Invalid item name");
             return;
@@ -100,7 +100,7 @@ public static class GameActionManager {
         // DalamudApi.PluginLog.Debug($"[USE ITEM NAME] {itemName}");
     }
 
-    public static unsafe void UseInventoryItemById(uint itemId) {
+    public static unsafe void UseInventoryItem(uint itemId) {
         // DalamudApi.Framework.RunOnFrameworkThread(delegate
         // {
         //     AgentInventoryContext.Instance()->UseItem(itemId);
@@ -113,8 +113,8 @@ public static class GameActionManager {
         // DalamudApi.PluginLog.Debug($"[USE INVENTORY ITEM] {itemId}");
     }
 
-    public static unsafe void UseInventoryItemByName(string itemName) {
-        var item = ItemHelper.GetExecutableActionByName(itemName);
+    public static unsafe void UseInventoryItem(string itemName) {
+        var item = ItemHelper.GetExecutableAction(itemName);
         if (item == null) {
             DalamudApi.PluginLog.Debug("Invalid item name");
             return;

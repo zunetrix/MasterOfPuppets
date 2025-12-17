@@ -204,11 +204,11 @@ public class MacroManager {
 
         var clonedMacro = includeCids ? Plugin.Config.Macros[itemIndex].Clone() : Plugin.Config.Macros[itemIndex].CloneWithoutCharacters();
         string macroJson = clonedMacro.JsonSerialize();
-        return Compressor.CompressString(macroJson);
+        return StringCompressor.CompressString(macroJson);
     }
 
     public void ImportMacroFromString(string compressedMacroString) {
-        string macroString = Compressor.DecompressString(compressedMacroString);
+        string macroString = StringCompressor.DecompressString(compressedMacroString);
         var newMacro = macroString.JsonDeserialize<Macro>();
 
         if (newMacro == null) {

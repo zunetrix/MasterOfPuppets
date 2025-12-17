@@ -25,7 +25,7 @@ public static class GeneralActionHelper {
             .Select(GetExecutableAction).ToList();
     }
 
-    public static GeneralAction? GetActionByName(string actionName) {
+    public static GeneralAction? GetGeneralAction(string actionName) {
         // returns RowId = 0 for invalid names
         var action = DalamudApi.DataManager.GetExcelSheet<GeneralAction>()
         .FirstOrDefault(a => string.Equals(a.Name.ToString(), actionName, System.StringComparison.OrdinalIgnoreCase));
@@ -34,23 +34,23 @@ public static class GeneralActionHelper {
         return isActionFound ? action : null;
     }
 
-    public static ExecutableAction? GetExecutableActionByName(string actionName) {
-        var action = GetActionByName(actionName);
+    public static ExecutableAction? GetExecutableAction(string actionName) {
+        var action = GetGeneralAction(actionName);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
-    private static GeneralAction? GetActionById(uint id) {
+    private static GeneralAction? GetGeneralAction(uint id) {
         // action.Icon is int
         return DalamudApi.DataManager.GetExcelSheet<GeneralAction>().GetRowOrDefault(id);
     }
 
-    public static ExecutableAction? GetExecutableActionById(uint slotId) {
-        var action = GetActionById(slotId);
+    public static ExecutableAction? GetExecutableAction(uint slotId) {
+        var action = GetGeneralAction(slotId);
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
     public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
-        return (uint?)GetActionById(item)?.Icon ?? undefinedIcon;
+        return (uint?)GetGeneralAction(item)?.Icon ?? undefinedIcon;
     }
 }

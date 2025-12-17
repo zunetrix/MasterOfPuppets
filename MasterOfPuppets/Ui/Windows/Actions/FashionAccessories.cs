@@ -150,16 +150,16 @@ public class FashionAccessoriesWindow : Window {
         }
 
         ImGui.SameLine();
-        var rainCheck = ActionHelper.GetExecutableActionById(30869); // Rain Check
+        var rainCheck = ActionHelper.GetExecutableAction(30869); // Rain Check
         var rainCheckIcon = DalamudApi.TextureProvider.GetFromGameIcon(rainCheck.IconId).GetWrapOrEmpty().Handle;
 
-        var umbrellaDance = ActionHelper.GetExecutableActionById(30868); // Umbrella Dance
+        var umbrellaDance = ActionHelper.GetExecutableAction(30868); // Umbrella Dance
         var umbrellaDanceIcon = DalamudApi.TextureProvider.GetFromGameIcon(umbrellaDance.IconId).GetWrapOrEmpty().Handle;
 
-        var changePose = EmoteHelper.GetExecutableActionById(90); // Change Pose
+        var changePose = EmoteHelper.GetExecutableAction(90); // Change Pose
         var changePoseIcon = DalamudApi.TextureProvider.GetFromGameIcon(changePose.IconId).GetWrapOrEmpty().Handle;
 
-        var putAway = GeneralActionHelper.GetExecutableActionById(28); // Put Away
+        var putAway = GeneralActionHelper.GetExecutableAction(28); // Put Away
         var putAwayIcon = DalamudApi.TextureProvider.GetFromGameIcon(putAway.IconId).GetWrapOrEmpty().Handle;
 
         var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
