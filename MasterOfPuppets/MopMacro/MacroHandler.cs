@@ -465,14 +465,14 @@ public class MacroHandler : IDisposable {
     private string[] GetLocalPlayerMacroActions(string macroNameOrNumber) {
         int macroIndex = Plugin.MacroManager.FindMacroIndex(macroNameOrNumber);
         var macro = Plugin.MacroManager.GetMacroByIndex(macroIndex);
-        var playerCid = DalamudApi.Player.ContentId;
+        var playerCid = DalamudApi.PlayerState.ContentId;
         var actions = macro.GetCidActions(playerCid);
         return actions;
     }
 
     public void ExecuteMacro(int macroIndex) {
         var macro = Plugin.MacroManager.GetMacroByIndex(macroIndex);
-        var playerCid = DalamudApi.Player.ContentId;
+        var playerCid = DalamudApi.PlayerState.ContentId;
         var actions = macro.GetCidActions(playerCid);
 
         this.EnqueueMacroActions(macro.Name, actions, Plugin.Config.DelayBetweenActions);

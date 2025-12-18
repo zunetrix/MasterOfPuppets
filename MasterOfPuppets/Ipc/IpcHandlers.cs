@@ -113,7 +113,7 @@ internal class IpcHandlers {
         var characterName = message.StringData[1];
 
         DalamudApi.Framework.RunOnTick(() => {
-            var localPlayerName = DalamudApi.Player.CharacterName;
+            var localPlayerName = DalamudApi.PlayerState.CharacterName;
             if (!string.Equals(localPlayerName, characterName, StringComparison.OrdinalIgnoreCase)) return;
             Plugin.MacroHandler.EnqueueMacroActions("#mop-inline-macro-char", actions: [textCommand], delayBetweenActions: 0);
         });

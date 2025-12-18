@@ -98,7 +98,7 @@ internal class ChatWatcher : IDisposable {
         string macroNameOrIndex = args[0];
         int macroIndex = Plugin.MacroManager.FindMacroIndex(macroNameOrIndex);
         var macro = Plugin.Config.Macros[macroIndex];
-        var playerCid = DalamudApi.Player.ContentId;
+        var playerCid = DalamudApi.PlayerState.ContentId;
         var playerActions = macro.GetCidActions(playerCid);
 
         Plugin.MacroHandler.EnqueueMacroActions(macro.Name, playerActions, Plugin.Config.DelayBetweenActions);
@@ -129,7 +129,7 @@ internal class ChatWatcher : IDisposable {
             return;
         }
 
-        var localPlayerName = DalamudApi.Player.CharacterName;
+        var localPlayerName = DalamudApi.PlayerState.CharacterName;
         if (string.Equals(localPlayerName, senderName, StringComparison.OrdinalIgnoreCase)) return;
 
         var textCommand = args[0];
@@ -144,7 +144,7 @@ internal class ChatWatcher : IDisposable {
 
         var characterName = args[0];
         var textCommand = args[1];
-        var localPlayerName = $"{DalamudApi.Player.CharacterName}@{DalamudApi.Player.HomeWorld.Value.Name}";
+        var localPlayerName = $"{DalamudApi.PlayerState.CharacterName}@{DalamudApi.PlayerState.HomeWorld.Value.Name}";
         if (!localPlayerName.Contains(characterName, StringComparison.InvariantCultureIgnoreCase)) return;
 
         Plugin.MacroHandler.EnqueueMacroActions("#mopbrc-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
