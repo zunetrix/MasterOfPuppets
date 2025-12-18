@@ -139,7 +139,7 @@ public class PluginCommandManager : IDisposable {
                         }
 
                         var offsetXYZ = new Vector3(x, y, z);
-                        Plugin.MovementManager.MoveToRelativePosition(offsetXYZ);
+                        Plugin.MovementManager.MoveToPosition(offsetXYZ);
                     }
                     break;
                 case "movetotarget": {

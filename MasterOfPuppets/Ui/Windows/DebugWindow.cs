@@ -20,6 +20,7 @@ using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 using MasterOfPuppets.Movement;
 using Dalamud.Interface.ImGuiSeStringRenderer;
+using Dalamud.Utility;
 
 namespace MasterOfPuppets;
 
@@ -37,6 +38,7 @@ public class DebugWindow : Window {
     private static string _zInput = "0";
     private static int _macroIdx = 0;
     private static string _targetNameMoveTo = string.Empty;
+    private static string _targetNameMoveToRelative = string.Empty;
     private static string _search = string.Empty;
     private static HashSet<object>? _filtered;
     private static int _hoveredItem;
@@ -313,6 +315,10 @@ public class DebugWindow : Window {
                 ImGui.InputTextWithHint("(+Forward | -Back)##zInput", "Z", ref _zInput, 10, ImGuiInputTextFlags.AutoSelectAll);
 
                 ImGui.Spacing();
+                ImGui.TextUnformatted("If informed will be used as origin point");
+                ImGui.InputTextWithHint("##MoveToCharacterNameInput", "Reference character name", ref _targetNameMoveToRelative, 255, ImGuiInputTextFlags.AutoSelectAll);
+
+                ImGui.Spacing();
                 ImGui.Spacing();
                 if (ImGui.Button("Move")) {
                     var offsetXYZ = new Vector3(
@@ -320,13 +326,20 @@ public class DebugWindow : Window {
                      float.Parse(_yInput, System.Globalization.CultureInfo.InvariantCulture),
                      float.Parse(_zInput, System.Globalization.CultureInfo.InvariantCulture));
 
-                    Plugin.MovementManager.MoveToRelativePosition(offsetXYZ);
+                    if (!_targetNameMoveToRelative.IsNullOrEmpty()) {
+                        Plugin.MovementManager.MoveToPositionRelative(offsetXYZ, _targetNameMoveToRelative);
+                        return;
+                    }
+
+                    Plugin.MovementManager.MoveToPosition(offsetXYZ);
                 }
+
                 ImGui.SameLine();
                 if (ImGui.Button("Reset")) {
                     _xInput = "0";
                     _yInput = "0";
                     _zInput = "0";
+                    _targetNameMoveToRelative = string.Empty;
                 }
 
                 ImGui.Spacing();

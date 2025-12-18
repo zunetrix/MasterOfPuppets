@@ -90,6 +90,7 @@ public class MovementManager : IDisposable {
     //     }
     // }
 
+    // TODO: fix signature
     [Signature("38 1D ?? ?? ?? ?? 75 2D", ScanType = ScanType.StaticAddress)]
     private static readonly IntPtr walkingBoolPtr = IntPtr.Zero;
     internal static unsafe bool IsWalking {
@@ -111,14 +112,13 @@ public class MovementManager : IDisposable {
         IsWalking = false;
     }
 
-    public void MoveToCommand(Vector3 dest, Vector3 origin = new(), bool relativeToPlayer = true, bool fly = false) {
-        if (relativeToPlayer) {
-            var originActor = relativeToPlayer ? DalamudApi.Objects.LocalPlayer : null;
-            origin = originActor?.Position ?? new();
-        }
-        var offset = dest;
+    public void MoveToCommand(Vector3 offset, Vector3? origin = null, bool fly = false) {
+        var baseOrigin =
+            origin ??
+            DalamudApi.Objects.LocalPlayer?.Position ??
+            Vector3.Zero;
 
-        MoveTo(origin + offset, fly);
+        MoveTo(baseOrigin + offset, fly);
     }
 
     public static unsafe Vector3? GetObjectPosition(string objectName) {
@@ -177,7 +177,7 @@ public class MovementManager : IDisposable {
                 return;
             }
 
-            MoveToCommand(objectPosition.Value, relativeToPlayer: false);
+            MoveToCommand(objectPosition.Value);
         });
     }
 
@@ -189,13 +189,25 @@ public class MovementManager : IDisposable {
                 return;
             }
 
-            MoveToCommand(objectPosition.Value, relativeToPlayer: false);
+            MoveToCommand(objectPosition.Value);
         });
     }
 
-    public void MoveToRelativePosition(Vector3 position) {
+    public void MoveToPosition(Vector3 position) {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
-            MoveToCommand(position, relativeToPlayer: true);
+            MoveToCommand(position);
+        });
+    }
+
+    public void MoveToPositionRelative(Vector3 position, string objectName) {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            var objectPosition = GetObjectPosition(objectName);
+            if (objectPosition == null) {
+                DalamudApi.PluginLog.Debug($"MoveToObject: Could not find object {objectName}");
+                return;
+            }
+
+            MoveToCommand(position, objectPosition);
         });
     }
 
@@ -212,7 +224,7 @@ public class MovementManager : IDisposable {
     public void StopMove() {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
             var origin = new Vector3(0, 0, 0);
-            MoveToRelativePosition(origin);
+            MoveToPosition(origin);
         });
     }
 }

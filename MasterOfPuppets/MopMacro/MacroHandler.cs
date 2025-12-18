@@ -263,8 +263,27 @@ public class MacroHandler : IDisposable {
                 }
 
                 var offsetXYZ = new Vector3(x, y, z);
-                Plugin.MovementManager.MoveToRelativePosition(offsetXYZ);
+                Plugin.MovementManager.MoveToPosition(offsetXYZ);
                 DalamudApi.PluginLog.Debug($"[mopmove] {x}, {y}, {z}");
+                await Task.CompletedTask;
+            },
+
+            ["mopmoverelativeto"] = async (macroId, args, token) => {
+                if (string.IsNullOrWhiteSpace(args)) return;
+                var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length != 4) return;
+                string relativeCharacterName = parts[3].Replace("\"", "");
+
+                if (!float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
+                || !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
+                || !float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
+                    DalamudApi.PluginLog.Warning($"[mopmove] invalid argument parse: \"{args}\"");
+                    return;
+                }
+
+                var offsetXYZ = new Vector3(x, y, z);
+                Plugin.MovementManager.MoveToPositionRelative(offsetXYZ, relativeCharacterName);
+                DalamudApi.PluginLog.Debug($"[mopmoverelativeto] {x}, {y}, {z} ({relativeCharacterName})");
                 await Task.CompletedTask;
             },
 
@@ -281,7 +300,7 @@ public class MacroHandler : IDisposable {
                     return;
                 }
 
-                var characterName = args;
+                var characterName = args.Replace("\"", ""); ;
                 Plugin.MovementManager.MoveToObject(characterName);
                 DalamudApi.PluginLog.Debug($"[mopmovetocharacter] {args}");
                 await Task.CompletedTask;
