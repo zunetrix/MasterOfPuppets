@@ -70,37 +70,25 @@ public class DebugWindow : Window {
         if (!ImGui.BeginTabBar("##DebugTabs")) return;
 
         DrawGeneralDebugTab();
-        DrawHotbarDebugTab();
-        DrawPetHotbarDebugTab();
+        DrawActionsDebugTab();
+        DrawTargetDebugTab();
         DrawMovementDebugTab();
         DrawElementsDebugTab();
+        DrawHotbarDebugTab();
+        DrawPetHotbarDebugTab();
+        DrawConflictingPluginDebugTab();
         DrawFontAwesomeIconsDebugTab();
 
         ImGui.EndTabBar();
     }
 
-    public bool IsConflictingPluginDetected() {
-        var conflictingPluginNames = new[] { "WrathCombo", "RotationSolver", "BossMod" };
-
-        return DalamudApi.PluginInterface.InstalledPlugins
-            .Any(plugin =>
-                plugin.IsLoaded &&
-                conflictingPluginNames.Contains(plugin.InternalName, StringComparer.OrdinalIgnoreCase));
-    }
-
-    private void DrawGeneralDebugTab() {
-        if (ImGui.BeginTabItem($"General###GeneralDebugTab")) {
-            ImGui.TextUnformatted("Actions Test");
+    private void DrawTargetDebugTab() {
+        if (ImGui.BeginTabItem($"Target###DrawTargetDebugTab")) {
+            ImGui.TextUnformatted("Target");
 
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
-
-            ImGui.InputInt("##MacroIndexInput", ref _macroIdx);
-            ImGui.SameLine();
-            if (ImGui.Button("Print Macro")) {
-                DalamudApi.PluginLog.Warning($"{Plugin.Config.Macros[_macroIdx].JsonSerialize()}");
-            }
 
             ImGui.InputTextWithHint("##TargetNameDebugInput", "Target name", ref _targetName, 255, ImGuiInputTextFlags.AutoSelectAll);
             ImGui.SameLine();
@@ -125,37 +113,17 @@ public class DebugWindow : Window {
                 TargetManager.TargetMyMinion();
             }
 
-            if (ImGui.Button("Get Object Quantity")) {
-                GameSettingsManager.GetDisplayObjectLimit();
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Set Object Quantity")) {
-                GameSettingsManager.SetDisplayObjectLimit(SettingsDisplayObjectLimitType.Minimum);
-            }
+            ImGui.EndTabItem();
+        }
+    }
 
-            if (ImGui.Button("Print Game Chat Error")) {
-                DalamudApi.ChatGui.PrintError($"Test error message");
-            }
+    private void DrawActionsDebugTab() {
+        if (ImGui.BeginTabItem($"Actions###DrawActionsDebugTab")) {
+            ImGui.TextUnformatted("Actions");
 
-            if (ImGui.Button("Chat SendChatRunMacro(2)")) {
-                Chat.SendMessage($"/p moprun 2");
-            }
-
-            if (ImGui.Button("Chat SendChatRunMacro(Parasol action 1)")) {
-                Chat.SendMessage($"\"Parasol action 1\"");
-            }
-
-            if (ImGui.Button("Chat SendChatStopMacroExecution")) {
-                Plugin.ChatWatcher.SendChatStopMacroExecution();
-            }
-
-            ImGui.Button("Resset all Config data (double click)");
-            if (ImGui.IsItemHovered()) {
-                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
-                    Plugin.Config.ResetData();
-                    Plugin.IpcProvider.SyncConfiguration();
-                }
-            }
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
 
             if (ImGui.Button("ExecuteHotbarAction (sit anywhere 96)")) {
                 HotbarManager.ExecuteHotbarEmoteAction(96);
@@ -223,6 +191,57 @@ public class DebugWindow : Window {
                 uint lominsanSparklere = 5893;
                 Plugin.IpcProvider.ExecuteItemCommand(lominsanSparklere);
                 DalamudApi.ShowNotification($"Broadcast UseItem(5893)", NotificationType.Info, 5000);
+            }
+
+            ImGui.EndTabItem();
+        }
+    }
+
+    private void DrawGeneralDebugTab() {
+        if (ImGui.BeginTabItem($"General###GeneralDebugTab")) {
+            ImGui.TextUnformatted("Macros");
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.InputInt("##MacroIndexInput", ref _macroIdx);
+            ImGui.SameLine();
+            if (ImGui.Button("Print Macro")) {
+                DalamudApi.PluginLog.Warning($"{Plugin.Config.Macros[_macroIdx].JsonSerialize()}");
+            }
+
+            if (ImGui.Button("Get Object Quantity")) {
+                GameSettingsManager.GetDisplayObjectLimit();
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button("Set Object Quantity Minimum")) {
+                GameSettingsManager.SetDisplayObjectLimit(SettingsDisplayObjectLimitType.Minimum);
+            }
+
+            if (ImGui.Button("Print Game Chat Error")) {
+                DalamudApi.ChatGui.PrintError($"Test error message");
+            }
+
+            if (ImGui.Button("Chat SendChatRunMacro(2)")) {
+                Chat.SendMessage($"/p moprun 2");
+            }
+
+            if (ImGui.Button("Chat SendChatRunMacro(Parasol action 1)")) {
+                Chat.SendMessage($"\"Parasol action 1\"");
+            }
+
+            if (ImGui.Button("Chat SendChatStopMacroExecution")) {
+                Plugin.ChatWatcher.SendChatStopMacroExecution();
+            }
+
+            ImGui.Button("Resset all Config data (double click)");
+            if (ImGui.IsItemHovered()) {
+                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
+                    Plugin.Config.ResetData();
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
             }
 
             if (ImGui.Button("Abandon Duty")) {
@@ -793,5 +812,28 @@ public class DebugWindow : Window {
         }
 
         ImGui.PopFont();
+    }
+
+    public string? GetConflictingPluginName() {
+        var conflictingPluginNames = new[] { "WrathCombo", "RotationSolver", "BossMod" };
+
+        var plugin = DalamudApi.PluginInterface.InstalledPlugins
+            .FirstOrDefault(p =>
+                p.IsLoaded &&
+                conflictingPluginNames.Contains(p.InternalName, StringComparer.OrdinalIgnoreCase));
+
+        return plugin?.InternalName;
+    }
+
+    private void DrawConflictingPluginDebugTab() {
+        if (ImGui.BeginTabItem($"Conflicting Plugin###ConflictingPluginDebugTab")) {
+            ImGui.TextUnformatted("Conflicting Plugin");
+
+            var conflictPluginName = GetConflictingPluginName();
+            if (!string.IsNullOrEmpty(conflictPluginName))
+                ImGuiUtil.DrawColoredBanner($"Conflicting Plugin Detected: {conflictPluginName}", Style.Colors.Red);
+
+            ImGui.EndTabItem();
+        }
     }
 }

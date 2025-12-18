@@ -264,7 +264,6 @@ public class MacroHandler : IDisposable {
 
                 var offsetXYZ = new Vector3(x, y, z);
                 Plugin.MovementManager.MoveToRelativePosition(offsetXYZ);
-
                 DalamudApi.PluginLog.Debug($"[mopmove] {x}, {y}, {z}");
                 await Task.CompletedTask;
             },
@@ -283,7 +282,6 @@ public class MacroHandler : IDisposable {
                 }
 
                 var characterName = args;
-
                 Plugin.MovementManager.MoveToObject(characterName);
                 DalamudApi.PluginLog.Debug($"[mopmovetocharacter] {args}");
                 await Task.CompletedTask;

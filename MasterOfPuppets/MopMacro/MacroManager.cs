@@ -80,7 +80,7 @@ public class MacroManager {
         Plugin.IpcProvider.SyncConfiguration();
     }
 
-    public int ReplaceInSelectedMacros(string find, string replace, bool ignoreCase = false) {
+    public int ReplaceInSelectedMacrosActions(string find, string replace, bool ignoreCase = false) {
         if (string.IsNullOrWhiteSpace(find))
             return 0;
 
@@ -103,19 +103,114 @@ public class MacroManager {
 
                 if (command.Actions.IndexOf(find, comparison) >= 0) {
                     command.Actions = command.Actions.Replace(find, replace, comparison);
-                    DalamudApi.PluginLog.Debug($"Replace in macro ({macro.Name}): {find}, {replace}");
                     macroChanged = true;
                 }
             }
 
-            if (macroChanged)
+            if (macroChanged) {
+                DalamudApi.PluginLog.Debug($"Replace in macro actrions ({macro.Name}): {find} -> {replace}");
                 affectedMacros++;
+            }
         }
 
         if (affectedMacros > 0) {
             Plugin.Config.Save();
-            DalamudApi.ShowNotification($"Replaced {find} by {replace} in {affectedMacros} macros", NotificationType.Info, 5000);
+            DalamudApi.ShowNotification(
+                $"Replaced {find} by {replace} in {affectedMacros} macros actions",
+                NotificationType.Info,
+                5000);
         }
+        return affectedMacros;
+    }
+
+    public int ReplaceInSelectedMacrosTags(string find, string replace, bool ignoreCase = false) {
+        if (string.IsNullOrWhiteSpace(find))
+            return 0;
+
+        var comparison = ignoreCase
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+        int affectedMacros = 0;
+
+        foreach (var index in SelectedMacrosIndexes) {
+            if (index < 0 || index >= Plugin.Config.Macros.Count)
+                continue;
+
+            var macro = Plugin.Config.Macros[index];
+            bool macroChanged = false;
+
+            for (int i = 0; i < macro.Tags.Count; i++) {
+                var tag = macro.Tags[i];
+                if (string.IsNullOrEmpty(tag))
+                    continue;
+
+                if (tag.IndexOf(find, comparison) >= 0) {
+                    macro.Tags[i] = tag.Replace(find, replace, comparison);
+                    macroChanged = true;
+                }
+            }
+
+            if (macroChanged) {
+                DalamudApi.PluginLog.Debug($"Replace in macro tags ({macro.Name}): {find} -> {replace}");
+                affectedMacros++;
+            }
+        }
+
+        if (affectedMacros > 0) {
+            Plugin.Config.Save();
+            DalamudApi.ShowNotification(
+                $"Replaced \"{find}\" by \"{replace}\" in {affectedMacros} macros tags",
+                NotificationType.Info,
+                5000);
+        }
+
+        return affectedMacros;
+    }
+
+    public int RemoveTagFromSelectedMacros(string tagToRemove, bool ignoreCase = false) {
+        if (string.IsNullOrWhiteSpace(tagToRemove))
+            return 0;
+
+        var comparison = ignoreCase
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+        int affectedMacros = 0;
+
+        foreach (var index in SelectedMacrosIndexes) {
+            if (index < 0 || index >= Plugin.Config.Macros.Count)
+                continue;
+
+            var macro = Plugin.Config.Macros[index];
+            bool macroChanged = false;
+
+            for (int i = macro.Tags.Count - 1; i >= 0; i--) {
+                var tag = macro.Tags[i];
+                if (string.IsNullOrEmpty(tag))
+                    continue;
+
+                if (string.Equals(tag, tagToRemove, comparison)) {
+                    macro.Tags.RemoveAt(i);
+                    macroChanged = true;
+                }
+            }
+
+            if (macroChanged) {
+                DalamudApi.PluginLog.Debug(
+                    $"Removed tag \"{tagToRemove}\" from macro ({macro.Name})");
+                affectedMacros++;
+            }
+        }
+
+        if (affectedMacros > 0) {
+            Plugin.Config.Save();
+            DalamudApi.ShowNotification(
+                $"Removed tag \"{tagToRemove}\" from {affectedMacros} macros",
+                NotificationType.Info,
+                5000);
+        }
+
         return affectedMacros;
     }
 

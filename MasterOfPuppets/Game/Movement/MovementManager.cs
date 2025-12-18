@@ -55,13 +55,9 @@ public class MovementManager : IDisposable {
     }
 
     public async Task<List<Vector3>> QueryPath(Vector3 from, Vector3 to, bool flying, float range = 0) {
-        // DalamudApi.PluginLog.Debug($"Kicking off pathfind from {from} to {to}");
-
         var path = await Task.Run(() => {
             return new List<Vector3> { to };
         });
-
-        // DalamudApi.PluginLog.Debug($"Pathfinding done: {path.Count} waypoints");
         return path;
     }
 
@@ -71,7 +67,6 @@ public class MovementManager : IDisposable {
             return false;
         }
 
-        // var toleranceStr = range > 0 ? $" within {range}y" : "";
         // _pendingTask = _manager.QueryPath(DalamudApi.Objects.LocalPlayer?.Position ?? default, dest, fly, range: range);
         _pendingTask = QueryPath(DalamudApi.Objects.LocalPlayer?.Position ?? default, dest, fly, range: range);
 
