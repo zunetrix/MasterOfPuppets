@@ -129,7 +129,7 @@ public static class ImGuiUtil {
             ImGui.PushFont(UiBuilder.DefaultFont);
             ImGui.BeginTooltip();
             ImGui.PushTextWrapPos(ImGuiHelpers.GlobalScale * wrap);
-            ImGui.TextUnformatted(desc);
+            ImGui.Text(desc);
             ImGui.PopTextWrapPos();
             ImGui.EndTooltip();
             ImGui.PopFont();
@@ -216,7 +216,7 @@ public static class ImGuiUtil {
         var result = currentValue;
 
         if (!string.IsNullOrEmpty(label)) {
-            ImGui.TextUnformatted(label);
+            ImGui.Text(label);
             ImGui.SameLine();
         }
 

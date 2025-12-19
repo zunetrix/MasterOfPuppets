@@ -43,7 +43,7 @@ public unsafe class OverrideCamera : IDisposable {
 
     public OverrideCamera() {
         DalamudApi.GameInteropProvider.InitializeFromAttributes(this);
-        DalamudApi.PluginLog.Information($"RMICamera address: 0x{_rmiCameraHook.Address:X}");
+        // DalamudApi.PluginLog.Information($"RMICamera address: 0x{_rmiCameraHook.Address:X}");
     }
 
     public void Dispose() {

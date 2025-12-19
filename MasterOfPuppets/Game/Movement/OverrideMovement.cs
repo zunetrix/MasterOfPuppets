@@ -60,14 +60,14 @@ public unsafe class OverrideMovement : IDisposable {
     public OverrideMovement() {
         var rmiWalkIsInputEnabled1Addr = DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 84 C0 75 10 38 43 3C");
         var rmiWalkIsInputEnabled2Addr = DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 84 C0 75 03 88 47 3F");
-        DalamudApi.PluginLog.Information($"RMIWalkIsInputEnabled1 address: 0x{rmiWalkIsInputEnabled1Addr:X}");
-        DalamudApi.PluginLog.Information($"RMIWalkIsInputEnabled2 address: 0x{rmiWalkIsInputEnabled2Addr:X}");
+        // DalamudApi.PluginLog.Information($"RMIWalkIsInputEnabled1 address: 0x{rmiWalkIsInputEnabled1Addr:X}");
+        // DalamudApi.PluginLog.Information($"RMIWalkIsInputEnabled2 address: 0x{rmiWalkIsInputEnabled2Addr:X}");
         _rmiWalkIsInputEnabled1 = Marshal.GetDelegateForFunctionPointer<RMIWalkIsInputEnabled>(rmiWalkIsInputEnabled1Addr);
         _rmiWalkIsInputEnabled2 = Marshal.GetDelegateForFunctionPointer<RMIWalkIsInputEnabled>(rmiWalkIsInputEnabled2Addr);
 
         DalamudApi.GameInteropProvider.InitializeFromAttributes(this);
-        DalamudApi.PluginLog.Information($"RMIWalk address: 0x{_rmiWalkHook.Address:X}");
-        DalamudApi.PluginLog.Information($"RMIFly address: 0x{_rmiFlyHook.Address:X}");
+        // DalamudApi.PluginLog.Information($"RMIWalk address: 0x{_rmiWalkHook.Address:X}");
+        // DalamudApi.PluginLog.Information($"RMIFly address: 0x{_rmiFlyHook.Address:X}");
         DalamudApi.GameConfig.UiControlChanged += OnConfigChanged;
         UpdateLegacyMode();
     }
@@ -124,6 +124,6 @@ public unsafe class OverrideMovement : IDisposable {
 
     private void UpdateLegacyMode() {
         _legacyMode = DalamudApi.GameConfig.UiControl.TryGetUInt("MoveMode", out var mode) && mode == 1;
-        DalamudApi.PluginLog.Info($"Legacy mode is now {(_legacyMode ? "enabled" : "disabled")}");
+        // DalamudApi.PluginLog.Info($"Legacy mode is now {(_legacyMode ? "enabled" : "disabled")}");
     }
 }

@@ -227,6 +227,9 @@ Right-Click to copy command</value>
     <data name="StopMacroExecutionBtn" xml:space="preserve">
         <value>Stop All Macro Execution</value>
     </data>
+    <data name="StopMovementBtn" xml:space="preserve">
+        <value>Stop All Movement</value>
+    </data>
     <data name="MacroSearchInputLabel" xml:space="preserve">
         <value>Seach Macro</value>
     </data>

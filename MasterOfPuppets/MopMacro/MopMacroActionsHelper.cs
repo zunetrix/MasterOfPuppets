@@ -67,6 +67,83 @@ public static class MopMacroActionsHelper {
             Remove the target
             """
         },
+
+        // MOVEMENT
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop move \"X Y Z\"",
+            SuggestionCommand = "/mop move \"0 0 0\"",
+            Example = """
+            /mop move "0 0 4"
+            /mop move "4 0 0"
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Moves to the desired position using your current position as reference (origin)
+            X (+Left | -Right)
+            Y (+Fly Up | -Fly Down) *Inactive
+            Z (+Forward | -Back)
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop stopmove",
+            SuggestionCommand = "/mop stopmove",
+            Example = """
+            /mop stopmove
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Stops all movements
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop movetotarget",
+            SuggestionCommand = "/mop movetotarget",
+            Example = """
+            /mop movetotarget
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Moves to target position
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop movetocharacter \"Character Name\"",
+            SuggestionCommand = "/mop movetocharacter \"\"",
+            Example = """
+            /mop movetocharacter "Character Name"
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Moves to the position of the given character
+            This also works with NPCs, Minions, Etc
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop movetomytarget",
+            SuggestionCommand = "/mop movetomytarget",
+            Example = """
+            /mop movetomytarget
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Broadcast a command to move all local clients to you target except yourself
+            """
+        },
+
         new MopAction
         {
             Category = MopActionCategory.PluginCommand,
@@ -483,6 +560,81 @@ public static class MopMacroActionsHelper {
                 3 - Normal
                 4 - Low
                 5 - Minimum
+            """
+        },
+
+        // MOVEMENT
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopmove X Y Z",
+            SuggestionCommand = "/mopmove 0 0 0",
+            Example = """
+            /mopmove 0 0 4
+            /mopmove 4 0 0
+            """,
+            Notes = """
+            Moves to the desired position using your current position as reference (origin)
+            X (+Left | -Right)
+            Y (+Fly Up | -Fly Down) *Inactive
+            Z (+Forward | -Back)
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopmoverelativeto X Y Z \"Character Name\"",
+            SuggestionCommand = "/mopmoverelativeto 0 0 0 \"Character Name\"",
+            Example = """
+            /mopmove 0 0 4 "Character Name"
+            /mopmove 4 0 0 "Character Name"
+            """,
+            Notes = """
+            Moves to the desired position using the specified character as the reference point (origin)
+            X (+Left | -Right)
+            Y (+Fly Up | -Fly Down) *Inactive
+            Z (+Forward | -Back)
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopstopmove",
+            SuggestionCommand = "/mopstopmove",
+            Example = """
+            /mopstopmove
+            """,
+            Notes = """
+            Stops all movements
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopmovetotarget",
+            SuggestionCommand = "/mopmovetotarget",
+            Example = """
+            /mopmovetotarget
+            """,
+            Notes = """
+            Moves to target position
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopmovetocharacter \"Character Name\"",
+            SuggestionCommand = "/mopmovetocharacter \"\"",
+            Example = """
+            /mopmovetocharacter "Character Name"
+            """,
+            Notes = """
+            Moves to the position of the given character
+            This also works with NPCs, Minions, Etc
             """
         },
 

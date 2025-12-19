@@ -99,7 +99,7 @@ public record class CompletionInfo(
         if (TryGetRowByName<BuddyAction>(table, rowId, out var buddyAction)) { return buddyAction.Description; }
         if (TryGetRowByName<MainCommand>(table, rowId, out var mainCommand)) { return mainCommand.Description; }
         if (TryGetTransientRowByName<CompanionTransient>(table, rowId, out var companion)) { return companion.Tooltip; }
-        if (TryGetRowByName<MKDSupportJob>(table, rowId, out var occJob)) { return occJob.Unknown3; }
+        if (TryGetRowByName<MKDSupportJob>(table, rowId, out var occJob)) { return occJob.Description; }
 
         return null;
     }
@@ -115,7 +115,7 @@ public record class CompletionInfo(
                 return true;
             }
         }
-        row = default(T);
+        row = default;
         return false;
     }
 
@@ -130,7 +130,7 @@ public record class CompletionInfo(
                 return true;
             }
         }
-        row = default(T);
+        row = default;
         return false;
     }
 }

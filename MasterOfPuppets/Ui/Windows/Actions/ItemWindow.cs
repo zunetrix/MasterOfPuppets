@@ -9,6 +9,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -58,21 +59,18 @@ public class ItemWindow : Window {
     //     ImGui.PushID(actionIndex);
     //     ImGui.TableNextRow();
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted($"{actionIndex + 1:000}");
+    //     ImGui.Text($"{actionIndex + 1:000}");
 
     //     ImGui.TableNextColumn();
-    //     var icon = DalamudApi.TextureProvider.GetFromGameIcon(item.IconId).GetWrapOrEmpty().Handle;
-    //     var iconSize = ImGuiHelpers.ScaledVector2(48, 48);
-
-    //     ImGui.Image(icon, iconSize);
+    //     DalamudApi.TextureProvider.DrawIcon(item.IconId, ImGuiHelpers.ScaledVector2(48, 48));
     //     if (ImGui.IsItemClicked()) {
     //         Plugin.IpcProvider.ExecuteItemCommand(item.ActionId);
     //     }
     //     ImGuiUtil.ToolTip(Language.ClickToExecute);
 
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted($"{item.ActionName}");
-    //     // ImGui.TextUnformatted($"{item.ActionName}\n({item.IconId}) {item.Category}");
+    //     ImGui.Text($"{item.ActionName}");
+    //     // ImGui.Text($"{item.ActionName}\n({item.IconId}) {item.Category}");
     //     if (ImGui.IsItemClicked()) {
     //         ImGui.SetClipboardText($"{item.ActionName}");
     //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -80,7 +78,7 @@ public class ItemWindow : Window {
     //     ImGuiUtil.ToolTip(Language.ClickToCopy);
 
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted(item.TextCommand);
+    //     ImGui.Text(item.TextCommand);
     //     if (ImGui.IsItemClicked()) {
     //         ImGui.SetClipboardText(item.TextCommand);
     //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -139,7 +137,7 @@ public class ItemWindow : Window {
     }
 
     private void DrawHeader() {
-        ImGui.TextUnformatted($"{Language.ItemTitle} (unlocked)");
+        ImGui.Text($"{Language.ItemTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute (broadcast)
@@ -190,14 +188,7 @@ public class ItemWindow : Window {
         }
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction item) => {
-            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(item.IconId).GetWrapOrEmpty();
-            var icon = DalamudApi.TextureProvider.GetFromGameIcon(item.IconId).GetWrapOrEmpty().Handle;
-            ImGui.Image(
-                icon.Handle,
-                new Vector2(iconSize),
-                new Vector2(0.0f, 0.0f),
-                new Vector2(1.0f, 1.0f)
-            );
+            DalamudApi.TextureProvider.DrawIcon(item.IconId, new Vector2(iconSize));
             ImGuiUtil.ToolTip($"""
             {item.ActionName} ({item.ActionId})
             Icon: {item.IconId}

@@ -142,6 +142,10 @@ public class PluginCommandManager : IDisposable {
                         Plugin.MovementManager.MoveToPosition(offsetXYZ);
                     }
                     break;
+                case "stopmove": {
+                        Plugin.IpcProvider.StopMovement();
+                    }
+                    break;
                 case "movetotarget": {
                         Plugin.MovementManager.MoveToTargetPosition();
                     }

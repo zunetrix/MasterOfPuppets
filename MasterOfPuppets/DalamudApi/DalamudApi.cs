@@ -1,7 +1,5 @@
 using System;
 
-using Dalamud.Game;
-using Dalamud.Game.ClientState.Objects;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.IoC;
 using Dalamud.Plugin;

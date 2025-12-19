@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Text;
 
 namespace MasterOfPuppets.Util;
 
@@ -149,6 +150,37 @@ public static class ArgumentParser {
         }
 
         result.AddRange(tokens);
+        return result;
+    }
+
+    // parse args and preserve quoted content as single arg
+    public static List<string> ParseMacroArgs(string args) {
+        var result = new List<string>();
+        if (string.IsNullOrWhiteSpace(args))
+            return result;
+
+        var sb = new StringBuilder();
+        bool inQuotes = false;
+
+        foreach (char c in args) {
+            if (c == '"') {
+                inQuotes = !inQuotes; // double quote
+                continue;
+            }
+
+            if (char.IsWhiteSpace(c) && !inQuotes) {
+                if (sb.Length > 0) {
+                    result.Add(sb.ToString());
+                    sb.Clear();
+                }
+            } else {
+                sb.Append(c);
+            }
+        }
+
+        if (sb.Length > 0)
+            result.Add(sb.ToString());
+
         return result;
     }
 }

@@ -93,6 +93,11 @@ internal class IpcHandlers {
         Plugin.MacroHandler.StopMacroQueueExecution();
     }
 
+    [IpcHandle(IpcMessageType.StopMovement)]
+    private void HandleStopMovement(IpcMessage message) {
+        Plugin.MovementManager.StopMove();
+    }
+
     [IpcHandle(IpcMessageType.RunMacro)]
     private void HandleRunMacro(IpcMessage message) {
         int macroIndex = message.DataStruct<int>();

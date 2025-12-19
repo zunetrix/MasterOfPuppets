@@ -9,6 +9,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -70,20 +71,17 @@ public class FacewearWindow : Window {
     //     ImGui.PushID(actionIndex);
     //     ImGui.TableNextRow();
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted($"{actionIndex + 1:000}");
+    //     ImGui.Text($"{actionIndex + 1:000}");
 
     //     ImGui.TableNextColumn();
-    //     var icon = DalamudApi.TextureProvider.GetFromGameIcon(facewear.IconId).GetWrapOrEmpty().Handle;
-    //     var iconSize = ImGuiHelpers.ScaledVector2(48, 48);
-
-    //     ImGui.Image(icon, iconSize);
+    //     DalamudApi.TextureProvider.DrawIcon(facewear.IconId, ImGuiHelpers.ScaledVector2(48, 48));
     //     if (ImGui.IsItemClicked()) {
     //         Plugin.IpcProvider.ExecuteTextCommand(facewear.TextCommand);
     //     }
     //     ImGuiUtil.ToolTip(Language.ClickToExecute);
 
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted($"{facewear.ActionName}");
+    //     ImGui.Text($"{facewear.ActionName}");
     //     if (ImGui.IsItemClicked()) {
     //         ImGui.SetClipboardText($"{facewear.ActionName}");
     //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -91,7 +89,7 @@ public class FacewearWindow : Window {
     //     ImGuiUtil.ToolTip(Language.ClickToCopy);
 
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted(facewear.TextCommand);
+    //     ImGui.Text(facewear.TextCommand);
     //     if (ImGui.IsItemClicked()) {
     //         ImGui.SetClipboardText(facewear.TextCommand);
     //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -138,7 +136,7 @@ public class FacewearWindow : Window {
     // }
 
     private void DrawHeader() {
-        ImGui.TextUnformatted($"{Language.FacewearTitle} (unlocked)");
+        ImGui.Text($"{Language.FacewearTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute (broadcast)
@@ -189,14 +187,7 @@ public class FacewearWindow : Window {
         }
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction facewear) => {
-            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(facewear.IconId.GetWrapOrEmpty();
-            var icon = DalamudApi.TextureProvider.GetFromGameIcon(facewear.IconId).GetWrapOrEmpty().Handle;
-            ImGui.Image(
-                icon.Handle,
-                new Vector2(iconSize),
-                new Vector2(0.0f, 0.0f),
-                new Vector2(1.0f, 1.0f)
-            );
+            DalamudApi.TextureProvider.DrawIcon(facewear.IconId, new Vector2(iconSize));
             ImGuiUtil.ToolTip($"""
             {facewear.ActionName} ({facewear.ActionId})
             Icon: {facewear.IconId}

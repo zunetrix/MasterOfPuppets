@@ -6,6 +6,7 @@ public enum IpcMessageType {
     Acknowledge,
     RunMacro,
     StopMacroExecution,
+    StopMovement,
     SyncConfiguration,
     ExecuteTextCommand,
     ExecuteActionCommand,

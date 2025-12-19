@@ -36,7 +36,7 @@ public static class ImGuiGroupPanel {
         ImGui.BeginGroup();
         ImGui.Dummy(new Vector2(frameHeight * 0.5f, 0.0f));
         ImGui.SameLine(0.0f, 0.0f);
-        ImGui.TextUnformatted(name);
+        ImGui.Text(name);
         var labelMin = ImGui.GetItemRectMin();
         var labelMax = ImGui.GetItemRectMax();
         ImGui.SameLine(0.0f, 0.0f);

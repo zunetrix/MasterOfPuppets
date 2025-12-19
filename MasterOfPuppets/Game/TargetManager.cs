@@ -163,4 +163,8 @@ public static class TargetManager {
     public static ulong? GetTargetObjectId() {
         return DalamudApi.Objects.LocalPlayer?.TargetObject?.GameObjectId;
     }
+
+    public static string GetTargetName() {
+        return DalamudApi.Objects.LocalPlayer?.TargetObject?.Name?.TextValue ?? string.Empty;
+    }
 }

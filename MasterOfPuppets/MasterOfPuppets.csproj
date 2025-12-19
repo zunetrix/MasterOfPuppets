@@ -1,11 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Dalamud.NET.Sdk/14.0.1">
+  <!-- <Project Sdk="Microsoft.NET.Sdk"> -->
   <!-- Project settings -->
   <PropertyGroup>
-    <TargetFramework>net9-windows</TargetFramework>
     <RootNamespace>MasterOfPuppets</RootNamespace>
     <AssemblyName>MasterOfPuppets</AssemblyName>
-    <Version>1.0.0.75</Version>
+    <Version>1.0.0.78</Version>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -13,9 +15,39 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <!-- <UseWpf>true</UseWpf> -->
+    <!-- MANIFEST  -->
+    <!-- <Author>Zune</Author>
+        <Name>Master Of Puppets</Name>
+        <InternalName>MasterOfPuppets</InternalName>
+        <Punchline>Gremlins Control Center</Punchline>
+        <Description>
+            FFXIV plugin that lets you create and send custom actions (similar to in-game macros),
+            either locally or via chat-based broadcast.
+            It supports broadcasting actions to multiple clients locally, or through in-game chat
+            channels such as Party, Linkshell, and Cross-World Linkshell.
+            Use it to trigger custom actions like emotes, minions, mounts, fashion changes, and
+            more.
+        </Description>
+        <RepoUrl>https://github.com/zunetrix/MasterOfPuppets</RepoUrl>
+        <Tags>utility;macro</Tags>
+        <DalamudApiLevel>14</DalamudApiLevel>
+        <MinimumDalamudVersion>14.0.0</MinimumDalamudVersion>
+        <LoadSync>true</LoadSync>
+        <CanUnloadAsync>true</CanUnloadAsync>
+        <LoadPriority>0</LoadPriority>
+        <IconUrl>https://i.imgur.com/0hdDvXd.png</IconUrl>
+        <Changelog>Weird features added</Changelog>
+        <AcceptsFeedback>false</AcceptsFeedback> -->
+    <!-- <ApplicableVersion>2025.10.30.0000.0000</ApplicableVersion> -->
+    <!-- <CategoryTags>debug;test</CategoryTags> -->
+    <!-- <LoadRequiredState>1</LoadRequiredState> -->
+    <!--
+        <ImageUrls>https://raw.githubusercontent.com/user/repo/image1.png;https://raw.githubusercontent.com/user/repo/image2.png</ImageUrls> -->
+    <!-- <FeedbackMessage>Be nice</FeedbackMessage> -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
-    <Version>1.0.0.75</Version>
+    <Version>1.0.0.78</Version>
+    <!-- <AssemblyVersion>1.0.0.77</AssemblyVersion> -->
     <DefineConstants>DEBUG</DefineConstants>
     <AssemblyName>MasterOfPuppets</AssemblyName>
   </PropertyGroup>
@@ -75,8 +107,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="13.0.0" />
-    <PackageReference Include="Fody" Version="6.9.2" PrivateAssets="all" />
+    <!-- <PackageReference Include="DalamudPackager" Version="14.0.0" /> -->
+    <PackageReference Include="Fody" Version="6.9.3" PrivateAssets="all" />
     <PackageReference Include="Resourcer.Fody" Version="1.8.1" PrivateAssets="all" />
     <!-- IPC -->
     <PackageReference Include="TinyIpc" Version="3.1.1" />
@@ -98,4 +130,7 @@
       <DependentUpon>Language.resx</DependentUpon>
     </Compile>
   </ItemGroup>
+  <Target Name="PackagePlugin" AfterTargets="Build">
+    <DalamudPackager ProjectDir="$(ProjectDir)" OutputPath="$(OutputPath)" AssemblyName="$(AssemblyName)" VersionComponents="4" MakeZip="true" />
+  </Target>
 </Project>

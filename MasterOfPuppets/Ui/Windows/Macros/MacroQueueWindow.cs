@@ -53,7 +53,7 @@ public class MacroQueueWindow : Window {
 
 
         ImGui.BeginChild("##CurrentActionsExecutionListLeftPane", ImGuiHelpers.ScaledVector2(300, 250));
-        ImGui.TextUnformatted("Macro Queue");
+        ImGui.Text("Macro Queue");
         if (ImGui.BeginListBox($"##CurrentActionsExecutionList", ImGuiHelpers.ScaledVector2(300, 220))) {
             for (int i = 0; i < Plugin.MacroHandler.CurrentActionsExecutionList.Count; i++) {
                 var isCurrentItemActive = i == Plugin.MacroHandler.CurrentActionExecutionIndex;
@@ -75,7 +75,7 @@ public class MacroQueueWindow : Window {
 
         ImGui.SameLine();
         ImGui.BeginChild("##CurrentActionsExecutionListRightPane", ImGuiHelpers.ScaledVector2(300, 250));
-        ImGui.TextUnformatted($"Loop Queue");
+        ImGui.Text($"Loop Queue");
         if (ImGui.BeginListBox($"##CurrentActionsLoopExecutionList", ImGuiHelpers.ScaledVector2(300, 220))) {
             for (int i = 0; i < Plugin.MacroHandler.CurrentActionsLoopExecutionList.Count; i++) {
                 var isCurrentItemActive = i == Plugin.MacroHandler.CurrentActionLoopExecutionIndex;

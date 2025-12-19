@@ -9,6 +9,7 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
@@ -287,7 +288,7 @@ public class MainWindow : Window {
             var regionMaxX = ImGui.GetWindowContentRegionMax().X;
             // align to right
             ImGui.SameLine(regionMaxX - textSize.X - (padding * 2));
-            ImGui.TextUnformatted(versionText);
+            ImGui.Text(versionText);
 
             ImGui.EndMenuBar();
         }
@@ -304,7 +305,7 @@ public class MainWindow : Window {
         float buttonWidth = ImGui.GetFrameHeight();
         float marginRight = 15f * ImGuiHelpers.GlobalScale;
 
-        // ImGui.TextUnformatted(Language.MacroListTitle);
+        // ImGui.Text(Language.MacroListTitle);
         // toggle left tags panel show/hide
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Tags, $"##ToggleMacroTagsPanelBtn", Language.ToggleMacroTagsPanelBtn)) {
             _showTagsPanel = !_showTagsPanel;
@@ -316,7 +317,7 @@ public class MainWindow : Window {
             SearchMacro();
         }
 
-        int buttonMacroCount = 3;
+        int buttonMacroCount = 4;
         float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
 
@@ -336,10 +337,18 @@ public class MainWindow : Window {
         //     Ui.CharactersWindow.Toggle();
         // }
 
-        ImGui.SameLine();
         ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);
         ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive);
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Ban, $"##StopMovementBtn", Language.StopMovementBtn)) {
+            Plugin.IpcProvider.StopMovement();
+            DalamudApi.ShowNotification($"Movement stoped", NotificationType.Info, 3000);
+        }
+
+        ImGui.SameLine();
+
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionBtn", Language.StopMacroExecutionBtn)) {
             Plugin.IpcProvider.StopMacroExecution();
             DalamudApi.ShowNotification($"Macro execution queue stoped", NotificationType.Info, 3000);
@@ -378,7 +387,7 @@ public class MainWindow : Window {
         ImGui.TableSetColumnIndex(0);
         // ImGui.TableNextColumn();
         bool isChecked = Plugin.MacroManager.SelectedMacrosIndexes.Contains(macroIdx);
-        if (ImGui.Checkbox($"##SelectedMacroCheck_{macroIdx}", ref isChecked)) {
+        if (ImGui.Checkbox($"##SelectedMacroCheckbox_{macroIdx}", ref isChecked)) {
             if (isChecked)
                 Plugin.MacroManager.SelectedMacrosIndexes.Add(macroIdx);
             else
@@ -386,12 +395,10 @@ public class MainWindow : Window {
         }
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted($"{macroIdx + 1:000}");
+        ImGui.Text($"{macroIdx + 1:000}");
 
         ImGui.TableNextColumn();
-        var icon = DalamudApi.TextureProvider.GetFromGameIcon(macro.IconId).GetWrapOrEmpty().Handle;
-        var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
-        ImGui.Image(icon, iconSize);
+        DalamudApi.TextureProvider.DrawIcon(macro.IconId, ImGuiHelpers.ScaledVector2(30, 30));
         if (macro.Tags.Count > 0) {
             ImGuiUtil.ToolTip($"{string.Join("\n", macro.Tags)}");
         }
@@ -645,28 +652,29 @@ public class MainWindow : Window {
                 else
                     Plugin.MacroManager.ClearMacroSelection();
             }
+            ImGuiUtil.ToolTip("Select / Unselect All");
 
             // checkbox border
-            var min = ImGui.GetItemRectMin();
-            var max = ImGui.GetItemRectMax();
-            var dl = ImGui.GetWindowDrawList();
-            dl.AddRect(min, max, ImGui.ColorConvertFloat4ToU32(Style.Components.TooltipBorderColor), 0f, ImDrawFlags.None, 1.0f);
+            // var min = ImGui.GetItemRectMin();
+            // var max = ImGui.GetItemRectMax();
+            // var dl = ImGui.GetWindowDrawList();
+            // dl.AddRect(min, max, ImGui.ColorConvertFloat4ToU32(Style.Components.TooltipBorderColor), 0f, ImDrawFlags.None, 1.0f);
 
             ImGui.TableSetColumnIndex(1);
             ImGui.TableHeader("#");
-            // ImGui.TextUnformatted("#");
+            // ImGui.Text("#");
 
             ImGui.TableSetColumnIndex(2);
             ImGui.TableHeader("Icon");
-            // ImGui.TextUnformatted("Icon");
+            // ImGui.Text("Icon");
 
             ImGui.TableSetColumnIndex(3);
             ImGui.TableHeader(Language.MacroNameLabel);
-            // ImGui.TextUnformatted(Language.MacroNameLabel);
+            // ImGui.Text(Language.MacroNameLabel);
 
             ImGui.TableSetColumnIndex(4);
             ImGui.TableHeader("Options");
-            // ImGui.TextUnformatted("Options");
+            // ImGui.Text("Options");
 
             ImGuiListClipperPtr clipper;
             unsafe {
@@ -694,7 +702,6 @@ public class MainWindow : Window {
     }
 
     private void DrawMacroPanels() {
-
         if (_showTagsPanel) {
             DrawLeftPanel();
         }
@@ -715,7 +722,7 @@ public class MainWindow : Window {
 
         // left panel fixed width tree
         ImGui.BeginChild("##MacroTags", ImGuiHelpers.ScaledVector2(_leftPanelWidth, -1), true);
-        ImGui.TextUnformatted(Language.MacroTagsLabel);
+        ImGui.Text(Language.MacroTagsLabel);
 
         int buttonFilterCount = 2;
         float buttonWidth = ImGui.GetFrameHeight();

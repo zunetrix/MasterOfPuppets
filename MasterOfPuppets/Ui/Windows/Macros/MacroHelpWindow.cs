@@ -93,19 +93,19 @@ public class MacroHelpWindow : Window {
         ImGui.Spacing();
         ImGui.Indent();
 
-        ImGui.TextUnformatted("Usage:");
+        ImGui.Text("Usage:");
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CopyMopActionTextCommand", "Copy Text Command")) {
             ImGui.SetClipboardText($"{MacroHelpData.SuggestionCommand}");
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGui.SameLine();
-        ImGui.TextUnformatted(MacroHelpData.TextCommand);
+        ImGui.Text(MacroHelpData.TextCommand);
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
-        ImGui.TextUnformatted("Example:");
+        ImGui.Text("Example:");
         ImGui.TextWrapped(MacroHelpData.Example);
         if (ImGui.IsItemClicked()) {
             ImGui.SetClipboardText(MacroHelpData.Example);

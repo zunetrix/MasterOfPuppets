@@ -36,8 +36,8 @@ public class MacroImportExportWindow : Window {
 
     public override void Draw() {
         ImGuiGroupPanel.BeginGroupPanel("Macro Export");
-        ImGui.TextUnformatted("Export Directory:");
-        ImGui.TextUnformatted(Plugin.Config.MacroExportPath.EllipsisPath(50));
+        ImGui.Text("Export Directory:");
+        ImGui.Text(Plugin.Config.MacroExportPath.EllipsisPath(50));
 
         ImGui.SameLine();
         ImGui.Dummy(ImGuiHelpers.ScaledVector2(5));
@@ -144,7 +144,7 @@ public class MacroImportExportWindow : Window {
 
         ImGuiGroupPanel.BeginGroupPanel("Macro Import");
 
-        ImGui.TextUnformatted("Import Mode:");
+        ImGui.Text("Import Mode:");
         var macroImportMode = Plugin.Config.MacroImportMode;
         if (ImGuiUtil.EnumCombo("##MacroImportMode", ref macroImportMode)) {
             Plugin.Config.MacroImportMode = macroImportMode;

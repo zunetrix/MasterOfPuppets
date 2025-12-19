@@ -10,6 +10,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -94,20 +95,17 @@ public class EmotesWindow : Window {
     //     ImGui.TableNextRow();
     //     // ImGui.TableSetColumnIndex(0);
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted($"{actionIndex + 1:000}");
+    //     ImGui.Text($"{actionIndex + 1:000}");
 
     //     ImGui.TableNextColumn();
-    //     var icon = DalamudApi.TextureProvider.GetFromGameIcon(emote.IconId).GetWrapOrEmpty().Handle;
-    //     var iconSize = ImGuiHelpers.ScaledVector2(48, 48);
-
-    //     ImGui.Image(icon, iconSize);
+    //     DalamudApi.TextureProvider.DrawIcon(emote.IconId, ImGuiHelpers.ScaledVector2(48, 48));
     //     if (ImGui.IsItemClicked()) {
     //         Plugin.IpcProvider.ExecuteTextCommand(emote.TextCommand);
     //     }
     //     ImGuiUtil.ToolTip(Language.ClickToExecute);
 
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted($"{emote.ActionName} ({emote.ActionId})");
+    //     ImGui.Text($"{emote.ActionName} ({emote.ActionId})");
     //     if (ImGui.IsItemClicked()) {
     //         ImGui.SetClipboardText($"{emote.ActionName}");
     //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -115,7 +113,7 @@ public class EmotesWindow : Window {
     //     ImGuiUtil.ToolTip(Language.ClickToCopy);
 
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted(emote.TextCommand);
+    //     ImGui.Text(emote.TextCommand);
     //     if (ImGui.IsItemClicked()) {
     //         ImGui.SetClipboardText(emote.TextCommand);
     //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -123,7 +121,7 @@ public class EmotesWindow : Window {
     //     ImGuiUtil.ToolTip(Language.ClickToCopy);
 
     //     // ImGui.TableNextColumn();
-    //     // ImGui.TextUnformatted(emote.Category);
+    //     // ImGui.Text(emote.Category);
 
     //     ImGui.PopID();
     // }
@@ -166,7 +164,7 @@ public class EmotesWindow : Window {
     // }
 
     private void DrawHeader() {
-        ImGui.TextUnformatted($"{Language.EmotesTitle} (unlocked)");
+        ImGui.Text($"{Language.EmotesTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute (broadcast)
@@ -265,17 +263,8 @@ public class EmotesWindow : Window {
         }
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction emote) => {
-            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(emote.IconId).GetWrapOrEmpty();
-            var icon = DalamudApi.TextureProvider.GetFromGameIcon(emote.IconId).GetWrapOrEmpty().Handle;
             var tintColor = emote.Category == "InternalEmote" ? Style.Colors.Cyan : Vector4.One;
-
-            ImGui.Image(
-                icon.Handle,
-                new Vector2(iconSize),
-                new Vector2(0.0f, 0.0f),
-                new Vector2(1.0f, 1.0f),
-                tintColor
-            );
+            DalamudApi.TextureProvider.DrawIcon(emote.IconId, new Vector2(iconSize), tintCol: tintColor);
             ImGuiUtil.ToolTip($"""
             {emote.ActionName} ({emote.ActionId})
             Icon: {emote.IconId}

@@ -9,6 +9,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -68,20 +69,17 @@ public class FashionAccessoriesWindow : Window {
     //     ImGui.PushID(actionIndex);
     //     ImGui.TableNextRow();
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted($"{actionIndex + 1:000}");
+    //     ImGui.Text($"{actionIndex + 1:000}");
 
     //     ImGui.TableNextColumn();
-    //     var icon = DalamudApi.TextureProvider.GetFromGameIcon(fashionAccessorie.IconId).GetWrapOrEmpty().Handle;
-    //     var iconSize = ImGuiHelpers.ScaledVector2(48, 48);
-
-    //     ImGui.Image(icon, iconSize);
+    //     DalamudApi.TextureProvider.DrawIcon(fashionAccessorie.IconId, ImGuiHelpers.ScaledVector2(48, 48));
     //     if (ImGui.IsItemClicked()) {
     //         Plugin.IpcProvider.ExecuteTextCommand(fashionAccessorie.TextCommand);
     //     }
     //     ImGuiUtil.ToolTip(Language.ClickToExecute);
 
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted($"{fashionAccessorie.ActionName}");
+    //     ImGui.Text($"{fashionAccessorie.ActionName}");
     //     if (ImGui.IsItemClicked()) {
     //         ImGui.SetClipboardText($"{fashionAccessorie.ActionName}");
     //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -89,7 +87,7 @@ public class FashionAccessoriesWindow : Window {
     //     ImGuiUtil.ToolTip(Language.ClickToCopy);
 
     //     ImGui.TableNextColumn();
-    //     ImGui.TextUnformatted(fashionAccessorie.TextCommand);
+    //     ImGui.Text(fashionAccessorie.TextCommand);
     //     if (ImGui.IsItemClicked()) {
     //         ImGui.SetClipboardText(fashionAccessorie.TextCommand);
     //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -136,7 +134,7 @@ public class FashionAccessoriesWindow : Window {
     // }
 
     private void DrawHeader() {
-        ImGui.TextUnformatted($"{Language.FashionAccessoriesTitle} (unlocked)");
+        ImGui.Text($"{Language.FashionAccessoriesTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute (broadcast)
@@ -151,41 +149,33 @@ public class FashionAccessoriesWindow : Window {
 
         ImGui.SameLine();
         var rainCheck = ActionHelper.GetExecutableAction(30869); // Rain Check
-        var rainCheckIcon = DalamudApi.TextureProvider.GetFromGameIcon(rainCheck.IconId).GetWrapOrEmpty().Handle;
-
         var umbrellaDance = ActionHelper.GetExecutableAction(30868); // Umbrella Dance
-        var umbrellaDanceIcon = DalamudApi.TextureProvider.GetFromGameIcon(umbrellaDance.IconId).GetWrapOrEmpty().Handle;
-
         var changePose = EmoteHelper.GetExecutableAction(90); // Change Pose
-        var changePoseIcon = DalamudApi.TextureProvider.GetFromGameIcon(changePose.IconId).GetWrapOrEmpty().Handle;
-
         var putAway = GeneralActionHelper.GetExecutableAction(28); // Put Away
-        var putAwayIcon = DalamudApi.TextureProvider.GetFromGameIcon(putAway.IconId).GetWrapOrEmpty().Handle;
-
         var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
 
-        ImGui.Image(rainCheckIcon, iconSize);
+        DalamudApi.TextureProvider.DrawIcon(rainCheck.IconId, iconSize);
         if (ImGui.IsItemClicked()) {
             Plugin.IpcProvider.ExecuteActionCommand(rainCheck.ActionId);
         }
         ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.SameLine();
-        ImGui.Image(umbrellaDanceIcon, iconSize);
+        DalamudApi.TextureProvider.DrawIcon(umbrellaDance.IconId, iconSize);
         if (ImGui.IsItemClicked()) {
             Plugin.IpcProvider.ExecuteActionCommand(umbrellaDance.ActionId);
         }
         ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.SameLine();
-        ImGui.Image(changePoseIcon, iconSize);
+        DalamudApi.TextureProvider.DrawIcon(changePose.IconId, iconSize);
         if (ImGui.IsItemClicked()) {
             Plugin.IpcProvider.ExecuteTextCommand(changePose.TextCommand);
         }
         ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.SameLine();
-        ImGui.Image(putAwayIcon, iconSize);
+        DalamudApi.TextureProvider.DrawIcon(putAway.IconId, iconSize);
         if (ImGui.IsItemClicked()) {
             Plugin.IpcProvider.ExecuteTextCommand(putAway.TextCommand);
         }
@@ -229,14 +219,7 @@ public class FashionAccessoriesWindow : Window {
         }
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction fashionAccessorie) => {
-            // var icon = DalamudApi.TextureProvider.GetFromGameIcon(fashionAccessorie.IconId).GetWrapOrEmpty();
-            var icon = DalamudApi.TextureProvider.GetFromGameIcon(fashionAccessorie.IconId).GetWrapOrEmpty().Handle;
-            ImGui.Image(
-                icon.Handle,
-                new Vector2(iconSize),
-                new Vector2(0.0f, 0.0f),
-                new Vector2(1.0f, 1.0f)
-            );
+            DalamudApi.TextureProvider.DrawIcon(fashionAccessorie.IconId, new Vector2(iconSize));
             ImGuiUtil.ToolTip($"""
             {fashionAccessorie.ActionName} ({fashionAccessorie.ActionId})
             Icon: {fashionAccessorie.IconId}

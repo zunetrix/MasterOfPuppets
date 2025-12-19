@@ -77,7 +77,7 @@ public class SettingsWindow : Window {
 
             ImGui.Spacing();
             ImGui.Spacing();
-            ImGui.TextUnformatted("Global delay between actions");
+            ImGui.Text("Global delay between actions");
             ImGui.SetNextItemWidth(150);
             var delayBetweenActions = Plugin.Config.DelayBetweenActions;
             if (ImGui.InputDouble("##DelayBetrweenActions", ref delayBetweenActions, 0.1, 1, "%.2f", ImGuiInputTextFlags.AutoSelectAll)) {
@@ -217,7 +217,7 @@ public class SettingsWindow : Window {
             ImGui.Spacing();
 
             var selectedPrefix = Plugin.Config.DefaultChatSyncPrefix;
-            ImGui.TextUnformatted(Language.SettingsWindowDefaultChatSyncPrefix);
+            ImGui.Text(Language.SettingsWindowDefaultChatSyncPrefix);
             if (ImGui.BeginCombo("##DefaultChatPrefix", selectedPrefix)) {
                 foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes) {
                     string prefix = chatType.ToChatPrefix();
@@ -259,7 +259,7 @@ public class SettingsWindow : Window {
                 ImGui.Spacing();
                 ImGui.Spacing();
 
-                ImGui.TextUnformatted("Listened Chats");
+                ImGui.Text("Listened Chats");
                 if (ImGui.BeginListBox("##ListenedChatTypes", new Vector2(-1, 100))) {
                     foreach (var chatType in Plugin.Config.ListenedChatTypes.ToList()) {
                         var displayName = $"{chatType}";
@@ -282,7 +282,7 @@ public class SettingsWindow : Window {
 
             if (ImGui.CollapsingHeader($"Allowed Chat Command Senders")) {
                 ImGui.Indent();
-                ImGui.TextUnformatted("Sender Name");
+                ImGui.Text("Sender Name");
                 ImGui.InputTextWithHint("##CommandSenderNameInput", "Sender name", ref _characterName, 255, ImGuiInputTextFlags.AutoSelectAll);
 
                 ImGui.SameLine();
@@ -300,7 +300,7 @@ public class SettingsWindow : Window {
                 ImGui.Spacing();
                 ImGui.Spacing();
 
-                ImGui.TextUnformatted("Chat Command Sender Whitelist");
+                ImGui.Text("Chat Command Sender Whitelist");
                 if (ImGui.BeginListBox("##ChatCommandSenderWhitelist", new Vector2(-1, 100))) {
                     foreach (var senderName in Plugin.Config.ChatCommandSenderWhitelist.ToList()) {
                         if (ImGui.Selectable(senderName, false)) {
@@ -321,7 +321,7 @@ public class SettingsWindow : Window {
 
     private void DrawGameSettingsTab() {
         if (ImGui.BeginTabItem($"{Language.SettingsGameSettingsTab}###GameSettingsTab")) {
-            ImGui.TextUnformatted("Object Quantity Limit");
+            ImGui.Text("Object Quantity Limit");
             ImGuiUtil.HelpMarker("Change for all clients");
             if (ImGuiUtil.EnumCombo("##SettingsObjectQuantity", ref _objectQuantityType)) {
                 Plugin.IpcProvider.SetGameSettingsObjectQuantity(_objectQuantityType);

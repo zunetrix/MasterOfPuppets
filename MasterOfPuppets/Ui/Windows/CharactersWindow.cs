@@ -81,7 +81,7 @@ public class CharactersWindow : Window {
         var availablePartyMembers = GetAvailablePartyMembers();
 
         ImGui.BeginDisabled(availablePartyMembers.Count == 0);
-        ImGui.TextUnformatted(Language.CharactersLabel);
+        ImGui.Text(Language.CharactersLabel);
 
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
@@ -130,7 +130,7 @@ public class CharactersWindow : Window {
                 ImGui.PushID(i);
                 ImGui.TableNextRow();
                 ImGui.TableSetColumnIndex(0);
-                ImGui.TextUnformatted($"{i + 1:00}");
+                ImGui.Text($"{i + 1:00}");
 
                 ImGui.TableNextColumn();
                 ImGui.Selectable($"{characters[i].Name}");
@@ -250,7 +250,7 @@ public class CharactersWindow : Window {
 
         var cidsGroups = Plugin.Config.CidsGroups;
 
-        ImGui.TextUnformatted(Language.GroupsLabel);
+        ImGui.Text(Language.GroupsLabel);
 
         string previewGroupValue = cidsGroups.Count > 0
         && Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex)
@@ -305,7 +305,7 @@ public class CharactersWindow : Window {
                 .ToList();
 
         ImGui.BeginDisabled(availableCharacters.Count == 0);
-        ImGui.TextUnformatted(Language.CharactersLabel);
+        ImGui.Text(Language.CharactersLabel);
 
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);

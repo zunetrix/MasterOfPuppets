@@ -8,6 +8,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
+using MasterOfPuppets.Util;
+
 namespace MasterOfPuppets;
 
 public class MacroHandler : IDisposable {
@@ -252,8 +254,8 @@ public class MacroHandler : IDisposable {
 
             ["mopmove"] = async (macroId, args, token) => {
                 if (string.IsNullOrWhiteSpace(args)) return;
-                var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length != 3) return;
+                var parts = ArgumentParser.ParseMacroArgs(args);
+                if (parts.Count != 3) return;
 
                 if (!float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
                 || !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
@@ -269,15 +271,14 @@ public class MacroHandler : IDisposable {
             },
 
             ["mopmoverelativeto"] = async (macroId, args, token) => {
-                if (string.IsNullOrWhiteSpace(args)) return;
-                var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length != 4) return;
-                string relativeCharacterName = parts[3].Replace("\"", "");
+                var parts = ArgumentParser.ParseMacroArgs(args);
+                if (parts.Count != 4) return;
+                string relativeCharacterName = parts[3];
 
                 if (!float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
                 || !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
                 || !float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
-                    DalamudApi.PluginLog.Warning($"[mopmove] invalid argument parse: \"{args}\"");
+                    DalamudApi.PluginLog.Warning($"[mopmoverelativeto] invalid argument parse: \"{args}\"");
                     return;
                 }
 
@@ -303,6 +304,12 @@ public class MacroHandler : IDisposable {
                 var characterName = args.Replace("\"", ""); ;
                 Plugin.MovementManager.MoveToObject(characterName);
                 DalamudApi.PluginLog.Debug($"[mopmovetocharacter] {args}");
+                await Task.CompletedTask;
+            },
+
+            ["mopstopmove"] = async (macroId, args, token) => {
+                Plugin.MovementManager.StopMove();
+                DalamudApi.PluginLog.Debug($"[mopstopmove] {args}");
                 await Task.CompletedTask;
             },
         };

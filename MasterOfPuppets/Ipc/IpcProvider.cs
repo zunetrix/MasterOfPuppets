@@ -166,8 +166,13 @@ internal class IpcProvider : IDisposable {
         BroadCast(message, includeSelf: true);
     }
 
+    public void StopMovement() {
+        var message = IpcMessage.Create(IpcMessageType.StopMovement).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
     public void RunMacro(int macroIndex, bool includeSelf = true) {
-        DalamudApi.PluginLog.Debug($"[Run Macro] {macroIndex}");
+        DalamudApi.PluginLog.Debug($"[Run Macro] {macroIndex + 1}");
         var message = IpcMessage.Create(IpcMessageType.RunMacro, macroIndex).Serialize();
         BroadCast(message, includeSelf);
     }

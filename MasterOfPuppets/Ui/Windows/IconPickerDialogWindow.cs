@@ -7,6 +7,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Util.ImGuiIconPicker;
 
 namespace MasterOfPuppets;
@@ -66,6 +67,7 @@ public class IconPickerDialogWindow : Window {
     public void Open(uint? initialIcon, Action<uint> callback) {
         CurrentIconId = initialIcon;
         Callback = callback;
+
         if (!IsOpen) {
             IsOpen = true;
         } else {
@@ -161,28 +163,23 @@ public class IconPickerDialogWindow : Window {
     private void DrawSearchResults(float iconSize, int columns) {
         var lineHeight = iconSize + ImGui.GetStyle().ItemSpacing.Y;
         ImGuiClip.ClippedDraw(searchedIconInfo, (namedIcon) => {
-            var icon = DalamudApi.TextureProvider.GetFromGameIcon(namedIcon.IconId).GetWrapOrEmpty();
-            ImGui.Image(
-                icon.Handle,
-                new Vector2(iconSize),
-                new Vector2(0.0f, 0.0f),
-                new Vector2(1.0f, 1.0f)
-            );
+            DalamudApi.TextureProvider.DrawIcon(namedIcon.IconId, new Vector2(iconSize));
+
             if (ImGui.IsItemHovered()) {
                 ImGui.BeginTooltip();
 
                 if (ImGui.IsMouseDown(ImGuiMouseButton.Right)) {
                     // Icon Preview
-                    ImGui.Image(icon.Handle, new Vector2(400 * ImGuiHelpers.GlobalScale));
+                    DalamudApi.TextureProvider.DrawIcon(namedIcon.IconId, new Vector2(300 * ImGuiHelpers.GlobalScale));
                 } else {
                     // Icon Details
-                    ImGui.TextUnformatted($"{namedIcon.IconId}");
+                    ImGui.Text($"{namedIcon.IconId}");
 
                     if (showIconNames) {
                         var columns = 3;
                         var currentColumn = 0;
                         foreach (var name in namedIcon.Names) {
-                            ImGui.TextUnformatted(name);
+                            ImGui.Text(name);
                             if (currentColumn > columns) {
                                 currentColumn = 0;
                             } else {

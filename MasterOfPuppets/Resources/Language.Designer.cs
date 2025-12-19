@@ -567,6 +567,11 @@ internal class Language {
             return ResourceManager.GetString("StopMacroExecutionBtn", resourceCulture);
         }
     }
+    internal static string StopMovementBtn {
+        get {
+            return ResourceManager.GetString("StopMovementBtn", resourceCulture);
+        }
+    }
     internal static string MacroSearchInputLabel {
         get {
             return ResourceManager.GetString("MacroSearchInputLabel", resourceCulture);

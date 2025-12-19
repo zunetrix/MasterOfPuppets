@@ -86,7 +86,7 @@ public class DebugWindow : Window {
 
     private void DrawTargetDebugTab() {
         if (ImGui.BeginTabItem($"Target###DrawTargetDebugTab")) {
-            ImGui.TextUnformatted("Target");
+            ImGui.Text("Target");
 
             ImGui.Spacing();
             ImGui.Separator();
@@ -121,7 +121,7 @@ public class DebugWindow : Window {
 
     private void DrawActionsDebugTab() {
         if (ImGui.BeginTabItem($"Actions###DrawActionsDebugTab")) {
-            ImGui.TextUnformatted("Actions");
+            ImGui.Text("Actions");
 
             ImGui.Spacing();
             ImGui.Separator();
@@ -201,7 +201,7 @@ public class DebugWindow : Window {
 
     private void DrawGeneralDebugTab() {
         if (ImGui.BeginTabItem($"General###GeneralDebugTab")) {
-            ImGui.TextUnformatted("Macros");
+            ImGui.Text("Macros");
 
             ImGui.Spacing();
             ImGui.Separator();
@@ -251,7 +251,7 @@ public class DebugWindow : Window {
             }
             // unsafe
             // {
-            //     ImGui.TextUnformatted($"{ActionManager.Instance()->QueuedActionId}");
+            //     ImGui.Text($"{ActionManager.Instance()->QueuedActionId}");
             // }
 
             if (ImGui.Button("Use Invalid Item name")) {
@@ -293,30 +293,47 @@ public class DebugWindow : Window {
 
     private void DrawMovementDebugTab() {
         if (ImGui.BeginTabItem($"Movement###MovementDebugTab")) {
-            ImGui.TextUnformatted("Move");
+            ImGui.Text("Movement");
 
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            if (ImGui.Button("Stop Move")) {
+                Plugin.MovementManager.StopMove();
+            }
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.Text("Move to");
             ImGui.BeginGroup();
             {
-                ImGui.TextUnformatted("X");
+                ImGui.Text("X");
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(60);
-                ImGui.InputTextWithHint("(+Left -Right)##xInput", "X", ref _xInput, 10, ImGuiInputTextFlags.AutoSelectAll);
+                ImGui.InputTextWithHint("(+Left | -Right)##xInput", "X", ref _xInput, 10, ImGuiInputTextFlags.AutoSelectAll);
 
                 ImGui.Spacing();
-                ImGui.TextUnformatted("Y");
+                ImGui.Text("Y");
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(60);
                 ImGui.InputTextWithHint("(+Fly Up | -Fly Down)##yInput", "Y", ref _yInput, 10, ImGuiInputTextFlags.AutoSelectAll);
 
                 ImGui.Spacing();
-                ImGui.TextUnformatted("Z");
+                ImGui.Text("Z");
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(60);
                 ImGui.InputTextWithHint("(+Forward | -Back)##zInput", "Z", ref _zInput, 10, ImGuiInputTextFlags.AutoSelectAll);
 
                 ImGui.Spacing();
-                ImGui.TextUnformatted("If informed will be used as origin point");
-                ImGui.InputTextWithHint("##MoveToCharacterNameInput", "Reference character name", ref _targetNameMoveToRelative, 255, ImGuiInputTextFlags.AutoSelectAll);
+                ImGui.Text("If informed will be used as origin point");
+                ImGui.InputTextWithHint("##MoveToCharacterNameRelativeInput", "Reference character name", ref _targetNameMoveToRelative, 255, ImGuiInputTextFlags.AutoSelectAll);
+                ImGui.SameLine();
+                if (ImGui.Button("Get Target Name##GetReferenceTargetName")) {
+                    _targetNameMoveToRelative = DalamudApi.Objects.LocalPlayer.TargetObject?.Name.TextValue ?? string.Empty;
+                }
 
                 ImGui.Spacing();
                 ImGui.Spacing();
@@ -346,39 +363,39 @@ public class DebugWindow : Window {
                 ImGui.Separator();
                 ImGui.Spacing();
 
-                if (ImGui.Button("Move To Target")) {
+                if (ImGui.Button($"MoveToObject (Target)")) {
                     var targetObjectId = TargetManager.GetTargetObjectId();
                     if (targetObjectId == null) return;
 
                     Plugin.MovementManager.MoveToObject(targetObjectId.Value);
                 }
 
-                ImGui.Spacing();
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                if (ImGui.Button("Stop Move")) {
-                    Plugin.MovementManager.StopMove();
+                if (ImGui.Button($"MoveToTargetPosition")) {
+                    Plugin.MovementManager.MoveToTargetPosition();
                 }
 
                 ImGui.Spacing();
+                ImGui.Spacing();
+                ImGui.Text($"Player Position X:{DalamudApi.Objects.LocalPlayer.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.Position.Z}");
+                ImGui.Text($"Target: {TargetManager.GetTargetName()}");
+                ImGui.Text($"Target Object Id: {TargetManager.GetTargetObjectId()}");
+                ImGui.Text($"Target Position X:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Z}");
+
+                ImGui.Spacing();
                 ImGui.Separator();
                 ImGui.Spacing();
 
-                ImGui.TextUnformatted("Move To Character");
+                ImGui.Text("Move To Character");
                 ImGui.InputTextWithHint("##MoveToCharacterNameInput", "Target name", ref _targetNameMoveTo, 255, ImGuiInputTextFlags.AutoSelectAll);
+
                 ImGui.SameLine();
                 if (ImGui.Button("Move to Character")) {
                     Plugin.MovementManager.MoveToObject(_targetNameMoveTo);
                 }
                 ImGui.SameLine();
-                if (ImGui.Button("Get Target Name")) {
+                if (ImGui.Button("Get Target Name##GetMoveToTargetName")) {
                     _targetNameMoveTo = DalamudApi.Objects.LocalPlayer.TargetObject?.Name.TextValue ?? string.Empty;
                 }
-
-                ImGui.Spacing();
-                ImGui.TextUnformatted($"Player Position X:{DalamudApi.Objects.LocalPlayer.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.Position.Z}");
-                ImGui.TextUnformatted($"Target Position X:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Z}");
             }
             ImGui.EndGroup();
 
@@ -450,13 +467,13 @@ public class DebugWindow : Window {
                             ImGui.PushID(slotIndex);
                             ImGui.TableNextRow();
                             ImGui.TableNextColumn();
-                            ImGui.TextUnformatted($"{slotIndex + 1:000}");
+                            ImGui.Text($"{slotIndex + 1:000}");
 
                             ImGui.TableNextColumn();
-                            ImGui.TextUnformatted($"{slot.CommandType} - ({slot.ApparentSlotType})");
+                            ImGui.Text($"{slot.CommandType} - ({slot.ApparentSlotType})");
 
                             ImGui.TableNextColumn();
-                            ImGui.TextUnformatted($"{slot.CommandId} - ({slot.ApparentActionId})");
+                            ImGui.Text($"{slot.CommandId} - ({slot.ApparentActionId})");
                             if (ImGui.IsItemClicked()) {
                                 ImGui.SetClipboardText($"{slot.ApparentActionId}");
                                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -464,17 +481,15 @@ public class DebugWindow : Window {
                             ImGuiUtil.ToolTip(Language.ClickToCopy);
 
                             ImGui.TableNextColumn();
-                            var icon = DalamudApi.TextureProvider.GetFromGameIcon(slot.IconId).GetWrapOrEmpty().Handle;
-                            var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
-                            ImGui.TextUnformatted($"{slot.IconId}");
-                            ImGui.Image(icon, iconSize);
+                            ImGui.Text($"{slot.IconId}");
+                            DalamudApi.TextureProvider.DrawIcon(slot.IconId, ImGuiHelpers.ScaledVector2(30, 30));
                             if (ImGui.IsItemClicked()) {
                                 HotbarManager.ExecuteHotbarActionByIndex((uint)hotbarIndex, (uint)slotIndex);
                             }
                             ImGuiUtil.ToolTip(Language.ClickToExecute);
 
                             ImGui.TableNextColumn();
-                            ImGui.TextUnformatted($"{slot.GetDisplayNameForSlot(slot.ApparentSlotType, slot.ApparentActionId)}");
+                            ImGui.Text($"{slot.GetDisplayNameForSlot(slot.ApparentSlotType, slot.ApparentActionId)}");
 
                             ImGui.PopID();
                         }
@@ -514,13 +529,13 @@ public class DebugWindow : Window {
                         ImGui.PushID(slotIndex);
                         ImGui.TableNextRow();
                         ImGui.TableNextColumn();
-                        ImGui.TextUnformatted($"{slotIndex + 1:000}");
+                        ImGui.Text($"{slotIndex + 1:000}");
 
                         ImGui.TableNextColumn();
-                        ImGui.TextUnformatted($"{slot.CommandType} - ({slot.ApparentSlotType})");
+                        ImGui.Text($"{slot.CommandType} - ({slot.ApparentSlotType})");
 
                         ImGui.TableNextColumn();
-                        ImGui.TextUnformatted($"{slot.CommandId} - ({slot.ApparentActionId})");
+                        ImGui.Text($"{slot.CommandId} - ({slot.ApparentActionId})");
                         if (ImGui.IsItemClicked()) {
                             ImGui.SetClipboardText($"{slot.ApparentActionId}");
                             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -528,17 +543,15 @@ public class DebugWindow : Window {
                         ImGuiUtil.ToolTip(Language.ClickToCopy);
 
                         ImGui.TableNextColumn();
-                        var icon = DalamudApi.TextureProvider.GetFromGameIcon(slot.IconId).GetWrapOrEmpty().Handle;
-                        var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
-                        ImGui.TextUnformatted($"{slot.IconId}");
-                        ImGui.Image(icon, iconSize);
+                        ImGui.Text($"{slot.IconId}");
+                        DalamudApi.TextureProvider.DrawIcon(slot.IconId, ImGuiHelpers.ScaledVector2(30, 30));
                         if (ImGui.IsItemClicked()) {
                             HotbarManager.ExecutePetHotbarActionByIndex((uint)slotIndex);
                         }
                         ImGuiUtil.ToolTip(Language.ClickToExecute);
 
                         ImGui.TableNextColumn();
-                        ImGui.TextUnformatted($"{slot.GetDisplayNameForSlot(slot.ApparentSlotType, slot.ApparentActionId)}");
+                        ImGui.Text($"{slot.GetDisplayNameForSlot(slot.ApparentSlotType, slot.ApparentActionId)}");
 
                         ImGui.PopID();
                     }
@@ -662,10 +675,7 @@ public class DebugWindow : Window {
     }
 
     private void DrawIconPicker() {
-        var iconSize = ImGuiHelpers.ScaledVector2(50, 50);
-        // var icon = DalamudApi.TextureProvider.GetFromGameIcon(undefinedIconId).GetWrapOrEmpty().Handle;
-        var icon = DalamudApi.TextureProvider.GetMacroIcon(_macroIconId).GetWrapOrEmpty().Handle;
-        ImGui.Image(icon, iconSize);
+        DalamudApi.TextureProvider.DrawIcon(_macroIconId, ImGuiHelpers.ScaledVector2(50, 50));
         if (ImGui.IsItemClicked()) {
             Ui.IconPickerDialogWindow.Open(_macroIconId, selectedIconId => {
                 _macroIconId = selectedIconId;
@@ -720,7 +730,7 @@ public class DebugWindow : Window {
 
     private void DrawElementsDebugTab() {
         if (ImGui.BeginTabItem($"Gui Elements###GuiElementsDebugTab")) {
-            ImGui.TextUnformatted("ImGui Elements");
+            ImGui.Text("ImGui Elements");
             DrawSpinner();
 
             DrawIconPicker();
@@ -731,10 +741,8 @@ public class DebugWindow : Window {
 
             ImGuiModalDialog.Draw();
 
-            ImGui.Text(_textAnimator.GetAnimatedText("Test rainbow name colors"));
-
             ImGuiHelpers.SeStringWrapped(
-                _textAnimator.GetAnimatedText("Test rainbow name colors"),
+                _textAnimator.GetAnimatedText("TEST RAINBOW TEXT MASTER OF PUPPETS"),
                 new SeStringDrawParams() {
                     WrapWidth = 600 * ImGuiHelpers.GlobalScale
                 }
@@ -798,15 +806,15 @@ public class DebugWindow : Window {
         var lineLength = 0f;
 
         foreach (var icon in searchedGlyphs) {
-            ImGui.TextUnformatted(icon.icon.ToIconString());
+            ImGui.Text(icon.icon.ToIconString());
 
             if (ImGui.IsItemHovered()) {
                 ImGui.BeginTooltip();
                 ImGui.SetWindowFontScale(3);
-                ImGui.TextUnformatted(icon.icon.ToIconString());
+                ImGui.Text(icon.icon.ToIconString());
                 ImGui.SetWindowFontScale(1);
                 ImGui.PushFont(UiBuilder.DefaultFont);
-                ImGui.TextUnformatted($"{icon.name}\n{(int)icon.icon}\n0x{(int)icon.icon:X}");
+                ImGui.Text($"{icon.name}\n{(int)icon.icon}\n0x{(int)icon.icon:X}");
                 ImGui.EndTooltip();
                 ImGui.PopFont();
             }
@@ -840,7 +848,7 @@ public class DebugWindow : Window {
 
     private void DrawConflictingPluginDebugTab() {
         if (ImGui.BeginTabItem($"Conflicting Plugin###ConflictingPluginDebugTab")) {
-            ImGui.TextUnformatted("Conflicting Plugin");
+            ImGui.Text("Conflicting Plugin");
 
             var conflictPluginName = GetConflictingPluginName();
             if (!string.IsNullOrEmpty(conflictPluginName))

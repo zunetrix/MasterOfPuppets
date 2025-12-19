@@ -68,7 +68,7 @@ public class MovementManager : IDisposable {
         }
 
         // _pendingTask = _manager.QueryPath(DalamudApi.Objects.LocalPlayer?.Position ?? default, dest, fly, range: range);
-        _pendingTask = QueryPath(DalamudApi.Objects.LocalPlayer?.Position ?? default, dest, fly, range: range);
+        _pendingTask = QueryPath(default, dest, fly, range: range);
 
         _pendingFly = fly;
         _pendingDestRange = range;
@@ -118,7 +118,8 @@ public class MovementManager : IDisposable {
             DalamudApi.Objects.LocalPlayer?.Position ??
             Vector3.Zero;
 
-        MoveTo(baseOrigin + offset, fly);
+        var destination = baseOrigin + offset;
+        MoveTo(destination, fly);
     }
 
     public static unsafe Vector3? GetObjectPosition(string objectName) {
@@ -165,7 +166,6 @@ public class MovementManager : IDisposable {
             if (actor != null && actor.GameObjectId == objectId)
                 return actor.Position;
         }
-
         return null;
     }
 
@@ -176,8 +176,9 @@ public class MovementManager : IDisposable {
                 DalamudApi.PluginLog.Debug($"MoveToObject: Could not find object {objectId}");
                 return;
             }
+            // DalamudApi.PluginLog.Warning($"objectPosition X:{objectPosition.Value.X}, Y:{objectPosition.Value.Y}, Z:{objectPosition.Value.Z}");
 
-            MoveToCommand(objectPosition.Value);
+            MoveToCommand(objectPosition.Value, Vector3.Zero);
         });
     }
 
@@ -189,7 +190,7 @@ public class MovementManager : IDisposable {
                 return;
             }
 
-            MoveToCommand(objectPosition.Value);
+            MoveToCommand(objectPosition.Value, Vector3.Zero);
         });
     }
 
@@ -201,13 +202,13 @@ public class MovementManager : IDisposable {
 
     public void MoveToPositionRelative(Vector3 position, string objectName) {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
-            var objectPosition = GetObjectPosition(objectName);
-            if (objectPosition == null) {
+            var originPosition = GetObjectPosition(objectName);
+            if (originPosition == null) {
                 DalamudApi.PluginLog.Debug($"MoveToObject: Could not find object {objectName}");
                 return;
             }
 
-            MoveToCommand(position, objectPosition);
+            MoveToCommand(position, originPosition);
         });
     }
 
@@ -223,8 +224,8 @@ public class MovementManager : IDisposable {
     // TODO: Find a better way to stop moving when the destination is an unreachable point
     public void StopMove() {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
-            var origin = new Vector3(0, 0, 0);
-            MoveToPosition(origin);
+            var position = new Vector3(0, 0, 0);
+            MoveToCommand(position);
         });
     }
 }

@@ -494,18 +494,14 @@ public class MacroEditorWindow : Window {
     private void DrawMacroIconPicker() {
         ImGui.TextUnformatted(Language.MacroIconLabel);
         var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
-        // uint undefinedIconId = 60042;
-        // var icon = DalamudApi.TextureProvider.GetFromGameIcon(MacroItem.IconId).GetWrapOrEmpty().Handle;
-        var icon = DalamudApi.TextureProvider.GetMacroIcon(MacroItem.IconId).GetWrapOrEmpty().Handle;
-        // ImGui.Image(icon, iconSize);
 
         var drawList = ImGui.GetWindowDrawList();
         Vector2 pos = ImGui.GetCursorScreenPos();
-        Vector2 size = iconSize;
-        ImGui.Image(icon, size);
+
+        DalamudApi.TextureProvider.DrawIcon(MacroItem.IconId, iconSize);
         uint borderColor = ImGui.ColorConvertFloat4ToU32(Style.Components.TooltipBorderColor);
         float thickness = 1f;
-        drawList.AddRect(pos, pos + size, borderColor, 0f, ImDrawFlags.None, thickness);
+        drawList.AddRect(pos, pos + iconSize, borderColor, 0f, ImDrawFlags.None, thickness);
 
         if (ImGui.IsItemClicked()) {
             Ui.IconPickerDialogWindow.Open(MacroItem.IconId, (selectedIconId) => {

@@ -211,7 +211,7 @@ public class AutoCompletePopup {
                         ImGui.GetCursorPosX() + ImGui.GetColumnWidth() - ImGui.CalcTextSize(text).X - ImGui.GetStyle().FramePadding.X
                     );
                     ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
-                    ImGui.TextUnformatted(text);
+                    ImGui.Text(text);
                     ImGui.PopStyleColor();
                     ImGui.PopID();
                 }
