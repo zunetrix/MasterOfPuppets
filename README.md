@@ -23,9 +23,28 @@ TODO:
  - refactor macro commands to individual handlers
 
 ```
-start code no loop
+start code no loop block
 
 /moploopstart
 loop code
 /moploopend
 ```
+
+# Reference projects
+
+## Repos
+ - https://github.com/WorkingRobot/EXDViewer
+ - https://github.com/KazWolfe/XIVDeck
+ - https://github.com/Caraxi/SimpleTweaksPlugin
+ - https://github.com/PunishXIV/Questionable
+ - https://github.com/grittyfrog/MacroMate
+ - https://github.com/awgil/ffxiv_navmesh/
+ - https://github.com/Ennea/VeryImportantItem
+ - https://github.com/una-xiv/umbra
+
+# Game Sheet Preview
+ - https://exd.camora.dev
+
+## Sig maker
+ - https://github.com/A200K/IDA-Pro-SigMaker/releases
+
