@@ -44,6 +44,90 @@ public static class MopMacroActionsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop emote",
+            SuggestionCommand = "/mop emote",
+            Example = """
+            /mop emote
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Open emote window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop fashion",
+            SuggestionCommand = "/mop fashion",
+            Example = """
+            /mop fashion
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Open fashion window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop facewear",
+            SuggestionCommand = "/mop facewear",
+            Example = """
+            /mop facewear
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Open facewear window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop mount",
+            SuggestionCommand = "/mop mount",
+            Example = """
+            /mop mount
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Open mount window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop minion",
+            SuggestionCommand = "/mop minion",
+            Example = """
+            /mop minion
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Open minion window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop item",
+            SuggestionCommand = "/mop item",
+            Example = """
+            /mop item
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Open item window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop gearset",
+            SuggestionCommand = "/mop gearset",
+            Example = """
+            /mop gearset
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Open gearset window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mop targetmytarget",
             SuggestionCommand = "/mop targetmytarget",
             Example = """

@@ -12,7 +12,7 @@ namespace MasterOfPuppets;
 
 internal class Configuration : IPluginConfiguration {
     public int Version { get; set; } = 1;
-    private IDalamudPluginInterface PluginInterface { get; set; } = null!;
+    private IDalamudPluginInterface PluginInterface { get; set; } = null;
 
     public bool SyncClients { get; set; } = true;
     // for individual Config file accounts

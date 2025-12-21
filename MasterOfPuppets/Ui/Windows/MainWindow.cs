@@ -237,12 +237,22 @@ public class MainWindow : Window {
 
                 // -----------------------
 
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##ShowItemMenu")) {
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.ShoppingBag, $"##ShowItemMenu")) {
                     Ui.ItemWindow.Toggle();
                 }
                 ImGui.SameLine();
                 if (ImGui.Selectable(Language.ShowItemBtn)) {
                     Ui.ItemWindow.Toggle();
+                }
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##ShowGearsetMenu")) {
+                    Ui.GearSetWindow.Toggle();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable(Language.GearSetTitle)) {
+                    Ui.GearSetWindow.Toggle();
                 }
 
                 // -----------------------
@@ -267,7 +277,17 @@ public class MainWindow : Window {
 
                 // -----------------------
 
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowRight, $"##ExecuteAbandonDutyCommand")) {
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowRight, $"##ExecuteMoveToMyTargetCommand")) {
+                    Plugin.IpcProvider.ExecuteMoveToMyTarget();
+                }
+                ImGui.SameLine();
+                if (ImGui.Selectable("Move To My Target")) {
+                    Plugin.IpcProvider.ExecuteMoveToMyTarget();
+                }
+
+                // -----------------------
+
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowLoopLeft, $"##ExecuteAbandonDutyCommand")) {
                     Plugin.IpcProvider.ExecuteAbandonDuty();
                 }
                 ImGui.SameLine();

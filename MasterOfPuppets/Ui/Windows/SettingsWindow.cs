@@ -162,22 +162,6 @@ public class SettingsWindow : Window {
             }
             ImGui.PopStyleColor(3);
 
-            // ImGui.Spacing();
-            // var targetedColour = Plugin.Config.TargetedColour;
-            // if (ImGui.ColorEdit4(Language.SettingsMarkersMarkTargetColour, ref targetedColour))
-            // {
-            //     Plugin.Config.TargetedColour = targetedColour;
-            //     Plugin.Config.Save();
-            // }
-
-            // var targetedSize = Plugin.Config.TargetedSize;
-            // if (ImGui.DragFloat(Language.SettingsMarkersMarkTargetSize, ref targetedSize, 0.01f, 0f, 15f))
-            // {
-            //     targetedSize = Math.Max(0f, targetedSize);
-            //     Plugin.Config.TargetedSize = targetedSize;
-            //     Plugin.Config.Save();
-            // }
-
             ImGui.EndTabItem();
         }
     }

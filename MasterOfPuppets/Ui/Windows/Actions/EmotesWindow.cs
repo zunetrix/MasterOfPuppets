@@ -249,18 +249,12 @@ public class EmotesWindow : Window {
     private void DrawIconGrid(float iconSize, int columns) {
         var lineHeight = iconSize + ImGui.GetStyle().ItemSpacing.Y;
 
-        List<ExecutableAction> itemsToDraw;
-        bool allFiltersEnabled = _showGeneralEmotes && _showExpressionsEmotes && _showInternalEmotes;
-        bool hasSearch = !string.IsNullOrWhiteSpace(_searchString);
+        if (ListSearchedIndexes.Count == 0)
+            Search();
 
-        if (!hasSearch && allFiltersEnabled && ListSearchedIndexes.Count == 0) {
-            itemsToDraw = UnlockedActions;
-        } else {
-            itemsToDraw = ListSearchedIndexes
-                .Where(i => i >= 0 && i < UnlockedActions.Count)
-                .Select(i => UnlockedActions[i])
-                .ToList();
-        }
+        var itemsToDraw = ListSearchedIndexes
+        .Select(i => UnlockedActions[i])
+        .ToList();
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction emote) => {
             var tintColor = emote.Category == "InternalEmote" ? Style.Colors.Cyan : Vector4.One;

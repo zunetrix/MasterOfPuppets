@@ -119,6 +119,9 @@ public class PluginCommandManager : IDisposable {
                 case "item":
                     Plugin.Ui.ItemWindow.Toggle();
                     break;
+                case "gearset":
+                    Plugin.Ui.GearSetWindow.Toggle();
+                    break;
                 case "move": {
                         if (parsedArgs.Count < 2) {
                             DalamudApi.ShowNotification($"Invalid arguments to move", NotificationType.Error, 5000);
