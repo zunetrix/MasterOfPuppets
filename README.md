@@ -41,6 +41,7 @@ loop code
  - https://github.com/awgil/ffxiv_navmesh/
  - https://github.com/Ennea/VeryImportantItem
  - https://github.com/una-xiv/umbra
+ - https://github.com/Infiziert90/DeathRoll
 
 # Game Sheet Preview
  - https://exd.camora.dev

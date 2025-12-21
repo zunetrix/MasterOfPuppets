@@ -70,7 +70,7 @@ public class PluginCommandManager : IDisposable {
 
     private void OnMainCommand(string command, string arguments) {
         var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
-        // DalamudApi.PluginLog.Debug($"command: [{command}] {string.Join('|', parsedArgs)}");
+        // DalamudApi.PluginLog.Warning($"command: [{command}] {string.Join('|', parsedArgs)}");
 
         if (parsedArgs.Any()) {
             var subcommand = parsedArgs[0];

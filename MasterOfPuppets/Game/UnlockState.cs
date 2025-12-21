@@ -47,9 +47,10 @@ public static unsafe class UnlockState {
         return PlayerState.Instance()->IsMcGuffinUnlocked(mcGuffin.RowId);
     }
 
+    // TODO
     internal static bool IsUnlocked(this Action action) {
-        // TODO
         return true;
+        // return DalamudApi.UnlockState.IsActionUnlocked(action);
         // var unavailableActionStatus = 639;
         // return ActionManager.Instance()->GetActionStatus(ActionType.Action, action.RowId) == unavailableActionStatus;
     }

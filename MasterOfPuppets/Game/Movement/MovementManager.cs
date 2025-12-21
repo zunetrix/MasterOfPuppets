@@ -214,7 +214,7 @@ public class MovementManager : IDisposable {
 
     public void MoveToTargetPosition() {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
-            var targetObjectId = TargetManager.GetTargetObjectId();
+            var targetObjectId = GameTargetManager.GetTargetObjectId();
             if (targetObjectId == null) return;
 
             MoveToObject(targetObjectId.Value);

@@ -12,7 +12,7 @@ using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 
 namespace MasterOfPuppets;
 
-public static class TargetManager {
+public static class GameTargetManager {
 
     private static unsafe void TargetObjectInternal(Func<IGameObject, bool> match) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
@@ -49,7 +49,7 @@ public static class TargetManager {
             }
 
             if (closest != null)
-                DalamudApi.Targets.Target = closest;
+                DalamudApi.TargetManager.Target = closest;
         });
     }
 
@@ -121,7 +121,7 @@ public static class TargetManager {
                 }
 
                 DalamudApi.PluginLog.Debug($"targeting: {closestMatch.TargetObject.Name.TextValue}");
-                DalamudApi.Targets.Target = closestMatch.TargetObject;
+                DalamudApi.TargetManager.Target = closestMatch.TargetObject;
             });
         } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, $"Error target of \"{assistName}\"");
@@ -130,7 +130,7 @@ public static class TargetManager {
 
     public static void TargetClear() {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
-            DalamudApi.Targets.Target = null;
+            DalamudApi.TargetManager.Target = null;
         });
     }
 
@@ -152,7 +152,7 @@ public static class TargetManager {
 
             if (minionObj == null) return;
 
-            DalamudApi.Targets.Target = minionObj;
+            DalamudApi.TargetManager.Target = minionObj;
         });
     }
 

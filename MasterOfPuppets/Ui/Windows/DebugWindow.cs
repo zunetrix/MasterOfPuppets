@@ -78,6 +78,7 @@ public class DebugWindow : Window {
         DrawElementsDebugTab();
         DrawHotbarDebugTab();
         DrawPetHotbarDebugTab();
+        DrawAnimationDebugTab();
         DrawConflictingPluginDebugTab();
         DrawFontAwesomeIconsDebugTab();
 
@@ -95,12 +96,12 @@ public class DebugWindow : Window {
             ImGui.InputTextWithHint("##TargetNameDebugInput", "Target name", ref _targetName, 255, ImGuiInputTextFlags.AutoSelectAll);
             ImGui.SameLine();
             if (ImGui.Button("Target")) {
-                TargetManager.TargetObject(_targetName);
+                GameTargetManager.TargetObject(_targetName);
             }
 
             ImGui.SameLine();
             if (ImGui.Button("Target Clear")) {
-                TargetManager.TargetClear();
+                GameTargetManager.TargetClear();
             }
 
             if (ImGui.Button("Target Clear Broadcast")) {
@@ -112,7 +113,7 @@ public class DebugWindow : Window {
             }
 
             if (ImGui.Button("Target My Minion")) {
-                TargetManager.TargetMyMinion();
+                GameTargetManager.TargetMyMinion();
             }
 
             ImGui.EndTabItem();
@@ -364,7 +365,7 @@ public class DebugWindow : Window {
                 ImGui.Spacing();
 
                 if (ImGui.Button($"MoveToObject (Target)")) {
-                    var targetObjectId = TargetManager.GetTargetObjectId();
+                    var targetObjectId = GameTargetManager.GetTargetObjectId();
                     if (targetObjectId == null) return;
 
                     Plugin.MovementManager.MoveToObject(targetObjectId.Value);
@@ -377,8 +378,8 @@ public class DebugWindow : Window {
                 ImGui.Spacing();
                 ImGui.Spacing();
                 ImGui.Text($"Player Position X:{DalamudApi.Objects.LocalPlayer.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.Position.Z}");
-                ImGui.Text($"Target: {TargetManager.GetTargetName()}");
-                ImGui.Text($"Target Object Id: {TargetManager.GetTargetObjectId()}");
+                ImGui.Text($"Target: {GameTargetManager.GetTargetName()}");
+                ImGui.Text($"Target Object Id: {GameTargetManager.GetTargetObjectId()}");
                 ImGui.Text($"Target Position X:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Z}");
 
                 ImGui.Spacing();
@@ -744,7 +745,8 @@ public class DebugWindow : Window {
             ImGuiHelpers.SeStringWrapped(
                 _textAnimator.GetAnimatedText("TEST RAINBOW TEXT MASTER OF PUPPETS"),
                 new SeStringDrawParams() {
-                    WrapWidth = 600 * ImGuiHelpers.GlobalScale
+                    WrapWidth = 600 * ImGuiHelpers.GlobalScale,
+                    FontSize = 30,
                 }
             );
 
@@ -857,4 +859,16 @@ public class DebugWindow : Window {
             ImGui.EndTabItem();
         }
     }
+
+    private void DrawAnimationDebugTab() {
+        if (ImGui.BeginTabItem($"Conflicting Plugin###ConflictingPluginDebugTab")) {
+            ImGui.Text("Animation");
+
+
+            ImGui.EndTabItem();
+        }
+    }
+}
+
+internal class AnimFloat {
 }

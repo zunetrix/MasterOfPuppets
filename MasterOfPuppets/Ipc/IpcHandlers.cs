@@ -57,7 +57,7 @@ internal class IpcHandlers {
     [IpcHandle(IpcMessageType.ExecuteTargetMyTarget)]
     private void HandleExecuteTargetMyTarget(IpcMessage message) {
         ulong targetObjectId = message.DataStruct<ulong>();
-        TargetManager.TargetObject(targetObjectId);
+        GameTargetManager.TargetObject(targetObjectId);
     }
 
     [IpcHandle(IpcMessageType.ExecuteMoveToMyTarget)]
@@ -68,7 +68,7 @@ internal class IpcHandlers {
 
     [IpcHandle(IpcMessageType.ExecuteTargetClear)]
     private void HandleExecuteTargetClear(IpcMessage message) {
-        TargetManager.TargetClear();
+        GameTargetManager.TargetClear();
     }
 
     [IpcHandle(IpcMessageType.ExecuteAbandonDuty)]

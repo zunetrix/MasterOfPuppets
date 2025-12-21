@@ -162,27 +162,27 @@ public class MacroHandler : IDisposable {
             },
 
             ["moptargetmyminion"] = async (macroId, args, token) => {
-                TargetManager.TargetMyMinion();
+                GameTargetManager.TargetMyMinion();
                 DalamudApi.PluginLog.Debug($"[moptargetmyminion]");
                 await Task.CompletedTask;
             },
 
             ["moptarget"] = async (macroId, args, token) => {
                 string targetName = args.Trim().Trim('"');
-                TargetManager.TargetObject(targetName);
+                GameTargetManager.TargetObject(targetName);
                 DalamudApi.PluginLog.Debug($"[moptarget] {targetName}");
                 await Task.CompletedTask;
             },
 
             ["moptargetof"] = async (macroId, args, token) => {
                 string targetName = args.Trim().Trim('"');
-                TargetManager.TargetOf(targetName);
+                GameTargetManager.TargetOf(targetName);
                 DalamudApi.PluginLog.Debug($"[moptargetof] {targetName}");
                 await Task.CompletedTask;
             },
 
             ["moptargetclear"] = async (macroId, args, token) => {
-                TargetManager.TargetClear();
+                GameTargetManager.TargetClear();
                 DalamudApi.PluginLog.Debug($"[moptargetclear]");
                 await Task.CompletedTask;
             },

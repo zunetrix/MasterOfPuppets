@@ -194,9 +194,9 @@ public class IconPickerIndex {
         ApplyIconCategory(63_180..63_200, "Textures", "Submarine Maps");
         ApplyIconCategory(63_200..63_900, "Textures", "Zone Maps");
         ApplyIconCategory(63_900..64_000, "System", "Map Markers");
-        ApplyIconCategory(64_000..64_200, "Actions", "Emotes");
+        // ApplyIconCategory(64_000..64_200, "Actions", "Emotes"); // 7.3
         ApplyIconCategory(64_200..64_325, "Actions", "Free Company");
-        ApplyIconCategory(64_325..64_500, "Actions", "Emotes");
+        // ApplyIconCategory(64_325..64_500, "Actions", "Emotes");
         ApplyIconCategory(64_500..64_600, "Icons", "Group Pose"); // Stamps 1
         ApplyIconCategory(64_600..64_800, "Actions", "Eureka");
         ApplyIconCategory(64_800..65_000, "Actions", "NPC");
@@ -249,6 +249,10 @@ public class IconPickerIndex {
         ApplyIconCategory(181_000..181_500, "Spoilers", "Boss Titles");
         ApplyIconCategory(181_500..200_000, "Spoilers", "Adventurer Plate");
         ApplyIconCategory(210_100..229_962, "Statuses");
+        ApplyIconCategory(246_100..246_499, "Actions", "Emotes");
+        // ApplyIconCategory(246_101..246_133, "Actions", "Emotes"); // facial
+        // ApplyIconCategory(246_201..246_299, "Actions", "Emotes"); // emotes1
+        // ApplyIconCategory(246_301..246_499, "Actions", "Emotes"); // emotes 2
     }
 
     private void ApplyIconCategory(Range range, string category, string? subcategory = null) {
