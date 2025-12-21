@@ -22,82 +22,6 @@
             Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
 
-    <data name="SettingsMarkersMarkTarget" xml:space="preserve">
-        <value>Mark your target</value>
-    </data>
-    <data name="SettingsMarkersMarkTargetColour" xml:space="preserve">
-        <value>Target mark colour</value>
-    </data>
-    <data name="SettingsMarkersMarkTargetSize" xml:space="preserve">
-        <value>Target mark size</value>
-    </data>
-    <data name="SettingsMarkersMarkTargeting" xml:space="preserve">
-        <value>Mark targeting you</value>
-    </data>
-    <data name="SettingsMarkersMarkTargetingColour" xml:space="preserve">
-        <value>Targeting mark colour</value>
-    </data>
-    <data name="SettingsMarkersMarkTargetingSize" xml:space="preserve">
-        <value>Targeting mark size</value>
-    </data>
-    <data name="SettingsFilterTab" xml:space="preserve">
-        <value>Filters</value>
-    </data>
-    <data name="SettingsFilterLogParty" xml:space="preserve">
-        <value>Log party members</value>
-    </data>
-    <data name="SettingsFilterLogAlliance" xml:space="preserve">
-        <value>Log alliance members</value>
-    </data>
-    <data name="SettingsFilterLogCombat" xml:space="preserve">
-        <value>Log targeters engaged in combat</value>
-    </data>
-    <data name="SettingsFilterLogSelf" xml:space="preserve">
-        <value>Log yourself</value>
-    </data>
-    <data name="SettingsBehaviourTab" xml:space="preserve">
-        <value>Behaviour</value>
-    </data>
-    <data name="SettingsBehaviourFocusHover" xml:space="preserve">
-        <value>Focus target on hover</value>
-    </data>
-    <data name="SettingsBehaviourExamineEnabled" xml:space="preserve">
-        <value>Open examine window on Alt-click</value>
-    </data>
-    <data name="SettingsSoundTab" xml:space="preserve">
-        <value>Sound</value>
-    </data>
-    <data name="SettingsSoundEnabled" xml:space="preserve">
-        <value>Play sound when targeted</value>
-    </data>
-    <data name="SettingsSoundPath" xml:space="preserve">
-        <value>Path to audio file</value>
-    </data>
-    <data name="SettingsSoundPathHelp" xml:space="preserve">
-        <value>Leave this blank to use a built-in sound.</value>
-    </data>
-    <data name="SettingsSoundVolume" xml:space="preserve">
-        <value>Volume of sound</value>
-    </data>
-    <data name="SettingsSoundDefaultDevice" xml:space="preserve">
-        <value>Default</value>
-    </data>
-    <data name="SettingsSoundInvalidDevice" xml:space="preserve">
-        <value>Invalid device</value>
-    </data>
-    <data name="SettingsSoundOutputDevice" xml:space="preserve">
-        <value>Output device</value>
-    </data>
-    <data name="SettingsSoundCooldown" xml:space="preserve">
-        <value>Cooldown for sound (seconds)</value>
-    </data>
-    <data name="SettingsSoundPlayWhenClosed" xml:space="preserve">
-        <value>Play sound when window is closed</value>
-    </data>
-    <data name="SettingsWindowTab" xml:space="preserve">
-        <value>Window</value>
-    </data>
-
     <data name="SettingsWindowShowConfigButton" xml:space="preserve">
         <value>Show settings button</value>
     </data>
@@ -110,53 +34,6 @@
     <data name="SettingsWindowAllowResize" xml:space="preserve">
         <value>Allow resizing the main window</value>
     </data>
-    <data name="SettingsWindowShowCombat" xml:space="preserve">
-        <value>Show window while in combat</value>
-    </data>
-    <data name="SettingsWindowShowInstance" xml:space="preserve">
-        <value>Show window while in instance</value>
-    </data>
-    <data name="SettingsWindowShowCutscene" xml:space="preserve">
-        <value>Show window while in cutscenes</value>
-    </data>
-    <data name="SettingsHistoryTab" xml:space="preserve">
-        <value>History</value>
-    </data>
-    <data name="SettingsHistoryEnabled" xml:space="preserve">
-        <value>Show previous targeters</value>
-    </data>
-    <data name="SettingsHistoryRecordClosed" xml:space="preserve">
-        <value>Record history when window is closed</value>
-    </data>
-    <data name="SettingsHistoryAmount" xml:space="preserve">
-        <value>Number of previous targeters to keep</value>
-    </data>
-    <data name="SettingsHistoryTimestamps" xml:space="preserve">
-        <value>Show timestamps</value>
-    </data>
-    <data name="SettingsAdvancedTab" xml:space="preserve">
-        <value>Advanced</value>
-    </data>
-    <data name="SettingsAdvancedPollFrequency" xml:space="preserve">
-        <value>Poll frequency in milliseconds</value>
-    </data>
-    <data name="ExamineErrorToast" xml:space="preserve">
-        <value>{0} is not close enough to examine.</value>
-    </data>
-    <data name="MainTargetingYou" xml:space="preserve">
-        <value>Targeting you</value>
-    </data>
-    <data name="MainHelpExamine" xml:space="preserve">
-        <value>Click to link, Alt-click to examine, or right click to target.</value>
-    </data>
-    <data name="MainHelpNoExamine" xml:space="preserve">
-        <value>Click to link or right click to target.</value>
-    </data>
-    <data name="SoundChatError" xml:space="preserve">
-        <value>Could not play sound file: {0}</value>
-    </data>
-
-
     <data name="SettingsTitle" xml:space="preserve">
         <value>Settings</value>
     </data>
@@ -286,6 +163,9 @@ Right-Click to copy command</value>
     </data>
     <data name="ItemTitle" xml:space="preserve">
         <value>Items</value>
+    </data>
+    <data name="GearSetTitle" xml:space="preserve">
+        <value>Gear Set</value>
     </data>
     <data name="ShowItemBtn" xml:space="preserve">
         <value>Items</value>
