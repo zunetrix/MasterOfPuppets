@@ -112,13 +112,16 @@ public class MovementManager : IDisposable {
         IsWalking = false;
     }
 
-    public void MoveToCommand(Vector3 offset, Vector3? origin = null, bool fly = false) {
+    private void MoveByOffsetCommand(Vector3 offset, Vector3? origin = null, bool fly = false) {
         var baseOrigin =
             origin ??
             DalamudApi.Objects.LocalPlayer?.Position ??
             Vector3.Zero;
 
         var destination = baseOrigin + offset;
+
+        // DalamudApi.PluginLog.Warning($"MoveByOffset -> X:{destination.X}, Y:{destination.Y}, Z:{destination.Z}");
+
         MoveTo(destination, fly);
     }
 
@@ -178,7 +181,7 @@ public class MovementManager : IDisposable {
             }
             // DalamudApi.PluginLog.Warning($"objectPosition X:{objectPosition.Value.X}, Y:{objectPosition.Value.Y}, Z:{objectPosition.Value.Z}");
 
-            MoveToCommand(objectPosition.Value, Vector3.Zero);
+            MoveByOffsetCommand(objectPosition.Value, Vector3.Zero);
         });
     }
 
@@ -190,13 +193,19 @@ public class MovementManager : IDisposable {
                 return;
             }
 
-            MoveToCommand(objectPosition.Value, Vector3.Zero);
+            MoveByOffsetCommand(objectPosition.Value, Vector3.Zero);
         });
     }
 
     public void MoveToPosition(Vector3 position) {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
-            MoveToCommand(position);
+            MoveByOffsetCommand(position);
+        });
+    }
+
+    public void MoveToCoord(Vector3 position) {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            MoveByOffsetCommand(position, Vector3.Zero);
         });
     }
 
@@ -208,7 +217,7 @@ public class MovementManager : IDisposable {
                 return;
             }
 
-            MoveToCommand(position, originPosition);
+            MoveByOffsetCommand(position, originPosition);
         });
     }
 
@@ -225,7 +234,7 @@ public class MovementManager : IDisposable {
     public void StopMove() {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
             var position = new Vector3(0, 0, 0);
-            MoveToCommand(position);
+            MoveByOffsetCommand(position);
         });
     }
 }

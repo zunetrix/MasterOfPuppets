@@ -160,6 +160,17 @@ public static class GameTargetManager {
         return DalamudApi.Objects.LocalPlayer?.TargetObject?.Position;
     }
 
+    public static Vector3 GetTargetOffsetFromMe() {
+        var target = DalamudApi.Objects.LocalPlayer?.TargetObject?.Position;
+        var origin = DalamudApi.Objects.LocalPlayer?.Position;
+        if (!target.HasValue || !origin.HasValue)
+            return default;
+
+        var offset = target.Value - origin.Value;
+
+        return offset;
+    }
+
     public static ulong? GetTargetObjectId() {
         return DalamudApi.Objects.LocalPlayer?.TargetObject?.GameObjectId;
     }

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <!-- <RootNamespace>MasterOfPuppets</RootNamespace> -->
     <!-- <AssemblyName>MasterOfPuppets</AssemblyName> -->
-    <Version>1.0.0.79</Version>
+    <Version>1.0.0.81</Version>
     <TargetFramework>net10.0-windows</TargetFramework>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <LangVersion>latest</LangVersion>
@@ -53,7 +53,7 @@
     <!-- <FeedbackMessage>Be nice</FeedbackMessage> -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
-    <Version>1.0.0.79</Version>
+    <Version>1.0.0.81</Version>
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
   <!-- Linux build -->

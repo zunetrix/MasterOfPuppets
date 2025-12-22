@@ -33,9 +33,9 @@ public class DebugWindow : Window {
     private uint _macroIconId = 60042;
     private static string _inputMacroContent = string.Empty;
     private static string _targetName = string.Empty;
-    private static string _xInput = "0";
-    private static string _yInput = "0";
-    private static string _zInput = "0";
+    private static float _xInput = 0;
+    private static float _yInput = 0;
+    private static float _zInput = 0;
     private static int _macroIdx = 0;
     private static string _targetNameMoveTo = string.Empty;
     private static string _targetNameMoveToRelative = string.Empty;
@@ -313,36 +313,35 @@ public class DebugWindow : Window {
             {
                 ImGui.Text("X");
                 ImGui.SameLine();
-                ImGui.SetNextItemWidth(60);
-                ImGui.InputTextWithHint("(+Left | -Right)##xInput", "X", ref _xInput, 10, ImGuiInputTextFlags.AutoSelectAll);
+                ImGui.SetNextItemWidth(180);
+                ImGui.InputFloat("X (+Left | -Right)##xInput", ref _xInput, 1, 10, "%.10f", flags: ImGuiInputTextFlags.AutoSelectAll);
 
                 ImGui.Spacing();
                 ImGui.Text("Y");
                 ImGui.SameLine();
-                ImGui.SetNextItemWidth(60);
-                ImGui.InputTextWithHint("(+Fly Up | -Fly Down)##yInput", "Y", ref _yInput, 10, ImGuiInputTextFlags.AutoSelectAll);
+                ImGui.SetNextItemWidth(180);
+                ImGui.InputFloat("Y (+Fly Up | -Fly Down)##yInput", ref _yInput, 1, 10, "%.10f", flags: ImGuiInputTextFlags.AutoSelectAll);
 
                 ImGui.Spacing();
                 ImGui.Text("Z");
                 ImGui.SameLine();
-                ImGui.SetNextItemWidth(60);
-                ImGui.InputTextWithHint("(+Forward | -Back)##zInput", "Z", ref _zInput, 10, ImGuiInputTextFlags.AutoSelectAll);
+                ImGui.SetNextItemWidth(180);
+                ImGui.InputFloat("Z (+Forward | -Back)##zInput", ref _zInput, 1, 10, "%.10f", flags: ImGuiInputTextFlags.AutoSelectAll);
 
                 ImGui.Spacing();
-                ImGui.Text("If informed will be used as origin point");
-                ImGui.InputTextWithHint("##MoveToCharacterNameRelativeInput", "Reference character name", ref _targetNameMoveToRelative, 255, ImGuiInputTextFlags.AutoSelectAll);
-                ImGui.SameLine();
-                if (ImGui.Button("Get Target Name##GetReferenceTargetName")) {
-                    _targetNameMoveToRelative = DalamudApi.Objects.LocalPlayer.TargetObject?.Name.TextValue ?? string.Empty;
+                if (ImGui.Button("Set Target Position to Input##SetTargetPositionToInput")) {
+                    if (DalamudApi.Objects.LocalPlayer.TargetObject == null) return;
+                    var target = DalamudApi.Objects.LocalPlayer.TargetObject;
+
+                    _xInput = target.Position.X;
+                    _yInput = target.Position.Y;
+                    _zInput = target.Position.Z;
                 }
 
                 ImGui.Spacing();
                 ImGui.Spacing();
-                if (ImGui.Button("Move")) {
-                    var offsetXYZ = new Vector3(
-                     float.Parse(_xInput, System.Globalization.CultureInfo.InvariantCulture),
-                     float.Parse(_yInput, System.Globalization.CultureInfo.InvariantCulture),
-                     float.Parse(_zInput, System.Globalization.CultureInfo.InvariantCulture));
+                if (ImGui.Button("Move By Offset")) {
+                    var offsetXYZ = new Vector3(_xInput, _yInput, _zInput);
 
                     if (!_targetNameMoveToRelative.IsNullOrEmpty()) {
                         Plugin.MovementManager.MoveToPositionRelative(offsetXYZ, _targetNameMoveToRelative);
@@ -353,11 +352,26 @@ public class DebugWindow : Window {
                 }
 
                 ImGui.SameLine();
+                if (ImGui.Button("Move To Coord")) {
+                    var offsetXYZ = new Vector3(_xInput, _yInput, _zInput);
+
+                    Plugin.MovementManager.MoveToCoord(offsetXYZ);
+                }
+
+                ImGui.SameLine();
                 if (ImGui.Button("Reset")) {
-                    _xInput = "0";
-                    _yInput = "0";
-                    _zInput = "0";
+                    _xInput = 0;
+                    _yInput = 0;
+                    _zInput = 0;
                     _targetNameMoveToRelative = string.Empty;
+                }
+
+                ImGui.Spacing();
+                ImGui.Text("If informed will be used as origin point");
+                ImGui.InputTextWithHint("##MoveToCharacterNameRelativeInput", "Reference character name", ref _targetNameMoveToRelative, 255, ImGuiInputTextFlags.AutoSelectAll);
+                ImGui.SameLine();
+                if (ImGui.Button("Get Target Name##GetReferenceTargetName")) {
+                    _targetNameMoveToRelative = DalamudApi.Objects.LocalPlayer.TargetObject?.Name.TextValue ?? string.Empty;
                 }
 
                 ImGui.Spacing();
@@ -378,9 +392,21 @@ public class DebugWindow : Window {
                 ImGui.Spacing();
                 ImGui.Spacing();
                 ImGui.Text($"Player Position X:{DalamudApi.Objects.LocalPlayer.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.Position.Z}");
-                ImGui.Text($"Target: {GameTargetManager.GetTargetName()}");
-                ImGui.Text($"Target Object Id: {GameTargetManager.GetTargetObjectId()}");
+                ImGui.SameLine();
+                if (ImGui.Button("Copy##CopyPlayerPositionToClipboard")) {
+                    if (DalamudApi.Objects.LocalPlayer == null) return;
+                    var player = DalamudApi.Objects.LocalPlayer;
+                    ImGui.SetClipboardText($"{player.Position.X}, {player.Position.Y}, {player.Position.Z}");
+                }
+
+                ImGui.Text($"Target: {GameTargetManager.GetTargetName()} ({GameTargetManager.GetTargetObjectId()})");
                 ImGui.Text($"Target Position X:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Z}");
+                ImGui.SameLine();
+                if (ImGui.Button("Copy##CopyTargetPositionToClipboard")) {
+                    if (DalamudApi.Objects.LocalPlayer.TargetObject == null) return;
+                    var target = DalamudApi.Objects.LocalPlayer.TargetObject;
+                    ImGui.SetClipboardText($"{target.Position.X}, {target.Position.Y}, {target.Position.Z}");
+                }
 
                 ImGui.Spacing();
                 ImGui.Separator();
@@ -395,7 +421,7 @@ public class DebugWindow : Window {
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Get Target Name##GetMoveToTargetName")) {
-                    _targetNameMoveTo = DalamudApi.Objects.LocalPlayer.TargetObject?.Name.TextValue ?? string.Empty;
+                    _targetNameMoveTo = GameTargetManager.GetTargetName();
                 }
             }
             ImGui.EndGroup();
@@ -863,7 +889,6 @@ public class DebugWindow : Window {
     private void DrawAnimationDebugTab() {
         if (ImGui.BeginTabItem($"Conflicting Plugin###ConflictingPluginDebugTab")) {
             ImGui.Text("Animation");
-
 
             ImGui.EndTabItem();
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Globalization;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
@@ -9,7 +10,6 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.Components;
-
 
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Extensions.Dalamud;
@@ -26,6 +26,7 @@ public class MacroEditorWindow : Window {
     private int SelectedCommandIndex = 0;
     private bool EditingExistingMacro = false;
     private string TagName = string.Empty;
+    private uint _inputLines = 11;
 
     private List<string> MacrosTags = new();
 
@@ -464,11 +465,33 @@ public class MacroEditorWindow : Window {
     }
 
     private void DrawCommandEditor(int commandIndex) {
-
         DrawCharacterAssignList(commandIndex);
 
+        ImGui.BeginGroup();
         ImGui.TextUnformatted(Language.ActionsTitle);
         ImGuiUtil.HelpMarker("Press TAB to autocomplete");
+
+        ImGui.SameLine();
+        ImGui.Dummy(new Vector2(20, 0));
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##CopyTargetNameBtn", "Copy Target Name")) {
+            ImGui.SetClipboardText($"\"{GameTargetManager.GetTargetName()}\"");
+        }
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonArrowDownToLine, $"##CopyTargetPositionBtn", "Copy Offset To Target Position")) {
+            var offset = GameTargetManager.GetTargetOffsetFromMe();
+            string commandPosition = $"{offset.X.ToString(CultureInfo.InvariantCulture)} {offset.Y.ToString(CultureInfo.InvariantCulture)} {offset.Z.ToString(CultureInfo.InvariantCulture)}";
+            ImGui.SetClipboardText(commandPosition);
+        }
+
+        ImGui.SameLine();
+        ImGui.Dummy(new Vector2(20, 0));
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(100);
+        if (ImGui.InputUInt("Lines##InputLines", ref _inputLines, 1, 1)) {
+            _inputLines = Math.Max(11u, _inputLines);
+        }
+
         ImGui.Spacing();
 
         if (InputTextMultiline.Draw(
@@ -477,17 +500,18 @@ public class MacroEditorWindow : Window {
             ushort.MaxValue,
             new Vector2(
                 MathF.Min(ImGui.GetContentRegionAvail().X, 500f * ImGuiHelpers.GlobalScale),
-                ImGui.GetTextLineHeight() * 11 // line count
+                ImGui.GetTextLineHeight() * _inputLines // line count
             ),
             ImGuiInputTextFlags.None
         )) {
             // DalamudApi.PluginLog.Debug($"{_inputTextContent}");
         }
+        ImGui.EndGroup();
 
         ImGui.Spacing();
         ImGui.Spacing();
 
-        ImGui.EndChild();
+        ImGui.EndChild(); // ##CommandEditor
         ImGui.EndGroup();
     }
 
