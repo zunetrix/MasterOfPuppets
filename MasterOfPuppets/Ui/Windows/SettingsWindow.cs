@@ -171,7 +171,6 @@ public class SettingsWindow : Window {
             var useChatSync = Plugin.Config.UseChatSync;
             if (ImGui.Checkbox(Language.SettingsWindowUseChatSync, ref useChatSync)) {
                 Plugin.Config.UseChatSync = useChatSync;
-                Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
             ImGuiUtil.HelpMarker("""

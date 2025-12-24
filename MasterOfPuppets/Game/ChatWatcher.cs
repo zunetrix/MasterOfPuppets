@@ -11,6 +11,7 @@ namespace MasterOfPuppets;
 
 internal class ChatWatcher : IDisposable {
     private Plugin Plugin { get; }
+    // private bool _isRegistered;
 
     public readonly HashSet<XivChatType> AllowedChatTypes = new()
     {
@@ -50,11 +51,30 @@ internal class ChatWatcher : IDisposable {
         };
 
         DalamudApi.ChatGui.ChatMessage += OnChatMessage;
+        // UpdateRegistration();
     }
 
     public void Dispose() {
         DalamudApi.ChatGui.ChatMessage -= OnChatMessage;
+
     }
+
+    // public void UpdateRegistration() {
+    //     if (Plugin.Config.UseChatSync && !_isRegistered) {
+    //         DalamudApi.ChatGui.ChatMessage += OnChatMessage;
+    //         _isRegistered = true;
+    //     } else if (!Plugin.Config.UseChatSync && _isRegistered) {
+    //         DalamudApi.ChatGui.ChatMessage -= OnChatMessage;
+    //         _isRegistered = false;
+    //     }
+    // }
+
+    // public void Dispose() {
+    //     if (_isRegistered) {
+    //         DalamudApi.ChatGui.ChatMessage -= OnChatMessage;
+    //         _isRegistered = false;
+    //     }
+    // }
 
     private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
         if (!Plugin.Config.UseChatSync) return;

@@ -3,10 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 using Lumina.Excel.Sheets;
-using Lumina.Data;
-
-using Dalamud.Game;
-
 
 namespace MasterOfPuppets;
 
@@ -38,16 +34,8 @@ public static class ItemHelper {
     }
 
     public static Item? GetItem(string itemName) {
-        var clientLanguage = DalamudApi.ClientState.ClientLanguage switch {
-            ClientLanguage.Japanese => Language.Japanese,
-            ClientLanguage.German => Language.German,
-            ClientLanguage.French => Language.French,
-            ClientLanguage.English => Language.English,
-            _ => Language.English
-        };
-
         // returns RowId = 0 for invalid names
-        var item = DalamudApi.DataManager.Excel.GetSheet<Item>(clientLanguage)
+        var item = DalamudApi.DataManager.GetExcelSheet<Item>(DalamudApi.ClientState.ClientLanguage)
         .FirstOrDefault(i => string.Equals(i.Name.ToString(), itemName, StringComparison.OrdinalIgnoreCase));
 
         var isItemFound = item.RowId > 0;

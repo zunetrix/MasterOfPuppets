@@ -59,6 +59,7 @@ public class MacroManager {
         }
 
         macro.SanitizeActions();
+        macro.SanitizeMacroVariablesText();
         Plugin.Config.Macros.Add(macro);
 
         Plugin.Config.Save();
@@ -75,6 +76,7 @@ public class MacroManager {
         }
 
         macro.SanitizeActions();
+        macro.SanitizeMacroVariablesText();
         Plugin.Config.Macros[macroIdx] = macro;
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();
@@ -297,7 +299,7 @@ public class MacroManager {
             throw new ArgumentException("Invalid macro index");
         }
 
-        var clonedMacro = includeCids ? Plugin.Config.Macros[itemIndex].Clone() : Plugin.Config.Macros[itemIndex].CloneWithoutCharacters();
+        var clonedMacro = Plugin.Config.Macros[itemIndex].Clone(includeCids);
         string macroJson = clonedMacro.JsonSerialize();
         return StringCompressor.CompressString(macroJson);
     }
@@ -320,7 +322,7 @@ public class MacroManager {
             var selectedMacros = Plugin.Config.Macros
             .Select((macro, index) => new { macro, index })
             .Where(x => SelectedMacrosIndexes.Contains(x.index))
-            .Select(x => includeCids ? x.macro : x.macro.CloneWithoutCharacters())
+            .Select(x => x.macro.Clone(includeCids))
             .ToList();
 
             string macroJson = selectedMacros.JsonSerialize();
@@ -338,7 +340,7 @@ public class MacroManager {
         try {
             var selectedMacros = Plugin.Config.Macros
             .Select((macro, index) => new { macro, index })
-            .Select(x => includeCids ? x.macro : x.macro.CloneWithoutCharacters())
+            .Select(x => x.macro.Clone(includeCids))
             .ToList();
 
             string macroJson = selectedMacros.JsonSerialize();
@@ -378,7 +380,7 @@ public class MacroManager {
 
             if (!includeCids) {
                 macrosImport = macrosImport
-                .Select(macro => macro.CloneWithoutCharacters())
+                .Select(macro => macro.Clone(includeCids: false))
                 .ToList();
             }
 

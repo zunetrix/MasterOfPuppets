@@ -149,6 +149,11 @@ internal class Language {
             return ResourceManager.GetString("MacroNameLabel", resourceCulture);
         }
     }
+    internal static string MacroVariablesLabel {
+        get {
+            return ResourceManager.GetString("MacroVariablesLabel", resourceCulture);
+        }
+    }
     internal static string MacroColorLabel {
         get {
             return ResourceManager.GetString("MacroColorLabel", resourceCulture);

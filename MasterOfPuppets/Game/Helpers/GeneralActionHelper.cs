@@ -27,7 +27,7 @@ public static class GeneralActionHelper {
 
     public static GeneralAction? GetGeneralAction(string actionName) {
         // returns RowId = 0 for invalid names
-        var action = DalamudApi.DataManager.GetExcelSheet<GeneralAction>()
+        var action = DalamudApi.DataManager.GetExcelSheet<GeneralAction>(DalamudApi.ClientState.ClientLanguage)
         .FirstOrDefault(a => string.Equals(a.Name.ToString(), actionName, System.StringComparison.OrdinalIgnoreCase));
 
         var isActionFound = action.RowId != 0;

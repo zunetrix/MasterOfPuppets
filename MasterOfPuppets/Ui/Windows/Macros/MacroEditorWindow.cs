@@ -26,7 +26,7 @@ public class MacroEditorWindow : Window {
     private int SelectedCommandIndex = 0;
     private bool EditingExistingMacro = false;
     private string TagName = string.Empty;
-    private uint _inputLines = 11;
+    private uint _inputLines = 15;
 
     private List<string> MacrosTags = new();
 
@@ -117,9 +117,48 @@ public class MacroEditorWindow : Window {
         DrawHeader();
         ImGui.EndGroup();
 
-        ImGui.BeginChild("##MacroEditorListScrollableContent", ImGuiHelpers.ScaledVector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        // Main area: left = commands + editor, right = details (tags, variables, icon/color)
+        var contentAvail = ImGui.GetContentRegionAvail();
+        var rightPanelWidth = Math.Max(320f * ImGuiHelpers.GlobalScale, contentAvail.X * 0.30f);
+        var leftPanelWidth = Math.Max(220f, contentAvail.X - rightPanelWidth - ImGui.GetStyle().ItemSpacing.X);
+
+        ImGui.BeginChild("##MacroEditorMain", new Vector2(0, 0), false);
+
+        ImGui.BeginChild("##MacroEditorLeft", new Vector2(leftPanelWidth, 0), false);
         DrawCommandList();
         ImGui.EndChild();
+
+        ImGui.SameLine();
+        ImGui.BeginChild("##MacroEditorRight", new Vector2(rightPanelWidth, 0), true);
+        ImGui.Text("Details");
+        ImGui.Separator();
+
+        if (ImGui.CollapsingHeader("Appearance")) {
+            DrawIconColorPicker();
+        }
+
+        if (ImGui.CollapsingHeader("Tags")) {
+            DrawTagsSelector();
+        }
+
+        if (ImGui.CollapsingHeader("Macro Variables")) {
+            ImGui.Text(Language.MacroVariablesLabel);
+            ImGui.SameLine();
+            ImGuiUtil.HelpMarker("""
+            * Macro variables can be overridden by action variables
+            Variables usage:
+            $name = "Character Name"
+            $time = 0.5
+            /moptarget "$name"
+            /mopwait $time
+            """);
+            ImGui.InputTextMultiline("##MacroVariablesInput", ref MacroItem.Variables, size: new Vector2(-1, 250));
+            ImGui.Spacing();
+            ImGui.Spacing();
+        }
+        ImGui.EndChild(); // ##MacroEditorRight
+
+        ImGui.EndChild(); // ##MacroEditorMain
     }
 
     private void DrawIconColorPicker() {
@@ -127,7 +166,7 @@ public class MacroEditorWindow : Window {
         ImGui.BeginGroup();
         {
             ImGui.Spacing();
-            ImGui.TextUnformatted(Language.MacroColorLabel);
+            ImGui.Text(Language.MacroColorLabel);
             ImGui.PushItemWidth(250);
 
             MacroItem.Color = ImGuiComponents.ColorPickerWithPalette(1, "##MacroColorInput", MacroItem.Color);
@@ -150,47 +189,17 @@ public class MacroEditorWindow : Window {
             ImGuiUtil.ToolTip($"Click to select icon");
         }
         ImGui.EndGroup();
+        ImGui.Spacing();
+        ImGui.Spacing();
     }
 
-    private void DrawTagsManager() {
-        // tags
-        float totalWidth = ImGui.GetContentRegionAvail().X;
-        float tagsListWidth = totalWidth * 0.5f;
-        float tagsComboWidth = totalWidth * 0.5f - ImGui.GetStyle().ItemSpacing.X - 20 * ImGuiHelpers.GlobalScale;
-        ImGui.BeginGroup();
-        {
-            ImGui.BeginChild($"##MacroTagsListChild", new Vector2(tagsListWidth, 150), true);
-            ImGui.TextUnformatted(Language.MacroTagsLabel);
-
-            if (ImGui.BeginListBox($"##MacroTagsList", new Vector2(-1, -1))) {
-                for (var tagIndex = 0; tagIndex < MacroItem.Tags.Count; tagIndex++) {
-                    if (ImGui.Selectable($"{MacroItem.Tags[tagIndex]}", false)) {
-                        if (ImGui.GetIO().KeyCtrl) {
-                            MacroItem.Tags.RemoveAt(tagIndex);
-                            RefreshMacrosTags();
-                        }
-                    }
-                    ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
-                }
-                ImGui.EndListBox();
-            }
-            ImGui.EndChild();
-        }
-        ImGui.EndGroup();
-
-        ImGui.SameLine();
-        ImGui.Dummy(ImGuiHelpers.ScaledVector2(5));
-        ImGui.SameLine();
-
+    private void DrawTagsSelector() {
         ImGui.BeginGroup();
         {
             ImGui.Text("Tag Name");
-            ImGui.PushItemWidth(tagsComboWidth - 80);
             ImGui.InputText("##TagNameInput", ref TagName);
-            ImGui.PopItemWidth();
 
             ImGui.SameLine();
-
             if (ImGui.Button("Add Tag##AddTagBtn")) {
                 if (!string.IsNullOrWhiteSpace(TagName)) {
                     MacroItem.Tags.AddUnique(TagName.Trim());
@@ -204,7 +213,6 @@ public class MacroEditorWindow : Window {
 
             ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
             ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-            ImGui.PushItemWidth(tagsComboWidth);
             if (ImGui.BeginCombo($"##MacroTagsSelectList", "Select tag to add")) {
                 foreach (var macroTag in MacrosTags) {
                     if (ImGui.Selectable($"{macroTag}", false)) {
@@ -213,13 +221,32 @@ public class MacroEditorWindow : Window {
                 }
                 ImGui.EndCombo();
             }
-            ImGui.PopItemWidth();
             ImGui.PopStyleVar();
             ImGui.PopStyleColor();
-
-            DrawIconColorPicker();
         }
         ImGui.EndGroup();
+
+        ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 10));
+
+        ImGui.BeginGroup();
+        {
+            ImGui.Text(Language.MacroTagsLabel);
+            if (ImGui.BeginListBox("##MacroTagsList", new Vector2(-1, 200))) {
+                for (var tagIndex = 0; tagIndex < MacroItem.Tags.Count; tagIndex++) {
+                    if (ImGui.Selectable($"{MacroItem.Tags[tagIndex]}", false)) {
+                        if (ImGui.GetIO().KeyCtrl) {
+                            MacroItem.Tags.RemoveAt(tagIndex);
+                            RefreshMacrosTags();
+                        }
+                    }
+                    ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                }
+                ImGui.EndListBox();
+            }
+        }
+        ImGui.EndGroup();
+        ImGui.Spacing();
+        ImGui.Spacing();
     }
 
     private void DrawHeader() {
@@ -246,10 +273,6 @@ public class MacroEditorWindow : Window {
         }
 
         ImGui.Spacing();
-
-        DrawTagsManager();
-
-        ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
@@ -259,7 +282,7 @@ public class MacroEditorWindow : Window {
         }
 
         ImGui.SameLine();
-        ImGui.TextUnformatted("Commands");
+        ImGui.Text("Commands");
         ImGuiUtil.HelpMarker("""
         Start by adding characters to the list, then add commands and assign them to the characters or groups.
         After that, set the actions they should perform
@@ -290,7 +313,7 @@ public class MacroEditorWindow : Window {
     }
 
     private unsafe void DrawCommandList() {
-        //https://github.com/ocornut/imgui/blob/master/imgui_demo.cpp
+        // https://github.com/ocornut/imgui/blob/master/imgui_demo.cpp
 
         // new macro dont have any command
         if (MacroItem.Commands == null || MacroItem.Commands.Count == 0) return;
@@ -313,7 +336,7 @@ public class MacroEditorWindow : Window {
                 ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
             }
 
-            string label = $"Command ({commandIndex + 1})";
+            string label = $"Command {commandIndex + 1}";
             if (ImGui.Selectable(label, isSelected)) {
                 SelectedCommandIndex = commandIndex;
             }
@@ -354,9 +377,7 @@ public class MacroEditorWindow : Window {
 
         // prevent render if all commands removed
         if (!MacroItem.Commands.IndexExists(SelectedCommandIndex)) return;
-
         ImGui.SameLine();
-
         DrawCommandEditor(SelectedCommandIndex);
     }
 
@@ -369,12 +390,6 @@ public class MacroEditorWindow : Window {
         .Where(character => !usedCids.Contains(character.Cid))
         .ToList();
 
-        ImGui.BeginGroup();
-        ImGui.BeginChild("##CommandEditor", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()));
-        ImGuiUtil.DrawColoredBanner($"COMMAND {SelectedCommandIndex + 1}", Style.Components.ButtonBlueHovered);
-        ImGui.Spacing();
-        ImGui.Spacing();
-
         float totalWidth = ImGui.GetContentRegionAvail().X;
         float characterListWidth = totalWidth * 0.6f;
         float characterComboWidth = totalWidth * 0.4f - ImGui.GetStyle().ItemSpacing.X - 20 * ImGuiHelpers.GlobalScale;
@@ -382,7 +397,7 @@ public class MacroEditorWindow : Window {
         // horizontal layout
         ImGui.BeginGroup();
         ImGui.BeginChild($"##CharactersListChild_command_{commandIndex}", new Vector2(characterListWidth, 150), true);
-        ImGui.TextUnformatted(Language.CharactersLabel);
+        ImGui.Text(Language.CharactersLabel);
 
         if (ImGui.BeginListBox($"##CharactersList_command_{commandIndex}", new Vector2(-1, -1))) {
             for (var characterIndex = 0; characterIndex < MacroItem.Commands[commandIndex].Cids.Count; characterIndex++) {
@@ -465,11 +480,29 @@ public class MacroEditorWindow : Window {
     }
 
     private void DrawCommandEditor(int commandIndex) {
-        DrawCharacterAssignList(commandIndex);
+        ImGui.BeginGroup();
+        ImGui.BeginChild("##CommandEditor", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()));
+        ImGuiUtil.DrawColoredBanner($"COMMAND {SelectedCommandIndex + 1}", Style.Components.ButtonBlueHovered);
+        ImGui.Spacing();
+
+        if (ImGui.CollapsingHeader("Character Assignments")) {
+            DrawCharacterAssignList(commandIndex);
+        }
+
+        ImGui.Spacing();
+
+        // Macro Variables moved to the Details panel to declutter the command editor.
+
+        ImGui.Spacing();
+        ImGui.Spacing();
 
         ImGui.BeginGroup();
-        ImGui.TextUnformatted(Language.ActionsTitle);
-        ImGuiUtil.HelpMarker("Press TAB to autocomplete");
+        ImGui.Text(Language.ActionsTitle);
+        ImGuiUtil.HelpMarker("""
+            Press TAB to autocomplete
+
+            Use # for line comment (macro ignore line)
+        """);
 
         ImGui.SameLine();
         ImGui.Dummy(new Vector2(20, 0));
@@ -478,7 +511,7 @@ public class MacroEditorWindow : Window {
             ImGui.SetClipboardText($"\"{GameTargetManager.GetTargetName()}\"");
         }
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonArrowDownToLine, $"##CopyTargetPositionBtn", "Copy Offset To Target Position")) {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonArrowDownToLine, $"##CopyTargetPositionBtn", "Copy Target Offset Position")) {
             var offset = GameTargetManager.GetTargetOffsetFromMe();
             string commandPosition = $"{offset.X.ToString(CultureInfo.InvariantCulture)} {offset.Y.ToString(CultureInfo.InvariantCulture)} {offset.Z.ToString(CultureInfo.InvariantCulture)}";
             ImGui.SetClipboardText(commandPosition);
@@ -500,7 +533,7 @@ public class MacroEditorWindow : Window {
             ushort.MaxValue,
             new Vector2(
                 MathF.Min(ImGui.GetContentRegionAvail().X, 500f * ImGuiHelpers.GlobalScale),
-                ImGui.GetTextLineHeight() * _inputLines // line count
+                ImGui.GetTextLineHeight() * _inputLines
             ),
             ImGuiInputTextFlags.None
         )) {
@@ -516,7 +549,7 @@ public class MacroEditorWindow : Window {
     }
 
     private void DrawMacroIconPicker() {
-        ImGui.TextUnformatted(Language.MacroIconLabel);
+        ImGui.Text(Language.MacroIconLabel);
         var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
 
         var drawList = ImGui.GetWindowDrawList();

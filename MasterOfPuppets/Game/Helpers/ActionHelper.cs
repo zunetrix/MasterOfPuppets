@@ -26,7 +26,7 @@ public static class ActionHelper {
 
     public static Action? GetAction(string actionName) {
         // returns RowId = 0 for invalid names
-        var action = DalamudApi.DataManager.GetExcelSheet<Action>()
+        var action = DalamudApi.DataManager.GetExcelSheet<Action>(DalamudApi.ClientState.ClientLanguage)
         .FirstOrDefault(a => string.Equals(a.Name.ToString(), actionName, System.StringComparison.OrdinalIgnoreCase));
 
         var isActionFound = action.RowId != 0;
