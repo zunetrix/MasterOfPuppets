@@ -103,7 +103,7 @@ public unsafe class OverrideMovement : IDisposable {
     }
 
     private (Angle h, Angle v)? DirectionToDestination(bool allowVertical) {
-        var player = DalamudApi.Objects.LocalPlayer;
+        var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null)
             return null;
 

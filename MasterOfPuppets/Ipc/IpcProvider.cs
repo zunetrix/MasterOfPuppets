@@ -119,9 +119,9 @@ internal class IpcProvider : IDisposable {
     }
 
     public void ExecuteTargetMyTarget() {
-        if (DalamudApi.Objects.LocalPlayer == null) return;
+        if (DalamudApi.ObjectTable.LocalPlayer == null) return;
         // string asssistCharacterName = DalamudApi.Player.CharacterName;
-        var assitTargetObjectId = DalamudApi.Objects.LocalPlayer.TargetObjectId;
+        var assitTargetObjectId = DalamudApi.ObjectTable.LocalPlayer.TargetObjectId;
         if (assitTargetObjectId == 0) return;
 
         var message = IpcMessage.Create(IpcMessageType.ExecuteTargetMyTarget, assitTargetObjectId).Serialize();
@@ -129,8 +129,8 @@ internal class IpcProvider : IDisposable {
     }
 
     public void ExecuteMoveToMyTarget() {
-        if (DalamudApi.Objects.LocalPlayer == null) return;
-        var assitTargetObjectId = DalamudApi.Objects.LocalPlayer.TargetObjectId;
+        if (DalamudApi.ObjectTable.LocalPlayer == null) return;
+        var assitTargetObjectId = DalamudApi.ObjectTable.LocalPlayer.TargetObjectId;
         if (assitTargetObjectId == 0) return;
 
         var message = IpcMessage.Create(IpcMessageType.ExecuteMoveToMyTarget, assitTargetObjectId).Serialize();

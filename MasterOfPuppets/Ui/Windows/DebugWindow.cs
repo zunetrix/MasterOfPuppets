@@ -330,8 +330,8 @@ public class DebugWindow : Window {
 
                 ImGui.Spacing();
                 if (ImGui.Button("Set Target Position to Input##SetTargetPositionToInput")) {
-                    if (DalamudApi.Objects.LocalPlayer.TargetObject == null) return;
-                    var target = DalamudApi.Objects.LocalPlayer.TargetObject;
+                    if (DalamudApi.ObjectTable.LocalPlayer.TargetObject == null) return;
+                    var target = DalamudApi.ObjectTable.LocalPlayer.TargetObject;
 
                     _xInput = target.Position.X;
                     _yInput = target.Position.Y;
@@ -371,7 +371,7 @@ public class DebugWindow : Window {
                 ImGui.InputTextWithHint("##MoveToCharacterNameRelativeInput", "Reference character name", ref _targetNameMoveToRelative, 255, ImGuiInputTextFlags.AutoSelectAll);
                 ImGui.SameLine();
                 if (ImGui.Button("Get Target Name##GetReferenceTargetName")) {
-                    _targetNameMoveToRelative = DalamudApi.Objects.LocalPlayer.TargetObject?.Name.TextValue ?? string.Empty;
+                    _targetNameMoveToRelative = DalamudApi.ObjectTable.LocalPlayer.TargetObject?.Name.TextValue ?? string.Empty;
                 }
 
                 ImGui.Spacing();
@@ -391,20 +391,20 @@ public class DebugWindow : Window {
 
                 ImGui.Spacing();
                 ImGui.Spacing();
-                ImGui.Text($"Player Position X:{DalamudApi.Objects.LocalPlayer.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.Position.Z}");
+                ImGui.Text($"Player Position X:{DalamudApi.ObjectTable.LocalPlayer.Position.X}, Y:{DalamudApi.ObjectTable.LocalPlayer.Position.Y}, Z:{DalamudApi.ObjectTable.LocalPlayer.Position.Z}");
                 ImGui.SameLine();
                 if (ImGui.Button("Copy##CopyPlayerPositionToClipboard")) {
-                    if (DalamudApi.Objects.LocalPlayer == null) return;
-                    var player = DalamudApi.Objects.LocalPlayer;
+                    if (DalamudApi.ObjectTable.LocalPlayer == null) return;
+                    var player = DalamudApi.ObjectTable.LocalPlayer;
                     ImGui.SetClipboardText($"{player.Position.X}, {player.Position.Y}, {player.Position.Z}");
                 }
 
                 ImGui.Text($"Target: {GameTargetManager.GetTargetName()} ({GameTargetManager.GetTargetObjectId()})");
-                ImGui.Text($"Target Position X:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.X}, Y:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Y}, Z:{DalamudApi.Objects.LocalPlayer.TargetObject?.Position.Z}");
+                ImGui.Text($"Target Position X:{DalamudApi.ObjectTable.LocalPlayer.TargetObject?.Position.X}, Y:{DalamudApi.ObjectTable.LocalPlayer.TargetObject?.Position.Y}, Z:{DalamudApi.ObjectTable.LocalPlayer.TargetObject?.Position.Z}");
                 ImGui.SameLine();
                 if (ImGui.Button("Copy##CopyTargetPositionToClipboard")) {
-                    if (DalamudApi.Objects.LocalPlayer.TargetObject == null) return;
-                    var target = DalamudApi.Objects.LocalPlayer.TargetObject;
+                    if (DalamudApi.ObjectTable.LocalPlayer.TargetObject == null) return;
+                    var target = DalamudApi.ObjectTable.LocalPlayer.TargetObject;
                     ImGui.SetClipboardText($"{target.Position.X}, {target.Position.Y}, {target.Position.Z}");
                 }
 
@@ -446,11 +446,17 @@ public class DebugWindow : Window {
             //     //               -Y (fly down)
 
             if (ImGui.Button("Enable Walk")) {
-                MovementManager.EnableWalk();
+                Plugin.MovementManager.SetWalking(true);
             }
+
             ImGui.SameLine();
             if (ImGui.Button("Disable Walk")) {
-                MovementManager.DisableWalk();
+                Plugin.MovementManager.SetWalking(false);
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button("Toggle Walk")) {
+                Plugin.MovementManager.ToggleWalking();
             }
 
             ImGui.EndTabItem();

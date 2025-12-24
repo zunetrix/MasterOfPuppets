@@ -312,6 +312,24 @@ public class MacroHandler : IDisposable {
                 DalamudApi.PluginLog.Debug($"[mopstopmove] {args}");
                 await Task.CompletedTask;
             },
+
+            ["mopenablewalk"] = async (macroId, args, token) => {
+                Plugin.MovementManager.SetWalking(true);
+                DalamudApi.PluginLog.Debug($"[mopenablewalk]");
+                await Task.CompletedTask;
+            },
+
+            ["mopdisablewalk"] = async (macroId, args, token) => {
+                Plugin.MovementManager.SetWalking(false);
+                DalamudApi.PluginLog.Debug($"[mopdisablewalk]");
+                await Task.CompletedTask;
+            },
+
+            ["moptogglewalk"] = async (macroId, args, token) => {
+                Plugin.MovementManager.ToggleWalking();
+                DalamudApi.PluginLog.Debug($"[mopdisablewalk]");
+                await Task.CompletedTask;
+            },
         };
     }
 
@@ -383,7 +401,10 @@ public class MacroHandler : IDisposable {
                         "mopwait",
                         "moploop",
                         "mopmacro",
-                        "mopobjectquantity"
+                        "mopobjectquantity",
+                        "mopenablewalk",
+                        "mopdisablewalk",
+                        "moptogglewalk"
                     };
 
                     if (!noGlobalDelayActions.Contains(command) && (delayBetweenActions > 0.0)) {

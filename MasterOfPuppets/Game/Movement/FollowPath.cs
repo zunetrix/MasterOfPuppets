@@ -36,7 +36,7 @@ public class FollowPath : IDisposable {
     }
 
     public void Update(IFramework fwk) {
-        var player = DalamudApi.Objects.LocalPlayer;
+        var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null)
             return;
 

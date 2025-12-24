@@ -8,8 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace MasterOfPuppets.Movement;
 
-public class FollowPathPrecision : IDisposable
-{
+public class FollowPathPrecision : IDisposable {
     private Plugin Plugin { get; }
     public bool MovementAllowed = true;
     public bool IgnoreDeltaY = false;
@@ -31,31 +30,26 @@ public class FollowPathPrecision : IDisposable
 
     public event Action<Vector3, bool, float>? OnStuck;
 
-    public FollowPathPrecision(Plugin plugin)
-    {
+    public FollowPathPrecision(Plugin plugin) {
         Plugin = plugin;
     }
 
-    public void Dispose()
-    {
+    public void Dispose() {
         _camera.Dispose();
         _movement.Dispose();
     }
 
-    public void Update(IFramework fwk)
-    {
-        var player = DalamudApi.Objects.LocalPlayer;
+    public void Update(IFramework fwk) {
+        var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null)
             return;
 
-        while (Waypoints.Count > 1 && posPreviousFrame.HasValue)
-        {
+        while (Waypoints.Count > 1 && posPreviousFrame.HasValue) {
             var a = Waypoints[0];
             var b = player.Position;
             var c = posPreviousFrame.Value;
 
-            if (IgnoreDeltaY)
-            {
+            if (IgnoreDeltaY) {
                 a.Y = 0;
                 b.Y = 0;
                 c.Y = 0;
@@ -67,17 +61,13 @@ public class FollowPathPrecision : IDisposable
             Waypoints.RemoveAt(0);
         }
 
-        if (Waypoints.Count == 0)
-        {
+        if (Waypoints.Count == 0) {
             posPreviousFrame = player.Position;
             _movement.Enabled = _camera.Enabled = false;
             _camera.SpeedH = _camera.SpeedV = default;
             _movement.DesiredPosition = player.Position;
-        }
-        else
-        {
-            if (Plugin.Config.StopOnStuck && posPreviousFrame.HasValue)
-            {
+        } else {
+            if (Plugin.Config.StopOnStuck && posPreviousFrame.HasValue) {
                 float delta = fwk.UpdateDelta.Milliseconds / 1000f;
                 float distanceMoved = Vector3.Distance(player.Position, posPreviousFrame.Value) / Math.Max(delta, 0.0001f);
 
@@ -86,8 +76,7 @@ public class FollowPathPrecision : IDisposable
                 else
                     _millisecondsWithNoSignificantMovement = 0;
 
-                if (_millisecondsWithNoSignificantMovement >= Plugin.Config.StuckTimeoutMs)
-                {
+                if (_millisecondsWithNoSignificantMovement >= Plugin.Config.StuckTimeoutMs) {
                     var destination = Waypoints[^1];
                     Stop();
                     OnStuck?.Invoke(destination, !IgnoreDeltaY, DestinationTolerance);
@@ -97,8 +86,7 @@ public class FollowPathPrecision : IDisposable
 
             posPreviousFrame = player.Position;
 
-            if (Plugin.Config.CancelMoveOnUserInput && _movement.UserInput)
-            {
+            if (Plugin.Config.CancelMoveOnUserInput && _movement.UserInput) {
                 Stop();
                 return;
             }
@@ -110,8 +98,7 @@ public class FollowPathPrecision : IDisposable
             // -------------------------------
             // LAST WAYPOINT PRECISION
             // -------------------------------
-            if (Waypoints.Count == 1)
-            {
+            if (Waypoints.Count == 1) {
                 var targetFinal = Waypoints[0];
                 var delta = targetFinal - player.Position;
 
@@ -120,8 +107,7 @@ public class FollowPathPrecision : IDisposable
 
                 var dist = delta.Length();
 
-                if (dist <= FinalTolerance)
-                {
+                if (dist <= FinalTolerance) {
                     Stop();
                     return;
                 }
@@ -137,9 +123,7 @@ public class FollowPathPrecision : IDisposable
 
                 _movement.Enabled = MovementAllowed;
                 _movement.DesiredPosition = nextPos;
-            }
-            else
-            {
+            } else {
                 // -------------------------------
                 // WAYPOINT NORMAL
                 // -------------------------------
@@ -157,13 +141,11 @@ public class FollowPathPrecision : IDisposable
             if (_movement.DesiredPosition.Y > player.Position.Y &&
                 !DalamudApi.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InFlight] &&
                 !DalamudApi.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Diving] &&
-                !IgnoreDeltaY)
-            {
+                !IgnoreDeltaY) {
 
                 if (DalamudApi.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted])
                     ExecuteJump();
-                else
-                {
+                else {
                     _movement.Enabled = false;
                     return;
                 }
@@ -180,8 +162,7 @@ public class FollowPathPrecision : IDisposable
         }
     }
 
-    private static float DistanceToLineSegment(Vector3 v, Vector3 a, Vector3 b)
-    {
+    private static float DistanceToLineSegment(Vector3 v, Vector3 a, Vector3 b) {
         var ab = b - a;
         var av = v - a;
 
@@ -195,27 +176,23 @@ public class FollowPathPrecision : IDisposable
         return Vector3.Cross(ab, av).Length() / ab.Length();
     }
 
-    public void Stop()
-    {
+    public void Stop() {
         _millisecondsWithNoSignificantMovement = 0;
         Waypoints.Clear();
     }
 
-    private unsafe void ExecuteJump()
-    {
+    private unsafe void ExecuteJump() {
         // Unable to jump while diving, prevents spamming error messages.
         if (DalamudApi.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Diving])
             return;
 
-        if (DateTime.Now >= _nextJump)
-        {
+        if (DateTime.Now >= _nextJump) {
             ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2);
             _nextJump = DateTime.Now.AddMilliseconds(100);
         }
     }
 
-    public void Move(List<Vector3> waypoints, bool ignoreDeltaY, float destTolerance = 0.02f)
-    {
+    public void Move(List<Vector3> waypoints, bool ignoreDeltaY, float destTolerance = 0.02f) {
         Waypoints = waypoints;
         IgnoreDeltaY = ignoreDeltaY;
         DestinationTolerance = destTolerance;

@@ -42,6 +42,7 @@ loop code
  - https://github.com/Ennea/VeryImportantItem
  - https://github.com/una-xiv/umbra
  - https://github.com/Infiziert90/DeathRoll
+ - https://github.com/Zeffuro/AetherBags
 
 # Game Sheet Preview
  - https://exd.camora.dev

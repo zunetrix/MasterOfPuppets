@@ -21,7 +21,7 @@ public class DalamudApi {
     [PluginService] public static ITextureProvider TextureProvider { get; private set; } = null;
     [PluginService] public static IChatGui ChatGui { get; private set; } = null;
     [PluginService] public static IGameConfig GameConfig { get; private set; } = null;
-    [PluginService] public static IObjectTable Objects { get; private set; }
+    [PluginService] public static IObjectTable ObjectTable { get; private set; }
     [PluginService] public static ITargetManager TargetManager { get; private set; }
     [PluginService] public static ICondition Condition { get; private set; } = null;
     // [PluginService] public static IUnlockState UnlockState { get; private set; } = null;

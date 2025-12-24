@@ -722,6 +722,45 @@ public static class MopMacroActionsHelper {
             """
         },
 
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopenablewalk",
+            SuggestionCommand = "/mopenablewalk",
+            Example = """
+            /mopenablewalk
+            """,
+            Notes = """
+            Enable walking
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopdisablewalk",
+            SuggestionCommand = "/mopdisablewalk",
+            Example = """
+            /mopdisablewalk
+            """,
+            Notes = """
+            Disable walking
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/moptogglewalk",
+            SuggestionCommand = "/moptogglewalk",
+            Example = """
+            /moptogglewalk
+            """,
+            Notes = """
+            Toggle walking
+            """
+        },
+
         // ---------------------------
 
         new MopAction {

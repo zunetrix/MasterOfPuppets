@@ -4,8 +4,9 @@ using System.Numerics;
 using System.Threading.Tasks;
 
 using Dalamud.Game.ClientState.Objects.Enums;
-using Dalamud.Utility.Signatures;
 using Dalamud.Game.ClientState.Objects.SubKinds;
+
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 
 using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 
@@ -67,7 +68,7 @@ public class MovementManager : IDisposable {
             return false;
         }
 
-        // _pendingTask = _manager.QueryPath(DalamudApi.Objects.LocalPlayer?.Position ?? default, dest, fly, range: range);
+        // _pendingTask = _manager.QueryPath(DalamudApi.ObjectTable.LocalPlayer?.Position ?? default, dest, fly, range: range);
         _pendingTask = QueryPath(default, dest, fly, range: range);
 
         _pendingFly = fly;
@@ -75,47 +76,10 @@ public class MovementManager : IDisposable {
         return true;
     }
 
-    // private static class Signatures {
-    //     internal const string ToggleWalk = "38 1D ?? ?? ?? ?? 75 2D";
-    // }
-
-    // // set byte 1 to walk
-    // private delegate void ToggleWalkDelegate(uint arg1);
-
-    // private static ToggleWalkDelegate? _toggleWalk { get; }
-
-    // static MovementManager() {
-    //     if (DalamudApi.SigScanner.TryScanText(Signatures.ToggleWalk, out var _toggleWalkPtr)) {
-    //         _toggleWalk = Marshal.GetDelegateForFunctionPointer<ToggleWalkDelegate>(_toggleWalkPtr);
-    //     }
-    // }
-
-    // TODO: fix signature
-    [Signature("38 1D ?? ?? ?? ?? 75 2D", ScanType = ScanType.StaticAddress)]
-    private static readonly IntPtr walkingBoolPtr = IntPtr.Zero;
-    internal static unsafe bool IsWalking {
-        get => walkingBoolPtr != IntPtr.Zero && *(bool*)walkingBoolPtr;
-        set {
-            if (walkingBoolPtr != IntPtr.Zero) {
-                if (value == *(bool*)walkingBoolPtr) return;
-                DalamudApi.PluginLog.Warning($"setting walk {value}, current {*(bool*)walkingBoolPtr}");
-                *(bool*)walkingBoolPtr = value;
-            }
-        }
-    }
-
-    public static void EnableWalk() {
-        IsWalking = true;
-    }
-
-    public static void DisableWalk() {
-        IsWalking = false;
-    }
-
     private void MoveByOffsetCommand(Vector3 offset, Vector3? origin = null, bool fly = false) {
         var baseOrigin =
             origin ??
-            DalamudApi.Objects.LocalPlayer?.Position ??
+            DalamudApi.ObjectTable.LocalPlayer?.Position ??
             Vector3.Zero;
 
         var destination = baseOrigin + offset;
@@ -131,7 +95,7 @@ public class MovementManager : IDisposable {
             return null;
         }
 
-        foreach (var actor in DalamudApi.Objects) {
+        foreach (var actor in DalamudApi.ObjectTable) {
             if (actor == null)
                 continue;
 
@@ -165,7 +129,7 @@ public class MovementManager : IDisposable {
     }
 
     public static Vector3? GetObjectPosition(ulong objectId) {
-        foreach (var actor in DalamudApi.Objects) {
+        foreach (var actor in DalamudApi.ObjectTable) {
             if (actor != null && actor.GameObjectId == objectId)
                 return actor.Position;
         }
@@ -235,6 +199,22 @@ public class MovementManager : IDisposable {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
             var position = new Vector3(0, 0, 0);
             MoveByOffsetCommand(position);
+        });
+    }
+
+    public unsafe void SetWalking(bool isWalking) {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            var control = Control.Instance();
+            if (control == null) return;
+            control->IsWalking = isWalking;
+        });
+    }
+
+    public unsafe void ToggleWalking() {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            var control = Control.Instance();
+            if (control == null) return;
+            control->IsWalking = !control->IsWalking;
         });
     }
 }

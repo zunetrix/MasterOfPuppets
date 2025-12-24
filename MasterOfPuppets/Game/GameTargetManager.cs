@@ -16,14 +16,14 @@ public static class GameTargetManager {
 
     private static unsafe void TargetObjectInternal(Func<IGameObject, bool> match) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
-            var player = DalamudApi.Objects.LocalPlayer;
+            var player = DalamudApi.ObjectTable.LocalPlayer;
             if (player == null)
                 return;
 
             IGameObject? closest = null;
             var closestDistanceSq = float.MaxValue;
 
-            foreach (var actor in DalamudApi.Objects) {
+            foreach (var actor in DalamudApi.ObjectTable) {
                 if (actor == null)
                     continue;
 
@@ -78,12 +78,12 @@ public static class GameTargetManager {
                 // find target by name
                 IGameObject closestMatch = null;
                 var closestDistance = float.MaxValue;
-                var player = DalamudApi.Objects.LocalPlayer;
+                var player = DalamudApi.ObjectTable.LocalPlayer;
                 if (player == null) return;
 
-                // foreach (var assistActor in DalamudApi.Objects.Where(o => o.ObjectKind == ObjectKind.Player))
-                // var assistActor = DalamudApi.Objects.AsEnumerable().FirstOrDefault(o => o.Name.TextValue.Equals(_objectName));
-                foreach (var assistActor in DalamudApi.Objects) {
+                // foreach (var assistActor in DalamudApi.ObjectTable.Where(o => o.ObjectKind == ObjectKind.Player))
+                // var assistActor = DalamudApi.ObjectTable.AsEnumerable().FirstOrDefault(o => o.Name.TextValue.Equals(_objectName));
+                foreach (var assistActor in DalamudApi.ObjectTable) {
                     if (assistActor == null) continue;
 
                     // if player concat world name to prevent same characters names conflict
@@ -115,7 +115,7 @@ public static class GameTargetManager {
                 if (closestMatch == null) return;
                 if (closestMatch.TargetObject == null
                     || !((GameObjectStruct*)closestMatch.TargetObject.Address)->GetIsTargetable()
-                    // || closestMatch.TargetObjectId == DalamudApi.Objects.LocalPlayer.GameObjectId
+                    // || closestMatch.TargetObjectId == DalamudApi.ObjectTable.LocalPlayer.GameObjectId
                     ) {
                     return;
                 }
@@ -136,7 +136,7 @@ public static class GameTargetManager {
 
     public static unsafe void TargetMyMinion() {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
-            var localPlayer = DalamudApi.Objects.LocalPlayer;
+            var localPlayer = DalamudApi.ObjectTable.LocalPlayer;
             if (localPlayer == null) return;
 
             var c = (BattleChara*)localPlayer.Address;
@@ -147,7 +147,7 @@ public static class GameTargetManager {
 
             if (minion->Character.BaseId == 0) return;
 
-            var minionObj = DalamudApi.Objects
+            var minionObj = DalamudApi.ObjectTable
                 .FirstOrDefault(o => o.Address == (nint)minion);
 
             if (minionObj == null) return;
@@ -157,12 +157,12 @@ public static class GameTargetManager {
     }
 
     public static Vector3? GetTargetPosition() {
-        return DalamudApi.Objects.LocalPlayer?.TargetObject?.Position;
+        return DalamudApi.ObjectTable.LocalPlayer?.TargetObject?.Position;
     }
 
     public static Vector3 GetTargetOffsetFromMe() {
-        var target = DalamudApi.Objects.LocalPlayer?.TargetObject?.Position;
-        var origin = DalamudApi.Objects.LocalPlayer?.Position;
+        var target = DalamudApi.ObjectTable.LocalPlayer?.TargetObject?.Position;
+        var origin = DalamudApi.ObjectTable.LocalPlayer?.Position;
         if (!target.HasValue || !origin.HasValue)
             return default;
 
@@ -172,10 +172,10 @@ public static class GameTargetManager {
     }
 
     public static ulong? GetTargetObjectId() {
-        return DalamudApi.Objects.LocalPlayer?.TargetObject?.GameObjectId;
+        return DalamudApi.ObjectTable.LocalPlayer?.TargetObject?.GameObjectId;
     }
 
     public static string GetTargetName() {
-        return DalamudApi.Objects.LocalPlayer?.TargetObject?.Name?.TextValue ?? string.Empty;
+        return DalamudApi.ObjectTable.LocalPlayer?.TargetObject?.Name?.TextValue ?? string.Empty;
     }
 }
