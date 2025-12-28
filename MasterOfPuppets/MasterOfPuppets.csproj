@@ -1,65 +1,81 @@
 <Project Sdk="Dalamud.NET.Sdk/14.0.1">
-  <PropertyGroup>
-    <Version>1</Version>
-  </PropertyGroup>
-  <PropertyGroup>
-    <Author>Zune</Author>
-    <Name>Master Of Puppets</Name>
-    <InternalName>MasterOfPuppets</InternalName>
-    <Punchline>Gremlins Control Center</Punchline>
-    <Description> FFXIV plugin that lets you create and send custom actions (similar to in-game
+    <PropertyGroup>
+        <Version>1.0.0.88</Version>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Author>Zune</Author>
+        <Name>Master Of Puppets</Name>
+        <InternalName>MasterOfPuppets</InternalName>
+        <Punchline>Gremlins Control Center</Punchline>
+        <Description> FFXIV plugin that lets you create and send custom actions (similar to in-game
             macros),
             either locally or via chat-based broadcast.
             It supports broadcasting actions to multiple clients locally, or through in-game chat
             channels such as Party, Linkshell, and Cross-World Linkshell.
             Use it to trigger custom actions like emotes, minions, mounts, fashion changes, and
             more</Description>
-    <RepoUrl>https://github.com/zunetrix/MasterOfPuppets</RepoUrl>
-    <Tags>utility;macro</Tags>
-    <IconUrl>https://i.imgur.com/0hdDvXd.png</IconUrl>
-    <AcceptsFeedback>false</AcceptsFeedback>
-  </PropertyGroup>
-  <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <LangVersion>latest</LangVersion>
-    <Nullable>disable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-    <!-- <UseWpf>true</UseWpf> -->
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Fody" Version="6.9.3" PrivateAssets="all" />
-    <PackageReference Include="Resourcer.Fody" Version="1.8.1" PrivateAssets="all" />
-    <!-- IPC -->
-    <PackageReference Include="TinyIpc" Version="3.1.1" />
-    <PackageReference Include="protobuf-net" Version="3.2.46" />
-    <!-- Parser combinators for condition expressions -->
-    <PackageReference Include="Sprache" Version="2.3.1" />
-    <!-- Efficient text searching -->
-    <PackageReference Include="KTrie" Version="2.6.0" />
-    <!-- Discriminated unions -->
-    <!-- <PackageReference Include="OneOf" Version="3.0.263" /> -->
-    <!-- <PackageReference Include="LiteDB" Version="5.0.21" /> -->
-  </ItemGroup>
-  <!-- <ItemGroup>
+        <RepoUrl>https://github.com/zunetrix/MasterOfPuppets</RepoUrl>
+        <Tags>utility;macro</Tags>
+        <IconUrl>https://i.imgur.com/0hdDvXd.png</IconUrl>
+        <AcceptsFeedback>false</AcceptsFeedback>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <LangVersion>latest</LangVersion>
+        <Nullable>disable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+        <!-- <UseWpf>true</UseWpf> -->
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
+        <Version>1.0.0.88</Version>
+        <DefineConstants>DEBUG</DefineConstants>
+    </PropertyGroup>
+    <!-- Linux build -->
+    <PropertyGroup
+        Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
+        <DalamudLibPath>$(DALAMUD_HOME)</DalamudLibPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(IsCI)' == 'true'">
+        <DalamudLibPath>$(HOME)/dalamud</DalamudLibPath>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Fody" Version="6.9.3" PrivateAssets="all" />
+        <PackageReference Include="Resourcer.Fody" Version="1.8.1" PrivateAssets="all" />
+        <!-- IPC -->
+        <PackageReference Include="TinyIpc" Version="3.1.1" />
+        <PackageReference Include="protobuf-net" Version="3.2.46" />
+        <!-- Parser combinators for condition expressions -->
+        <PackageReference Include="Sprache" Version="2.3.1" />
+        <!-- Efficient text searching -->
+        <PackageReference Include="KTrie" Version="2.6.0" />
+        <!-- Discriminated unions -->
+        <!-- <PackageReference Include="OneOf" Version="3.0.263" /> -->
+        <!-- <PackageReference Include="LiteDB" Version="5.0.21" /> -->
+    </ItemGroup>
+    <!-- <ItemGroup>
         <ProjectReference Include="..\MasterOfPuppets.IPC\MasterOfPuppets.IPC.csproj" />
     </ItemGroup> -->
-  <ItemGroup>
-    <EmbeddedResource Update="Resources\Language.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Language.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <Compile Update="Resources\Language.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Language.resx</DependentUpon>
-    </Compile>
-    <!-- <Content Include="Assets\**\*.png" CopyToOutputDirectory="Always" /> -->
-  </ItemGroup>
-  <Target Name="PackagePlugin" AfterTargets="Build">
-    <DalamudPackager ProjectDir="$(ProjectDir)" OutputPath="$(OutputPath)" AssemblyName="$(AssemblyName)" VersionComponents="4" MakeZip="true" />
-  </Target>
+    <ItemGroup>
+        <EmbeddedResource Update="Resources\Language.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>Language.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+        <Compile Update="Resources\Language.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Language.resx</DependentUpon>
+        </Compile>
+        <!-- <Content Include="Assets\**\*.png" CopyToOutputDirectory="Always" /> -->
+    </ItemGroup>
+    <Target Name="PackagePlugin" AfterTargets="Build">
+        <DalamudPackager ProjectDir="$(ProjectDir)" OutputPath="$(OutputPath)"
+            AssemblyName="$(AssemblyName)" VersionComponents="4" MakeZip="true" />
+    </Target>
 </Project>

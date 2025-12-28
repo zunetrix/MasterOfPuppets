@@ -137,6 +137,11 @@ internal class IpcProvider : IDisposable {
         BroadCast(message, includeSelf: false);
     }
 
+    public void ExecuteToggleWalking() {
+        var message = IpcMessage.Create(IpcMessageType.ExecuteToggleWalking).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
     public void ExecuteTargetClear() {
         var message = IpcMessage.Create(IpcMessageType.ExecuteTargetClear).Serialize();
         BroadCast(message, includeSelf: true);

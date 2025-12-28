@@ -66,6 +66,11 @@ internal class IpcHandlers {
         Plugin.MovementManager.MoveToObject(targetObjectId);
     }
 
+    [IpcHandle(IpcMessageType.ExecuteToggleWalking)]
+    private void ExecuteToggleWalking(IpcMessage message) {
+        Plugin.MovementManager.ToggleWalking();
+    }
+
     [IpcHandle(IpcMessageType.ExecuteTargetClear)]
     private void HandleExecuteTargetClear(IpcMessage message) {
         GameTargetManager.TargetClear();

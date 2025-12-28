@@ -88,13 +88,11 @@ public class PluginCommandManager : IDisposable {
                     break;
 
                 case "stop":
-                    Plugin.IpcProvider.StopMacroExecution();
+                    Plugin.MacroHandler.StopMacroQueueExecution();
                     break;
-
                 case "targetmytarget":
                     Plugin.IpcProvider.ExecuteTargetMyTarget();
                     break;
-
                 case "targetclear":
                     Plugin.IpcProvider.ExecuteTargetClear();
                     break;
