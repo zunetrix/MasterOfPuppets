@@ -30,8 +30,9 @@ public class SettingsWindow : Window {
         _objectQuantityType = GameSettingsManager.GetDisplayObjectLimit();
     }
 
-    public override void PreDraw() {
-        base.PreDraw();
+    public override void OnOpen() {
+        _objectQuantityType = GameSettingsManager.GetDisplayObjectLimit();
+        base.OnOpen();
     }
 
     public override void Draw() {
