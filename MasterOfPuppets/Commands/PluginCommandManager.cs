@@ -211,6 +211,8 @@ public class PluginCommandManager : IDisposable {
 
     private void OnBroadcastCharacterCommand(string command, string arguments) {
         var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
+        // DalamudApi.PluginLog.Warning($"command: [{command}] {string.Join('|', parsedArgs)}");
+
         if (parsedArgs.Count >= 2) {
             string characterName = parsedArgs[0];
             string textCommand = parsedArgs[1];

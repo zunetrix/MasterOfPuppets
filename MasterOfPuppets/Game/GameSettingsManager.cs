@@ -5,15 +5,6 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
 namespace MasterOfPuppets;
 
-public enum SettingsDisplayObjectLimitType {
-    Automatic = 0,
-    Maximum = 1,
-    High = 2,
-    Normal = 3,
-    Low = 4,
-    Minimum = 5
-}
-
 public static class GameSettingsManager {
     public static unsafe void GetSettings() {
         var gameConfig = Framework.Instance()->SystemConfig.SystemConfigBase.ConfigBase.ConfigEntry;
@@ -46,4 +37,13 @@ public static class GameSettingsManager {
     // {
     //     DalamudApi.GameConfig.Set(SystemConfigOption.DisplayObjectLimitType, displayObjectLimitType);
     // }
+}
+
+public enum SettingsDisplayObjectLimitType {
+    Automatic = 0,
+    Maximum = 1,
+    High = 2,
+    Normal = 3,
+    Low = 4,
+    Minimum = 5
 }

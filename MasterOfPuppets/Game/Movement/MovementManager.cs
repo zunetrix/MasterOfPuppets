@@ -217,4 +217,8 @@ public class MovementManager : IDisposable {
             control->IsWalking = !control->IsWalking;
         });
     }
+
+    public void Rotate(int angle) {
+        _follow.Rotate(angle);
+    }
 }

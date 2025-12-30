@@ -1,8 +1,7 @@
 <Project Sdk="Dalamud.NET.Sdk/14.0.1">
     <PropertyGroup>
-        <Version>1.0.0.88</Version>
+        <Version>1.0.0.89</Version>
     </PropertyGroup>
-
     <PropertyGroup>
         <Author>Zune</Author>
         <Name>Master Of Puppets</Name>
@@ -20,7 +19,6 @@
         <IconUrl>https://i.imgur.com/0hdDvXd.png</IconUrl>
         <AcceptsFeedback>false</AcceptsFeedback>
     </PropertyGroup>
-
     <PropertyGroup>
         <TargetFramework>net10.0-windows</TargetFramework>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -32,9 +30,8 @@
         <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
         <!-- <UseWpf>true</UseWpf> -->
     </PropertyGroup>
-
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
-        <Version>1.0.0.88</Version>
+        <Version>1.0.0.89</Version>
         <DefineConstants>DEBUG</DefineConstants>
     </PropertyGroup>
     <!-- Linux build -->

@@ -18,7 +18,6 @@ using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
-using MasterOfPuppets.Movement;
 using Dalamud.Interface.ImGuiSeStringRenderer;
 using Dalamud.Utility;
 
@@ -36,6 +35,7 @@ public class DebugWindow : Window {
     private static float _xInput = 0;
     private static float _yInput = 0;
     private static float _zInput = 0;
+    private static int _angleInput = 180;
     private static int _macroIdx = 0;
     private static string _targetNameMoveTo = string.Empty;
     private static string _targetNameMoveToRelative = string.Empty;
@@ -457,6 +457,15 @@ public class DebugWindow : Window {
             ImGui.SameLine();
             if (ImGui.Button("Toggle Walk")) {
                 Plugin.MovementManager.ToggleWalking();
+            }
+
+
+            ImGui.Text("Rotate Character");
+            ImGui.InputInt("Angle##RotateCharacterInput", ref _angleInput, 1, 10, flags: ImGuiInputTextFlags.AutoSelectAll);
+
+            ImGui.SameLine();
+            if (ImGui.Button("Roate")) {
+                Plugin.MovementManager.Rotate(_angleInput);
             }
 
             ImGui.EndTabItem();

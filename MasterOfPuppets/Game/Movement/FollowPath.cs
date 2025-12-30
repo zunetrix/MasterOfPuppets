@@ -147,4 +147,8 @@ public class FollowPath : IDisposable {
         IgnoreDeltaY = ignoreDeltaY;
         DestinationTolerance = destTolerance;
     }
+
+    public void Rotate(int angle) {
+        _camera.DesiredAzimuth = angle.Degrees();
+    }
 }

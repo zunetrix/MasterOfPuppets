@@ -158,7 +158,7 @@ internal class IpcProvider : IDisposable {
     }
     public void EnqueueCharacterMacroActions(string textCommand, string characterName) {
         var message = IpcMessage.Create(IpcMessageType.EnqueueCharacterMacroActions, textCommand, characterName).Serialize();
-        BroadCast(message);
+        BroadCast(message, includeSelf: true);
     }
 
     public void SetGameSettingsObjectQuantity(SettingsDisplayObjectLimitType displayObjectLimitType) {

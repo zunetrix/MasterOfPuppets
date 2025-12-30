@@ -16,39 +16,39 @@ public static class ImGuiUtil {
     // ------------------------
     // COMPONENTS
     // ------------------------
-    // public static bool IconButtonRaii(FontAwesomeIcon icon, string? id = null, string tooltip = null, Vector4? color = null, Vector2? size = null) {
-    //     using var col = new ImRaii.Color();
+    public static bool IconButtonRaii(FontAwesomeIcon icon, string? id = null, string tooltip = null, Vector4? color = null, Vector2? size = null) {
+        using var col = new ImRaii.Color();
 
-    //     if (color.HasValue) {
-    //         ImGui.PushStyleColor(ImGuiCol.Text, (Vector4)color);
-    //     }
+        if (color.HasValue) {
+            ImGui.PushStyleColor(ImGuiCol.Text, (Vector4)color);
+        }
 
-    //     if (size.HasValue) {
-    //         size *= ImGuiHelpers.GlobalScale;
-    //     }
-    //     bool button;
+        if (size.HasValue) {
+            size *= ImGuiHelpers.GlobalScale;
+        }
+        bool button;
 
-    //     using (ImRaii.PushFont(UiBuilder.IconFont)) {
-    //         var iconSize = ImGui.CalcTextSize(icon.ToIconString());
-    //         var cursor = ImGui.GetCursorScreenPos();
+        using (ImRaii.PushFont(UiBuilder.IconFont)) {
+            var iconSize = ImGui.CalcTextSize(icon.ToIconString());
+            var cursor = ImGui.GetCursorScreenPos();
 
-    //         var width = size is { X: not 0 } ? size.Value.X : iconSize.X + (ImGui.GetStyle().FramePadding.X * 2);
-    //         var height = size is { Y: not 0 } ? size.Value.Y : ImGui.GetFrameHeight();
+            var width = size is { X: not 0 } ? size.Value.X : iconSize.X + (ImGui.GetStyle().FramePadding.X * 2);
+            var height = size is { Y: not 0 } ? size.Value.Y : ImGui.GetFrameHeight();
 
-    //         var buttonSize = new Vector2(width, height);
+            var buttonSize = new Vector2(width, height);
 
-    //         using (ImRaii.PushId(icon.ToIconString())) {
-    //             button = ImGui.Button(string.Empty, buttonSize);
-    //         }
+            using (ImRaii.PushId(icon.ToIconString())) {
+                button = ImGui.Button(string.Empty, buttonSize);
+            }
 
-    //         var iconPos = cursor + ((buttonSize - iconSize) / 2f);
+            var iconPos = cursor + ((buttonSize - iconSize) / 2f);
 
-    //         ImGui.GetWindowDrawList().AddText(iconPos, ImGui.GetColorU32(ImGuiCol.Text), icon.ToIconString());
-    //         if (tooltip != null) ToolTip(tooltip);
-    //     }
+            ImGui.GetWindowDrawList().AddText(iconPos, ImGui.GetColorU32(ImGuiCol.Text), icon.ToIconString());
+            if (tooltip != null) ToolTip(tooltip);
+        }
 
-    //     return button;
-    // }
+        return button;
+    }
 
     public static bool IconButton(FontAwesomeIcon icon, string? id = null, string tooltip = null, Vector4? color = null, Vector2? size = null) {
         ImGui.PushFont(UiBuilder.IconFont);
