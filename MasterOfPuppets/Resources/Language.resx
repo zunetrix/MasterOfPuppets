@@ -119,8 +119,8 @@ Right-Click to copy command</value>
     <data name="ShowMacroQueueBtn" xml:space="preserve">
         <value>Macro Queue</value>
     </data>
-    <data name="ToggleMacroTagsPanelBtn" xml:space="preserve">
-        <value>Toggle Macro Tags Panel</value>
+    <data name="TogglePanelBtn" xml:space="preserve">
+        <value>Toggle Panel</value>
     </data>
     <data name="ShowEmotesBtn" xml:space="preserve">
         <value>Emotes</value>

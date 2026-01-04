@@ -59,4 +59,3 @@ public class PluginUi : IDisposable {
         WindowSystem.Draw();
     }
 }
-

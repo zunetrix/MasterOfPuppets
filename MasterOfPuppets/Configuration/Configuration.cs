@@ -47,6 +47,9 @@ internal class Configuration : IPluginConfiguration {
     public bool ShowSettingsButton { get; set; } = true;
     public bool AllowCloseWithEscape { get; set; } = false;
 
+    public bool ShowPanelActionsBroadcast { get; set; } = true;
+    public bool ShowPanelMacroTags { get; set; } = true;
+
     // Movement
     [Newtonsoft.Json.JsonIgnore]
     public bool AlignCameraToMovement { get; set; } = true;
@@ -107,6 +110,11 @@ internal class Configuration : IPluginConfiguration {
 
         DelayBetweenActions = newPluginConfig.DelayBetweenActions;
         SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;
+
+        // UI
+        ShowPanelActionsBroadcast = newPluginConfig.ShowPanelActionsBroadcast;
+        ShowPanelMacroTags = newPluginConfig.ShowPanelMacroTags;
+
         OpenOnStartup = newPluginConfig.OpenOnStartup;
         OpenOnLogin = newPluginConfig.OpenOnLogin;
         AllowCloseWithEscape = newPluginConfig.AllowCloseWithEscape;

@@ -28,7 +28,6 @@ public class MainWindow : Window {
     private readonly HashSet<string> _selectedTags = new(StringComparer.OrdinalIgnoreCase);
     private bool _filterNoTags = false;
     private float _leftPanelWidth = 200f;
-    private bool _showTagsPanel = true;
     private bool _isGlobalMacroCheckboxChecked = false;
 
     internal MainWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name}") {
@@ -353,8 +352,8 @@ public class MainWindow : Window {
 
         // ImGui.Text(Language.MacroListTitle);
         // toggle left tags panel show/hide
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Tags, $"##ToggleMacroTagsPanelBtn", Language.ToggleMacroTagsPanelBtn)) {
-            _showTagsPanel = !_showTagsPanel;
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Tags, $"##ToggleMacroTagsPanelBtn", Language.TogglePanelBtn)) {
+            Plugin.Config.ShowPanelMacroTags = !Plugin.Config.ShowPanelMacroTags;
         }
 
         ImGui.SameLine();
@@ -747,7 +746,7 @@ public class MainWindow : Window {
     }
 
     private void DrawMacroPanels() {
-        if (_showTagsPanel) {
+        if (Plugin.Config.ShowPanelMacroTags) {
             DrawLeftPanel();
         }
 

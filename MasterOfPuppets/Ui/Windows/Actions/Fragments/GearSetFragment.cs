@@ -140,7 +140,8 @@ public class GearSetFragment : Fragment {
     }
 
     private void DrawGearSetTable(float iconSize = 30) {
-        var lineHeight = iconSize + ImGui.GetStyle().ItemSpacing.Y;
+        // var lineHeight = iconSize + ImGui.GetStyle().ItemSpacing.Y;
+        var lineHeight = iconSize + 10;
 
         if (ListSearchedIndexes.Count == 0)
             Search();
@@ -171,21 +172,6 @@ public class GearSetFragment : Fragment {
 
             clipper.End();
             ImGui.EndTable();
-
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Spacing();
         }
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
     }
 }
