@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Globalization;
 
 using Dalamud.Utility;
 
@@ -11,9 +11,9 @@ using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
 
-using FFXIVAction = Lumina.Excel.Sheets.Action;
-
 using MasterOfPuppets.Extensions;
+
+using FFXIVAction = Lumina.Excel.Sheets.Action;
 
 namespace MasterOfPuppets.Util.ImGuiIconPicker;
 

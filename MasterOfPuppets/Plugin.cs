@@ -4,9 +4,9 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
 using MasterOfPuppets.Ipc;
+using MasterOfPuppets.Movement;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt.AutoComplete;
-using MasterOfPuppets.Movement;
 
 namespace MasterOfPuppets;
 
