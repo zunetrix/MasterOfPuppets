@@ -5,7 +5,6 @@ using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
-using Dalamud.Interface.Components;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
@@ -184,78 +183,78 @@ public class MainWindow : Window {
         }
     }
 
-    private void DrawActionsMenu() {
-        if (ImGui.BeginMenu("Actions")) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowEmotesMenu")) {
-                Ui.EmotesWindow.Toggle();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.ShowEmotesBtn)) {
-                Ui.EmotesWindow.Toggle();
-            }
+    // private void DrawActionsMenu() {
+    //     if (ImGui.BeginMenu("Actions")) {
+    //         if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowEmotesMenu")) {
+    //             Ui.EmotesWindow.Toggle();
+    //         }
+    //         ImGui.SameLine();
+    //         if (ImGui.Selectable(Language.ShowEmotesBtn)) {
+    //             Ui.EmotesWindow.Toggle();
+    //         }
 
-            // -----------------------
+    //         // -----------------------
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Umbrella, $"##ShowFashionAccessoriesMenu")) {
-                Ui.FashionAccessoriesWindow.Toggle();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.ShowFashionAccessoriesBtn)) {
-                Ui.FashionAccessoriesWindow.Toggle();
-            }
+    //         if (ImGuiUtil.IconButton(FontAwesomeIcon.Umbrella, $"##ShowFashionAccessoriesMenu")) {
+    //             Ui.FashionAccessoriesWindow.Toggle();
+    //         }
+    //         ImGui.SameLine();
+    //         if (ImGui.Selectable(Language.ShowFashionAccessoriesBtn)) {
+    //             Ui.FashionAccessoriesWindow.Toggle();
+    //         }
 
-            // -----------------------
+    //         // -----------------------
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Glasses, $"##ShowFacewearMenu")) {
-                Ui.FacewearWindow.Toggle();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.ShowFacewearBtn)) {
-                Ui.FacewearWindow.Toggle();
-            }
+    //         if (ImGuiUtil.IconButton(FontAwesomeIcon.Glasses, $"##ShowFacewearMenu")) {
+    //             Ui.FacewearWindow.Toggle();
+    //         }
+    //         ImGui.SameLine();
+    //         if (ImGui.Selectable(Language.ShowFacewearBtn)) {
+    //             Ui.FacewearWindow.Toggle();
+    //         }
 
-            // -----------------------
+    //         // -----------------------
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Horse, $"##ShowMountMenu")) {
-                Ui.MountWindow.Toggle();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.ShowMountBtn)) {
-                Ui.MountWindow.Toggle();
-            }
+    //         if (ImGuiUtil.IconButton(FontAwesomeIcon.Horse, $"##ShowMountMenu")) {
+    //             Ui.MountWindow.Toggle();
+    //         }
+    //         ImGui.SameLine();
+    //         if (ImGui.Selectable(Language.ShowMountBtn)) {
+    //             Ui.MountWindow.Toggle();
+    //         }
 
-            // -----------------------
+    //         // -----------------------
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Cat, $"##ShowMinionMenu")) {
-                Ui.MinionWindow.Toggle();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.ShowMinionBtn)) {
-                Ui.MinionWindow.Toggle();
-            }
+    //         if (ImGuiUtil.IconButton(FontAwesomeIcon.Cat, $"##ShowMinionMenu")) {
+    //             Ui.MinionWindow.Toggle();
+    //         }
+    //         ImGui.SameLine();
+    //         if (ImGui.Selectable(Language.ShowMinionBtn)) {
+    //             Ui.MinionWindow.Toggle();
+    //         }
 
-            // -----------------------
+    //         // -----------------------
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.ShoppingBag, $"##ShowItemMenu")) {
-                Ui.ItemWindow.Toggle();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.ShowItemBtn)) {
-                Ui.ItemWindow.Toggle();
-            }
+    //         if (ImGuiUtil.IconButton(FontAwesomeIcon.ShoppingBag, $"##ShowItemMenu")) {
+    //             Ui.ItemWindow.Toggle();
+    //         }
+    //         ImGui.SameLine();
+    //         if (ImGui.Selectable(Language.ShowItemBtn)) {
+    //             Ui.ItemWindow.Toggle();
+    //         }
 
-            // -----------------------
+    //         // -----------------------
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##ShowGearsetMenu")) {
-                Ui.GearSetWindow.Toggle();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.GearSetTitle)) {
-                Ui.GearSetWindow.Toggle();
-            }
-            ImGui.EndMenu();
-        }
-    }
+    //         if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##ShowGearsetMenu")) {
+    //             Ui.GearSetWindow.Toggle();
+    //         }
+    //         ImGui.SameLine();
+    //         if (ImGui.Selectable(Language.GearSetTitle)) {
+    //             Ui.GearSetWindow.Toggle();
+    //         }
+    //         ImGui.EndMenu();
+    //     }
+    // }
 
     private void DrawCommandsMenu() {
         if (ImGui.BeginMenu("Commands")) {
@@ -317,7 +316,12 @@ public class MainWindow : Window {
 
         if (ImGui.BeginMenuBar()) {
             DrawMacroMenu();
-            DrawActionsMenu();
+            // DrawActionsMenu();
+
+            if (ImGui.MenuItem("Actions")) {
+                Plugin.Ui.ActionsBroadcastWindow.Toggle();
+            }
+
             DrawCommandsMenu();
 
             if (ImGui.MenuItem("Help")) {

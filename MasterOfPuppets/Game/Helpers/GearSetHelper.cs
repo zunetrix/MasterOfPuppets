@@ -20,7 +20,7 @@ public static class GearSetHelper {
                 ActionId = gearset->Id,
                 ActionName = gearset->NameString,
                 IconId = gearset->ClassJob + 62100u,
-                TextCommand = $"/gs change \"{gearsetIndex + 1}\"",
+                TextCommand = $"/gs change {gearsetIndex + 1}",
                 Category = $"{gearset->ClassJob}"
             };
 

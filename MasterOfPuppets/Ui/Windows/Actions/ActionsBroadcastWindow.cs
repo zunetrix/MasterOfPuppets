@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 
@@ -21,26 +22,29 @@ public class ActionsBroadcastWindow : Window {
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    private readonly List<IFragment> Fragments = new();
-    private readonly FragmentContext? _FragmentContext;
+    private readonly FragmentContext? _fragmentContext;
+
+    private readonly FragmentManager _fragmentManager = new();
 
     public ActionsBroadcastWindow(Plugin plugin) : base($"{Plugin.Name}###ActionsBroadcastWindow") {
         Plugin = plugin;
 
-        _FragmentContext = new FragmentContext(plugin);
+        _fragmentContext = new FragmentContext(plugin);
 
         Size = ImGuiHelpers.ScaledVector2(550, 450);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
 
-        Fragments.Add(new EmotesFragment());
-        Fragments.Add(new FacewearFragment());
-        Fragments.Add(new FashionAccessoriesFragment());
-        Fragments.Add(new GearSetFragment());
-        Fragments.Add(new ItemsFragment());
-        Fragments.Add(new MinionsFragment());
-        Fragments.Add(new MountsFragment());
+        _fragmentManager.Add(() => new EmotesFragment(_fragmentContext));
+        _fragmentManager.Add(() => new FashionAccessoriesFragment(_fragmentContext));
+        _fragmentManager.Add(() => new FacewearFragment(_fragmentContext));
+        _fragmentManager.Add(() => new MountsFragment(_fragmentContext));
+        _fragmentManager.Add(() => new MinionsFragment(_fragmentContext));
+        _fragmentManager.Add(() => new ItemsFragment(_fragmentContext));
+        _fragmentManager.Add(() => new GearSetFragment(_fragmentContext));
+
+        _fragmentManager.Show(0);
     }
 
     public override void Draw() {
@@ -52,20 +56,20 @@ public class ActionsBroadcastWindow : Window {
         DrawDebugTypeList();
 
         ImGui.SameLine();
-        DrawDebugTypeContent(SelectedItemIndex);
+        DrawTypeContent(SelectedItemIndex);
         ImGui.EndChild();
     }
 
     private void DrawDebugTypeList() {
         var isFiltered = !string.IsNullOrEmpty(_searchString);
 
-        var indices = isFiltered ? ListSearchedIndexes : Enumerable.Range(0, Fragments.Count).ToList();
+        var indices = isFiltered ? ListSearchedIndexes : Enumerable.Range(0, _fragmentManager.Fragments.Count).ToList();
 
         // left pane
-        ImGui.BeginChild("##ActionsTypeList", ImGuiHelpers.ScaledVector2(250, 0), true);
+        ImGui.BeginChild("##ActionsTypeList", ImGuiHelpers.ScaledVector2(200, 0), true);
         for (int i = 0; i < indices.Count; i++) {
             int realIndex = indices[i];
-            var fragment = Fragments[realIndex];
+            var fragment = _fragmentManager.Fragments[realIndex];
             bool isSelected = SelectedItemIndex == realIndex;
 
             if (isSelected) {
@@ -74,8 +78,11 @@ public class ActionsBroadcastWindow : Window {
                 ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
             }
 
-            if (ImGui.Selectable(fragment.Title, isSelected)) {
+            ImGuiUtil.IconButton(fragment.Instance.Icon, $"##fragment_{realIndex}");
+            ImGui.SameLine();
+            if (ImGui.Selectable(fragment.Instance.Title, isSelected)) {
                 SelectedItemIndex = realIndex;
+                _fragmentManager.Show(realIndex);
             }
 
             if (isSelected)
@@ -89,21 +96,18 @@ public class ActionsBroadcastWindow : Window {
         ImGui.EndChild();
     }
 
-    private void DrawDebugTypeContent(int itemIndex) {
-        if (Fragments.Count == 0) return;
-        var fragment = Fragments[itemIndex];
+    private void DrawTypeContent(int itemIndex) {
+        if (_fragmentManager.Fragments.Count == 0) return;
+        var fragment = _fragmentManager.Fragments[itemIndex];
 
         ImGui.BeginGroup();
         ImGui.BeginChild("##ActionsBroadcastContent", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()));
-        ImGuiUtil.DrawColoredBanner($"{fragment.Title}", Style.Components.ButtonBlueHovered);
+        ImGuiUtil.DrawColoredBanner($"{fragment.Instance.Title}", Style.Components.ButtonBlueHovered);
 
         ImGui.Spacing();
-        ImGui.Indent();
 
-        // render selected debug tab
-        fragment.Render(_FragmentContext);
+        _fragmentManager.Draw();
 
-        ImGui.Unindent();
         ImGui.EndChild();
         ImGui.EndGroup();
     }
@@ -124,9 +128,9 @@ public class ActionsBroadcastWindow : Window {
         ListSearchedIndexes.Clear();
 
         ListSearchedIndexes.AddRange(
-            Fragments
-            .Select((tab, index) => new { tab, index })
-            .Where(x => x.tab.Title.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            _fragmentManager.Fragments
+            .Select((fragment, index) => new { fragment, index })
+            .Where(x => x.fragment.Instance.Title.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             .Select(x => x.index)
             .ToList()
         );

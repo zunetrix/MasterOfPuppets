@@ -18,14 +18,6 @@ public class PluginUi : IDisposable {
     public CharactersWindow CharactersWindow { get; }
     public ActionsBroadcastWindow ActionsBroadcastWindow { get; }
 
-    public EmotesWindow EmotesWindow { get; }
-    public MountWindow MountWindow { get; }
-    public MinionWindow MinionWindow { get; }
-    public ItemWindow ItemWindow { get; }
-    public FacewearWindow FacewearWindow { get; }
-    public FashionAccessoriesWindow FashionAccessoriesWindow { get; }
-    public GearSetWindow GearSetWindow { get; }
-
     public MacroHelpWindow MacroHelpWindow { get; }
     public MacroImportExportWindow MacroImportExportWindow { get; }
     public IconPickerDialogWindow IconPickerDialogWindow { get; }
@@ -40,16 +32,7 @@ public class PluginUi : IDisposable {
         MacroBatchEditorWindow = AddWindow(new MacroBatchEditorWindow(Plugin));
         MacroQueueWindow = AddWindow(new MacroQueueWindow(Plugin));
         CharactersWindow = AddWindow(new CharactersWindow(Plugin));
-
         ActionsBroadcastWindow = AddWindow(new ActionsBroadcastWindow(Plugin));
-
-        EmotesWindow = AddWindow(new EmotesWindow(Plugin));
-        MountWindow = AddWindow(new MountWindow(Plugin));
-        MinionWindow = AddWindow(new MinionWindow(Plugin));
-        ItemWindow = AddWindow(new ItemWindow(Plugin));
-        FacewearWindow = AddWindow(new FacewearWindow(Plugin));
-        FashionAccessoriesWindow = AddWindow(new FashionAccessoriesWindow(Plugin));
-        GearSetWindow = AddWindow(new GearSetWindow(Plugin));
 
         MacroHelpWindow = AddWindow(new MacroHelpWindow(Plugin));
         MacroImportExportWindow = AddWindow(new MacroImportExportWindow(Plugin));

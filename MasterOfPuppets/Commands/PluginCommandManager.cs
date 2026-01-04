@@ -99,26 +99,8 @@ public class PluginCommandManager : IDisposable {
                 case "queue":
                     Plugin.Ui.MacroQueueWindow.Toggle();
                     break;
-                case "emote":
-                    Plugin.Ui.EmotesWindow.Toggle();
-                    break;
-                case "fashion":
-                    Plugin.Ui.FashionAccessoriesWindow.Toggle();
-                    break;
-                case "facewear":
-                    Plugin.Ui.FacewearWindow.Toggle();
-                    break;
-                case "mount":
-                    Plugin.Ui.MountWindow.Toggle();
-                    break;
-                case "minion":
-                    Plugin.Ui.MinionWindow.Toggle();
-                    break;
-                case "item":
-                    Plugin.Ui.ItemWindow.Toggle();
-                    break;
-                case "gearset":
-                    Plugin.Ui.GearSetWindow.Toggle();
+                case "actions":
+                    Plugin.Ui.ActionsBroadcastWindow.Toggle();
                     break;
                 case "move": {
                         if (parsedArgs.Count < 2) {

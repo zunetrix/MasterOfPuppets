@@ -27,8 +27,20 @@ public static class ItemHelper {
             (uint)ItemUICategoryEnum.SeasonalMiscellany
         ];
 
+        List<uint> allowedItems = [
+            4868, // Gysahl Greens
+        ];
+
         return DalamudApi.DataManager.GetExcelSheet<Item>()
-        .Where(i => i.IsUnlocked() && allowedCategories.Contains(i.ItemUICategory.Value.RowId) && (i.Cooldowns > 0 || i.Name.ToString().StartsWith("Ballroom")))
+        .Where(i => i.IsUnlocked() &&
+        (
+        allowedCategories.Contains(i.ItemUICategory.Value.RowId)
+        && (i.Cooldowns > 0 || i.Name.ToString().StartsWith("Ballroom"))
+        )
+        ||
+        allowedItems.Contains(i.RowId)
+
+        )
         .Select(GetExecutableAction)
         .ToList();
     }
@@ -177,3 +189,7 @@ public static class ItemHelper {
         Outfits = 112
     }
 }
+
+
+
+

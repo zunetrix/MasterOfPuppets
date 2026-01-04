@@ -14,7 +14,8 @@ public class ExecutableAction {
     [JsonProperty("iconId")] public uint IconId;
     [JsonProperty("textCommand")] public string TextCommand;
     [JsonProperty("category")] public string? Category;
-    // [JsonProperty("sortOrder")] public int? SortOrder;
+    [JsonProperty("sortOrder")] public int? SortOrder;
+
     [JsonConverter(typeof(StringEnumConverter))]
     [JsonProperty("type")] public HotbarSlotType? HotbarSlotType;
 }

@@ -53,6 +53,7 @@ public class FashionAccessoriesWindow : Window {
         // DrawFashionTable();
         ImGui.EndChild();
     }
+
     private void Search() {
         ListSearchedIndexes.Clear();
         ListSearchedIndexes.AddRange(
