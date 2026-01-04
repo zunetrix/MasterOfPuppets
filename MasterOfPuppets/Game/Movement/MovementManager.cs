@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 using Dalamud.Game.ClientState.Objects.Enums;
@@ -44,11 +46,10 @@ public class MovementManager : IDisposable {
 
     public void Update() {
         if (_pendingTask != null && _pendingTask.IsCompleted) {
-            // DalamudApi.PluginLog.Information($"Pathfinding complete");
             try {
                 _follow.Move(_pendingTask.Result, !_pendingFly, _pendingDestRange);
             } catch (Exception ex) {
-                DalamudApi.PluginLog.Error(ex, $"Pathfinding complete");
+                DalamudApi.PluginLog.Error(ex, $"Update->Move");
             }
             _pendingTask.Dispose();
             _pendingTask = null;
@@ -62,9 +63,15 @@ public class MovementManager : IDisposable {
         return path;
     }
 
+    public async Task<List<Vector3>> QueryPath(List<Vector3> pathPoints) {
+        var path = await Task.Run(() => {
+            return pathPoints.ToList();
+        });
+        return path;
+    }
+
     public bool MoveTo(Vector3 dest, bool fly, float range = 0) {
         if (_pendingTask != null) {
-            // DalamudApi.PluginLog.Error($"Pathfinding task is in progress...");
             return false;
         }
 
@@ -74,6 +81,31 @@ public class MovementManager : IDisposable {
         _pendingFly = fly;
         _pendingDestRange = range;
         return true;
+    }
+
+    public bool MoveToPath(List<Vector3> path, bool fly = false, float range = 0) {
+        if (_pendingTask != null) {
+            return false;
+        }
+
+        _pendingTask = QueryPath(path);
+
+        _pendingFly = fly;
+        _pendingDestRange = range;
+        return true;
+    }
+
+    public void MoveByOffsetPathCommand(List<Vector3> path, Vector3? origin = null, bool fly = false) {
+        var baseOrigin =
+            origin ??
+            DalamudApi.ObjectTable.LocalPlayer?.Position ??
+            Vector3.Zero;
+
+        var resolvedPath = path
+            .Select(offset => baseOrigin + offset)
+            .ToList();
+
+        MoveToPath(resolvedPath);
     }
 
     private void MoveByOffsetCommand(Vector3 offset, Vector3? origin = null, bool fly = false) {
@@ -197,8 +229,9 @@ public class MovementManager : IDisposable {
     // TODO: Find a better way to stop moving when the destination is an unreachable point
     public void StopMove() {
         DalamudApi.Framework.RunOnFrameworkThread(delegate {
-            var position = new Vector3(0, 0, 0);
-            MoveByOffsetCommand(position);
+            _follow.Stop();
+            // var position = new Vector3(0, 0, 0);
+            // MoveByOffsetCommand(position);
         });
     }
 
@@ -215,6 +248,22 @@ public class MovementManager : IDisposable {
             var control = Control.Instance();
             if (control == null) return;
             control->IsWalking = !control->IsWalking;
+        });
+    }
+
+    // is walking have a different flag for while autorun is enabled
+    public unsafe void SetWalkingAutoRun(bool isWalking) {
+        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            var control = Control.Instance();
+            if (control == null) return;
+
+            // DalamudApi.PluginLog.Debug($"Control address: {(nint)control:X16}");
+            // DalamudApi.PluginLog.Debug($"control: {control->IsWalking} {Marshal.ReadByte((nint)control + 29976)}");
+            // doesn't make player walk again during auto-run
+            control->IsWalking = true;
+            // makes player walk again during both auto-run and manual movement
+            int IsWalkingWhileAutoRunOffset = 29976;
+            Marshal.WriteByte((nint)control, IsWalkingWhileAutoRunOffset, 0x1);
         });
     }
 

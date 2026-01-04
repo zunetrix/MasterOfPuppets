@@ -37,8 +37,7 @@ public class FollowPath : IDisposable {
 
     public void Update(IFramework fwk) {
         var player = DalamudApi.ObjectTable.LocalPlayer;
-        if (player == null)
-            return;
+        if (player == null) return;
 
         while (Waypoints.Count > 0) {
             var a = Waypoints[0];
@@ -149,6 +148,7 @@ public class FollowPath : IDisposable {
     }
 
     public void Rotate(int angle) {
+        Waypoints = new List<Vector3> { new Vector3(0, 0, 0) };
         _camera.DesiredAzimuth = angle.Degrees();
     }
 }

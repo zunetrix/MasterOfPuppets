@@ -164,6 +164,15 @@ public class PluginCommandManager : IDisposable {
                 case "movetomytarget":
                     Plugin.IpcProvider.ExecuteMoveToMyTarget();
                     break;
+                case "enablewalk":
+                    Plugin.MovementManager.SetWalking(true);
+                    break;
+                case "disablewalk":
+                    Plugin.MovementManager.SetWalking(false);
+                    break;
+                case "togglewalk":
+                    Plugin.MovementManager.ToggleWalking();
+                    break;
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");
                     return;

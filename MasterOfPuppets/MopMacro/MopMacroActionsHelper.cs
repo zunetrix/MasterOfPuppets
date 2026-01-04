@@ -231,6 +231,54 @@ public static class MopMacroActionsHelper {
         new MopAction
         {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop enablewalk",
+            SuggestionCommand = "/mop enablewalk",
+            Example = """
+            /mop enablewalk
+
+            Broadcast:
+            /mopbr /mop enablewalk
+            """,
+            Notes = """
+            Enable walking
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop disablewalk",
+            SuggestionCommand = "/mop disablewalk",
+            Example = """
+            /mop disablewalk
+
+            Broadcast:
+            /mopbr /mop disablewalk
+            """,
+            Notes = """
+            Disable walking
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop togglewalk",
+            SuggestionCommand = "/mop togglewalk",
+            Example = """
+            /mop togglewalk
+
+            Broadcast:
+            /mopbr /mop togglewalk
+            """,
+            Notes = """
+            Toggle walking
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mopbr <command>",
             SuggestionCommand = "/mopbr ",
             Example = """

@@ -42,6 +42,8 @@ public class DebugWindow : Window {
     private static string _search = string.Empty;
     private static HashSet<object>? _filtered;
     private static int _hoveredItem;
+    private static readonly List<Vector3> _path = new();
+    private static List<Vector3> _pathOffset = new();
     private static readonly Dictionary<string, (bool toogle, bool wasEnterClickedLastTime)> _comboDic = [];
     private readonly ImGuiInputTextMultiline InputTextMultiline;
     private readonly ImGuiModalDialog ImGuiModalDialog = new("##ConfirmModal", new Vector2(400, 200));
@@ -459,17 +461,99 @@ public class DebugWindow : Window {
                 Plugin.MovementManager.ToggleWalking();
             }
 
-
             ImGui.Text("Rotate Character");
             ImGui.InputInt("Angle##RotateCharacterInput", ref _angleInput, 1, 10, flags: ImGuiInputTextFlags.AutoSelectAll);
 
             ImGui.SameLine();
-            if (ImGui.Button("Roate")) {
+            if (ImGui.Button("Rotate")) {
                 Plugin.MovementManager.Rotate(_angleInput);
+            }
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.Text("Move Path");
+
+            ImGui.BeginChild("##PathListGroup", ImGuiHelpers.ScaledVector2(300, 250));
+            ImGui.Text("Path Points");
+            if (ImGui.BeginListBox($"##PathList", ImGuiHelpers.ScaledVector2(300, 220))) {
+                for (int i = 0; i < _path.Count; i++) {
+                    if (ImGui.Selectable($"[{i + 1:00}] {_path[i].ToString()}##PathList_{i}", false, ImGuiSelectableFlags.None)) {
+                        if (ImGui.GetIO().KeyCtrl) {
+                            _path.RemoveAt(i);
+                        }
+
+                    }
+                    ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                }
+
+                ImGui.EndListBox();
+            }
+            ImGui.EndChild();
+
+            ImGui.SameLine();
+
+            ImGui.BeginChild("##PathListOffsetGroup", ImGuiHelpers.ScaledVector2(300, 250));
+            ImGui.Text("Path Points Offset");
+            if (ImGui.BeginListBox($"##PathListOffset", ImGuiHelpers.ScaledVector2(300, 220))) {
+                for (int i = 0; i < _pathOffset.Count; i++) {
+                    if (ImGui.Selectable($"[{i + 1:00}] {_pathOffset[i].ToString()}##PathListOffset_{i}", false, ImGuiSelectableFlags.None)) {
+                        if (ImGui.GetIO().KeyCtrl) {
+                            _pathOffset.RemoveAt(i);
+                        }
+
+                    }
+                    ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                }
+
+                ImGui.EndListBox();
+            }
+            ImGui.EndChild();
+
+
+            if (ImGui.Button("Add Current Location Point")) {
+                var point = DalamudApi.ObjectTable.LocalPlayer.Position;
+                _path.Add(point);
+                _pathOffset = CalculatePathOffsets(_path);
+            }
+
+            if (ImGui.Button("Move to Path")) {
+                Plugin.MovementManager.MoveByOffsetPathCommand(_pathOffset);
             }
 
             ImGui.EndTabItem();
         }
+    }
+
+    public static List<Vector3> CalculatePathOffsets1(List<Vector3> path) {
+        var offsets = new List<Vector3>();
+
+        if (path == null || path.Count < 2)
+            return offsets;
+
+        for (int i = 1; i < path.Count; i++) {
+            offsets.Add(path[i] - path[i - 1]);
+        }
+
+        return offsets;
+    }
+
+    public static List<Vector3> CalculatePathOffsets(List<Vector3> path) {
+        var offsets = new List<Vector3>();
+
+        if (path == null || path.Count < 2)
+            return offsets;
+
+        for (int i = 1; i < path.Count; i++) {
+            offsets.Add(new Vector3(
+                path[i].X - path[i - 1].X,
+                0f,
+                path[i].Z - path[i - 1].Z
+            ));
+        }
+
+        return offsets;
     }
 
     private unsafe void DrawHotbarDebugTab() {

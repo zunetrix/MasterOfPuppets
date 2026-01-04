@@ -91,18 +91,17 @@ public class CompletionIndex {
     }
 
     private List<CompletionInfo> AllCompletionInfo() {
-
-
         var completionInfo = DalamudApi.DataManager.GetExcelSheet<Completion>()
-             .Where(raw => AllowedCompletionGroups.Contains(raw.Group))
-             .Select(raw => ParsedCompletion.From(raw))
-             .SelectMany<ParsedCompletion, CompletionInfo>(parsed => CompletionInfo.From(parsed))
-             .Select(info => {
-                 if (CompletionGroupsById.TryGetValue(info.Group, out var completionGroup)) {
-                     return info with { GroupTitle = completionGroup.GroupTitle };
-                 }
-                 return info;
-             })
+            // .Where(raw => raw.Group != 0)
+            .Where(raw => AllowedCompletionGroups.Contains(raw.Group))
+            .Select(raw => ParsedCompletion.From(raw))
+            .SelectMany<ParsedCompletion, CompletionInfo>(parsed => CompletionInfo.From(parsed))
+            .Select(info => {
+                if (CompletionGroupsById.TryGetValue(info.Group, out var completionGroup)) {
+                    return info with { GroupTitle = completionGroup.GroupTitle };
+                }
+                return info;
+            })
             .Concat(EmoteHelper.GetAllowedItems().Select(x => {
                 var completion = new CompletionInfo(
                             Group: 0,

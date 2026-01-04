@@ -150,6 +150,8 @@ public static class GameTargetManager {
             var minionObj = DalamudApi.ObjectTable
                 .FirstOrDefault(o => o.Address == (nint)minion);
 
+            // var ownerObject = DalamudApi.ObjectTable.PlayerObjects.FirstOrDefault(obj => obj.EntityId == targetId);
+
             if (minionObj == null) return;
 
             DalamudApi.TargetManager.Target = minionObj;

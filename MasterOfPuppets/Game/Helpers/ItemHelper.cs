@@ -47,7 +47,7 @@ public static class ItemHelper {
         return item == null ? null : GetExecutableAction(item.Value);
     }
 
-    private static Item? GetItem(uint id) {
+    public static Item? GetItem(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Item>().GetRowOrDefault(id);
     }
 

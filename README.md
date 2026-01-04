@@ -17,6 +17,22 @@ dotnet build -c Release
 dotnet test ./MasterOfPuppetsTests/
 ```
 
+# Init submodules
+```sh
+git submodule update --init --recursive
+
+git submodule sync
+git submodule update --init --recursive --force
+
+```
+
+# Update submodules
+```sh
+cd /submodule/
+git checkout main
+git pull origin main
+```
+
 TODO:
  - moploop block (start end):
  - add chat watcher init to prevent register on chat game listener if use chat option is disabled
@@ -43,6 +59,7 @@ loop code
  - https://github.com/una-xiv/umbra
  - https://github.com/Infiziert90/DeathRoll
  - https://github.com/Zeffuro/AetherBags
+ - https://github.com/NightmareXIV/Stylist
 
 # Game Sheet Preview
  - https://exd.camora.dev
