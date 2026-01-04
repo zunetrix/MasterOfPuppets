@@ -2,6 +2,8 @@ using System;
 
 using Dalamud.Interface.Windowing;
 
+using MasterOfPuppets.Debug;
+
 namespace MasterOfPuppets;
 
 public class PluginUi : IDisposable {
@@ -14,6 +16,8 @@ public class PluginUi : IDisposable {
     public MacroBatchEditorWindow MacroBatchEditorWindow { get; }
     public MacroQueueWindow MacroQueueWindow { get; }
     public CharactersWindow CharactersWindow { get; }
+    public ActionsBroadcastWindow ActionsBroadcastWindow { get; }
+
     public EmotesWindow EmotesWindow { get; }
     public MountWindow MountWindow { get; }
     public MinionWindow MinionWindow { get; }
@@ -21,6 +25,7 @@ public class PluginUi : IDisposable {
     public FacewearWindow FacewearWindow { get; }
     public FashionAccessoriesWindow FashionAccessoriesWindow { get; }
     public GearSetWindow GearSetWindow { get; }
+
     public MacroHelpWindow MacroHelpWindow { get; }
     public MacroImportExportWindow MacroImportExportWindow { get; }
     public IconPickerDialogWindow IconPickerDialogWindow { get; }
@@ -35,6 +40,9 @@ public class PluginUi : IDisposable {
         MacroBatchEditorWindow = AddWindow(new MacroBatchEditorWindow(Plugin));
         MacroQueueWindow = AddWindow(new MacroQueueWindow(Plugin));
         CharactersWindow = AddWindow(new CharactersWindow(Plugin));
+
+        ActionsBroadcastWindow = AddWindow(new ActionsBroadcastWindow(Plugin));
+
         EmotesWindow = AddWindow(new EmotesWindow(Plugin));
         MountWindow = AddWindow(new MountWindow(Plugin));
         MinionWindow = AddWindow(new MinionWindow(Plugin));
@@ -42,10 +50,11 @@ public class PluginUi : IDisposable {
         FacewearWindow = AddWindow(new FacewearWindow(Plugin));
         FashionAccessoriesWindow = AddWindow(new FashionAccessoriesWindow(Plugin));
         GearSetWindow = AddWindow(new GearSetWindow(Plugin));
+
         MacroHelpWindow = AddWindow(new MacroHelpWindow(Plugin));
         MacroImportExportWindow = AddWindow(new MacroImportExportWindow(Plugin));
         IconPickerDialogWindow = AddWindow(new IconPickerDialogWindow());
-        DebugWindow = AddWindow(new DebugWindow(Plugin, this));
+        DebugWindow = AddWindow(new DebugWindow(Plugin));
 
         // MainWindow = new MainWindow(Plugin, this);
         // WindowSystem.AddWindow(MainWindow);

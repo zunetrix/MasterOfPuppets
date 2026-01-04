@@ -60,6 +60,7 @@ loop code
  - https://github.com/Infiziert90/DeathRoll
  - https://github.com/Zeffuro/AetherBags
  - https://github.com/NightmareXIV/Stylist
+ - https://github.com/MidoriKami/VanillaPlus
 
 # Game Sheet Preview
  - https://exd.camora.dev

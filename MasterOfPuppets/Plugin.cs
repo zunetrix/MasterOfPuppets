@@ -18,6 +18,7 @@ public class Plugin : IDalamudPlugin {
     internal PluginCommandManager PluginCommandManager { get; }
     internal IpcProvider IpcProvider { get; }
     internal ChatWatcher ChatWatcher { get; }
+    // internal ItemMover ItemMover { get; }
     internal MacroHandler MacroHandler { get; }
     internal MacroManager MacroManager { get; }
     internal CompletionIndex CompletionIndex { get; }
@@ -32,6 +33,7 @@ public class Plugin : IDalamudPlugin {
         Ui = new PluginUi(this);
         IpcProvider = new IpcProvider(this);
         ChatWatcher = new ChatWatcher(this);
+        // ItemMover = new ItemMover(this);
         MacroManager = new MacroManager(this);
         MacroHandler = new MacroHandler(this);
         PluginCommandManager = new PluginCommandManager(this);
@@ -66,6 +68,7 @@ public class Plugin : IDalamudPlugin {
 
         IpcProvider.Dispose();
         ChatWatcher.Dispose();
+        // ItemMover.Dispose();
         MacroHandler.Dispose();
         PluginCommandManager.Dispose();
         MovementManager.Dispose();
@@ -75,6 +78,8 @@ public class Plugin : IDalamudPlugin {
     }
 
     private void OnFrameworkUpdate(IFramework fwk) {
+        if (!DalamudApi.ClientState.IsLoggedIn) { return; }
+
         FollowPath.Update(fwk);
         MovementManager.Update();
     }
