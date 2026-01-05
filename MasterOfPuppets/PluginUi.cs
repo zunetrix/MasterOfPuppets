@@ -33,14 +33,10 @@ public class PluginUi : IDisposable {
         MacroQueueWindow = AddWindow(new MacroQueueWindow(Plugin));
         CharactersWindow = AddWindow(new CharactersWindow(Plugin));
         ActionsBroadcastWindow = AddWindow(new ActionsBroadcastWindow(Plugin));
-
         MacroHelpWindow = AddWindow(new MacroHelpWindow(Plugin));
         MacroImportExportWindow = AddWindow(new MacroImportExportWindow(Plugin));
         IconPickerDialogWindow = AddWindow(new IconPickerDialogWindow());
         DebugWindow = AddWindow(new DebugWindow(Plugin));
-
-        // MainWindow = new MainWindow(Plugin, this);
-        // WindowSystem.AddWindow(MainWindow);
     }
 
     private T AddWindow<T>(T window) where T : Window {

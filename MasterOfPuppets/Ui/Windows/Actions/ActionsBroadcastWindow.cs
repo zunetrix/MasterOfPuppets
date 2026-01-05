@@ -22,29 +22,29 @@ public class ActionsBroadcastWindow : Window {
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    private readonly FragmentContext? _fragmentContext;
+    private readonly WidgetContext? _widgetContext;
 
-    private readonly FragmentManager _fragmentManager = new();
+    private readonly WidgetManager _widgetManager = new();
 
     public ActionsBroadcastWindow(Plugin plugin) : base($"{Plugin.Name}###ActionsBroadcastWindow") {
         Plugin = plugin;
 
-        _fragmentContext = new FragmentContext(plugin);
+        _widgetContext = new WidgetContext(plugin);
 
         Size = ImGuiHelpers.ScaledVector2(550, 450);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
 
-        _fragmentManager.Add(() => new EmotesFragment(_fragmentContext));
-        _fragmentManager.Add(() => new FashionAccessoriesFragment(_fragmentContext));
-        _fragmentManager.Add(() => new FacewearFragment(_fragmentContext));
-        _fragmentManager.Add(() => new MountsFragment(_fragmentContext));
-        _fragmentManager.Add(() => new MinionsFragment(_fragmentContext));
-        _fragmentManager.Add(() => new ItemsFragment(_fragmentContext));
-        _fragmentManager.Add(() => new GearSetFragment(_fragmentContext));
+        _widgetManager.Add(() => new EmotesWidget(_widgetContext));
+        _widgetManager.Add(() => new FashionAccessoriesWidget(_widgetContext));
+        _widgetManager.Add(() => new FacewearWidget(_widgetContext));
+        _widgetManager.Add(() => new MountsWidget(_widgetContext));
+        _widgetManager.Add(() => new MinionsWidget(_widgetContext));
+        _widgetManager.Add(() => new ItemsWidget(_widgetContext));
+        _widgetManager.Add(() => new GearSetWidget(_widgetContext));
 
-        _fragmentManager.Show(0);
+        _widgetManager.Show(0);
     }
 
     public override void Draw() {
@@ -53,7 +53,9 @@ public class ActionsBroadcastWindow : Window {
         ImGui.EndGroup();
 
         ImGui.BeginChild("##ActionsBroadcastScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawDebugTypeList();
+        if (Plugin.Config.ShowPanelActionsBroadcast) {
+            DrawDebugTypeList();
+        }
 
         ImGui.SameLine();
         DrawTypeContent(SelectedItemIndex);
@@ -63,13 +65,13 @@ public class ActionsBroadcastWindow : Window {
     private void DrawDebugTypeList() {
         var isFiltered = !string.IsNullOrEmpty(_searchString);
 
-        var indices = isFiltered ? ListSearchedIndexes : Enumerable.Range(0, _fragmentManager.Fragments.Count).ToList();
+        var indices = isFiltered ? ListSearchedIndexes : Enumerable.Range(0, _widgetManager.Widgets.Count).ToList();
 
         // left pane
         ImGui.BeginChild("##ActionsTypeList", ImGuiHelpers.ScaledVector2(200, 0), true);
         for (int i = 0; i < indices.Count; i++) {
             int realIndex = indices[i];
-            var fragment = _fragmentManager.Fragments[realIndex];
+            var widget = _widgetManager.Widgets[realIndex];
             bool isSelected = SelectedItemIndex == realIndex;
 
             if (isSelected) {
@@ -78,11 +80,11 @@ public class ActionsBroadcastWindow : Window {
                 ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
             }
 
-            ImGuiUtil.IconButton(fragment.Instance.Icon, $"##fragment_{realIndex}");
+            ImGuiUtil.IconButton(widget.Instance.Icon, $"##fragment_{realIndex}");
             ImGui.SameLine();
-            if (ImGui.Selectable(fragment.Instance.Title, isSelected)) {
+            if (ImGui.Selectable(widget.Instance.Title, isSelected)) {
                 SelectedItemIndex = realIndex;
-                _fragmentManager.Show(realIndex);
+                _widgetManager.Show(realIndex);
             }
 
             if (isSelected)
@@ -97,16 +99,16 @@ public class ActionsBroadcastWindow : Window {
     }
 
     private void DrawTypeContent(int itemIndex) {
-        if (_fragmentManager.Fragments.Count == 0) return;
-        var fragment = _fragmentManager.Fragments[itemIndex];
+        if (_widgetManager.Widgets.Count == 0) return;
+        var widget = _widgetManager.Widgets[itemIndex];
 
         ImGui.BeginGroup();
         ImGui.BeginChild("##ActionsBroadcastContent", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()));
-        ImGuiUtil.DrawColoredBanner($"{fragment.Instance.Title}", Style.Components.ButtonBlueHovered);
+        ImGuiUtil.DrawColoredBanner($"{widget.Instance.Title}", Style.Components.ButtonBlueHovered);
 
         ImGui.Spacing();
 
-        _fragmentManager.Draw();
+        _widgetManager.Draw();
 
         ImGui.EndChild();
         ImGui.EndGroup();
@@ -114,6 +116,12 @@ public class ActionsBroadcastWindow : Window {
 
     private void DrawHeader() {
         ImGui.Spacing();
+
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Tags, $"##ToggleActionsBroadcastPanelBtn", Language.TogglePanelBtn)) {
+            Plugin.Config.ShowPanelActionsBroadcast = !Plugin.Config.ShowPanelActionsBroadcast;
+        }
+
+        ImGui.SameLine();
 
         if (ImGui.InputTextWithHint("##ActionsBroadcastSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
@@ -128,7 +136,7 @@ public class ActionsBroadcastWindow : Window {
         ListSearchedIndexes.Clear();
 
         ListSearchedIndexes.AddRange(
-            _fragmentManager.Fragments
+            _widgetManager.Widgets
             .Select((fragment, index) => new { fragment, index })
             .Where(x => x.fragment.Instance.Title.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             .Select(x => x.index)

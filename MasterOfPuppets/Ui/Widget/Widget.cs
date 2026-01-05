@@ -2,15 +2,15 @@ using Dalamud.Interface;
 
 namespace MasterOfPuppets;
 
-public abstract class Fragment {
+public abstract class Widget {
     public abstract string Title { get; }
     public virtual FontAwesomeIcon Icon => FontAwesomeIcon.None;
 
-    protected FragmentContext Context { get; }
+    protected WidgetContext Context { get; }
 
     internal bool IsShown { get; private set; }
 
-    protected Fragment(FragmentContext ctx) {
+    protected Widget(WidgetContext ctx) {
         this.Context = ctx;
     }
 

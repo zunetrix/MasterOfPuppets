@@ -15,20 +15,20 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Actions;
 
-public class FashionAccessoriesFragment : Fragment {
-    public override string Title => "Fashion Accessories";
-    public override FontAwesomeIcon Icon => FontAwesomeIcon.Umbrella;
+public class ItemsWidget : Widget {
+    public override string Title => "Items";
+    public override FontAwesomeIcon Icon => FontAwesomeIcon.ShoppingBag;
 
     private readonly List<ExecutableAction> UnlockedActions = new();
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    public FashionAccessoriesFragment(FragmentContext ctx) : base(ctx) {
+    public ItemsWidget(WidgetContext ctx) : base(ctx) {
     }
 
     public override void OnShow() {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(FashionAccessoriesHelper.GetAllowedItems());
+        UnlockedActions.AddRange(ItemHelper.GetAllowedItems());
         base.OnShow();
     }
 
@@ -43,13 +43,14 @@ public class FashionAccessoriesFragment : Fragment {
         DrawHeader();
         ImGui.EndGroup();
 
-        ImGui.BeginChild("##FashionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
-        DrawFashionGird();
+        ImGui.BeginChild("##ItemListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
+        DrawItemGird();
         ImGui.EndChild();
     }
 
     private void Search() {
         ListSearchedIndexes.Clear();
+
         ListSearchedIndexes.AddRange(
             UnlockedActions
             .Select((item, index) => new { item, index })
@@ -60,7 +61,7 @@ public class FashionAccessoriesFragment : Fragment {
     }
 
     private void DrawHeader() {
-        ImGui.Text($"{Language.FashionAccessoriesTitle} (unlocked)");
+        ImGui.Text($"{Language.ItemTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute (broadcast)
@@ -69,60 +70,26 @@ public class FashionAccessoriesFragment : Fragment {
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##FashionAccessoriesSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
+        if (ImGui.InputTextWithHint("##ItemSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
-
-        ImGui.SameLine();
-        var rainCheck = ActionHelper.GetExecutableAction(30869); // Rain Check
-        var umbrellaDance = ActionHelper.GetExecutableAction(30868); // Umbrella Dance
-        var changePose = EmoteHelper.GetExecutableAction(90); // Change Pose
-        var putAway = GeneralActionHelper.GetExecutableAction(28); // Put Away
-        var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
-
-        DalamudApi.TextureProvider.DrawIcon(rainCheck.IconId, iconSize);
-        if (ImGui.IsItemClicked()) {
-            Context.Plugin.IpcProvider.ExecuteActionCommand(rainCheck.ActionId);
-        }
-        ImGuiUtil.ToolTip(Language.ClickToExecute);
-
-        ImGui.SameLine();
-        DalamudApi.TextureProvider.DrawIcon(umbrellaDance.IconId, iconSize);
-        if (ImGui.IsItemClicked()) {
-            Context.Plugin.IpcProvider.ExecuteActionCommand(umbrellaDance.ActionId);
-        }
-        ImGuiUtil.ToolTip(Language.ClickToExecute);
-
-        ImGui.SameLine();
-        DalamudApi.TextureProvider.DrawIcon(changePose.IconId, iconSize);
-        if (ImGui.IsItemClicked()) {
-            Context.Plugin.IpcProvider.ExecuteTextCommand(changePose.TextCommand);
-        }
-        ImGuiUtil.ToolTip(Language.ClickToExecute);
-
-        ImGui.SameLine();
-        DalamudApi.TextureProvider.DrawIcon(putAway.IconId, iconSize);
-        if (ImGui.IsItemClicked()) {
-            Context.Plugin.IpcProvider.ExecuteTextCommand(putAway.TextCommand);
-        }
-        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
     }
 
-    public void DrawFashionGird() {
+    public void DrawItemGird() {
         float iconSize = 48 * ImGuiHelpers.GlobalScale;
 
-        if (ImGui.BeginTable("##FashionTable", 1, ImGuiTableFlags.Resizable)) {
+        if (ImGui.BeginTable("##ItemTable", 1, ImGuiTableFlags.Resizable)) {
             ImGui.TableSetupColumn("Icons", ImGuiTableColumnFlags.WidthStretch);
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##FashionIconList")) {
+            using (ImRaii.Child("Search##ItemIconList")) {
                 var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
                 DrawIconGrid(iconSize, columns);
             }
@@ -144,20 +111,20 @@ public class FashionAccessoriesFragment : Fragment {
                 .ToList();
         }
 
-        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction fashionAccessorie) => {
-            DalamudApi.TextureProvider.DrawIcon(fashionAccessorie.IconId, new Vector2(iconSize));
+        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction item) => {
+            DalamudApi.TextureProvider.DrawIcon(item.IconId, new Vector2(iconSize));
             ImGuiUtil.ToolTip($"""
-            {fashionAccessorie.ActionName} ({fashionAccessorie.ActionId})
-            Icon: {fashionAccessorie.IconId}
+            {item.ActionName} ({item.ActionId})
+            Icon: {item.IconId}
 
             Command:
-            {fashionAccessorie.TextCommand}
+            {item.TextCommand}
             """);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
-                ImGui.SetClipboardText(fashionAccessorie.TextCommand);
+                ImGui.SetClipboardText(item.TextCommand);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             } else if (ImGui.IsItemClicked(ImGuiMouseButton.Left)) {
-                Context.Plugin.IpcProvider.ExecuteTextCommand(fashionAccessorie.TextCommand);
+                Context.Plugin.IpcProvider.ExecuteItemCommand(item.ActionId);
             }
         }, columns, lineHeight);
     }

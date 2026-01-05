@@ -1,9 +1,9 @@
 namespace MasterOfPuppets;
 
-public class FragmentContext {
+public class WidgetContext {
     public Plugin Plugin { get; }
 
-    public FragmentContext(Plugin plugin) {
+    public WidgetContext(Plugin plugin) {
         Plugin = plugin;
     }
 }

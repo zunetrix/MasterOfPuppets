@@ -14,7 +14,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Actions;
 
-public class GearSetFragment : Fragment {
+public class GearSetWidget : Widget {
     public override string Title => "Gear Set";
     public override FontAwesomeIcon Icon => FontAwesomeIcon.Briefcase;
 
@@ -23,7 +23,7 @@ public class GearSetFragment : Fragment {
     private readonly List<int> ListSearchedIndexes = new();
     private bool _showEmptyGearsets = false;
 
-    public GearSetFragment(FragmentContext ctx) : base(ctx) {
+    public GearSetWidget(WidgetContext ctx) : base(ctx) {
     }
 
     public override void OnShow() {

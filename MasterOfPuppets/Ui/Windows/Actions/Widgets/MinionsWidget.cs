@@ -15,20 +15,20 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Actions;
 
-public class FacewearFragment : Fragment {
-    public override string Title => "Facewear";
-    public override FontAwesomeIcon Icon => FontAwesomeIcon.Glasses;
+public class MinionsWidget : Widget {
+    public override string Title => "Minions";
+    public override FontAwesomeIcon Icon => FontAwesomeIcon.Cat;
 
     private readonly List<ExecutableAction> UnlockedActions = new();
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    public FacewearFragment(FragmentContext ctx) : base(ctx) {
+    public MinionsWidget(WidgetContext ctx) : base(ctx) {
     }
 
     public override void OnShow() {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(FacewearHelper.GetAllowedItems());
+        UnlockedActions.AddRange(MinionHelper.GetAllowedItems());
         base.OnShow();
     }
 
@@ -39,14 +39,16 @@ public class FacewearFragment : Fragment {
     }
 
     public override void Draw() {
+
         ImGui.BeginGroup();
         DrawHeader();
         ImGui.EndGroup();
 
-        ImGui.BeginChild("##FacewerarListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
-        DrawFacewearGird();
+        ImGui.BeginChild("##MinionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
+        DrawMinionGird();
         ImGui.EndChild();
     }
+
     private void Search() {
         ListSearchedIndexes.Clear();
 
@@ -60,7 +62,7 @@ public class FacewearFragment : Fragment {
     }
 
     private void DrawHeader() {
-        ImGui.Text($"{Language.FacewearTitle} (unlocked)");
+        ImGui.Text($"{Language.MinionTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute (broadcast)
@@ -69,8 +71,13 @@ public class FacewearFragment : Fragment {
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##FacewearSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
+        if (ImGui.InputTextWithHint("##MinionSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button(Language.DismissBtn)) {
+            Context.Plugin.IpcProvider.ExecuteTextCommand("/minion");
         }
 
         ImGui.Spacing();
@@ -78,17 +85,17 @@ public class FacewearFragment : Fragment {
         ImGui.Spacing();
     }
 
-    public void DrawFacewearGird() {
+    public void DrawMinionGird() {
         float iconSize = 48 * ImGuiHelpers.GlobalScale;
 
-        if (ImGui.BeginTable("##FacewearTable", 1, ImGuiTableFlags.Resizable)) {
+        if (ImGui.BeginTable("##MinionTable", 1, ImGuiTableFlags.Resizable)) {
             ImGui.TableSetupColumn("Icons", ImGuiTableColumnFlags.WidthStretch);
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##FacewearIconList")) {
+            using (ImRaii.Child("Search##MinionIconList")) {
                 var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
                 DrawIconGrid(iconSize, columns);
             }
@@ -110,20 +117,20 @@ public class FacewearFragment : Fragment {
                 .ToList();
         }
 
-        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction facewear) => {
-            DalamudApi.TextureProvider.DrawIcon(facewear.IconId, new Vector2(iconSize));
+        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction minion) => {
+            DalamudApi.TextureProvider.DrawIcon(minion.IconId, new Vector2(iconSize));
             ImGuiUtil.ToolTip($"""
-            {facewear.ActionName} ({facewear.ActionId})
-            Icon: {facewear.IconId}
+            {minion.ActionName} ({minion.ActionId})
+            Icon: {minion.IconId}
 
             Command:
-            {facewear.TextCommand}
+            {minion.TextCommand}
             """);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
-                ImGui.SetClipboardText(facewear.TextCommand);
+                ImGui.SetClipboardText(minion.TextCommand);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             } else if (ImGui.IsItemClicked(ImGuiMouseButton.Left)) {
-                Context.Plugin.IpcProvider.ExecuteTextCommand(facewear.TextCommand);
+                Context.Plugin.IpcProvider.ExecuteTextCommand(minion.TextCommand);
             }
         }, columns, lineHeight);
     }

@@ -15,7 +15,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Actions;
 
-public sealed class EmotesFragment : Fragment {
+public sealed class EmotesWidget : Widget {
     public override string Title => "Emotes";
     public override FontAwesomeIcon Icon => FontAwesomeIcon.SmileWink;
 
@@ -26,7 +26,7 @@ public sealed class EmotesFragment : Fragment {
     private bool _showExpressionsEmotes = true;
     private bool _showInternalEmotes = true;
 
-    public EmotesFragment(FragmentContext ctx) : base(ctx) {
+    public EmotesWidget(WidgetContext ctx) : base(ctx) {
     }
 
     public override void OnShow() {

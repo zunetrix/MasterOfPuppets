@@ -15,20 +15,20 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Actions;
 
-public class ItemsFragment : Fragment {
-    public override string Title => "Items";
-    public override FontAwesomeIcon Icon => FontAwesomeIcon.ShoppingBag;
+public class FacewearWidget : Widget {
+    public override string Title => "Facewear";
+    public override FontAwesomeIcon Icon => FontAwesomeIcon.Glasses;
 
     private readonly List<ExecutableAction> UnlockedActions = new();
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    public ItemsFragment(FragmentContext ctx) : base(ctx) {
+    public FacewearWidget(WidgetContext ctx) : base(ctx) {
     }
 
     public override void OnShow() {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(ItemHelper.GetAllowedItems());
+        UnlockedActions.AddRange(FacewearHelper.GetAllowedItems());
         base.OnShow();
     }
 
@@ -43,11 +43,10 @@ public class ItemsFragment : Fragment {
         DrawHeader();
         ImGui.EndGroup();
 
-        ImGui.BeginChild("##ItemListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
-        DrawItemGird();
+        ImGui.BeginChild("##FacewerarListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
+        DrawFacewearGird();
         ImGui.EndChild();
     }
-
     private void Search() {
         ListSearchedIndexes.Clear();
 
@@ -61,7 +60,7 @@ public class ItemsFragment : Fragment {
     }
 
     private void DrawHeader() {
-        ImGui.Text($"{Language.ItemTitle} (unlocked)");
+        ImGui.Text($"{Language.FacewearTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute (broadcast)
@@ -70,7 +69,7 @@ public class ItemsFragment : Fragment {
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##ItemSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
+        if (ImGui.InputTextWithHint("##FacewearSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
 
@@ -79,17 +78,17 @@ public class ItemsFragment : Fragment {
         ImGui.Spacing();
     }
 
-    public void DrawItemGird() {
+    public void DrawFacewearGird() {
         float iconSize = 48 * ImGuiHelpers.GlobalScale;
 
-        if (ImGui.BeginTable("##ItemTable", 1, ImGuiTableFlags.Resizable)) {
+        if (ImGui.BeginTable("##FacewearTable", 1, ImGuiTableFlags.Resizable)) {
             ImGui.TableSetupColumn("Icons", ImGuiTableColumnFlags.WidthStretch);
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##ItemIconList")) {
+            using (ImRaii.Child("Search##FacewearIconList")) {
                 var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
                 DrawIconGrid(iconSize, columns);
             }
@@ -111,20 +110,20 @@ public class ItemsFragment : Fragment {
                 .ToList();
         }
 
-        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction item) => {
-            DalamudApi.TextureProvider.DrawIcon(item.IconId, new Vector2(iconSize));
+        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction facewear) => {
+            DalamudApi.TextureProvider.DrawIcon(facewear.IconId, new Vector2(iconSize));
             ImGuiUtil.ToolTip($"""
-            {item.ActionName} ({item.ActionId})
-            Icon: {item.IconId}
+            {facewear.ActionName} ({facewear.ActionId})
+            Icon: {facewear.IconId}
 
             Command:
-            {item.TextCommand}
+            {facewear.TextCommand}
             """);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
-                ImGui.SetClipboardText(item.TextCommand);
+                ImGui.SetClipboardText(facewear.TextCommand);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             } else if (ImGui.IsItemClicked(ImGuiMouseButton.Left)) {
-                Context.Plugin.IpcProvider.ExecuteItemCommand(item.ActionId);
+                Context.Plugin.IpcProvider.ExecuteTextCommand(facewear.TextCommand);
             }
         }, columns, lineHeight);
     }

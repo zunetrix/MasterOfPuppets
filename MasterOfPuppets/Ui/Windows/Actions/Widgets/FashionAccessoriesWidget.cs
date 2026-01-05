@@ -15,20 +15,20 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Actions;
 
-public class MinionsFragment : Fragment {
-    public override string Title => "Minions";
-    public override FontAwesomeIcon Icon => FontAwesomeIcon.Cat;
+public class FashionAccessoriesWidget : Widget {
+    public override string Title => "Fashion Accessories";
+    public override FontAwesomeIcon Icon => FontAwesomeIcon.Umbrella;
 
     private readonly List<ExecutableAction> UnlockedActions = new();
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    public MinionsFragment(FragmentContext ctx) : base(ctx) {
+    public FashionAccessoriesWidget(WidgetContext ctx) : base(ctx) {
     }
 
     public override void OnShow() {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(MinionHelper.GetAllowedItems());
+        UnlockedActions.AddRange(FashionAccessoriesHelper.GetAllowedItems());
         base.OnShow();
     }
 
@@ -39,19 +39,17 @@ public class MinionsFragment : Fragment {
     }
 
     public override void Draw() {
-
         ImGui.BeginGroup();
         DrawHeader();
         ImGui.EndGroup();
 
-        ImGui.BeginChild("##MinionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
-        DrawMinionGird();
+        ImGui.BeginChild("##FashionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
+        DrawFashionGird();
         ImGui.EndChild();
     }
 
     private void Search() {
         ListSearchedIndexes.Clear();
-
         ListSearchedIndexes.AddRange(
             UnlockedActions
             .Select((item, index) => new { item, index })
@@ -62,7 +60,7 @@ public class MinionsFragment : Fragment {
     }
 
     private void DrawHeader() {
-        ImGui.Text($"{Language.MinionTitle} (unlocked)");
+        ImGui.Text($"{Language.FashionAccessoriesTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute (broadcast)
@@ -71,31 +69,60 @@ public class MinionsFragment : Fragment {
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##MinionSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
+        if (ImGui.InputTextWithHint("##FashionAccessoriesSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
 
         ImGui.SameLine();
-        if (ImGui.Button(Language.DismissBtn)) {
-            Context.Plugin.IpcProvider.ExecuteTextCommand("/minion");
+        var rainCheck = ActionHelper.GetExecutableAction(30869); // Rain Check
+        var umbrellaDance = ActionHelper.GetExecutableAction(30868); // Umbrella Dance
+        var changePose = EmoteHelper.GetExecutableAction(90); // Change Pose
+        var putAway = GeneralActionHelper.GetExecutableAction(28); // Put Away
+        var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
+
+        DalamudApi.TextureProvider.DrawIcon(rainCheck.IconId, iconSize);
+        if (ImGui.IsItemClicked()) {
+            Context.Plugin.IpcProvider.ExecuteActionCommand(rainCheck.ActionId);
         }
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
+
+        ImGui.SameLine();
+        DalamudApi.TextureProvider.DrawIcon(umbrellaDance.IconId, iconSize);
+        if (ImGui.IsItemClicked()) {
+            Context.Plugin.IpcProvider.ExecuteActionCommand(umbrellaDance.ActionId);
+        }
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
+
+        ImGui.SameLine();
+        DalamudApi.TextureProvider.DrawIcon(changePose.IconId, iconSize);
+        if (ImGui.IsItemClicked()) {
+            Context.Plugin.IpcProvider.ExecuteTextCommand(changePose.TextCommand);
+        }
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
+
+        ImGui.SameLine();
+        DalamudApi.TextureProvider.DrawIcon(putAway.IconId, iconSize);
+        if (ImGui.IsItemClicked()) {
+            Context.Plugin.IpcProvider.ExecuteTextCommand(putAway.TextCommand);
+        }
+        ImGuiUtil.ToolTip(Language.ClickToExecute);
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
     }
 
-    public void DrawMinionGird() {
+    public void DrawFashionGird() {
         float iconSize = 48 * ImGuiHelpers.GlobalScale;
 
-        if (ImGui.BeginTable("##MinionTable", 1, ImGuiTableFlags.Resizable)) {
+        if (ImGui.BeginTable("##FashionTable", 1, ImGuiTableFlags.Resizable)) {
             ImGui.TableSetupColumn("Icons", ImGuiTableColumnFlags.WidthStretch);
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##MinionIconList")) {
+            using (ImRaii.Child("Search##FashionIconList")) {
                 var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
                 DrawIconGrid(iconSize, columns);
             }
@@ -117,20 +144,20 @@ public class MinionsFragment : Fragment {
                 .ToList();
         }
 
-        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction minion) => {
-            DalamudApi.TextureProvider.DrawIcon(minion.IconId, new Vector2(iconSize));
+        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction fashionAccessorie) => {
+            DalamudApi.TextureProvider.DrawIcon(fashionAccessorie.IconId, new Vector2(iconSize));
             ImGuiUtil.ToolTip($"""
-            {minion.ActionName} ({minion.ActionId})
-            Icon: {minion.IconId}
+            {fashionAccessorie.ActionName} ({fashionAccessorie.ActionId})
+            Icon: {fashionAccessorie.IconId}
 
             Command:
-            {minion.TextCommand}
+            {fashionAccessorie.TextCommand}
             """);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
-                ImGui.SetClipboardText(minion.TextCommand);
+                ImGui.SetClipboardText(fashionAccessorie.TextCommand);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             } else if (ImGui.IsItemClicked(ImGuiMouseButton.Left)) {
-                Context.Plugin.IpcProvider.ExecuteTextCommand(minion.TextCommand);
+                Context.Plugin.IpcProvider.ExecuteTextCommand(fashionAccessorie.TextCommand);
             }
         }, columns, lineHeight);
     }

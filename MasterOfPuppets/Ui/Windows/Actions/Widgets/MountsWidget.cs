@@ -15,7 +15,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Actions;
 
-public class MountsFragment : Fragment {
+public class MountsWidget : Widget {
     public override string Title => "Mounts";
     public override FontAwesomeIcon Icon => FontAwesomeIcon.Horse;
 
@@ -23,7 +23,7 @@ public class MountsFragment : Fragment {
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    public MountsFragment(FragmentContext ctx) : base(ctx) {
+    public MountsWidget(WidgetContext ctx) : base(ctx) {
     }
 
     public override void OnShow() {
