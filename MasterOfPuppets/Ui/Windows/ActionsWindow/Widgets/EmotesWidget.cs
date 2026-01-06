@@ -147,7 +147,7 @@ public sealed class EmotesWidget : Widget {
     }
 
     public void DrawEmoteGird() {
-        float iconSize = 48 * ImGuiHelpers.GlobalScale;
+        float iconSize = Context.Plugin.Config.ActionIconSize * ImGuiHelpers.GlobalScale;
 
         if (ImGui.BeginTable("##EmoteTable", 1, ImGuiTableFlags.Resizable)) {
             ImGui.TableSetupColumn("Icons", ImGuiTableColumnFlags.WidthStretch);

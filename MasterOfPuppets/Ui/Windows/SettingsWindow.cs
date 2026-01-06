@@ -84,10 +84,12 @@ public class SettingsWindow : Window {
             if (ImGui.InputDouble("##DelayBetrweenActions", ref delayBetweenActions, 0.1, 1, "%.2f", ImGuiInputTextFlags.AutoSelectAll)) {
                 delayBetweenActions = Math.Clamp(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero), 0, 60);
                 Plugin.Config.DelayBetweenActions = delayBetweenActions;
-                Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
-            ImGuiUtil.HelpMarker("Set 0 to disable");
+            ImGuiUtil.HelpMarker("""
+            Set 0 to disable
+            Be careful when disabling global delay along with loops to avoid spamming actions
+            """);
             ImGuiGroupPanel.EndGroupPanel();
 
             ImGui.Spacing();
@@ -98,21 +100,18 @@ public class SettingsWindow : Window {
             var openOnStartup = Plugin.Config.OpenOnStartup;
             if (ImGui.Checkbox(Language.SettingsWindowOpenOnStartup, ref openOnStartup)) {
                 Plugin.Config.OpenOnStartup = openOnStartup;
-                Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
 
             var openOnLogin = Plugin.Config.OpenOnLogin;
             if (ImGui.Checkbox(Language.SettingsWindowOpenLogin, ref openOnLogin)) {
                 Plugin.Config.OpenOnLogin = openOnLogin;
-                Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
 
             var allowCloseWithEscape = Plugin.Config.AllowCloseWithEscape;
             if (ImGui.Checkbox(Language.SettingsWindowAllowCloseWithEscape, ref allowCloseWithEscape)) {
                 Plugin.Config.AllowCloseWithEscape = allowCloseWithEscape;
-                Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
                 Plugin.Ui.MainWindow.UpdateWindowConfig();
             }

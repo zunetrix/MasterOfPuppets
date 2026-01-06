@@ -12,12 +12,11 @@ public class PluginUi : IDisposable {
     private WindowSystem WindowSystem { get; } = new();
     public MainWindow MainWindow { get; }
     public SettingsWindow SettingsWindow { get; }
+    public ActionsBroadcastWindow ActionsBroadcastWindow { get; }
     public MacroEditorWindow MacroEditorWindow { get; }
     public MacroBatchEditorWindow MacroBatchEditorWindow { get; }
     public MacroQueueWindow MacroQueueWindow { get; }
     public CharactersWindow CharactersWindow { get; }
-    public ActionsBroadcastWindow ActionsBroadcastWindow { get; }
-
     public MacroHelpWindow MacroHelpWindow { get; }
     public MacroImportExportWindow MacroImportExportWindow { get; }
     public IconPickerDialogWindow IconPickerDialogWindow { get; }

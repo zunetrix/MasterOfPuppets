@@ -33,16 +33,16 @@ public class DebugWindow : Window {
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
 
-        _widgetManager.Add(() => new ActionsDebugWidget(_widgetContext));
-        _widgetManager.Add(() => new ConflictingPluginDebugWidget(_widgetContext));
-        _widgetManager.Add(() => new FontAwesomeDebugWidget(_widgetContext));
         _widgetManager.Add(() => new GeneralDebugWidget(_widgetContext));
+        _widgetManager.Add(() => new ActionsDebugWidget(_widgetContext));
         _widgetManager.Add(() => new HotbarDebugWidget(_widgetContext));
         _widgetManager.Add(() => new HotbarPetDebugWidget(_widgetContext));
-        _widgetManager.Add(() => new InventoryDebugWidget(_widgetContext));
         _widgetManager.Add(() => new MovementDebugWidget(_widgetContext));
         _widgetManager.Add(() => new TargetDebugWidget(_widgetContext));
+        _widgetManager.Add(() => new InventoryDebugWidget(_widgetContext));
         _widgetManager.Add(() => new UiElementDebugWidget(_widgetContext));
+        _widgetManager.Add(() => new ConflictingPluginDebugWidget(_widgetContext));
+        _widgetManager.Add(() => new FontAwesomeDebugWidget(_widgetContext));
 
         _widgetManager.Show(0);
     }

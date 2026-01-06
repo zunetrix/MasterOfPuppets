@@ -354,6 +354,7 @@ public class MainWindow : Window {
         // toggle left tags panel show/hide
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Tags, $"##ToggleMacroTagsPanelBtn", Language.TogglePanelBtn)) {
             Plugin.Config.ShowPanelMacroTags = !Plugin.Config.ShowPanelMacroTags;
+            Plugin.IpcProvider.SyncConfiguration();
         }
 
         ImGui.SameLine();

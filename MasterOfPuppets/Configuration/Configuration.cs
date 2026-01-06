@@ -15,7 +15,7 @@ internal class Configuration : IPluginConfiguration {
     private IDalamudPluginInterface PluginInterface { get; set; } = null;
 
     public bool SyncClients { get; set; } = true;
-    // for individual Config file accounts
+    // individual account Config file
     public bool SaveConfigAfterSync { get; set; } = false;
 
     // Macros
@@ -46,9 +46,9 @@ internal class Configuration : IPluginConfiguration {
     public bool AllowResize { get; set; } = true;
     public bool ShowSettingsButton { get; set; } = true;
     public bool AllowCloseWithEscape { get; set; } = false;
-
     public bool ShowPanelActionsBroadcast { get; set; } = true;
     public bool ShowPanelMacroTags { get; set; } = true;
+    public float ActionIconSize { get; set; } = 48;
 
     // Movement
     [Newtonsoft.Json.JsonIgnore]
@@ -114,6 +114,7 @@ internal class Configuration : IPluginConfiguration {
         // UI
         ShowPanelActionsBroadcast = newPluginConfig.ShowPanelActionsBroadcast;
         ShowPanelMacroTags = newPluginConfig.ShowPanelMacroTags;
+        ActionIconSize = newPluginConfig.ActionIconSize;
 
         OpenOnStartup = newPluginConfig.OpenOnStartup;
         OpenOnLogin = newPluginConfig.OpenOnLogin;

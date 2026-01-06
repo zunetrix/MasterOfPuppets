@@ -15,20 +15,20 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Actions;
 
-public class MinionsWidget : Widget {
-    public override string Title => "Minions";
-    public override FontAwesomeIcon Icon => FontAwesomeIcon.Cat;
+public class MountsWidget : Widget {
+    public override string Title => "Mounts";
+    public override FontAwesomeIcon Icon => FontAwesomeIcon.Horse;
 
     private readonly List<ExecutableAction> UnlockedActions = new();
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    public MinionsWidget(WidgetContext ctx) : base(ctx) {
+    public MountsWidget(WidgetContext ctx) : base(ctx) {
     }
 
     public override void OnShow() {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(MinionHelper.GetAllowedItems());
+        UnlockedActions.AddRange(MountHelper.GetAllowedItems());
         base.OnShow();
     }
 
@@ -39,13 +39,12 @@ public class MinionsWidget : Widget {
     }
 
     public override void Draw() {
-
         ImGui.BeginGroup();
         DrawHeader();
         ImGui.EndGroup();
 
-        ImGui.BeginChild("##MinionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
-        DrawMinionGird();
+        ImGui.BeginChild("##MountListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
+        DrawMountGird();
         ImGui.EndChild();
     }
 
@@ -62,7 +61,7 @@ public class MinionsWidget : Widget {
     }
 
     private void DrawHeader() {
-        ImGui.Text($"{Language.MinionTitle} (unlocked)");
+        ImGui.Text($"{Language.MountTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute (broadcast)
@@ -71,31 +70,34 @@ public class MinionsWidget : Widget {
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##MinionSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
+        if (ImGui.InputTextWithHint("##MountSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
 
         ImGui.SameLine();
-        if (ImGui.Button(Language.DismissBtn)) {
-            Context.Plugin.IpcProvider.ExecuteTextCommand("/minion");
+        var unmount = GeneralActionHelper.GetExecutableAction(23);
+        DalamudApi.TextureProvider.DrawIcon(unmount.IconId, ImGuiHelpers.ScaledVector2(30, 30));
+        if (ImGui.IsItemClicked()) {
+            Context.Plugin.IpcProvider.ExecuteGeneralActionCommand(unmount.ActionId);
         }
+        ImGuiUtil.ToolTip($"{Language.ClickToExecute} (unmount)");
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
     }
 
-    public void DrawMinionGird() {
-        float iconSize = 48 * ImGuiHelpers.GlobalScale;
+    public void DrawMountGird() {
+        float iconSize = Context.Plugin.Config.ActionIconSize * ImGuiHelpers.GlobalScale;
 
-        if (ImGui.BeginTable("##MinionTable", 1, ImGuiTableFlags.Resizable)) {
+        if (ImGui.BeginTable("##MountTable", 1, ImGuiTableFlags.Resizable)) {
             ImGui.TableSetupColumn("Icons", ImGuiTableColumnFlags.WidthStretch);
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##MinionIconList")) {
+            using (ImRaii.Child("Search##MountIconList")) {
                 var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
                 DrawIconGrid(iconSize, columns);
             }
@@ -117,20 +119,20 @@ public class MinionsWidget : Widget {
                 .ToList();
         }
 
-        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction minion) => {
-            DalamudApi.TextureProvider.DrawIcon(minion.IconId, new Vector2(iconSize));
+        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction mount) => {
+            DalamudApi.TextureProvider.DrawIcon(mount.IconId, new Vector2(iconSize));
             ImGuiUtil.ToolTip($"""
-            {minion.ActionName} ({minion.ActionId})
-            Icon: {minion.IconId}
+            {mount.ActionName} ({mount.ActionId})
+            Icon: {mount.IconId}
 
             Command:
-            {minion.TextCommand}
+            {mount.TextCommand}
             """);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
-                ImGui.SetClipboardText(minion.TextCommand);
+                ImGui.SetClipboardText(mount.TextCommand);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             } else if (ImGui.IsItemClicked(ImGuiMouseButton.Left)) {
-                Context.Plugin.IpcProvider.ExecuteTextCommand(minion.TextCommand);
+                Context.Plugin.IpcProvider.ExecuteTextCommand(mount.TextCommand);
             }
         }, columns, lineHeight);
     }

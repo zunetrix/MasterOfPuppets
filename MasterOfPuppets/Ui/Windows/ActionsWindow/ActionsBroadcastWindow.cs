@@ -117,15 +117,33 @@ public class ActionsBroadcastWindow : Window {
     private void DrawHeader() {
         ImGui.Spacing();
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Tags, $"##ToggleActionsBroadcastPanelBtn", Language.TogglePanelBtn)) {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Bars, $"##ToggleActionsBroadcastPanelBtn", Language.TogglePanelBtn)) {
             Plugin.Config.ShowPanelActionsBroadcast = !Plugin.Config.ShowPanelActionsBroadcast;
+            Plugin.IpcProvider.SyncConfiguration();
         }
 
         ImGui.SameLine();
-
+        ImGui.SetNextItemWidth(400);
         if (ImGui.InputTextWithHint("##ActionsBroadcastSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
+
+        ImGui.SameLine();
+        ImGui.Spacing();
+        ImGui.SameLine();
+
+        ImGui.Text("Icon Size:");
+
+        ImGui.SameLine();
+        int actionsIconSize = (int)Plugin.Config.ActionIconSize;
+        ImGui.SetNextItemWidth(100);
+        ImGui.SameLine();
+        if (ImGui.DragInt("##ActionIconSizeDrag", ref actionsIconSize, 1, 20, 150)) {
+            actionsIconSize = Math.Clamp(actionsIconSize, 20, 150);
+            Plugin.Config.ActionIconSize = actionsIconSize;
+            Plugin.IpcProvider.SyncConfiguration();
+        }
+        ImGuiUtil.ToolTip("Drag or double-click to type");
 
         ImGui.Spacing();
         ImGui.Separator();

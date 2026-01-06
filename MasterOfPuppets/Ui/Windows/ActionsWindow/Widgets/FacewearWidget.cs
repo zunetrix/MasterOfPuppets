@@ -15,20 +15,20 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Actions;
 
-public class MountsWidget : Widget {
-    public override string Title => "Mounts";
-    public override FontAwesomeIcon Icon => FontAwesomeIcon.Horse;
+public class FacewearWidget : Widget {
+    public override string Title => "Facewear";
+    public override FontAwesomeIcon Icon => FontAwesomeIcon.Glasses;
 
     private readonly List<ExecutableAction> UnlockedActions = new();
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    public MountsWidget(WidgetContext ctx) : base(ctx) {
+    public FacewearWidget(WidgetContext ctx) : base(ctx) {
     }
 
     public override void OnShow() {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(MountHelper.GetAllowedItems());
+        UnlockedActions.AddRange(FacewearHelper.GetAllowedItems());
         base.OnShow();
     }
 
@@ -43,11 +43,10 @@ public class MountsWidget : Widget {
         DrawHeader();
         ImGui.EndGroup();
 
-        ImGui.BeginChild("##MountListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
-        DrawMountGird();
+        ImGui.BeginChild("##FacewerarListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
+        DrawFacewearGird();
         ImGui.EndChild();
     }
-
     private void Search() {
         ListSearchedIndexes.Clear();
 
@@ -61,7 +60,7 @@ public class MountsWidget : Widget {
     }
 
     private void DrawHeader() {
-        ImGui.Text($"{Language.MountTitle} (unlocked)");
+        ImGui.Text($"{Language.FacewearTitle} (unlocked)");
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
         Click on icon to execute (broadcast)
@@ -70,34 +69,26 @@ public class MountsWidget : Widget {
 
         ImGui.Spacing();
 
-        if (ImGui.InputTextWithHint("##MountSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
+        if (ImGui.InputTextWithHint("##FacewearSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
-
-        ImGui.SameLine();
-        var unmount = GeneralActionHelper.GetExecutableAction(23);
-        DalamudApi.TextureProvider.DrawIcon(unmount.IconId, ImGuiHelpers.ScaledVector2(30, 30));
-        if (ImGui.IsItemClicked()) {
-            Context.Plugin.IpcProvider.ExecuteGeneralActionCommand(unmount.ActionId);
-        }
-        ImGuiUtil.ToolTip($"{Language.ClickToExecute} (unmount)");
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
     }
 
-    public void DrawMountGird() {
-        float iconSize = 48 * ImGuiHelpers.GlobalScale;
+    public void DrawFacewearGird() {
+        float iconSize = Context.Plugin.Config.ActionIconSize * ImGuiHelpers.GlobalScale;
 
-        if (ImGui.BeginTable("##MountTable", 1, ImGuiTableFlags.Resizable)) {
+        if (ImGui.BeginTable("##FacewearTable", 1, ImGuiTableFlags.Resizable)) {
             ImGui.TableSetupColumn("Icons", ImGuiTableColumnFlags.WidthStretch);
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##MountIconList")) {
+            using (ImRaii.Child("Search##FacewearIconList")) {
                 var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
                 DrawIconGrid(iconSize, columns);
             }
@@ -119,20 +110,20 @@ public class MountsWidget : Widget {
                 .ToList();
         }
 
-        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction mount) => {
-            DalamudApi.TextureProvider.DrawIcon(mount.IconId, new Vector2(iconSize));
+        ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction facewear) => {
+            DalamudApi.TextureProvider.DrawIcon(facewear.IconId, new Vector2(iconSize));
             ImGuiUtil.ToolTip($"""
-            {mount.ActionName} ({mount.ActionId})
-            Icon: {mount.IconId}
+            {facewear.ActionName} ({facewear.ActionId})
+            Icon: {facewear.IconId}
 
             Command:
-            {mount.TextCommand}
+            {facewear.TextCommand}
             """);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
-                ImGui.SetClipboardText(mount.TextCommand);
+                ImGui.SetClipboardText(facewear.TextCommand);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             } else if (ImGui.IsItemClicked(ImGuiMouseButton.Left)) {
-                Context.Plugin.IpcProvider.ExecuteTextCommand(mount.TextCommand);
+                Context.Plugin.IpcProvider.ExecuteTextCommand(facewear.TextCommand);
             }
         }, columns, lineHeight);
     }
