@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MasterOfPuppets.Extensions;
 
-public static class RangeExt {
+public static class RangeExtensions {
     public static int Length(this Range range) {
         return (range.End.Value - range.Start.Value) + 1;
     }

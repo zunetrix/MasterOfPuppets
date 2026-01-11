@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MasterOfPuppets.Extensions;
 
-public static class ListExt {
+public static class ListExtensions {
     /// <summary>
     /// Move a list item in safe way
     /// </summary>

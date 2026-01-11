@@ -1,15 +1,11 @@
-using System;
-
 using Dalamud.Bindings.ImGui;
-using Dalamud.Game.Inventory;
+using Dalamud.Interface.Utility;
 using Dalamud.Utility;
 
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
-using MasterOfPuppets.Util;
-
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureGearsetModule;
+using MasterOfPuppets.Extensions.Dalamud;
 
 namespace MasterOfPuppets.Debug;
 
@@ -33,47 +29,69 @@ public sealed class InventoryDebugWidget : Widget {
 
         var raptureGearSetModule = RaptureGearsetModule.Instance();
         var gearsetCount = InventoryManager.Instance()->GetPermittedGearsetCount();
+        var iconSize = ImGuiHelpers.ScaledVector2(30, 30);
 
-        if (ImGui.BeginTable($"##GearSetItems", 7, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg)) {
-            ImGui.TableSetupColumn("Gear Set");
-            ImGui.TableSetupColumn("Item");
-            ImGui.TableSetupColumn("Glamour");
-            ImGui.TableSetupColumn("Missing Gearset");
-            ImGui.TableSetupColumn("Missing Appearance");
-            ImGui.TableSetupColumn("Missing Color");
-            ImGui.TableSetupColumn("Missing Glamour");
+        if (ImGui.BeginTable($"##GearSetItems", 6, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg)) {
+            ImGui.TableSetupColumn("N", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Gear Set", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Item", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Glamour", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Is In Armoury", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Is In Inventory", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthStretch);
 
             ImGui.TableHeadersRow();
-
             for (var gearsetIndex = 0; gearsetIndex < gearsetCount; gearsetIndex++) {
-                var gearset = raptureGearSetModule->GetGearset(gearsetIndex);
-                var items = gearset->Items;
+                if (!raptureGearSetModule->IsValidGearset(gearsetIndex)) continue;
+                // if (gearsetIndex != 7) continue;
 
-                foreach (var item in items) {
-                    var itemName = ItemUtil.GetItemName(item.ItemId).ExtractText();
+                var gearset = raptureGearSetModule->GetGearset(gearsetIndex);
+                var geasrsetItems = gearset->Items;
+
+                foreach (var gearsetItem in geasrsetItems) {
+                    if (gearsetItem.ItemId == 0) continue;
+                    // if (geasrsetItem.ItemId != 2672) continue;
+
+                    var inventoryItem = InventoryHelper.FindGearsetItemInInventory(gearsetItem);
+                    bool isGearsetItemInInvenotry = inventoryItem != null;
+                    if (!isGearsetItemInInvenotry) continue;
+
+                    var emptyInventorySlot = InventoryHelper.FindFirstEmptyInventorySlot();
+                    // DalamudApi.PluginLog.Warning($"emptyInventorySlot: ({emptyInventorySlot.Value.Slot})");
+                    // DalamudApi.PluginLog.Warning($"isGearsetItemInInvenotry: ({isGearsetItemInInvenotry})");
+
+                    var itemName = ItemUtil.GetItemName(gearsetItem.ItemId).ExtractText();
                     ImGui.TableNextRow();
 
                     ImGui.TableNextColumn();
-                    ImGui.Text($"{gearset->NameString} ({gearsetIndex + 1})");
+                    ImGui.Text($"{gearsetIndex + 1:00}");
 
                     ImGui.TableNextColumn();
-                    ImGui.Text($"{itemName} ({item.ItemId})");
+                    DalamudApi.TextureProvider.DrawIcon(gearsetItem.GetInventoryTypeIcon(), iconSize);
 
                     ImGui.TableNextColumn();
-                    ImGui.Text($"{item.GlamourId}");
+                    ImGui.Text($"{gearset->NameString}");
 
                     ImGui.TableNextColumn();
-                    ImGui.Text(item.Flags.HasFlag(GearsetItemFlag.ItemMissing) ? "Yes" : "No");
+                    ImGui.Text($"{itemName} ({gearsetItem.ItemId})");
+
+                    // ImGui.TableNextColumn();
+                    // ImGui.Text($"{gearsetItem.GlamourId}");
+
+                    // ImGui.TableNextColumn();
+                    // ImGui.Text(gearsetItem.IsInArmoury() ? "Yes" : "No");
 
                     ImGui.TableNextColumn();
-                    ImGui.Text(item.Flags.HasFlag(GearsetItemFlag.AppearanceDiffers) ? "Yes" : "No");
+                    ImGui.Text(isGearsetItemInInvenotry ? "Yes" : "No");
 
                     ImGui.TableNextColumn();
-                    ImGui.Text(item.Flags.HasFlag(GearsetItemFlag.ColorDiffers) ? "Yes" : "No");
-
-                    ImGui.TableNextColumn();
-                    var missingGlamour = item.Flags.HasFlag(GearsetItemFlag.ItemMissing) || item.Flags.HasFlag(GearsetItemFlag.AppearanceDiffers) || item.Flags.HasFlag(GearsetItemFlag.ColorDiffers);
-                    ImGui.Text(missingGlamour ? "Yes" : "No");
+                    if (ImGui.Button($"Move to Armoury##{gearsetIndex}_{gearsetItem.ItemId}")) {
+                        if (emptyInventorySlot != null && isGearsetItemInInvenotry) {
+                            InventoryType inventoryType = gearsetItem.GetInventoryType();
+                            DalamudApi.PluginLog.Warning($"Moving Item: {itemName} ({inventoryItem.Value.Slot}) -> Armoury: {inventoryType} (0)");
+                            InventoryManager.Instance()->MoveItemSlot(inventoryItem.Value.Type, (ushort)inventoryItem.Value.Slot, inventoryType, (ushort)0, true);
+                        }
+                    }
                 }
             }
             ImGui.EndTable();
@@ -82,7 +100,6 @@ public sealed class InventoryDebugWidget : Widget {
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
-
 
         // foreach (var inventoryType in Enum.GetValues<GameInventoryType>()) {
         //     // var items = GameInventoryItem.GetReadOnlySpanOfInventory(inventoryType);

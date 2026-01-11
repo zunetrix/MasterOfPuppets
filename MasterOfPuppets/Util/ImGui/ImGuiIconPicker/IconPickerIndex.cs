@@ -788,7 +788,7 @@ public record class IconInfoCategory(
 ) {
     public IconInfoCategory TopLevel() => new IconInfoCategory(Name, SubcategoryName: null);
 
-    public static Comparer<IconInfoCategory> NameComparer => ComparerExt.Compose(
+    public static Comparer<IconInfoCategory> NameComparer => ComparerExtensions.Compose(
         Comparer<IconInfoCategory>.Create((a, b) => a.Name.CompareTo(b.Name)),
         Comparer<IconInfoCategory>.Create((a, b) => a.SubcategoryName?.CompareTo(b.SubcategoryName) ?? 0)
     );

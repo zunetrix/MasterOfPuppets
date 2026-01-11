@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MasterOfPuppets.Extensions;
 
-public static class DictionaryExt {
+public static class DictionaryExtensions {
     /**
      * <summary>Retrieve the element indexed by key, or create and add it and return the created value</summary>
      */

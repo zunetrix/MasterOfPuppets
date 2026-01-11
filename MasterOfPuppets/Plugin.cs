@@ -77,10 +77,10 @@ public class Plugin : IDalamudPlugin {
         Ui.Dispose();
     }
 
-    private void OnFrameworkUpdate(IFramework fwk) {
+    private void OnFrameworkUpdate(IFramework framework) {
         if (!DalamudApi.ClientState.IsLoggedIn) { return; }
 
-        FollowPath.Update(fwk);
+        FollowPath.Update(framework);
         MovementManager.Update();
     }
 

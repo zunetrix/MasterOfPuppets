@@ -2,7 +2,7 @@ using Dalamud.Game.Text;
 
 namespace MasterOfPuppets.Extensions.Dalamud;
 
-public static class ChatTypeExt {
+public static class ChatTypeExtensions {
     public static string ToChatPrefix(this XivChatType type) {
         return type switch {
             XivChatType.Party => "/p",

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace MasterOfPuppets.Extensions;
 
-public static class EnumerableExt {
+public static class EnumerableExtensions {
     public static IEnumerable<int> RangeSE(int start, int end) => Enumerable.Range(start, end - start);
 
     public static IEnumerable<(T item, int index)> WithIndex<T>(this IEnumerable<T> source) {

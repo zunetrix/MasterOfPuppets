@@ -6,7 +6,7 @@ using Dalamud.Utility;
 
 namespace MasterOfPuppets.Extensions.Dalamud;
 
-public static class PartyListExt {
+public static class PartyListExtensions {
     public static IPartyMember? GetMeAsPartyMember(this IPartyList partyList) => partyList.IsInParty() ? partyList.FirstOrDefault(i => i.ContentId == (long)DalamudApi.PlayerState.ContentId) : null;
     public static IPartyMember? GetPartyLeader(this IPartyList partyList) => partyList.IsInParty() ? partyList[(int)partyList.PartyLeaderIndex] : null;
     public static bool IsInParty(this IPartyList partyList) => partyList?.Length > 1;

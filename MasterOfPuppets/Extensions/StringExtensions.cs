@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace MasterOfPuppets.Extensions;
 
-public static class StringExt {
+public static class StringExtensions {
     public static string EllipsisPath(this string path, int maxLength = 30, char delimiter = '\\') {
         if (string.IsNullOrEmpty(path) || path.Length <= maxLength)
             return path;

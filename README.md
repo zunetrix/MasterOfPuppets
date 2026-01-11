@@ -1,6 +1,6 @@
 # Master Of Puppets
 
-FFXIV plugin to send custom individual actions (like game macros) with local sync or via chat (party, linkshell, crossworld linkshell)
+FFXIV plugin that lets you create and send custom actions (similar to in-game macros), either locally or via chat-based broadcast. It supports broadcasting actions to multiple clients locally, or through in-game chat channels such as Party, Linkshell, and Cross-World Linkshell. Use it to trigger custom actions like emotes, minions, mounts, fashion changes, and more.
 
 
 # Builds
