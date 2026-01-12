@@ -51,7 +51,7 @@ internal class IpcHandlers {
     [IpcHandle(IpcMessageType.ExecuteChangeGearset)]
     private void HandleExecuteCHangeGearset(IpcMessage message) {
         int gearsetIndex = message.DataStruct<int>();
-        GearSetHelper.ChangeGearset(Plugin, gearsetIndex);
+        GearsetManager.ChangeGearset(Plugin, gearsetIndex);
     }
 
     [IpcHandle(IpcMessageType.ExecuteItemCommand)]

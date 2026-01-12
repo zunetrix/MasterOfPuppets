@@ -208,6 +208,23 @@ public static class MopMacroActionsHelper {
         new MopAction
         {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop gs <gearset number>",
+            SuggestionCommand = "/mop gs",
+            Example = """
+            /mop gs 1
+            /mop gs 5
+
+            Broadcast:
+            /mopbr /mop gs 5
+            """,
+            Notes = """
+            Change the gearset using inventory items, the command first moves the gearset items from the inventory to the armoury, then equips the gearset. It prioritizes empty armoury slots, if none are available, it uses the first slot and swaps that item back into the inventory.
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mopbr <command>",
             SuggestionCommand = "/mopbr ",
             Example = """

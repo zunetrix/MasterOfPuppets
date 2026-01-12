@@ -203,19 +203,19 @@ public static class GearsetItemExtensions {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe bool MatchStains(
         InventoryItem* slot,
-        in RaptureGearsetModule.GearsetItem gear
+        in RaptureGearsetModule.GearsetItem gearsetItem
     ) =>
-    slot->Stains[0] == gear.Stain0Id &&
-    slot->Stains[1] == gear.Stain1Id;
+    slot->Stains[0] == gearsetItem.Stain0Id &&
+    slot->Stains[1] == gearsetItem.Stain1Id;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe bool MatchMateria(
         InventoryItem* slot,
-        in RaptureGearsetModule.GearsetItem gear
+        in RaptureGearsetModule.GearsetItem gearsetItem
     ) {
         for (int i = 0; i < 5; i++) {
-            if (slot->Materia[i] != gear.Materia[i]) return false;
-            if (slot->MateriaGrades[i] != gear.MateriaGrades[i]) return false;
+            if (slot->Materia[i] != gearsetItem.Materia[i]) return false;
+            if (slot->MateriaGrades[i] != gearsetItem.MateriaGrades[i]) return false;
         }
         return true;
     }

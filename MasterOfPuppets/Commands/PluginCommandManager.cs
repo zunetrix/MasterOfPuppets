@@ -155,6 +155,21 @@ public class PluginCommandManager : IDisposable {
                 case "togglewalk":
                     Plugin.MovementManager.ToggleWalking();
                     break;
+                case "gs": {
+                        if (parsedArgs.Count < 2 ||
+                            !int.TryParse(parsedArgs[1], out var gearsetIndex) ||
+                            gearsetIndex is <= 0 or > 100) {
+                            DalamudApi.ShowNotification(
+                                "Invalid arguments. Expected gearset number (1-100)",
+                                NotificationType.Error,
+                                5000
+                            );
+                            return;
+                        }
+
+                        GearsetManager.ChangeGearset(Plugin, gearsetIndex - 1);
+                        break;
+                    }
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");
                     return;

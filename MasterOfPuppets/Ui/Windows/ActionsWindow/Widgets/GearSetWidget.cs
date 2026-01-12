@@ -28,7 +28,7 @@ public class GearSetWidget : Widget {
 
     public override void OnShow() {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(GearSetHelper.GetAllowedItems());
+        UnlockedActions.AddRange(GearsetHelper.GetAllowedItems());
         base.OnShow();
     }
 
@@ -121,9 +121,7 @@ public class GearSetWidget : Widget {
             {gearset.TextCommand}
             """);
         if (ImGui.IsItemClicked()) {
-            // Context.Plugin.IpcProvider.ExecuteTextCommand($"/mopbr {gearset.TextCommand}");
-            // GearSetHelper.ChangeGearset(Context.Plugin, (int)gearset.ActionId);
-            Context.Plugin.IpcProvider.ExecuteChangeGearset((int)gearset.ActionId);
+            Context.Plugin.IpcProvider.ExecuteTextCommand($"/mopbr {gearset.TextCommand}");
         }
         ImGuiUtil.ToolTip(Language.ClickToExecute);
 
@@ -134,6 +132,13 @@ public class GearSetWidget : Widget {
             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
         }
         ImGuiUtil.ToolTip(Language.ClickToCopy);
+
+        ImGui.TableNextColumn();
+        if (ImGui.Button($"Equip Gearset")) {
+            // GearsetHelper.ChangeGearset(Context.Plugin, (int)gearset.ActionId);
+            Context.Plugin.IpcProvider.ExecuteChangeGearset((int)gearset.ActionId);
+        }
+        ImGuiUtil.ToolTip("Try equip gear set from inventory");
 
         // ImGui.TableNextColumn();
         // ImGui.Text($"{gearset.Category}");
@@ -154,14 +159,13 @@ public class GearSetWidget : Widget {
 
         var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
-        var tableColumnCount = 3;
+        var tableColumnCount = 4;
 
         if (ImGui.BeginTable("##ItemTable", tableColumnCount, tableFlags)) {
-            // ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("GS#", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 1.0f);
-            // ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed);
 
             var clipper = new ImGuiListClipper();
             clipper.Begin(itemsToDraw.Count, lineHeight);

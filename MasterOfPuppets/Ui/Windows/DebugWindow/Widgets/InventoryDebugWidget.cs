@@ -20,18 +20,11 @@ public sealed class InventoryDebugWidget : Widget {
     }
 
     public unsafe void ListInventory() {
-        // var container = InventoryManager.Instance()->GetInventoryContainer(InventoryType.Inventory1);
-        // for (var i = 0; i < 13; i++) {
-        //     if (i == 5) continue;
-        //     var slot = container->GetInventorySlot(i);
-        //     var itemId = slot->ItemId;
-        // }
-
         ImGui.InputInt("##GearsetIndexInput", ref _gearsetIndex);
 
         ImGui.SameLine();
         if (ImGui.Button($"Change Gearset")) {
-            GearSetHelper.ChangeGearset(Context.Plugin, _gearsetIndex + 1);
+            GearsetManager.ChangeGearset(Context.Plugin, _gearsetIndex + 1);
         }
 
         var raptureGearSetModule = RaptureGearsetModule.Instance();
@@ -40,32 +33,29 @@ public sealed class InventoryDebugWidget : Widget {
 
         if (ImGui.BeginTable($"##GearSetItems", 6, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg)) {
             ImGui.TableSetupColumn("N", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Slot", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Gear Set", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Item", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Glamour", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Is In Armoury", ImGuiTableColumnFlags.WidthFixed);
+            // ImGui.TableSetupColumn("Glamour", ImGuiTableColumnFlags.WidthFixed);
+            // ImGui.TableSetupColumn("Is In Armoury", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Is In Inventory", ImGuiTableColumnFlags.WidthFixed);
             ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthStretch);
 
             ImGui.TableHeadersRow();
             for (var gearsetIndex = 0; gearsetIndex < gearsetCount; gearsetIndex++) {
                 if (!raptureGearSetModule->IsValidGearset(gearsetIndex)) continue;
-                // if (gearsetIndex != 7) continue;
 
                 var gearset = raptureGearSetModule->GetGearset(gearsetIndex);
                 var geasrsetItems = gearset->Items;
 
                 foreach (var gearsetItem in geasrsetItems) {
                     if (gearsetItem.ItemId == 0) continue;
-                    // if (geasrsetItem.ItemId != 2672) continue;
 
                     var inventoryItem = InventoryHelper.FindGearsetItemInInventory(gearsetItem);
                     bool isGearsetItemInInvenotry = inventoryItem != null;
                     if (!isGearsetItemInInvenotry) continue;
 
                     var emptyInventorySlot = InventoryHelper.FindFirstEmptyInventorySlot();
-                    // DalamudApi.PluginLog.Warning($"emptyInventorySlot: ({emptyInventorySlot.Value.Slot})");
-                    // DalamudApi.PluginLog.Warning($"isGearsetItemInInvenotry: ({isGearsetItemInInvenotry})");
 
                     var itemName = ItemUtil.GetItemName(gearsetItem.ItemId).ExtractText();
                     ImGui.TableNextRow();

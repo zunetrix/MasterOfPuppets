@@ -104,4 +104,14 @@ public static class InventoryHelper {
         }
         return null;
     }
+
+    public static unsafe InventoryDescriptor? FindFirstEmptyArmourySlot(InventoryType inventoryType) {
+        var inventoryContainer = InventoryManager.Instance()->GetInventoryContainer(inventoryType);
+        for (int i = 0; i < inventoryContainer->GetSize(); i++) {
+            if (inventoryContainer->GetInventorySlot(i)->ItemId == 0) {
+                return new(inventoryContainer->Type, i);
+            }
+        }
+        return null;
+    }
 }

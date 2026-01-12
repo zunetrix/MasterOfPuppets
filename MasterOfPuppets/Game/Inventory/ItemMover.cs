@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Dalamud.Plugin.Services;
 
@@ -14,7 +15,7 @@ public unsafe class ItemMover : IDisposable {
     public Action? OnAllItemsMoved;
 
     private bool isWorking;
-    private uint expectedItemId;
+    private ItemSignature? expectedItem;
 
     public ItemMover(Plugin plugin) {
         Plugin = plugin;
@@ -22,6 +23,7 @@ public unsafe class ItemMover : IDisposable {
     }
 
     public void Dispose() {
+        Reset();
         DalamudApi.Framework.Update -= Framework_Update;
     }
 
@@ -57,22 +59,48 @@ public unsafe class ItemMover : IDisposable {
             return;
         }
 
-        // check if item moved
-        if (expectedItemId != 0 && slot->GetItemId() != expectedItemId) {
-            expectedItemId = 0;
+        // check if item was moved
+        if (expectedItem.HasValue && !MatchesItemSignature(slot, expectedItem.Value)) {
+            expectedItem = null;
             ItemsToMove.Dequeue();
             return;
         }
 
-        if (expectedItemId == 0 && EzThrottler.Throttle("ItemMover", 500)) {
-            expectedItemId = slot->GetItemId();
-            InventoryManager.Instance()->MoveItemSlot(fromInventory.Type, (ushort)fromInventory.Slot, toInventory, 0, true);
+        if (!expectedItem.HasValue && EzThrottler.Throttle("ItemMover", 500)) {
+            expectedItem = CaptureItemSignature(slot);
+
+            var targetSlot = InventoryHelper.FindFirstEmptyArmourySlot(toInventory)?.Slot ?? 0;
+
+            InventoryManager.Instance()->MoveItemSlot(
+                fromInventory.Type,
+                (ushort)fromInventory.Slot,
+                toInventory,
+                (ushort)targetSlot,
+                true
+            );
         }
+    }
+
+    private static ItemSignature CaptureItemSignature(InventoryItem* slot) {
+        var sig = new ItemSignature {
+            ItemId = slot->GetItemId(),
+            GlamourId = slot->GlamourId,
+        };
+
+        for (int i = 0; i < 5; i++) {
+            sig.Materia[i] = slot->Materia[i];
+            sig.MateriaGrades[i] = slot->MateriaGrades[i];
+        }
+
+        sig.Stains[0] = slot->Stains[0];
+        sig.Stains[1] = slot->Stains[1];
+
+        return sig;
     }
 
     private void Finish() {
         isWorking = false;
-        expectedItemId = 0;
+        expectedItem = null;
 
         OnAllItemsMoved?.Invoke();
         OnAllItemsMoved = null;
@@ -81,6 +109,30 @@ public unsafe class ItemMover : IDisposable {
     private void Reset() {
         ItemsToMove.Clear();
         isWorking = false;
-        expectedItemId = 0;
+        expectedItem = null;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool MatchesItemSignature(InventoryItem* slot, in ItemSignature sig) {
+        if (slot->GetItemId() != sig.ItemId) return false;
+        if (slot->GlamourId != sig.GlamourId) return false;
+
+        if (slot->Stains[0] != sig.Stains[0]) return false;
+        if (slot->Stains[1] != sig.Stains[1]) return false;
+
+        for (int i = 0; i < 5; i++) {
+            if (slot->Materia[i] != sig.Materia[i]) return false;
+            if (slot->MateriaGrades[i] != sig.MateriaGrades[i]) return false;
+        }
+
+        return true;
+    }
+
+    private struct ItemSignature {
+        public uint ItemId;
+        public uint GlamourId;
+        public fixed ushort Materia[5];
+        public fixed byte MateriaGrades[5];
+        public fixed byte Stains[2];
     }
 }

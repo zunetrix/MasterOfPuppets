@@ -34,7 +34,7 @@ public class GearSetWindow : Window {
 
     public override void OnOpen() {
         UnlockedActions.Clear();
-        UnlockedActions.AddRange(GearSetHelper.GetAllowedItems());
+        UnlockedActions.AddRange(GearsetHelper.GetAllowedItems());
         base.OnOpen();
     }
 
