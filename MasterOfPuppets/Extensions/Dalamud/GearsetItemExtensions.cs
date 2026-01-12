@@ -10,23 +10,31 @@ public static class GearsetItemExtensions {
     public static unsafe bool IsInArmoury(
         this in RaptureGearsetModule.GearsetItem gearsetItem
     ) {
-        if (gearsetItem.ItemId == 0)
+        var gearsetItemId = gearsetItem.ItemId;
+        if (gearsetItemId == 0)
             return false;
 
-        var inventoryType = GetInventoryType(gearsetItem.ItemId);
+        var inventoryType = GetInventoryType(gearsetItemId);
         if (inventoryType == default)
             return false;
 
-        var container = InventoryManager.Instance()->GetInventoryContainer(inventoryType);
-        if (container == null)
+        var inventoryContainer = InventoryManager.Instance()->GetInventoryContainer(inventoryType);
+        if (inventoryContainer == null)
             return false;
 
-        return FindInContainer(
-            container,
+        var gearsetGlamourId = gearsetItem.GlamourId;
+
+        int containerSlot = FindContainerSlot(
+            inventoryContainer,
             gearsetItem,
-            gearsetItem.ItemId,
-            gearsetItem.GlamourId
-        );
+            gearsetItemId,
+            gearsetGlamourId);
+
+        if (containerSlot >= 0) {
+            return true;
+        }
+
+        return false;
     }
 
     public static unsafe bool IsInInventory(
@@ -35,6 +43,41 @@ public static class GearsetItemExtensions {
         var gearsetItemId = gearsetItem.ItemId;
         if (gearsetItemId == 0)
             return false;
+
+        ReadOnlySpan<InventoryType> inventories = [
+            InventoryType.Inventory1,
+            InventoryType.Inventory2,
+            InventoryType.Inventory3,
+            InventoryType.Inventory4
+        ];
+
+        var gearsetGlamourId = gearsetItem.GlamourId;
+
+        foreach (var inventory in inventories) {
+            var inventoryContainer = InventoryManager.Instance()->GetInventoryContainer(inventory);
+            if (inventoryContainer == null)
+                continue;
+
+            int containerSlot = FindContainerSlot(
+                inventoryContainer,
+                gearsetItem,
+                gearsetItemId,
+                gearsetGlamourId);
+
+            if (containerSlot >= 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static unsafe InventoryDescriptor? FindGearsetItemInInventory(
+        this in RaptureGearsetModule.GearsetItem gearsetItem
+    ) {
+        var gearsetItemId = gearsetItem.ItemId;
+        if (gearsetItemId == 0)
+            return null;
 
         var gearsetGlamourId = gearsetItem.GlamourId;
 
@@ -50,16 +93,18 @@ public static class GearsetItemExtensions {
             if (inventoryContainer == null)
                 continue;
 
-            if (FindInContainer(
+            int containerSlot = FindContainerSlot(
                 inventoryContainer,
                 gearsetItem,
                 gearsetItemId,
-                gearsetGlamourId)
-            )
-                return true;
+                gearsetGlamourId);
+
+            if (containerSlot >= 0) {
+                return new(inventoryContainer->Type, containerSlot);
+            }
         }
 
-        return false;
+        return null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -132,7 +177,7 @@ public static class GearsetItemExtensions {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe bool FindInContainer(
+    private static unsafe int FindContainerSlot(
         InventoryContainer* container,
         in RaptureGearsetModule.GearsetItem gear,
         uint itemId,
@@ -150,9 +195,9 @@ public static class GearsetItemExtensions {
                 continue;
 
             if (MatchStains(slot, gear) && MatchMateria(slot, gear))
-                return true;
+                return i;
         }
-        return false;
+        return -1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

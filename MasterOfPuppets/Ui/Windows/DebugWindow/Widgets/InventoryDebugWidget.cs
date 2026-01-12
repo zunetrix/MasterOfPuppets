@@ -11,7 +11,7 @@ namespace MasterOfPuppets.Debug;
 
 public sealed class InventoryDebugWidget : Widget {
     public override string Title => "Inventory";
-
+    private static int _gearsetIndex = 0;
     public InventoryDebugWidget(WidgetContext ctx) : base(ctx) {
     }
 
@@ -26,6 +26,13 @@ public sealed class InventoryDebugWidget : Widget {
         //     var slot = container->GetInventorySlot(i);
         //     var itemId = slot->ItemId;
         // }
+
+        ImGui.InputInt("##GearsetIndexInput", ref _gearsetIndex);
+
+        ImGui.SameLine();
+        if (ImGui.Button($"Change Gearset")) {
+            GearSetHelper.ChangeGearset(Context.Plugin, _gearsetIndex + 1);
+        }
 
         var raptureGearSetModule = RaptureGearsetModule.Instance();
         var gearsetCount = InventoryManager.Instance()->GetPermittedGearsetCount();
@@ -89,7 +96,8 @@ public sealed class InventoryDebugWidget : Widget {
                         if (emptyInventorySlot != null && isGearsetItemInInvenotry) {
                             InventoryType inventoryType = gearsetItem.GetInventoryType();
                             DalamudApi.PluginLog.Warning($"Moving Item: {itemName} ({inventoryItem.Value.Slot}) -> Armoury: {inventoryType} (0)");
-                            InventoryManager.Instance()->MoveItemSlot(inventoryItem.Value.Type, (ushort)inventoryItem.Value.Slot, inventoryType, (ushort)0, true);
+                            ushort targetSlot = 0;
+                            InventoryManager.Instance()->MoveItemSlot(inventoryItem.Value.Type, (ushort)inventoryItem.Value.Slot, inventoryType, targetSlot, true);
                         }
                     }
                 }

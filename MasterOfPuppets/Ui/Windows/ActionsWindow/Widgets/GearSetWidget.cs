@@ -121,7 +121,8 @@ public class GearSetWidget : Widget {
             {gearset.TextCommand}
             """);
         if (ImGui.IsItemClicked()) {
-            Context.Plugin.IpcProvider.ExecuteTextCommand($"/mopbr {gearset.TextCommand}");
+            // Context.Plugin.IpcProvider.ExecuteTextCommand($"/mopbr {gearset.TextCommand}");
+            GearSetHelper.ChangeGearset(Context.Plugin, (int)gearset.ActionId);
         }
         ImGuiUtil.ToolTip(Language.ClickToExecute);
 

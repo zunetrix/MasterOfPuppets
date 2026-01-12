@@ -19,5 +19,6 @@ public enum IpcMessageType {
     ExecuteAbandonDuty,
     EnqueueMacroActions,
     EnqueueCharacterMacroActions,
-    SetGameSettingsObjectQuantity
+    SetGameSettingsObjectQuantity,
+    ExecuteChangeGearset
 }

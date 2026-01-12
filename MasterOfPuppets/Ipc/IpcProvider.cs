@@ -152,10 +152,16 @@ internal class IpcProvider : IDisposable {
         BroadCast(message, includeSelf: true);
     }
 
+    public void ExecuteChangeGearset(int gearsetIndex) {
+        var message = IpcMessage.Create(IpcMessageType.ExecuteChangeGearset, gearsetIndex).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
     public void EnqueueMacroActions(string textCommand, bool includeSelf) {
         var message = IpcMessage.Create(IpcMessageType.EnqueueMacroActions, textCommand).Serialize();
         BroadCast(message, includeSelf: includeSelf);
     }
+
     public void EnqueueCharacterMacroActions(string textCommand, string characterName) {
         var message = IpcMessage.Create(IpcMessageType.EnqueueCharacterMacroActions, textCommand, characterName).Serialize();
         BroadCast(message, includeSelf: true);

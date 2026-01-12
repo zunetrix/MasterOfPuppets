@@ -48,6 +48,12 @@ internal class IpcHandlers {
         GameActionManager.UseGeneralAction(message.DataStruct<uint>());
     }
 
+    [IpcHandle(IpcMessageType.ExecuteChangeGearset)]
+    private void HandleExecuteCHangeGearset(IpcMessage message) {
+        int gearsetIndex = message.DataStruct<int>();
+        GearSetHelper.ChangeGearset(Plugin, gearsetIndex);
+    }
+
     [IpcHandle(IpcMessageType.ExecuteItemCommand)]
     private unsafe void HandleExecuteItemCommand(IpcMessage message) {
         uint itemId = message.DataStruct<uint>();
