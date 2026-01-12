@@ -97,10 +97,11 @@ public static class GearSetHelper {
         };
     }
 
-    private static unsafe void EquipGearset(int gearsetIndex) {
-        DalamudApi.Framework.RunOnFrameworkThread(() => {
-            RaptureGearsetModule.Instance()->EquipGearset(gearsetIndex);
-        });
+    private static void EquipGearset(int gearsetIndex) {
+        Chat.SendMessage($"/gs change {gearsetIndex + 1}");
+        // DalamudApi.Framework.RunOnFrameworkThread(() => {
+        //     RaptureGearsetModule.Instance()->EquipGearset(gearsetIndex);
+        // });
     }
 }
 
