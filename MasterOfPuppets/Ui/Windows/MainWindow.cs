@@ -30,7 +30,7 @@ public class MainWindow : Window {
     private float _leftPanelWidth = 200f;
     private bool _isGlobalMacroCheckboxChecked = false;
 
-    internal MainWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name}") {
+    internal MainWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name}###MopMainWindow") {
         Plugin = plugin;
         Ui = ui;
 

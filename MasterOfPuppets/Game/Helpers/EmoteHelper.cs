@@ -44,7 +44,7 @@ public static class EmoteHelper {
         return GetEmote(item)?.Icon ?? undefinedIcon;
     }
 
-    private static readonly (string Name, uint Id, uint IconId)[] InternalEmoteData =
+    private static readonly (string Name, uint Id, uint IconId)[] InternalEmoteList =
     {
         ("Sleep / wake", 88, 246213),
         ("Sleep / wake (Change Pose)", 99, 246213),
@@ -73,7 +73,7 @@ public static class EmoteHelper {
     };
 
     private static List<ExecutableAction> GenerateInternalEmotesList() {
-        return InternalEmoteData
+        return InternalEmoteList
             .Select(e => new ExecutableAction {
                 ActionId = e.Id,
                 ActionName = e.Name,

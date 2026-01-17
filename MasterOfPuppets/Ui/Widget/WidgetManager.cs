@@ -5,7 +5,9 @@ namespace MasterOfPuppets;
 
 public sealed class WidgetManager {
     private readonly List<LazyWidget> _widgets = new();
+    // private readonly List<Widget> _widgets = new();
     private Widget? _current;
+    private bool _initialized;
 
     public IReadOnlyList<LazyWidget> Widgets => _widgets;
 
@@ -18,6 +20,9 @@ public sealed class WidgetManager {
     // }
 
     public void Show(int index) {
+        if (index < 0 || index >= _widgets.Count)
+            return;
+
         var widget = _widgets[index].Instance;
 
         if (_current == widget)
@@ -38,6 +43,16 @@ public sealed class WidgetManager {
     // }
 
     public void Draw() {
+        // safe lazy init
+        if (!_initialized) {
+            _initialized = true;
+
+            if (_current == null && _widgets.Count > 0) {
+                this.Show(0);
+            }
+        }
+
         _current?.DrawInternal();
     }
 }
+

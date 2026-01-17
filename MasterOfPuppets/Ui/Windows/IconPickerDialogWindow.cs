@@ -33,7 +33,7 @@ public class IconPickerDialogWindow : Window {
         }
     }
 
-    public IconPickerDialogWindow() : base("Icon Picker##IconPIckerDialogWindow") {
+    public IconPickerDialogWindow() : base("Icon Picker###IconPIckerDialogWindow") {
         Size = ImGuiHelpers.ScaledVector2(450, 400);
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;

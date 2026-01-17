@@ -43,8 +43,6 @@ public class ActionsBroadcastWindow : Window {
         _widgetManager.Add(() => new MinionsWidget(_widgetContext));
         _widgetManager.Add(() => new ItemsWidget(_widgetContext));
         _widgetManager.Add(() => new GearSetWidget(_widgetContext));
-
-        _widgetManager.Show(0);
     }
 
     public override void Draw() {
@@ -54,15 +52,15 @@ public class ActionsBroadcastWindow : Window {
 
         ImGui.BeginChild("##ActionsBroadcastScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
         if (Plugin.Config.ShowPanelActionsBroadcast) {
-            DrawDebugTypeList();
+            DrawActionsWidgetList();
         }
 
         ImGui.SameLine();
-        DrawTypeContent(SelectedItemIndex);
+        DrawTypeContent();
         ImGui.EndChild();
     }
 
-    private void DrawDebugTypeList() {
+    private void DrawActionsWidgetList() {
         var isFiltered = !string.IsNullOrEmpty(_searchString);
 
         var indices = isFiltered ? ListSearchedIndexes : Enumerable.Range(0, _widgetManager.Widgets.Count).ToList();
@@ -80,7 +78,7 @@ public class ActionsBroadcastWindow : Window {
                 ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
             }
 
-            ImGuiUtil.IconButton(widget.Instance.Icon, $"##fragment_{realIndex}");
+            ImGuiUtil.IconButton(widget.Instance.Icon, $"##ActionsBroadcastWidget_{realIndex}");
             ImGui.SameLine();
             if (ImGui.Selectable(widget.Instance.Title, isSelected)) {
                 SelectedItemIndex = realIndex;
@@ -98,15 +96,14 @@ public class ActionsBroadcastWindow : Window {
         ImGui.EndChild();
     }
 
-    private void DrawTypeContent(int itemIndex) {
+    private void DrawTypeContent() {
         if (_widgetManager.Widgets.Count == 0) return;
-        var widget = _widgetManager.Widgets[itemIndex];
+        // var widget = _widgetManager.Widgets[itemIndex];
 
         ImGui.BeginGroup();
         ImGui.BeginChild("##ActionsBroadcastContent", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()));
-        ImGuiUtil.DrawColoredBanner($"{widget.Instance.Title}", Style.Components.ButtonBlueHovered);
-
-        ImGui.Spacing();
+        // ImGuiUtil.DrawColoredBanner($"{widget.Instance.Title}", Style.Components.ButtonBlueHovered);
+        // ImGui.Spacing();
 
         _widgetManager.Draw();
 
