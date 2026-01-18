@@ -41,10 +41,9 @@ public class DebugWindow : Window {
         _widgetManager.Add(() => new TargetDebugWidget(_widgetContext));
         _widgetManager.Add(() => new InventoryDebugWidget(_widgetContext));
         _widgetManager.Add(() => new UiElementDebugWidget(_widgetContext));
+        _widgetManager.Add(() => new UiAnimationDebugWidget(_widgetContext));
         _widgetManager.Add(() => new ConflictingPluginDebugWidget(_widgetContext));
         _widgetManager.Add(() => new FontAwesomeDebugWidget(_widgetContext));
-
-        _widgetManager.Show(0);
     }
 
     public override void Draw() {
