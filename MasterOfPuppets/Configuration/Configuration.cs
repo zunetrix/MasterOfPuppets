@@ -1,12 +1,14 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 using Dalamud.Configuration;
 using Dalamud.Game.Text;
 using Dalamud.Plugin;
 
 using MasterOfPuppets.Extensions;
-using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
 
@@ -81,44 +83,121 @@ internal class Configuration : IPluginConfiguration {
         ListenedChatTypes = new();
     }
 
-    public void UpdateFromJson(string cofigurationJson) {
-        if (string.IsNullOrWhiteSpace(cofigurationJson)) return;
+    // public void UpdateFromJson(string cofigurationJson) {
+    //     if (string.IsNullOrWhiteSpace(cofigurationJson)) return;
 
-        var newPluginConfig = cofigurationJson.JsonDeserialize<Configuration>();
-        if (newPluginConfig == null) return;
+    //     var newPluginConfig = cofigurationJson.JsonDeserialize<Configuration>();
+    //     if (newPluginConfig == null) return;
 
-        // macro
-        Macros = newPluginConfig.Macros;
-        Characters = newPluginConfig.Characters;
-        CidsGroups = newPluginConfig.CidsGroups;
-        AutoSaveMacro = newPluginConfig.AutoSaveMacro;
+    //     // macro
+    //     Macros = newPluginConfig.Macros;
+    //     Characters = newPluginConfig.Characters;
+    //     CidsGroups = newPluginConfig.CidsGroups;
+    //     AutoSaveMacro = newPluginConfig.AutoSaveMacro;
 
-        // import export
-        MacroExportPath = newPluginConfig.MacroExportPath;
-        MacroImportMode = newPluginConfig.MacroImportMode;
-        IncludeCidOnExport = newPluginConfig.IncludeCidOnExport;
-        IncludeCidOnImport = newPluginConfig.IncludeCidOnImport;
-        BackupBeforeImport = newPluginConfig.BackupBeforeImport;
+    //     // import export
+    //     MacroExportPath = newPluginConfig.MacroExportPath;
+    //     MacroImportMode = newPluginConfig.MacroImportMode;
+    //     IncludeCidOnExport = newPluginConfig.IncludeCidOnExport;
+    //     IncludeCidOnImport = newPluginConfig.IncludeCidOnImport;
+    //     BackupBeforeImport = newPluginConfig.BackupBeforeImport;
 
-        SyncClients = newPluginConfig.SyncClients;
+    //     SyncClients = newPluginConfig.SyncClients;
 
-        UseChatSync = newPluginConfig.UseChatSync;
-        ListenedChatTypes = newPluginConfig.ListenedChatTypes;
-        UseChatCommandSenderWhitelist = newPluginConfig.UseChatCommandSenderWhitelist;
-        ChatCommandSenderWhitelist = newPluginConfig.ChatCommandSenderWhitelist;
-        DefaultChatSyncPrefix = newPluginConfig.DefaultChatSyncPrefix;
+    //     UseChatSync = newPluginConfig.UseChatSync;
+    //     ListenedChatTypes = newPluginConfig.ListenedChatTypes;
+    //     UseChatCommandSenderWhitelist = newPluginConfig.UseChatCommandSenderWhitelist;
+    //     ChatCommandSenderWhitelist = newPluginConfig.ChatCommandSenderWhitelist;
+    //     DefaultChatSyncPrefix = newPluginConfig.DefaultChatSyncPrefix;
 
-        DelayBetweenActions = newPluginConfig.DelayBetweenActions;
-        SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;
+    //     DelayBetweenActions = newPluginConfig.DelayBetweenActions;
+    //     SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;
 
-        // UI
-        ShowPanelActionsBroadcast = newPluginConfig.ShowPanelActionsBroadcast;
-        ShowPanelMacroTags = newPluginConfig.ShowPanelMacroTags;
-        ActionIconSize = newPluginConfig.ActionIconSize;
+    //     // UI
+    //     ShowPanelActionsBroadcast = newPluginConfig.ShowPanelActionsBroadcast;
+    //     ShowPanelMacroTags = newPluginConfig.ShowPanelMacroTags;
+    //     ActionIconSize = newPluginConfig.ActionIconSize;
 
-        OpenOnStartup = newPluginConfig.OpenOnStartup;
-        OpenOnLogin = newPluginConfig.OpenOnLogin;
-        AllowCloseWithEscape = newPluginConfig.AllowCloseWithEscape;
+    //     OpenOnStartup = newPluginConfig.OpenOnStartup;
+    //     OpenOnLogin = newPluginConfig.OpenOnLogin;
+    //     AllowCloseWithEscape = newPluginConfig.AllowCloseWithEscape;
+    // }
+
+    private void UpdateFrom(Configuration other) {
+        var type = typeof(Configuration);
+
+        foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+            if (!prop.CanRead || !prop.CanWrite)
+                continue;
+
+            if (Attribute.IsDefined(prop, typeof(NoSyncAttribute)))
+                continue;
+
+            if (Attribute.IsDefined(prop, typeof(Newtonsoft.Json.JsonIgnoreAttribute)))
+                continue;
+
+            var oldValue = prop.GetValue(this);
+            var newValue = prop.GetValue(other);
+
+#if DEBUG
+            if (!AreEqual(oldValue, newValue)) {
+                LogChange(prop.Name, oldValue, newValue);
+            }
+#endif
+            prop.SetValue(this, newValue);
+        }
+
+        foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance)) {
+            if (Attribute.IsDefined(field, typeof(NoSyncAttribute)))
+                continue;
+
+            if (Attribute.IsDefined(field, typeof(Newtonsoft.Json.JsonIgnoreAttribute)))
+                continue;
+
+            var oldValue = field.GetValue(this);
+            var newValue = field.GetValue(other);
+
+#if DEBUG
+            if (!AreEqual(oldValue, newValue)) {
+                LogChange(field.Name, oldValue, newValue);
+            }
+#endif
+            field.SetValue(this, newValue);
+        }
+    }
+
+    public void UpdateFromJson(string configurationJson) {
+        if (string.IsNullOrWhiteSpace(configurationJson))
+            return;
+
+        var incoming = configurationJson.JsonDeserialize<Configuration>();
+        if (incoming == null)
+            return;
+
+        UpdateFrom(incoming);
+    }
+
+    static bool AreEqual(object? a, object? b) {
+        if (ReferenceEquals(a, b))
+            return true;
+
+        if (a == null || b == null)
+            return false;
+
+        if (a is IList listA && b is IList listB)
+            return listA.Count == listB.Count;
+
+        return a.Equals(b);
+    }
+
+    static void LogChange(string name, object? oldVal, object? newVal) {
+        static string Format(object? v) {
+            if (v == null) return "null";
+            if (v is IList list) return $"List(count={list.Count})";
+            return v.ToString() ?? "?";
+        }
+
+        DalamudApi.PluginLog.Debug($"[ConfigSync] {name}: {Format(oldVal)} → {Format(newVal)}");
     }
 
     public void AddCharacter(Character character) {
@@ -149,3 +228,5 @@ internal class Configuration : IPluginConfiguration {
     }
 }
 
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+public sealed class NoSyncAttribute : Attribute { }
