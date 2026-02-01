@@ -7,7 +7,6 @@ using System.Text;
 using Dalamud.Interface.ImGuiNotification;
 
 using MasterOfPuppets.Extensions;
-using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
 
@@ -301,11 +300,11 @@ public class MacroManager {
 
         var clonedMacro = Plugin.Config.Macros[itemIndex].Clone(includeCids);
         string macroJson = clonedMacro.JsonSerialize();
-        return StringCompressor.CompressString(macroJson);
+        return macroJson.Compress();
     }
 
     public void ImportMacroFromString(string compressedMacroString) {
-        string macroString = StringCompressor.DecompressString(compressedMacroString);
+        string macroString = compressedMacroString.Decompress();
         var newMacro = macroString.JsonDeserialize<Macro>();
 
         if (newMacro == null) {

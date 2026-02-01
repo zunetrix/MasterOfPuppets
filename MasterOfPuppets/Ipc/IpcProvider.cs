@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 
-using MasterOfPuppets.Util;
+using MasterOfPuppets.Extensions;
 
 using TinyIpc.IO;
 using TinyIpc.Messaging;

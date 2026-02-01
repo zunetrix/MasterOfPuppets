@@ -73,7 +73,6 @@ public class Plugin : IDalamudPlugin {
         PluginCommandManager.Dispose();
         MovementManager.Dispose();
         FollowPath.Dispose();
-
         Ui.Dispose();
     }
 

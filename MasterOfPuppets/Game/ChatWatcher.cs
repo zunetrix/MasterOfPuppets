@@ -56,7 +56,6 @@ internal class ChatWatcher : IDisposable {
 
     public void Dispose() {
         DalamudApi.ChatGui.ChatMessage -= OnChatMessage;
-
     }
 
     // public void UpdateRegistration() {

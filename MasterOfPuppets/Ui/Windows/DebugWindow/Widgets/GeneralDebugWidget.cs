@@ -5,7 +5,7 @@ using Dalamud.Interface.ImGuiNotification;
 
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
-using MasterOfPuppets.Util;
+using MasterOfPuppets.Extensions;
 
 namespace MasterOfPuppets.Debug;
 

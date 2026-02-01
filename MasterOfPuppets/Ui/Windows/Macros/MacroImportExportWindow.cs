@@ -216,7 +216,8 @@ public class MacroImportExportWindow : Window {
                     if (!File.Exists(selectedPaths[0])) return;
 
                     Plugin.MacroManager.ImportMacrosFromFile(selectedPaths[0], Plugin.Config.MacroImportMode, Plugin.Config.IncludeCidOnImport, backupBeforeImport);
-                });
+                }
+            );
         }
         ImGui.PopStyleColor(3);
         ImGuiGroupPanel.EndGroupPanel();

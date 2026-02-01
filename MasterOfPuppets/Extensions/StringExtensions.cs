@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text;
 
 namespace MasterOfPuppets.Extensions;
 
@@ -47,11 +51,23 @@ public static class StringExtensions {
         return self;
     }
 
-    public static int MaxLineLength(this string self) {
-        return Enumerable.Max(self.Split("\n").Select(s => s.Count()));
-    }
-
     internal static bool ContainsIgnoreCase(this string haystack, string needle) {
         return CultureInfo.InvariantCulture.CompareInfo.IndexOf(haystack, needle, CompareOptions.IgnoreCase) >= 0;
+    }
+
+    public static string Compress(this string input) {
+        var bytes = Encoding.UTF8.GetBytes(input);
+        using var ms = new MemoryStream();
+        using (var gs = new GZipStream(ms, CompressionMode.Compress))
+            gs.Write(bytes, 0, bytes.Length);
+        return Convert.ToBase64String(ms.ToArray());
+    }
+
+    public static string Decompress(this string input) {
+        var data = Convert.FromBase64String(input);
+        using var ms = new MemoryStream(data);
+        using var gs = new GZipStream(ms, CompressionMode.Decompress);
+        using var r = new StreamReader(gs);
+        return r.ReadToEnd();
     }
 }

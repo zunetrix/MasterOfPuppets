@@ -7,8 +7,6 @@ using Dalamud.Plugin.Services;
 namespace MasterOfPuppets.Extensions.Dalamud;
 
 public static class ITextureProviderExtensions {
-
-
     public static void DrawIcon(this ITextureProvider textureProvider, GameIconLookup gameIconLookup, Vector2 size, Vector2? uv0 = null, Vector2? uv1 = null, Vector4? tintCol = null, Vector4? borderCol = null) {
         try {
             var iconTexture = DalamudApi.TextureProvider.GetFromGameIcon(gameIconLookup).GetWrapOrEmpty().Handle;

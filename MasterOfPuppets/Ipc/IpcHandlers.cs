@@ -1,7 +1,5 @@
 using System;
 
-using MasterOfPuppets.Movement;
-
 namespace MasterOfPuppets.Ipc;
 
 [AttributeUsage(AttributeTargets.Method)]
@@ -23,7 +21,7 @@ internal class IpcHandlers {
     [IpcHandle(IpcMessageType.SyncConfiguration)]
     private void HandleSyncConfiguration(IpcMessage message) {
         var configString = message.StringData[0];
-        bool saveConfigAfterSync = bool.TryParse(message.StringData[1], out var tmp) && tmp;
+        bool saveConfigAfterSync = bool.TryParse(message.StringData[1], out var parsed) && parsed;
 
         Plugin.Config.UpdateFromJson(configString);
 
@@ -55,7 +53,7 @@ internal class IpcHandlers {
     }
 
     [IpcHandle(IpcMessageType.ExecuteItemCommand)]
-    private unsafe void HandleExecuteItemCommand(IpcMessage message) {
+    private void HandleExecuteItemCommand(IpcMessage message) {
         uint itemId = message.DataStruct<uint>();
         GameActionManager.UseItem(itemId);
     }
