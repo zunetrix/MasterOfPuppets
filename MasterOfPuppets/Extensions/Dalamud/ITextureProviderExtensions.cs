@@ -2,6 +2,7 @@ using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
+using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
 
 namespace MasterOfPuppets.Extensions.Dalamud;
@@ -18,13 +19,13 @@ public static class ITextureProviderExtensions {
                 tintCol ?? Vector4.One,
                 borderCol ?? Vector4.Zero);
         } catch {
-            ImGui.Dummy(size);
+            ImGuiHelpers.ScaledDummy(size);
         }
 
         // if (!ImGui.IsRectVisible(size)
         //     || !textureProvider.TryGetFromGameIcon(gameIconLookup, out var texture)
         //     || !texture.TryGetWrap(out var wrap, out _)) {
-        //     ImGui.Dummy(size);
+        //     ImGuiHelpers.ScaledDummy(size);
         //     return;
         // }
 

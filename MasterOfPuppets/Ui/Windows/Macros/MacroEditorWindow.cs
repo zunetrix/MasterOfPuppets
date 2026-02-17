@@ -180,7 +180,7 @@ public class MacroEditorWindow : Window {
         ImGui.EndGroup();
 
         ImGui.SameLine();
-        ImGui.Dummy(ImGuiHelpers.ScaledVector2(10));
+        ImGuiHelpers.ScaledDummy(10);
         ImGui.SameLine();
 
         ImGui.BeginGroup();
@@ -226,7 +226,7 @@ public class MacroEditorWindow : Window {
         }
         ImGui.EndGroup();
 
-        ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 10));
+        ImGuiHelpers.ScaledDummy(0, 10);
 
         ImGui.BeginGroup();
         {
@@ -505,7 +505,8 @@ public class MacroEditorWindow : Window {
         """);
 
         ImGui.SameLine();
-        ImGui.Dummy(new Vector2(20, 0));
+        ImGuiHelpers.ScaledDummy(20, 0);
+
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##CopyTargetNameBtn", "Copy Target Name")) {
             ImGui.SetClipboardText($"\"{GameTargetManager.GetTargetName()}\"");
@@ -518,7 +519,7 @@ public class MacroEditorWindow : Window {
         }
 
         ImGui.SameLine();
-        ImGui.Dummy(new Vector2(20, 0));
+        ImGuiHelpers.ScaledDummy(20, 0);
         ImGui.SameLine();
         ImGui.SetNextItemWidth(100);
         if (ImGui.InputUInt("Lines##InputLines", ref _inputLines, 1, 1)) {

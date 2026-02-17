@@ -40,7 +40,7 @@ public class MacroImportExportWindow : Window {
         ImGui.Text(Plugin.Config.MacroExportPath.EllipsisPath(50));
 
         ImGui.SameLine();
-        ImGui.Dummy(ImGuiHelpers.ScaledVector2(5));
+        ImGuiHelpers.ScaledDummy(5);
 
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Folder, "##SetExportFolderBtn", "Set Export Folder")) {
@@ -106,7 +106,7 @@ public class MacroImportExportWindow : Window {
         ImGui.PopStyleColor(3);
 
         ImGui.SameLine();
-        ImGui.Dummy(ImGuiHelpers.ScaledVector2(10));
+        ImGuiHelpers.ScaledDummy(10);
 
         ImGui.SameLine();
         ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);

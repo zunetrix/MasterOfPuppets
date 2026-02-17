@@ -51,17 +51,17 @@ public static class ImGuiUtil {
     }
 
     public static bool IconButton(FontAwesomeIcon icon, string? id = null, string tooltip = null, Vector4? color = null, Vector2? size = null) {
-        ImGui.PushFont(UiBuilder.IconFont);
-        try {
-            var iconButtonSize = ImGui.CalcTextSize(icon.ToIconString()) + ImGui.GetStyle().FramePadding * 2;
+        using (ImRaii.PushFont(UiBuilder.IconFont)) {
+            try {
+                var iconButtonSize = ImGui.CalcTextSize(icon.ToIconString()) + ImGui.GetStyle().FramePadding * 2;
 
-            if (color != null) ImGui.PushStyleColor(ImGuiCol.Text, (Vector4)color);
-            var buttonSize = size != null ? size.Value : iconButtonSize;
-            return ImGui.Button($"{icon.ToIconString()}##{id}", buttonSize);
-        } finally {
-            ImGui.PopFont();
-            if (color != null) ImGui.PopStyleColor();
-            if (tooltip != null) ToolTip(tooltip);
+                if (color != null) ImGui.PushStyleColor(ImGuiCol.Text, (Vector4)color);
+                var buttonSize = size != null ? size.Value : iconButtonSize;
+                return ImGui.Button($"{icon.ToIconString()}##{id}", buttonSize);
+            } finally {
+                if (color != null) ImGui.PopStyleColor();
+                if (tooltip != null) ToolTip(tooltip);
+            }
         }
     }
 
@@ -189,7 +189,7 @@ public static class ImGuiUtil {
         ImGui.PopStyleColor(3);
     }
 
-    /// Applies a border over the previous item
+    // Applies a border over the previous item
     public static void ItemBorder(
         uint col,
         float rounding = 1.0f,
@@ -213,7 +213,8 @@ public static class ImGuiUtil {
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + style.FramePadding.Y);
         var size = new Vector2(radius * 2, radius * 2);
 
-        ImGui.Dummy(size);
+        ImGuiHelpers.ScaledDummy(size);
+
         var dummyPos = ImGui.GetItemRectMin();
         var dummySize = ImGui.GetItemRectSize();
         var center = new Vector2(
@@ -227,11 +228,11 @@ public static class ImGuiUtil {
         var numSegments = 30;
         var start = Math.Abs(Math.Sin(ImGui.GetTime() * 1.8f) * (numSegments - 5));
 
-        var aMin = Math.PI * 2.0f * ((float)start / (float)numSegments);
-        var aMax = Math.PI * 2.0f * (((float)numSegments - 3) / (float)numSegments);
+        var aMin = Math.PI * 2.0f * ((float)start / numSegments);
+        var aMax = Math.PI * 2.0f * (((float)numSegments - 3) / numSegments);
 
         for (var i = 0; i < numSegments; ++i) {
-            var a = aMin + ((float)i / (float)numSegments) * (aMax - aMin);
+            var a = aMin + i / (float)numSegments * (aMax - aMin);
             ImGui.GetWindowDrawList().PathLineTo(
                 new Vector2(
                     center.X + (float)Math.Cos(a + (float)ImGui.GetTime() * 8) * (radius - thickness / 2),

@@ -157,7 +157,7 @@ public class SettingsWindow : Window {
         }
 
         ImGui.SameLine();
-        ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
+        ImGuiHelpers.ScaledDummy(0, 20);
         ImGui.SameLine();
 
         if (ImGui.Button(Language.OpenPluginConfigFile)) {
@@ -271,7 +271,7 @@ public class SettingsWindow : Window {
             ImGui.InputTextWithHint("##CommandSenderNameInput", "Sender name", ref _characterName, 255, ImGuiInputTextFlags.AutoSelectAll);
 
             ImGui.SameLine();
-            ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
+            ImGuiHelpers.ScaledDummy(0, 20);
             ImGui.SameLine();
 
             if (ImGui.Button($"Add##AddCommandSenderBtn")) {

@@ -61,6 +61,7 @@ loop code
  - https://github.com/Zeffuro/AetherBags
  - https://github.com/NightmareXIV/Stylist
  - https://github.com/MidoriKami/VanillaPlus
+ - https://github.com/Critical-Impact/DalaMock/tree/main/DalaMock.PluginTemplate
 
 # Game Sheet Preview
  - https://exd.camora.dev

@@ -7,6 +7,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Utility;
 
@@ -42,25 +43,28 @@ public class CharactersWindow : Window {
     }
 
     public override void Draw() {
-        if (!ImGui.BeginTabBar("##CharactersManagerTabs")) return;
+        using var tabBar = ImRaii.TabBar($"{Language.SettingsGeneralTab}###CharactersManagerTabs");
+        if (!tabBar) return;
 
-        if (ImGui.BeginTabItem($"Characters List###CharactersTab")) {
-            DrawPartyMemberSelector();
-            DrawCharactersTable();
+        DrawCharactersTab();
+        DrawCidsGroupsTab();
+    }
 
-            ImGui.EndTabItem();
-        }
+    private void DrawCharactersTab() {
+        using var tabItem = ImRaii.TabItem($"Characters List###CharactersTab");
+        if (!tabItem) return;
+        DrawPartyMemberSelector();
+        DrawCharactersTable();
 
-        if (ImGui.BeginTabItem($"Characters Groups###CidsGroupsTab")) {
-            DrawCidsGroupsHeader();
-            DrawCidsGroupsSelector();
-            DrawGroupAvailableCharacterSelector();
-            DrawCidGroupCharactersList();
+    }
 
-            ImGui.EndTabItem();
-        }
-
-        ImGui.EndTabBar();
+    private void DrawCidsGroupsTab() {
+        using var tabItem = ImRaii.TabItem($"Characters Groups###CidsGroupsTab");
+        if (!tabItem) return;
+        DrawCidsGroupsHeader();
+        DrawCidsGroupsSelector();
+        DrawGroupAvailableCharacterSelector();
+        DrawCidGroupCharactersList();
     }
 
     private List<Character> GetAvailablePartyMembers() {
@@ -226,7 +230,7 @@ public class CharactersWindow : Window {
         ImGui.InputTextWithHint("##GroupNameInput", "Group name", ref _tmpGroupName, 255, ImGuiInputTextFlags.AutoSelectAll);
 
         ImGui.SameLine();
-        ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
+        ImGuiHelpers.ScaledDummy(0, 20);
         ImGui.SameLine();
 
         if (ImGui.Button($"Add new group##AddNewGroupBtn")) {
@@ -275,7 +279,7 @@ public class CharactersWindow : Window {
         ImGui.PopStyleColor();
 
         ImGui.SameLine();
-        ImGui.Dummy(ImGuiHelpers.ScaledVector2(0, 20));
+        ImGuiHelpers.ScaledDummy(0, 20);
         ImGui.SameLine();
 
         ImGui.BeginDisabled(!Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex));

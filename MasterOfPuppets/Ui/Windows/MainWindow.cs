@@ -39,10 +39,10 @@ public class MainWindow : Window {
         UpdateWindowConfig();
     }
 
-    public override void Update() {
-        IsVisible = false;
-        base.Update();
-    }
+    // public override void Update() {
+    //     IsVisible = false;
+    //     base.Update();
+    // }
 
     public override void PreDraw() {
         // Flags = ImGuiWindowFlags.None;
