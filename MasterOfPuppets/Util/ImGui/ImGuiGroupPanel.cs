@@ -6,15 +6,32 @@ using Dalamud.Bindings.ImGui;
 
 namespace MasterOfPuppets.Util.ImGuiExt;
 
-// https://github.com/ocornut/imgui/issues/1496#issuecomment-655048353
+//https://github.com/ocornut/imgui/issues/1496#issuecomment-655048353
 public static class ImGuiGroupPanel {
     static readonly Stack<RectF> s_GroupPanelLabelStack = new Stack<RectF>();
 
-    public static void BeginGroupPanel(string name) {
-        BeginGroupPanel(name, -Vector2.One);
+    /// <summary>
+    /// Begin a group panel with automatic disposal.
+    /// Usage: using (ImGuiGroupPanel.BeginGroupPanel("My Panel")) { ... }
+    /// </summary>
+    public static GroupPanelEnd BeginGroupPanel(string name) {
+        BeginGroupPanelInternal(name, -Vector2.One);
+        return new GroupPanelEnd();
     }
 
-    public static unsafe void BeginGroupPanel(string name, Vector2 size) {
+    /// <summary>
+    /// Begin a group panel with specific size and automatic disposal.
+    /// Usage: using (ImGuiGroupPanel.BeginGroupPanel("My Panel", new Vector2(100, 50))) { ... }
+    /// </summary>
+    public static GroupPanelEnd BeginGroupPanel(string name, Vector2 size) {
+        BeginGroupPanelInternal(name, size);
+        return new GroupPanelEnd();
+    }
+
+    /// <summary>
+    /// Internal implementation of BeginGroupPanel.
+    /// </summary>
+    private static unsafe void BeginGroupPanelInternal(string name, Vector2 size) {
         ImGui.BeginGroup();
         var cursorPos = ImGui.GetCursorScreenPos();
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
@@ -58,7 +75,14 @@ public static class ImGuiGroupPanel {
         ImGui.PushTextWrapPos(igGetContentRegionMax()->X);
     }
 
-    public static unsafe void EndGroupPanel() {
+    /// <summary>
+    /// Ends the group panel. Called automatically by the disposable wrapper.
+    /// </summary>
+    public static void EndGroupPanel() {
+        EndGroupPanelInternal();
+    }
+
+    private static unsafe void EndGroupPanelInternal() {
         ImGui.PopTextWrapPos();
         ImGui.PopItemWidth();
 
@@ -122,6 +146,15 @@ public static class ImGuiGroupPanel {
         ImGui.EndGroup();
     }
 
+    /// <summary>
+    /// Disposable wrapper for group panel that automatically calls EndGroupPanel.
+    /// </summary>
+    public readonly struct GroupPanelEnd : IDisposable {
+        public void Dispose() {
+            EndGroupPanel();
+        }
+    }
+
     private static unsafe Vector2* igGetWindowSize() {
         Vector2 v;
         ImGuiNative.GetWindowSize(&v);
@@ -144,5 +177,3 @@ public static class ImGuiGroupPanel {
         public Vector2 Max;
     }
 }
-
-

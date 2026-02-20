@@ -49,99 +49,98 @@ public class SettingsWindow : Window {
         using var tabItem = ImRaii.TabItem($"{Language.SettingsGeneralTab}###GeneralTab");
         if (!tabItem) return;
 
-        ImGuiGroupPanel.BeginGroupPanel(Language.SettingsGeneralTab);
-        var syncClients = Plugin.Config.SyncClients;
-        if (ImGui.Checkbox(Language.SettingsWindowSyncClients, ref syncClients)) {
-            Plugin.Config.SyncClients = syncClients;
-            Plugin.Config.Save();
-            Plugin.IpcProvider.SyncConfiguration();
-        }
-        ImGuiUtil.HelpMarker("Allow actions to be executed in broadcast to all clients");
+        using (ImGuiGroupPanel.BeginGroupPanel(Language.SettingsGeneralTab)) {
+            var syncClients = Plugin.Config.SyncClients;
+            if (ImGui.Checkbox(Language.SettingsWindowSyncClients, ref syncClients)) {
+                Plugin.Config.SyncClients = syncClients;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("Allow actions to be executed in broadcast to all clients");
 
-        ImGui.Spacing();
-        ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Spacing();
 
-        var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
-        if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync)) {
-            Plugin.Config.SaveConfigAfterSync = saveConfigAfterSync;
-            Plugin.Config.Save();
-            Plugin.IpcProvider.SyncConfiguration();
-        }
-        ImGuiUtil.HelpMarker("Enable for accounts with individual config file");
+            var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
+            if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync)) {
+                Plugin.Config.SaveConfigAfterSync = saveConfigAfterSync;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("Enable for accounts with individual config file");
 
-        ImGui.Spacing();
-        ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Spacing();
 
-        var autoSaveMacro = Plugin.Config.AutoSaveMacro;
-        if (ImGui.Checkbox(Language.SettingsWindowAutoSaveMacro, ref autoSaveMacro)) {
-            Plugin.Config.AutoSaveMacro = autoSaveMacro;
-            Plugin.IpcProvider.SyncConfiguration();
-        }
-        ImGuiUtil.HelpMarker("Auto save macro on close editor");
+            var autoSaveMacro = Plugin.Config.AutoSaveMacro;
+            if (ImGui.Checkbox(Language.SettingsWindowAutoSaveMacro, ref autoSaveMacro)) {
+                Plugin.Config.AutoSaveMacro = autoSaveMacro;
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("Auto save macro on close editor");
 
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Text("Global delay between actions");
-        ImGui.SetNextItemWidth(150);
-        var delayBetweenActions = Plugin.Config.DelayBetweenActions;
-        if (ImGui.InputDouble("##DelayBetrweenActions", ref delayBetweenActions, 0.1, 1, "%.2f", ImGuiInputTextFlags.AutoSelectAll)) {
-            delayBetweenActions = Math.Clamp(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero), 0, 60);
-            Plugin.Config.DelayBetweenActions = delayBetweenActions;
-            Plugin.IpcProvider.SyncConfiguration();
-        }
-        ImGuiUtil.HelpMarker("""
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Text("Global delay between actions");
+            ImGui.SetNextItemWidth(150);
+            var delayBetweenActions = Plugin.Config.DelayBetweenActions;
+            if (ImGui.InputDouble("##DelayBetrweenActions", ref delayBetweenActions, 0.1, 1, "%.2f", ImGuiInputTextFlags.AutoSelectAll)) {
+                delayBetweenActions = Math.Clamp(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero), 0, 60);
+                Plugin.Config.DelayBetweenActions = delayBetweenActions;
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("""
             Set 0 to disable
             Be careful when disabling global delay along with loops to avoid spamming actions
             """);
-        ImGuiGroupPanel.EndGroupPanel();
+        }
 
         ImGui.Spacing();
         ImGui.Spacing();
 
 
-        ImGuiGroupPanel.BeginGroupPanel("Window");
-        var openOnStartup = Plugin.Config.OpenOnStartup;
-        if (ImGui.Checkbox(Language.SettingsWindowOpenOnStartup, ref openOnStartup)) {
-            Plugin.Config.OpenOnStartup = openOnStartup;
-            Plugin.IpcProvider.SyncConfiguration();
+        using (ImGuiGroupPanel.BeginGroupPanel("Window")) {
+            var openOnStartup = Plugin.Config.OpenOnStartup;
+            if (ImGui.Checkbox(Language.SettingsWindowOpenOnStartup, ref openOnStartup)) {
+                Plugin.Config.OpenOnStartup = openOnStartup;
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            var openOnLogin = Plugin.Config.OpenOnLogin;
+            if (ImGui.Checkbox(Language.SettingsWindowOpenLogin, ref openOnLogin)) {
+                Plugin.Config.OpenOnLogin = openOnLogin;
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            var allowCloseWithEscape = Plugin.Config.AllowCloseWithEscape;
+            if (ImGui.Checkbox(Language.SettingsWindowAllowCloseWithEscape, ref allowCloseWithEscape)) {
+                Plugin.Config.AllowCloseWithEscape = allowCloseWithEscape;
+                Plugin.IpcProvider.SyncConfiguration();
+                Plugin.Ui.MainWindow.UpdateWindowConfig();
+            }
+
+            // var showSettingsButton = Plugin.Config.ShowSettingsButton;
+            // if (ImGui.Checkbox(Language.SettingsWindowShowConfigButton, ref showSettingsButton))
+            // {
+            //     Plugin.Config.ShowSettingsButton = showSettingsButton;
+            //     Plugin.Config.Save();
+            //     Plugin.Ui.MainWindow.UpdateConfig();
+            // }
+
+            // var allowMovement = Plugin.Config.AllowMovement;
+            // if (ImGui.Checkbox(Language.SettingsWindowAllowMovement, ref allowMovement))
+            // {
+            //     Plugin.Config.AllowMovement = allowMovement;
+            //     Plugin.Config.Save();
+            // }
+
+            // var allowResizing = Plugin.Config.AllowResize;
+            // if (ImGui.Checkbox(Language.SettingsWindowAllowResize, ref allowResizing))
+            // {
+            //     Plugin.Config.AllowResize = allowResizing;
+            //     Plugin.Config.Save();
+            // }
         }
-
-        var openOnLogin = Plugin.Config.OpenOnLogin;
-        if (ImGui.Checkbox(Language.SettingsWindowOpenLogin, ref openOnLogin)) {
-            Plugin.Config.OpenOnLogin = openOnLogin;
-            Plugin.IpcProvider.SyncConfiguration();
-        }
-
-        var allowCloseWithEscape = Plugin.Config.AllowCloseWithEscape;
-        if (ImGui.Checkbox(Language.SettingsWindowAllowCloseWithEscape, ref allowCloseWithEscape)) {
-            Plugin.Config.AllowCloseWithEscape = allowCloseWithEscape;
-            Plugin.IpcProvider.SyncConfiguration();
-            Plugin.Ui.MainWindow.UpdateWindowConfig();
-        }
-
-        // var showSettingsButton = Plugin.Config.ShowSettingsButton;
-        // if (ImGui.Checkbox(Language.SettingsWindowShowConfigButton, ref showSettingsButton))
-        // {
-        //     Plugin.Config.ShowSettingsButton = showSettingsButton;
-        //     Plugin.Config.Save();
-        //     Plugin.Ui.MainWindow.UpdateConfig();
-        // }
-
-        // var allowMovement = Plugin.Config.AllowMovement;
-        // if (ImGui.Checkbox(Language.SettingsWindowAllowMovement, ref allowMovement))
-        // {
-        //     Plugin.Config.AllowMovement = allowMovement;
-        //     Plugin.Config.Save();
-        // }
-
-        // var allowResizing = Plugin.Config.AllowResize;
-        // if (ImGui.Checkbox(Language.SettingsWindowAllowResize, ref allowResizing))
-        // {
-        //     Plugin.Config.AllowResize = allowResizing;
-        //     Plugin.Config.Save();
-        // }
-
-        ImGuiGroupPanel.EndGroupPanel();
 
         ImGui.Spacing();
         ImGui.Spacing();

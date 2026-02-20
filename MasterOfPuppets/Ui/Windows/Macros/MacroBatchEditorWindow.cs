@@ -44,102 +44,102 @@ public class MacroBatchEditorWindow : Window {
     }
 
     private void DrawMacroActionBatchEditor() {
-        ImGuiGroupPanel.BeginGroupPanel("Macro Batch Action Editor");
-        ImGui.Text("Replace in the selected macros actions");
-        ImGui.SameLine();
-        ImGuiUtil.HelpMarker("""
+        using (ImGuiGroupPanel.BeginGroupPanel("Macro Batch Action Editor")) {
+            ImGui.Text("Replace in the selected macros actions");
+            ImGui.SameLine();
+            ImGuiUtil.HelpMarker("""
         Pay attention when replacing commands to avoid false positives.
         For example, replacing /target with /moptarget: it's better to include the slash in both the find and replace.
         Using just the word target caused it to be replaced in places where it shouldn't have been.
         """);
 
-        ImGui.InputTextWithHint("##FindActionInput", "Find", ref _findActionInput, 255, ImGuiInputTextFlags.AutoSelectAll);
-        ImGui.SameLine();
-        ImGui.Checkbox($"Ignore Case##IgnoreCaseActionCheckbox", ref _ignoreCaseAction);
+            ImGui.InputTextWithHint("##FindActionInput", "Find", ref _findActionInput, 255, ImGuiInputTextFlags.AutoSelectAll);
+            ImGui.SameLine();
+            ImGui.Checkbox($"Ignore Case##IgnoreCaseActionCheckbox", ref _ignoreCaseAction);
 
-        ImGui.Spacing();
-        ImGui.InputTextWithHint("##ReplaceActionInput", "Replace", ref _replaceActionInput, 255, ImGuiInputTextFlags.AutoSelectAll);
+            ImGui.Spacing();
+            ImGui.InputTextWithHint("##ReplaceActionInput", "Replace", ref _replaceActionInput, 255, ImGuiInputTextFlags.AutoSelectAll);
 
-        ImGui.Spacing();
-        ImGui.Spacing();
-        // ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-        // ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-        // ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-        if (ImGui.Button($"Replace Actions In All Selected Macros ({Plugin.MacroManager.SelectedMacrosIndexes.Count})")) {
-            if (Plugin.MacroManager.SelectedMacrosIndexes.Count == 0) {
-                DalamudApi.ShowNotification($"Select at least one macro to replace", NotificationType.Warning, 5000);
-                return;
+            ImGui.Spacing();
+            ImGui.Spacing();
+            // ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
+            // ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
+            // ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
+            if (ImGui.Button($"Replace Actions In All Selected Macros ({Plugin.MacroManager.SelectedMacrosIndexes.Count})")) {
+                if (Plugin.MacroManager.SelectedMacrosIndexes.Count == 0) {
+                    DalamudApi.ShowNotification($"Select at least one macro to replace", NotificationType.Warning, 5000);
+                    return;
+                }
+
+                _affectedMacrosActions = Plugin.MacroManager.ReplaceInSelectedMacrosActions(_findActionInput, _replaceActionInput, _ignoreCaseAction);
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            // ImGui.PopStyleColor(3);
+
+            ImGui.Spacing();
+            if (_affectedMacrosActions > 0) {
+                ImGui.Text($"Affected Macros: {_affectedMacrosActions}");
             }
 
-            _affectedMacrosActions = Plugin.MacroManager.ReplaceInSelectedMacrosActions(_findActionInput, _replaceActionInput, _ignoreCaseAction);
-            Plugin.IpcProvider.SyncConfiguration();
+            ImGui.Spacing();
+            ImGui.Spacing();
         }
-        // ImGui.PopStyleColor(3);
-
-        ImGui.Spacing();
-        if (_affectedMacrosActions > 0) {
-            ImGui.Text($"Affected Macros: {_affectedMacrosActions}");
-        }
-
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGuiGroupPanel.EndGroupPanel();
     }
 
     private void DrawMacroTagBatchEditor() {
-        ImGuiGroupPanel.BeginGroupPanel("Macro Batch Tag Editor");
-        ImGui.Text("Replace in the selected macros tags");
+        using (ImGuiGroupPanel.BeginGroupPanel("Macro Batch Tag Editor")) {
+            ImGui.Text("Replace in the selected macros tags");
 
-        ImGui.InputTextWithHint("##FindTagInput", "Find", ref _findTagInput, 255, ImGuiInputTextFlags.AutoSelectAll);
-        ImGui.SameLine();
-        ImGui.Checkbox($"Ignore Case##IgnoreCaseTagCheckbox", ref _ignoreCaseTag);
+            ImGui.InputTextWithHint("##FindTagInput", "Find", ref _findTagInput, 255, ImGuiInputTextFlags.AutoSelectAll);
+            ImGui.SameLine();
+            ImGui.Checkbox($"Ignore Case##IgnoreCaseTagCheckbox", ref _ignoreCaseTag);
 
-        ImGui.Spacing();
-        ImGui.InputTextWithHint("##ReplaceTagInput", "Replace", ref _replaceTagInput, 255, ImGuiInputTextFlags.AutoSelectAll);
+            ImGui.Spacing();
+            ImGui.InputTextWithHint("##ReplaceTagInput", "Replace", ref _replaceTagInput, 255, ImGuiInputTextFlags.AutoSelectAll);
 
-        ImGui.Spacing();
-        ImGui.Spacing();
-        if (ImGui.Button($"Replace Tags In All Selected Macros ({Plugin.MacroManager.SelectedMacrosIndexes.Count})")) {
-            if (Plugin.MacroManager.SelectedMacrosIndexes.Count == 0) {
-                DalamudApi.ShowNotification($"Select at least one macro to replace", NotificationType.Warning, 5000);
-                return;
+            ImGui.Spacing();
+            ImGui.Spacing();
+            if (ImGui.Button($"Replace Tags In All Selected Macros ({Plugin.MacroManager.SelectedMacrosIndexes.Count})")) {
+                if (Plugin.MacroManager.SelectedMacrosIndexes.Count == 0) {
+                    DalamudApi.ShowNotification($"Select at least one macro to replace", NotificationType.Warning, 5000);
+                    return;
+                }
+
+                _affectedMacrosTags = Plugin.MacroManager.ReplaceInSelectedMacrosTags(_findTagInput, _replaceTagInput, _ignoreCaseTag);
+                Plugin.IpcProvider.SyncConfiguration();
             }
 
-            _affectedMacrosTags = Plugin.MacroManager.ReplaceInSelectedMacrosTags(_findTagInput, _replaceTagInput, _ignoreCaseTag);
-            Plugin.IpcProvider.SyncConfiguration();
-        }
+            ImGui.Spacing();
+            if (_affectedMacrosTags > 0) {
+                ImGui.Text($"Affected Macros: {_affectedMacrosTags}");
+            }
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+            ImGui.Spacing();
 
-        ImGui.Spacing();
-        if (_affectedMacrosTags > 0) {
-            ImGui.Text($"Affected Macros: {_affectedMacrosTags}");
-        }
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-        ImGui.Spacing();
+            ImGui.InputTextWithHint("##RemoveTagInput", "Replace", ref _removeTagInput, 255, ImGuiInputTextFlags.AutoSelectAll);
+            ImGui.SameLine();
+            ImGui.Checkbox($"Ignore Case##IgnoreCaseTagRemoveCheckbox", ref _ignoreCaseTagRemove);
 
-        ImGui.InputTextWithHint("##RemoveTagInput", "Replace", ref _removeTagInput, 255, ImGuiInputTextFlags.AutoSelectAll);
-        ImGui.SameLine();
-        ImGui.Checkbox($"Ignore Case##IgnoreCaseTagRemoveCheckbox", ref _ignoreCaseTagRemove);
+            ImGui.Spacing();
+            ImGui.Spacing();
+            if (ImGui.Button($"Delete Tag In All Selected Macros ({Plugin.MacroManager.SelectedMacrosIndexes.Count})")) {
+                if (Plugin.MacroManager.SelectedMacrosIndexes.Count == 0) {
+                    DalamudApi.ShowNotification($"Select at least one macro to remove tag", NotificationType.Warning, 5000);
+                    return;
+                }
 
-        ImGui.Spacing();
-        ImGui.Spacing();
-        if (ImGui.Button($"Delete Tag In All Selected Macros ({Plugin.MacroManager.SelectedMacrosIndexes.Count})")) {
-            if (Plugin.MacroManager.SelectedMacrosIndexes.Count == 0) {
-                DalamudApi.ShowNotification($"Select at least one macro to remove tag", NotificationType.Warning, 5000);
-                return;
+                _affectedMacrosTagRemove = Plugin.MacroManager.RemoveTagFromSelectedMacros(_removeTagInput, _ignoreCaseTagRemove);
+                Plugin.IpcProvider.SyncConfiguration();
             }
 
-            _affectedMacrosTagRemove = Plugin.MacroManager.RemoveTagFromSelectedMacros(_removeTagInput, _ignoreCaseTagRemove);
-            Plugin.IpcProvider.SyncConfiguration();
+            ImGui.Spacing();
+            if (_affectedMacrosTagRemove > 0) {
+                ImGui.Text($"Affected Macros: {_affectedMacrosTagRemove}");
+            }
         }
-
-        ImGui.Spacing();
-        if (_affectedMacrosTagRemove > 0) {
-            ImGui.Text($"Affected Macros: {_affectedMacrosTagRemove}");
-        }
-        ImGuiGroupPanel.EndGroupPanel();
     }
 }
 

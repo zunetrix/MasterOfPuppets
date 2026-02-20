@@ -12,6 +12,7 @@ namespace MasterOfPuppets.Debug;
 
 public sealed class FontAwesomeDebugWidget : Widget {
     public override string Title => "Font Awesome";
+    private static int iconSize = 30;
 
     static readonly (FontAwesomeIcon icon, string name)[] glyphs =
         Enumerable.Range(0xE000, 0xF000)
@@ -40,21 +41,33 @@ public sealed class FontAwesomeDebugWidget : Widget {
             }
         }
 
+        ImGui.SameLine();
+        ImGui.Text("Icon Size:");
+        ImGui.SetNextItemWidth(100);
+        ImGui.SameLine();
+        if (ImGui.DragInt("##FontAwesomeIconSizeInput", ref iconSize, 1, 20, 150)) {
+            //
+        }
+
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
         ImGui.Spacing();
 
         ImGui.PushFont(UiBuilder.IconFont);
-        var windowWidth = ImGui.GetWindowWidth() - 60 * ImGui.GetIO().FontGlobalScale;
+        var itemSpacing = iconSize * ImGui.GetIO().FontGlobalScale;
+        var windowWidth = ImGui.GetContentRegionMax().X - itemSpacing;
         var lineLength = 0f;
 
         foreach (var icon in searchedGlyphs) {
+            var iconScale = iconSize / 30f;
+            ImGui.SetWindowFontScale(iconScale);
             ImGui.Text(icon.icon.ToIconString());
+            ImGui.SetWindowFontScale(1);
 
             if (ImGui.IsItemHovered()) {
                 ImGui.BeginTooltip();
-                ImGui.SetWindowFontScale(3);
+                ImGui.SetWindowFontScale(iconSize / 10f + 0.5f);
                 ImGui.Text(icon.icon.ToIconString());
                 ImGui.SetWindowFontScale(1);
                 ImGui.PushFont(UiBuilder.DefaultFont);
@@ -67,12 +80,12 @@ public sealed class FontAwesomeDebugWidget : Widget {
                 ImGui.SetClipboardText($"(FontAwesomeIcon){(int)icon.Item1}");
             }
 
-            if (lineLength < windowWidth) {
-                lineLength += 30 * ImGui.GetIO().FontGlobalScale;
+            if (lineLength + itemSpacing < windowWidth) {
+                lineLength += itemSpacing;
                 ImGui.SameLine(lineLength);
             } else {
                 lineLength = 0;
-                ImGui.Dummy(new Vector2(0, 10 * ImGui.GetIO().FontGlobalScale));
+                ImGui.Dummy(new Vector2(0, iconSize * ImGui.GetIO().FontGlobalScale));
             }
         }
 
