@@ -45,9 +45,18 @@ public static class GearsetManager {
 
     private static void EquipGearset(int gearsetIndex) {
         Chat.SendMessage($"/gs change {gearsetIndex + 1}");
-        // DalamudApi.Framework.RunOnFrameworkThread(() => {
-        //     RaptureGearsetModule.Instance()->EquipGearset(gearsetIndex);
-        // });
+    }
+
+    private static unsafe void ChangeGearsetGlamour(int gearsetIndex, int glamoutIndex) {
+        if (glamoutIndex <= 0 || glamoutIndex > 20) return;
+
+        var rapture = RaptureGearsetModule.Instance();
+        if (!rapture->IsValidGearset(gearsetIndex))
+            return;
+
+        DalamudApi.Framework.RunOnFrameworkThread(() => {
+            rapture->EquipGearset(gearsetIndex, (byte)glamoutIndex);
+        });
     }
 }
 
