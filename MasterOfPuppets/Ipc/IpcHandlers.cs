@@ -70,6 +70,12 @@ internal class IpcHandlers {
         Plugin.MovementManager.MoveToObject(targetObjectId);
     }
 
+    [IpcHandle(IpcMessageType.ExecuteStackOnMe)]
+    private void ExecuteStackOnMe(IpcMessage message) {
+        ulong targetObjectId = message.DataStruct<ulong>();
+        Plugin.MovementManager.MoveToObject(targetObjectId);
+    }
+
     [IpcHandle(IpcMessageType.ExecuteToggleWalking)]
     private void ExecuteToggleWalking(IpcMessage message) {
         Plugin.MovementManager.ToggleWalking();

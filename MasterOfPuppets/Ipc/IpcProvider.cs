@@ -137,6 +137,14 @@ internal class IpcProvider : IDisposable {
         BroadCast(message, includeSelf: false);
     }
 
+    public void ExecuteStackOnMe() {
+        if (DalamudApi.ObjectTable.LocalPlayer == null) return;
+        var targetObjectId = DalamudApi.ObjectTable.LocalPlayer.GameObjectId;
+
+        var message = IpcMessage.Create(IpcMessageType.ExecuteStackOnMe, targetObjectId).Serialize();
+        BroadCast(message, includeSelf: false);
+    }
+
     public void ExecuteToggleWalking() {
         var message = IpcMessage.Create(IpcMessageType.ExecuteToggleWalking).Serialize();
         BroadCast(message, includeSelf: true);

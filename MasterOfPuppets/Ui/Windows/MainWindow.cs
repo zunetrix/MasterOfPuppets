@@ -287,6 +287,16 @@ public class MainWindow : Window {
 
             // -----------------------
 
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonArrowDownToLine, $"##ExecuteStackOnMeCommand")) {
+                Plugin.IpcProvider.ExecuteStackOnMe();
+            }
+            ImGui.SameLine();
+            if (ImGui.Selectable("Stack On Me")) {
+                Plugin.IpcProvider.ExecuteStackOnMe();
+            }
+
+            // -----------------------
+
             if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingDashedLineArrowRight, $"##ExecuteToggleWalkingCommand")) {
                 Plugin.IpcProvider.ExecuteToggleWalking();
             }

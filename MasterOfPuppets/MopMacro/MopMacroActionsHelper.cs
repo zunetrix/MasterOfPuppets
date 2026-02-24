@@ -131,6 +131,20 @@ public static class MopMacroActionsHelper {
         new MopAction
         {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop stackonme",
+            SuggestionCommand = "/mop stackonme",
+            Example = """
+            /mop stackonme
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Stacks on the requester character
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mop movetocharacter \"Character Name\"",
             SuggestionCommand = "/mop movetocharacter \"\"",
             Example = """

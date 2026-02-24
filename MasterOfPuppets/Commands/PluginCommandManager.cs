@@ -133,6 +133,10 @@ public class PluginCommandManager : IDisposable {
                         Plugin.MovementManager.MoveToTargetPosition();
                     }
                     break;
+                case "stackonme": {
+                        Plugin.IpcProvider.ExecuteStackOnMe();
+                    }
+                    break;
                 case "movetocharacter": {
                         if (parsedArgs.Count <= 1) {
                             DalamudApi.ShowNotification($"Invalid arguments expected character name", NotificationType.Error, 5000);

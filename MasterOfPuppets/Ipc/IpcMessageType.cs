@@ -14,6 +14,7 @@ public enum IpcMessageType {
     ExecuteItemCommand,
     ExecuteTargetMyTarget,
     ExecuteMoveToMyTarget,
+    ExecuteStackOnMe,
     ExecuteToggleWalking,
     ExecuteTargetClear,
     ExecuteAbandonDuty,
