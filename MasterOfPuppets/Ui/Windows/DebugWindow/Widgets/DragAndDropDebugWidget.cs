@@ -28,7 +28,14 @@ public sealed class DragAndDropDebugWidget : Widget {
         ImGui.Spacing();
 
         ImGui.Text($"DND ImGui Payload Context");
-        DrawDragAndDropImGuiPayload();
+        DrawDragAndDropImGuiPayloadPtr();
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        // ImGui.Text($"DND ImRaii Payload Context");
+        // DrawDragAndDropImRaiiPayload();
 
     }
 
@@ -74,7 +81,49 @@ public sealed class DragAndDropDebugWidget : Widget {
         }
     }
 
-    public void DrawDragAndDropImGuiPayload() {
+    // public void DrawDragAndDropImRaiiPayload() {
+    //     for (int i = 0; i < _items.Count; i++) {
+
+    //         ImGui.Selectable($"{_items[i]}##item_imraii_{i}");
+    //         DragDropSource(i);
+    //         DragDropTarget(i);
+    //     }
+    // }
+
+    // private void DragDropSource(int payloadSend) {
+    //     using (var DragDropSource = ImRaii.DragDropSource()) {
+    //         if (!DragDropSource) return;
+
+    //         byte[] payload = BitConverter.GetBytes(payloadSend);
+    //         ImGui.SetDragDropPayload("DND_IMRAII_PAYLOAD", payload, ImGuiCond.None);
+    //     }
+    // }
+
+    // private void DragDropTarget(int i) {
+    //     using (var DragDropTarget = ImRaii.DragDropTarget()) {
+    //         if (!DragDropTarget) return;
+
+    //         var dragDropPayload = ImGui.AcceptDragDropPayload("DND_IMRAII_PAYLOAD");
+    //         if (dragDropPayload.IsDelivery() && !dragDropPayload.IsNull) {
+    //             unsafe {
+    //                 var spanPayload = new ReadOnlySpan<byte>(dragDropPayload.Data, sizeof(int));
+    //                 int sourceIndex = BitConverter.ToInt32(spanPayload);
+
+    //                 int offset = i - sourceIndex;
+    //                 if (offset != 0 && sourceIndex + offset >= 0) {
+    //                     int targetIndex = sourceIndex + offset;
+    //                     DalamudApi.PluginLog.Warning($"Drag end [{i}]: original: {sourceIndex} target: {targetIndex}] offset: {offset}");
+
+    //                     var item = _items[sourceIndex];
+    //                     _items.RemoveAt(sourceIndex);
+    //                     _items.Insert(targetIndex, item);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+    public void DrawDragAndDropImGuiPayloadPtr() {
         for (int i = 0; i < _items.Count; i++) {
             ImGui.Selectable($"{_items[i]}##item_payload_{i}");
 

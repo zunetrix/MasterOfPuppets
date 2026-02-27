@@ -164,9 +164,11 @@ public class FacewearWindow : Window {
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##FacewearIconList")) {
-                var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
-                DrawIconGrid(iconSize, columns);
+            using (var child = ImRaii.Child("Search##FacewearIconList")) {
+                if (child) {
+                    var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
+                    DrawIconGrid(iconSize, columns);
+                }
             }
 
             ImGui.EndTable();

@@ -120,7 +120,7 @@ internal class IpcProvider : IDisposable {
 
     public void ExecuteTargetMyTarget() {
         if (DalamudApi.ObjectTable.LocalPlayer == null) return;
-        // string asssistCharacterName = DalamudApi.Player.CharacterName;
+        // string asssistCharacterName = DalamudApi.PlayerState.CharacterName;
         var assitTargetObjectId = DalamudApi.ObjectTable.LocalPlayer.TargetObjectId;
         if (assitTargetObjectId == 0) return;
 

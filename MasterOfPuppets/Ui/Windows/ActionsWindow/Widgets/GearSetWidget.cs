@@ -7,6 +7,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
@@ -27,8 +28,7 @@ public class GearSetWidget : Widget {
     }
 
     public override void OnShow() {
-        UnlockedActions.Clear();
-        UnlockedActions.AddRange(GearsetHelper.GetAllowedItems());
+        ReloadData();
         base.OnShow();
     }
 
@@ -39,13 +39,18 @@ public class GearSetWidget : Widget {
     }
 
     public override void Draw() {
-        ImGui.BeginGroup();
-        DrawHeader();
-        ImGui.EndGroup();
+        using (ImRaii.Group()) {
+            DrawHeader();
+        }
 
         ImGui.BeginChild("##GearSetListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.AlwaysVerticalScrollbar);
         DrawGearSetTable();
         ImGui.EndChild();
+    }
+
+    private void ReloadData() {
+        UnlockedActions.Clear();
+        UnlockedActions.AddRange(GearsetHelper.GetAllowedItems());
     }
 
     private void Search() {
@@ -78,7 +83,10 @@ public class GearSetWidget : Widget {
         """);
 
         ImGui.Spacing();
-
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##GearSetReloadDataBtn", "Reload")) {
+            ReloadData();
+        }
+        ImGui.SameLine();
         if (ImGui.InputTextWithHint("##GearSetSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }

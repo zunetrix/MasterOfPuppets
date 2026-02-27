@@ -27,8 +27,7 @@ public class MountsWidget : Widget {
     }
 
     public override void OnShow() {
-        UnlockedActions.Clear();
-        UnlockedActions.AddRange(MountHelper.GetAllowedItems());
+        ReloadData();
         base.OnShow();
     }
 
@@ -39,13 +38,18 @@ public class MountsWidget : Widget {
     }
 
     public override void Draw() {
-        ImGui.BeginGroup();
-        DrawHeader();
-        ImGui.EndGroup();
+        using (ImRaii.Group()) {
+            DrawHeader();
+        }
 
         ImGui.BeginChild("##MountListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
         DrawMountGird();
         ImGui.EndChild();
+    }
+
+    private void ReloadData() {
+        UnlockedActions.Clear();
+        UnlockedActions.AddRange(MountHelper.GetAllowedItems());
     }
 
     private void Search() {
@@ -69,7 +73,10 @@ public class MountsWidget : Widget {
         """);
 
         ImGui.Spacing();
-
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##MountReloadDataBtn", "Reload")) {
+            ReloadData();
+        }
+        ImGui.SameLine();
         if (ImGui.InputTextWithHint("##MountSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
@@ -97,9 +104,11 @@ public class MountsWidget : Widget {
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##MountIconList")) {
-                var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
-                DrawIconGrid(iconSize, columns);
+            using (var child = ImRaii.Child("Search##MountIconList")) {
+                if (child) {
+                    var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
+                    DrawIconGrid(iconSize, columns);
+                }
             }
 
             ImGui.EndTable();

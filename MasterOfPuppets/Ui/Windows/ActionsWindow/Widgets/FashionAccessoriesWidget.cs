@@ -27,8 +27,7 @@ public class FashionAccessoriesWidget : Widget {
     }
 
     public override void OnShow() {
-        UnlockedActions.Clear();
-        UnlockedActions.AddRange(FashionAccessoriesHelper.GetAllowedItems());
+        ReloadData();
         base.OnShow();
     }
 
@@ -39,13 +38,18 @@ public class FashionAccessoriesWidget : Widget {
     }
 
     public override void Draw() {
-        ImGui.BeginGroup();
-        DrawHeader();
-        ImGui.EndGroup();
+        using (ImRaii.Group()) {
+            DrawHeader();
+        }
 
         ImGui.BeginChild("##FashionListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
         DrawFashionGird();
         ImGui.EndChild();
+    }
+
+    private void ReloadData() {
+        UnlockedActions.Clear();
+        UnlockedActions.AddRange(FashionAccessoriesHelper.GetAllowedItems());
     }
 
     private void Search() {
@@ -68,7 +72,10 @@ public class FashionAccessoriesWidget : Widget {
         """);
 
         ImGui.Spacing();
-
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##FashionAccessoriesReloadDataBtn", "Reload")) {
+            ReloadData();
+        }
+        ImGui.SameLine();
         if (ImGui.InputTextWithHint("##FashionAccessoriesSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
@@ -122,9 +129,11 @@ public class FashionAccessoriesWidget : Widget {
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##FashionIconList")) {
-                var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
-                DrawIconGrid(iconSize, columns);
+            using (var child = ImRaii.Child("Search##FashionIconList")) {
+                if (child) {
+                    var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
+                    DrawIconGrid(iconSize, columns);
+                }
             }
 
             ImGui.EndTable();

@@ -237,9 +237,11 @@ public class EmotesWindow : Window {
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##EmoteIconList")) {
-                var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
-                DrawIconGrid(iconSize, columns);
+            using (var child = ImRaii.Child("Search##EmoteIconList")) {
+                if (child) {
+                    var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
+                    DrawIconGrid(iconSize, columns);
+                }
             }
 
             ImGui.EndTable();

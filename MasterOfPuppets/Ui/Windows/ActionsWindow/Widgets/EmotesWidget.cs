@@ -30,8 +30,7 @@ public sealed class EmotesWidget : Widget {
     }
 
     public override void OnShow() {
-        UnlockedActions.Clear();
-        UnlockedActions.AddRange(EmoteHelper.GetAllowedItems());
+        ReloadData();
         base.OnShow();
     }
 
@@ -42,13 +41,18 @@ public sealed class EmotesWidget : Widget {
     }
 
     public override void Draw() {
-        ImGui.BeginGroup();
-        DrawHeader();
-        ImGui.EndGroup();
+        using (ImRaii.Group()) {
+            DrawHeader();
+        }
 
         ImGui.BeginChild("##EmotesListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.NoScrollbar);
         DrawEmoteGird();
         ImGui.EndChild();
+    }
+
+    private void ReloadData() {
+        UnlockedActions.Clear();
+        UnlockedActions.AddRange(EmoteHelper.GetAllowedItems());
     }
 
     private void Search() {
@@ -91,7 +95,10 @@ public sealed class EmotesWidget : Widget {
         """);
 
         ImGui.Spacing();
-
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##EmotesReloadDataBtn", "Reload")) {
+            ReloadData();
+        }
+        ImGui.SameLine();
         if (ImGui.InputTextWithHint("##EmoteSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
@@ -156,11 +163,12 @@ public sealed class EmotesWidget : Widget {
             ImGui.TableNextColumn();
 
             ImGui.TableNextColumn();
-            using (ImRaii.Child("Search##EmoteIconList")) {
-                var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
-                DrawIconGrid(iconSize, columns);
+            using (var child = ImRaii.Child("Search##EmoteIconList")) {
+                if (child) {
+                    var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
+                    DrawIconGrid(iconSize, columns);
+                }
             }
-
             ImGui.EndTable();
         }
     }
