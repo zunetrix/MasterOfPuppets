@@ -114,7 +114,7 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mop invite",
             SuggestionCommand = "/mop invite \"Character Name@World\"",
             Example = """
-            /mop invite \"Character Name@World\"
+            /mop invite "Character Name@World"
             """,
             Notes = """
             Invites a character by Name@World

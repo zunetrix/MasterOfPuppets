@@ -9,6 +9,7 @@ using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using BattleChara = FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara;
+using System.Threading.Tasks;
 // using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 
 namespace MasterOfPuppets;
@@ -190,13 +191,16 @@ public static class GameTargetManager {
         });
     }
 
-    public static unsafe void InteractWithMyTarget(ulong objectId) {
+    public async static void InteractWithMyTarget(ulong objectId) {
         TargetObject(objectId);
+        await Task.Delay(500);
 
-        DalamudApi.Framework.RunOnTick(() => {
+        _ = DalamudApi.Framework.RunOnTick(() => {
             var target = DalamudApi.ObjectTable.LocalPlayer?.TargetObject.Address;
             if (target == null) return;
-            TargetSystem.Instance()->InteractWithObject((GameObject*)target.Value, false);
+            unsafe {
+                TargetSystem.Instance()->InteractWithObject((GameObject*)target.Value, false);
+            }
         });
     }
 }

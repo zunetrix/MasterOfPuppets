@@ -45,8 +45,7 @@ public static class GameFunctions {
             return;
 
         DalamudApi.Framework.RunOnTick(() => {
-            InfoProxyPartyInvite.Instance()
-                ->InviteToParty(0, charName, (ushort)worldId.Value);
+            InfoProxyPartyInvite.Instance()->InviteToParty(0, charName, (ushort)worldId.Value);
         });
     }
 }
