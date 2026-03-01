@@ -108,6 +108,19 @@ public static class MopMacroActionsHelper {
             """
         },
 
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop invite",
+            SuggestionCommand = "/mop invite \"Character Name@World\"",
+            Example = """
+            /mop invite \"Character Name@World\"
+            """,
+            Notes = """
+            Invites a character by Name@World
+            """
+        },
+
         // MOVEMENT
         new MopAction
         {

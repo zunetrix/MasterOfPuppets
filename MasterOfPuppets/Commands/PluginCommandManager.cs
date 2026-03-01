@@ -32,6 +32,7 @@ public class PluginCommandManager : IDisposable {
                 /mop targetmytarget -> make all clients target your current target
                 /mop interactwithmytarget -> make all clients interact with you current target
                 /mop targetclear - > clear all targets
+                /mop invite - > invite a character by name@world
             """,
         });
 
@@ -179,6 +180,19 @@ public class PluginCommandManager : IDisposable {
                         }
 
                         GearsetManager.ChangeGearset(Plugin, gearsetIndex - 1);
+                        break;
+                    }
+                case "invite": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ShowNotification(
+                                "Invalid arguments. Expected \"Character Name@World\"",
+                                NotificationType.Error,
+                                5000
+                            );
+                            return;
+                        }
+
+                        GameFunctions.InviteToParty(parsedArgs[1]);
                         break;
                     }
                 default:
