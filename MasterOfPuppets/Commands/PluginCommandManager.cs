@@ -181,6 +181,19 @@ public class PluginCommandManager : IDisposable {
                         GearsetManager.ChangeGearset(Plugin, gearsetIndex - 1);
                         break;
                     }
+                case "invite": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ShowNotification(
+                                "Invalid arguments. Expected \"Character Name@world\"",
+                                NotificationType.Error,
+                                5000
+                            );
+                            return;
+                        }
+
+                        GameFunctions.InviteToParty(parsedArgs[1]);
+                        break;
+                    }
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");
                     return;
