@@ -64,6 +64,17 @@ internal class IpcHandlers {
         GameTargetManager.TargetObject(targetObjectId);
     }
 
+    [IpcHandle(IpcMessageType.ExecuteInteractWithMyTarget)]
+    private void HandleExecuteInteractWithMyTarget(IpcMessage message) {
+        ulong targetObjectId = message.DataStruct<ulong>();
+        GameTargetManager.InteractWithMyTarget(targetObjectId);
+    }
+
+    [IpcHandle(IpcMessageType.ExecuteInteractWithTarget)]
+    private void HandleExecuteInteractWithTarget(IpcMessage message) {
+        GameTargetManager.InteractWithTarget();
+    }
+
     [IpcHandle(IpcMessageType.ExecuteMoveToMyTarget)]
     private void ExecuteMoveToMyTarget(IpcMessage message) {
         ulong targetObjectId = message.DataStruct<ulong>();

@@ -2,13 +2,14 @@ using System;
 using System.Linq;
 using System.Numerics;
 
-using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
+using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
-
-using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using BattleChara = FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara;
+// using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 
 namespace MasterOfPuppets;
 
@@ -32,7 +33,7 @@ public static class GameTargetManager {
 
                 // unsafe
                 try {
-                    if (!((GameObjectStruct*)actor.Address)->GetIsTargetable())
+                    if (!((GameObject*)actor.Address)->GetIsTargetable())
                         continue;
                 } catch {
                     continue;
@@ -98,7 +99,7 @@ public static class GameTargetManager {
                     // DalamudApi.PluginLog.Warning($"TargetOf: \"{lookupName}\"");
 
                     if (!lookupName.Contains(assistName, StringComparison.InvariantCultureIgnoreCase)
-                        || !((GameObjectStruct*)assistActor.Address)->GetIsTargetable()) continue;
+                        || !((GameObject*)assistActor.Address)->GetIsTargetable()) continue;
 
                     var distance = Vector3.Distance(player.Position, assistActor.Position);
                     if (closestMatch == null) {
@@ -114,7 +115,7 @@ public static class GameTargetManager {
 
                 if (closestMatch == null) return;
                 if (closestMatch.TargetObject == null
-                    || !((GameObjectStruct*)closestMatch.TargetObject.Address)->GetIsTargetable()
+                    || !((GameObject*)closestMatch.TargetObject.Address)->GetIsTargetable()
                     // || closestMatch.TargetObjectId == DalamudApi.ObjectTable.LocalPlayer.GameObjectId
                     ) {
                     return;
@@ -179,5 +180,23 @@ public static class GameTargetManager {
 
     public static string GetTargetName() {
         return DalamudApi.ObjectTable.LocalPlayer?.TargetObject?.Name?.TextValue ?? string.Empty;
+    }
+
+    public static unsafe void InteractWithTarget() {
+        DalamudApi.Framework.RunOnTick(() => {
+            var target = DalamudApi.ObjectTable.LocalPlayer?.TargetObject.Address;
+            if (target == null) return;
+            TargetSystem.Instance()->InteractWithObject((GameObject*)target.Value, false);
+        });
+    }
+
+    public static unsafe void InteractWithMyTarget(ulong objectId) {
+        TargetObject(objectId);
+
+        DalamudApi.Framework.RunOnTick(() => {
+            var target = DalamudApi.ObjectTable.LocalPlayer?.TargetObject.Address;
+            if (target == null) return;
+            TargetSystem.Instance()->InteractWithObject((GameObject*)target.Value, false);
+        });
     }
 }

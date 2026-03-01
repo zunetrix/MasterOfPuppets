@@ -67,6 +67,33 @@ public static class MopMacroActionsHelper {
             Useful to complete event quests
             """
         },
+
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop interactwithmytarget",
+            SuggestionCommand = "/mop interactwithmytarget",
+            Example = """
+            /mop interactwithmytarget
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Useful to complete event quests, interacts with main client target
+            """
+        },
+
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop interactwithtarget",
+            SuggestionCommand = "/mop interactwithtarget",
+            Example = """
+            /mop interactwithtarget
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Useful to complete event quests, interacts with current target
+            """
+        },
+
         new MopAction
         {
             Category = MopActionCategory.PluginCommand,

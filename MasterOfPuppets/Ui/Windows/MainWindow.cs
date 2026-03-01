@@ -267,6 +267,16 @@ public class MainWindow : Window {
 
             // -----------------------
 
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonChalkboard, $"##ExecuteInteractWIthMyTargetCommand")) {
+                Plugin.IpcProvider.ExecuteInteractWithMyTarget();
+            }
+            ImGui.SameLine();
+            if (ImGui.Selectable("Interact With My Target")) {
+                Plugin.IpcProvider.ExecuteInteractWithMyTarget();
+            }
+
+            // -----------------------
+
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Times, $"##ExecuteTargetClearCommand")) {
                 Plugin.IpcProvider.ExecuteTargetClear();
             }

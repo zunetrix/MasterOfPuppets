@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
+using FFXIVClientStructs.FFXIV.Client.UI.Info;
 
 namespace MasterOfPuppets;
 
@@ -24,4 +25,8 @@ public static class GameFunctions {
             Marshal.GetDelegateForFunctionPointer<AbandonDutyDelegate>(EventFramework.Addresses.LeaveCurrentContent.Value);
 
     public static void AbandonDuty() => _abandonDuty(false);
+
+    public static unsafe void InviteToParty(string character, ushort homeWorldId) {
+        InfoProxyPartyInvite.Instance()->InviteToParty(0, character, homeWorldId);
+    }
 }

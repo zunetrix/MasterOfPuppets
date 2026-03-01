@@ -30,6 +30,7 @@ public class PluginCommandManager : IDisposable {
                 /mop minion -> shtoggleow minion window
                 /mop item -> toggle item window
                 /mop targetmytarget -> make all clients target your current target
+                /mop interactwithmytarget -> make all clients interact with you current target
                 /mop targetclear - > clear all targets
             """,
         });
@@ -92,6 +93,12 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "targetmytarget":
                     Plugin.IpcProvider.ExecuteTargetMyTarget();
+                    break;
+                case "interactwithmytarget":
+                    Plugin.IpcProvider.ExecuteInteractWithMyTarget();
+                    break;
+                case "interactwithtarget":
+                    Plugin.IpcProvider.ExecuteInteractWithTarget();
                     break;
                 case "targetclear":
                     Plugin.IpcProvider.ExecuteTargetClear();
