@@ -7,6 +7,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Extensions.Dalamud;
@@ -403,23 +404,22 @@ public class MainWindow : Window {
         //     Ui.CharactersWindow.Toggle();
         // }
 
-        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
-        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);
-        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive);
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
+                .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
+                .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Ban, $"##StopMovementBtn", Language.StopMovementBtn)) {
+                Plugin.IpcProvider.StopMovement();
+                DalamudApi.ShowNotification($"Movement stoped", NotificationType.Info, 3000);
+            }
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Ban, $"##StopMovementBtn", Language.StopMovementBtn)) {
-            Plugin.IpcProvider.StopMovement();
-            DalamudApi.ShowNotification($"Movement stoped", NotificationType.Info, 3000);
+            ImGui.SameLine();
+
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionBtn", Language.StopMacroExecutionBtn)) {
+                Plugin.IpcProvider.StopMacroExecution();
+                DalamudApi.ShowNotification($"Macro execution queue stoped", NotificationType.Info, 3000);
+            }
         }
-
-        ImGui.SameLine();
-
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionBtn", Language.StopMacroExecutionBtn)) {
-            Plugin.IpcProvider.StopMacroExecution();
-            DalamudApi.ShowNotification($"Macro execution queue stoped", NotificationType.Info, 3000);
-        }
-        ImGui.PopStyleColor(3);
 
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.List, $"##ShowMacroQueueBtn", Language.ShowMacroQueueBtn)) {
@@ -858,40 +858,40 @@ public class MainWindow : Window {
 
         ImGui.Spacing();
         // tag list
-        ImGui.PushStyleColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered);
-        ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered);
-        ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
+        using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered)
+            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
+            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered)) {
 
-        int noTagCount = Plugin.Config.Macros.Count(m => m.Tags == null || m.Tags.Count == 0);
+            int noTagCount = Plugin.Config.Macros.Count(m => m.Tags == null || m.Tags.Count == 0);
 
-        bool isNoTagSelected = _filterNoTags;
-        if (ImGui.Selectable($"No Tags ({noTagCount})##tag_notag", isNoTagSelected)) {
-            _selectedTags.Clear();
-            _filterNoTags = !_filterNoTags;
-        }
+            bool isNoTagSelected = _filterNoTags;
+            if (ImGui.Selectable($"No Tags ({noTagCount})##tag_notag", isNoTagSelected)) {
+                _selectedTags.Clear();
+                _filterNoTags = !_filterNoTags;
+            }
 
-        ImGui.Separator();
+            ImGui.Separator();
 
-        for (int i = 0; i < allTags.Count; i++) {
-            var tag = allTags[i];
-            var isSelected = _selectedTags.Contains(tag);
+            for (int i = 0; i < allTags.Count; i++) {
+                var tag = allTags[i];
+                var isSelected = _selectedTags.Contains(tag);
 
-            var count = Plugin.Config.Macros
-                .Count(m => (m.Tags ?? new List<string>())
-                    .Any(t => string.Equals(t, tag, StringComparison.OrdinalIgnoreCase)));
+                var count = Plugin.Config.Macros
+                    .Count(m => (m.Tags ?? new List<string>())
+                        .Any(t => string.Equals(t, tag, StringComparison.OrdinalIgnoreCase)));
 
-            var label = $"{tag} ({count})##tag_{i}";
+                var label = $"{tag} ({count})##tag_{i}";
 
-            if (ImGui.Selectable(label, isSelected, ImGuiSelectableFlags.SpanAllColumns)) {
-                _filterNoTags = false;
+                if (ImGui.Selectable(label, isSelected, ImGuiSelectableFlags.SpanAllColumns)) {
+                    _filterNoTags = false;
 
-                if (isSelected)
-                    _selectedTags.Remove(tag);
-                else
-                    _selectedTags.Add(tag);
+                    if (isSelected)
+                        _selectedTags.Remove(tag);
+                    else
+                        _selectedTags.Add(tag);
+                }
             }
         }
-        ImGui.PopStyleColor(3);
         ImGui.EndChild();
 
         // splitter resizable

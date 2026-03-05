@@ -283,17 +283,17 @@ public class CharactersWindow : Window {
         ImGui.SameLine();
 
         ImGui.BeginDisabled(!Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex));
-        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
-        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);
-        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive);
-        if (ImGui.Button($"Delete Group")) {
-            if (ImGui.GetIO().KeyCtrl) {
-                Plugin.Config.CidsGroups.RemoveAt(_selectedCidGroupIndex);
-                Plugin.Config.Save();
-                Plugin.IpcProvider.SyncConfiguration();
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+            if (ImGui.Button($"Delete Group")) {
+                if (ImGui.GetIO().KeyCtrl) {
+                    Plugin.Config.CidsGroups.RemoveAt(_selectedCidGroupIndex);
+                    Plugin.Config.Save();
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
             }
         }
-        ImGui.PopStyleColor(3);
         ImGui.EndDisabled();
         ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
     }

@@ -148,21 +148,22 @@ public class SettingsWindow : Window {
         ImGui.Spacing();
         ImGui.Spacing();
 
-        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonPurpleNormal);
-        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonPurpleHovered);
-        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonPurpleActive);
-        if (ImGui.Button(Language.OpenPluginFolder)) {
-            WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
-        }
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonPurpleNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonPurpleHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonPurpleActive)) {
 
-        ImGui.SameLine();
-        ImGuiHelpers.ScaledDummy(0, 20);
-        ImGui.SameLine();
+            if (ImGui.Button(Language.OpenPluginFolder)) {
+                WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
+            }
 
-        if (ImGui.Button(Language.OpenPluginConfigFile)) {
-            WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
+            ImGui.SameLine();
+            ImGuiHelpers.ScaledDummy(0, 20);
+            ImGui.SameLine();
+
+            if (ImGui.Button(Language.OpenPluginConfigFile)) {
+                WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
+            }
         }
-        ImGui.PopStyleColor(3);
     }
 
     private void DrawChatSyncTab() {
