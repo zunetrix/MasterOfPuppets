@@ -5,6 +5,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Utility;
 
@@ -82,59 +83,59 @@ public class MacroImportExportWindow : Window {
             ImGui.Spacing();
             ImGui.Spacing();
 
-            ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-            ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-            if (ImGui.Button("Export All Macros")) {
-                var exportFolder = Plugin.Config.MacroExportPath.IsNullOrEmpty() ?
-                            DalamudApi.PluginInterface.ConfigDirectory.FullName : Plugin.Config.MacroExportPath;
+            using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive)) {
+                if (ImGui.Button("Export All Macros")) {
+                    var exportFolder = Plugin.Config.MacroExportPath.IsNullOrEmpty() ?
+                                DalamudApi.PluginInterface.ConfigDirectory.FullName : Plugin.Config.MacroExportPath;
 
-                var dateNow = DateTime.Now.ToString("yyyy-MM-dd_HHmmss");
-                var exportFileName = $"mop-macro-export-{dateNow}.json";
+                    var dateNow = DateTime.Now.ToString("yyyy-MM-dd_HHmmss");
+                    var exportFileName = $"mop-macro-export-{dateNow}.json";
 
-                FileDialogManager.SaveFileDialog("Export", ".json", exportFileName, ".json", (result, selectedPath) => {
-                    if (!result) return;
+                    FileDialogManager.SaveFileDialog("Export", ".json", exportFileName, ".json", (result, selectedPath) => {
+                        if (!result) return;
 
-                    Plugin.MacroManager.ExportMacrosToFile(selectedPath, Plugin.Config.IncludeCidOnExport);
+                        Plugin.MacroManager.ExportMacrosToFile(selectedPath, Plugin.Config.IncludeCidOnExport);
 
-                    Plugin.Config.MacroExportPath = Path.GetDirectoryName(selectedPath);
-                    Plugin.Config.Save();
-                    Plugin.IpcProvider.SyncConfiguration();
-                }, exportFolder);
-                // ImGui.SetNextWindowFocus();
+                        Plugin.Config.MacroExportPath = Path.GetDirectoryName(selectedPath);
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }, exportFolder);
+                    // ImGui.SetNextWindowFocus();
+                }
             }
-            ImGui.PopStyleColor(3);
 
             ImGui.SameLine();
             ImGuiHelpers.ScaledDummy(10);
 
             ImGui.SameLine();
-            ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-            ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-            if (ImGui.Button("Export Selected Macros")) {
-                if (Plugin.MacroManager.SelectedMacrosIndexes.Count == 0) {
-                    Chat.PrintError("No macros selected to export");
-                    return;
+            using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive)) {
+                if (ImGui.Button("Export Selected Macros")) {
+                    if (Plugin.MacroManager.SelectedMacrosIndexes.Count == 0) {
+                        Chat.PrintError("No macros selected to export");
+                        return;
+                    }
+
+                    var exportFolder = Plugin.Config.MacroExportPath.IsNullOrEmpty() ?
+                                DalamudApi.PluginInterface.ConfigDirectory.FullName : Plugin.Config.MacroExportPath;
+
+                    var dateNow = DateTime.Now.ToString("yyyy-MM-dd_HHmmss");
+                    var exportFileName = $"mop-macro-export-{dateNow}.json";
+
+                    FileDialogManager.SaveFileDialog("Export", ".json", exportFileName, ".json", (result, selectedPath) => {
+                        if (!result) return;
+
+                        Plugin.MacroManager.ExportSelectedMacrosToFile(selectedPath, Plugin.Config.IncludeCidOnExport);
+
+                        Plugin.Config.MacroExportPath = Path.GetDirectoryName(selectedPath);
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }, exportFolder);
                 }
-
-                var exportFolder = Plugin.Config.MacroExportPath.IsNullOrEmpty() ?
-                            DalamudApi.PluginInterface.ConfigDirectory.FullName : Plugin.Config.MacroExportPath;
-
-                var dateNow = DateTime.Now.ToString("yyyy-MM-dd_HHmmss");
-                var exportFileName = $"mop-macro-export-{dateNow}.json";
-
-                FileDialogManager.SaveFileDialog("Export", ".json", exportFileName, ".json", (result, selectedPath) => {
-                    if (!result) return;
-
-                    Plugin.MacroManager.ExportSelectedMacrosToFile(selectedPath, Plugin.Config.IncludeCidOnExport);
-
-                    Plugin.Config.MacroExportPath = Path.GetDirectoryName(selectedPath);
-                    Plugin.Config.Save();
-                    Plugin.IpcProvider.SyncConfiguration();
-                }, exportFolder);
             }
-            ImGui.PopStyleColor(3);
         }
 
         ImGui.Spacing();
@@ -201,24 +202,24 @@ public class MacroImportExportWindow : Window {
             ImGui.Spacing();
             ImGui.Spacing();
 
-            ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-            ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-            if (ImGui.Button("Import File")) {
-                FileDialogManager.OpenFileDialog(
-                    title: "Import",
-                    filters: ".json",
-                    startPath: Plugin.Config.MacroExportPath,
-                    selectionCountMax: 1,
-                    callback: (result, selectedPaths) => {
-                        if (!result || selectedPaths.Count == 0) return;
-                        if (!File.Exists(selectedPaths[0])) return;
+            using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive)) {
+                if (ImGui.Button("Import File")) {
+                    FileDialogManager.OpenFileDialog(
+                        title: "Import",
+                        filters: ".json",
+                        startPath: Plugin.Config.MacroExportPath,
+                        selectionCountMax: 1,
+                        callback: (result, selectedPaths) => {
+                            if (!result || selectedPaths.Count == 0) return;
+                            if (!File.Exists(selectedPaths[0])) return;
 
-                        Plugin.MacroManager.ImportMacrosFromFile(selectedPaths[0], Plugin.Config.MacroImportMode, Plugin.Config.IncludeCidOnImport, backupBeforeImport);
-                    }
-                );
+                            Plugin.MacroManager.ImportMacrosFromFile(selectedPaths[0], Plugin.Config.MacroImportMode, Plugin.Config.IncludeCidOnImport, backupBeforeImport);
+                        }
+                    );
+                }
             }
-            ImGui.PopStyleColor(3);
         }
     }
 }

@@ -18,49 +18,50 @@ public static class ImGuiUtil {
     // ------------------------
     public static bool IconButtonRaii(FontAwesomeIcon icon, string? id = null, string tooltip = null, Vector4? color = null, Vector2? size = null) {
         using var col = new ImRaii.Color();
-
-        if (color.HasValue) {
-            ImGui.PushStyleColor(ImGuiCol.Text, (Vector4)color);
-        }
-
-        if (size.HasValue) {
-            size *= ImGuiHelpers.GlobalScale;
-        }
         bool button;
 
-        using (ImRaii.PushFont(UiBuilder.IconFont)) {
-            var iconSize = ImGui.CalcTextSize(icon.ToIconString());
-            var cursor = ImGui.GetCursorScreenPos();
+        using (ImRaii.PushColor(ImGuiCol.Text, (Vector4)color, color.HasValue)) {
 
-            var width = size is { X: not 0 } ? size.Value.X : iconSize.X + (ImGui.GetStyle().FramePadding.X * 2);
-            var height = size is { Y: not 0 } ? size.Value.Y : ImGui.GetFrameHeight();
-
-            var buttonSize = new Vector2(width, height);
-
-            using (ImRaii.PushId(icon.ToIconString())) {
-                button = ImGui.Button(string.Empty, buttonSize);
+            if (size.HasValue) {
+                size *= ImGuiHelpers.GlobalScale;
             }
 
-            var iconPos = cursor + ((buttonSize - iconSize) / 2f);
+            using (ImRaii.PushFont(UiBuilder.IconFont)) {
+                var iconSize = ImGui.CalcTextSize(icon.ToIconString());
+                var cursor = ImGui.GetCursorScreenPos();
 
-            ImGui.GetWindowDrawList().AddText(iconPos, ImGui.GetColorU32(ImGuiCol.Text), icon.ToIconString());
-            if (tooltip != null) ToolTip(tooltip);
+                var width = size is { X: not 0 } ? size.Value.X : iconSize.X + (ImGui.GetStyle().FramePadding.X * 2);
+                var height = size is { Y: not 0 } ? size.Value.Y : ImGui.GetFrameHeight();
+
+                var buttonSize = new Vector2(width, height);
+
+                using (ImRaii.PushId(icon.ToIconString())) {
+                    button = ImGui.Button(string.Empty, buttonSize);
+                }
+
+                var iconPos = cursor + ((buttonSize - iconSize) / 2f);
+
+                ImGui.GetWindowDrawList().AddText(iconPos, ImGui.GetColorU32(ImGuiCol.Text), icon.ToIconString());
+                if (tooltip != null)
+                    ToolTip(tooltip);
+            }
         }
-
         return button;
+
     }
 
     public static bool IconButton(FontAwesomeIcon icon, string? id = null, string tooltip = null, Vector4? color = null, Vector2? size = null) {
         using (ImRaii.PushFont(UiBuilder.IconFont)) {
             try {
                 var iconButtonSize = ImGui.CalcTextSize(icon.ToIconString()) + ImGui.GetStyle().FramePadding * 2;
-
-                if (color != null) ImGui.PushStyleColor(ImGuiCol.Text, (Vector4)color);
-                var buttonSize = size != null ? size.Value : iconButtonSize;
-                return ImGui.Button($"{icon.ToIconString()}##{id}", buttonSize);
+                using (ImRaii.PushColor(ImGuiCol.Text, (Vector4)color, color != null)) {
+                    var buttonSize = size != null ? size.Value : iconButtonSize;
+                    return ImGui.Button($"{icon.ToIconString()}##{id}", buttonSize);
+                }
             } finally {
-                if (color != null) ImGui.PopStyleColor();
-                if (tooltip != null) ToolTip(tooltip);
+                if (tooltip != null) {
+                    ToolTip(tooltip);
+                }
             }
         }
     }
@@ -128,49 +129,43 @@ public static class ImGuiUtil {
         return ret;
     }
 
-    public static void DrawFontawesomeIconOutlined(FontAwesomeIcon icon, Vector4 outline, Vector4 iconColor) {
+    public static void DrawFontawesomeIconOutlined(FontAwesomeIcon icon, Vector4 outlineColor, Vector4 iconColor) {
         var positionOffset = ImGuiHelpers.ScaledVector2(0.0f, 1.0f);
         var cursorStart = ImGui.GetCursorPos() + positionOffset;
-        ImGui.PushFont(UiBuilder.IconFont);
 
-        ImGui.PushStyleColor(ImGuiCol.Text, outline);
-        foreach (var x in Enumerable.Range(-1, 3)) {
-            foreach (var y in Enumerable.Range(-1, 3)) {
-                if (x is 0 && y is 0) continue;
+        using (ImRaii.PushFont(UiBuilder.IconFont)) {
+            using (ImRaii.PushColor(ImGuiCol.Text, outlineColor)) {
+                foreach (var x in Enumerable.Range(-1, 3)) {
+                    foreach (var y in Enumerable.Range(-1, 3)) {
+                        if (x is 0 && y is 0) continue;
 
-                ImGui.SetCursorPos(cursorStart + new Vector2(x, y));
+                        ImGui.SetCursorPos(cursorStart + new Vector2(x, y));
+                        ImGui.Text(icon.ToIconString());
+                    }
+                }
+            }
+
+            using (ImRaii.PushColor(ImGuiCol.Text, iconColor)) {
+                ImGui.SetCursorPos(cursorStart);
                 ImGui.Text(icon.ToIconString());
             }
         }
-
-        ImGui.PopStyleColor();
-
-        ImGui.PushStyleColor(ImGuiCol.Text, iconColor);
-        ImGui.SetCursorPos(cursorStart);
-        ImGui.Text(icon.ToIconString());
-        ImGui.PopStyleColor();
-
-        ImGui.PopFont();
 
         ImGui.SetCursorPos(ImGui.GetCursorPos() - positionOffset);
     }
 
     public static void ToolTip(string desc, int wrap = 400, bool showBorder = true) {
         if (ImGui.IsItemHovered()) {
-            if (showBorder) {
-                ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-                ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-            }
-            ImGui.PushFont(UiBuilder.DefaultFont);
-            ImGui.BeginTooltip();
-            ImGui.PushTextWrapPos(ImGuiHelpers.GlobalScale * wrap);
-            ImGui.Text(desc);
-            ImGui.PopTextWrapPos();
-            ImGui.EndTooltip();
-            ImGui.PopFont();
-            if (showBorder) {
-                ImGui.PopStyleVar();
-                ImGui.PopStyleColor();
+            using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor, showBorder)) {
+                using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1, showBorder)) {
+                    using (ImRaii.PushFont(UiBuilder.DefaultFont)) {
+                        ImGui.BeginTooltip();
+                        ImGui.PushTextWrapPos(ImGuiHelpers.GlobalScale * wrap);
+                        ImGui.Text(desc);
+                        ImGui.PopTextWrapPos();
+                        ImGui.EndTooltip();
+                    }
+                }
             }
         }
     }
@@ -182,11 +177,11 @@ public static class ImGuiUtil {
     }
 
     public static void DrawColoredBanner(string content, Vector4 color) {
-        ImGui.PushStyleColor(ImGuiCol.Button, color);
-        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, color);
-        ImGui.PushStyleColor(ImGuiCol.ButtonActive, color);
-        ImGui.Button(content, new Vector2(-1, ImGui.GetFrameHeight()));
-        ImGui.PopStyleColor(3);
+        using (ImRaii.PushColor(ImGuiCol.Button, color)
+        .Push(ImGuiCol.ButtonHovered, color)
+        .Push(ImGuiCol.ButtonActive, color)) {
+            ImGui.Button(content, new Vector2(-1, ImGui.GetFrameHeight()));
+        }
     }
 
     // Applies a border over the previous item

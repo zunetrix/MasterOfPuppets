@@ -92,19 +92,14 @@ public class GearSetWidget : Widget {
         }
 
         ImGui.SameLine();
-        var showingEmptyGearSets = false;
-        if (_showEmptyGearsets) {
-            ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-            ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-            showingEmptyGearSets = true;
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showEmptyGearsets)
+        .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, _showEmptyGearsets)
+        .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, _showEmptyGearsets)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.BoxOpen, $"##ShowEmptyGearSetsBtn", "Show Empty Gear Sets")) {
+                _showEmptyGearsets = !_showEmptyGearsets;
+                Search();
+            }
         }
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.BoxOpen, $"##ShowEmptyGearSetsBtn", "Show Empty Gear Sets")) {
-            _showEmptyGearsets = !_showEmptyGearsets;
-            Search();
-        }
-        if (showingEmptyGearSets)
-            ImGui.PopStyleColor(3);
 
         ImGui.Spacing();
         ImGui.Separator();

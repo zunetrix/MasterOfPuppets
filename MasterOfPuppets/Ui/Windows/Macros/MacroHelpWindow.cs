@@ -7,6 +7,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Resources;
@@ -63,18 +64,13 @@ public class MacroHelpWindow : Window {
                     int realIndex = MopMacroActionsHelper.Actions.IndexOf(action);
                     bool isSelected = SelectedItemIndex == realIndex;
 
-                    if (isSelected) {
-                        ImGui.PushStyleColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered);
-                        ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered);
-                        ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
+                    using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
+                    .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, isSelected)
+                    .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, isSelected)) {
+                        if (ImGui.Selectable(action.SuggestionCommand, isSelected)) {
+                            SelectedItemIndex = realIndex;
+                        }
                     }
-
-                    if (ImGui.Selectable(action.SuggestionCommand, isSelected)) {
-                        SelectedItemIndex = realIndex;
-                    }
-
-                    if (isSelected)
-                        ImGui.PopStyleColor(3);
                 }
             }
             ImGui.Spacing();

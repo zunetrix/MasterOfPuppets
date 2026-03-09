@@ -178,49 +178,34 @@ public class EmotesWindow : Window {
         }
 
         ImGui.SameLine();
-        var showingGeneralEmotes = false;
-        if (_showGeneralEmotes) {
-            ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-            ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-            showingGeneralEmotes = true;
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showGeneralEmotes)
+                .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, _showGeneralEmotes)
+                .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, _showGeneralEmotes)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Smile, $"##ShowGeneralEmotesBtn", "Show General Emotes")) {
+                _showGeneralEmotes = !_showGeneralEmotes;
+                Search();
+            }
         }
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Smile, $"##ShowGeneralEmotesBtn", "Show General Emotes")) {
-            _showGeneralEmotes = !_showGeneralEmotes;
-            Search();
-        }
-        if (showingGeneralEmotes)
-            ImGui.PopStyleColor(3);
 
         ImGui.SameLine();
-        var showingExpressionsEmotes = false;
-        if (_showExpressionsEmotes) {
-            ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-            ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-            showingExpressionsEmotes = true;
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showExpressionsEmotes)
+                .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, _showExpressionsEmotes)
+                .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, _showExpressionsEmotes)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowExpressionsEmotesBtn", "Show Expressions Emotes")) {
+                _showExpressionsEmotes = !_showExpressionsEmotes;
+                Search();
+            }
         }
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowExpressionsEmotesBtn", "Show Expressions Emotes")) {
-            _showExpressionsEmotes = !_showExpressionsEmotes;
-            Search();
-        }
-        if (showingExpressionsEmotes)
-            ImGui.PopStyleColor(3);
 
         ImGui.SameLine();
-        var showingInternalEmotes = false;
-        if (_showInternalEmotes) {
-            ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-            ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-            showingInternalEmotes = true;
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showInternalEmotes)
+                .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, _showInternalEmotes)
+                .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, _showInternalEmotes)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Bed, $"##ShowInternalEmotesBtn", "Show Internal Emotes (sleep/sit anywhere etc)")) {
+                _showInternalEmotes = !_showInternalEmotes;
+                Search();
+            }
         }
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Bed, $"##ShowInternalEmotesBtn", "Show Internal Emotes (sleep/sit anywhere etc)")) {
-            _showInternalEmotes = !_showInternalEmotes;
-            Search();
-        }
-        if (showingInternalEmotes)
-            ImGui.PopStyleColor(3);
 
         ImGui.Spacing();
         ImGui.Separator();

@@ -9,6 +9,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Extensions;
@@ -254,15 +255,15 @@ public class MacroEditorWindow : Window {
         ImGui.InputText("##MacroNameInput", ref MacroItem.Name);
 
         ImGui.SameLine();
-        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonSuccessnNormal);
-        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonSuccessHovered);
-        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonSuccessActive);
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Save, $"##SaveMacroBtn", Language.SaveMacroBtn)) {
-            if (SaveMacro()) {
-                this.IsOpen = false;
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonSuccessnNormal)
+        .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonSuccessHovered)
+        .Push(ImGuiCol.ButtonActive, Style.Components.ButtonSuccessActive)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Save, $"##SaveMacroBtn", Language.SaveMacroBtn)) {
+                if (SaveMacro()) {
+                    this.IsOpen = false;
+                }
             }
         }
-        ImGui.PopStyleColor(3);
 
         ImGui.SameLine();
 
@@ -330,20 +331,16 @@ public class MacroEditorWindow : Window {
             ImGui.SameLine();
 
             bool isSelected = SelectedCommandIndex == commandIndex;
-            if (isSelected) {
-                ImGui.PushStyleColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered);
-                ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered);
-                ImGui.PushStyleColor(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
-            }
 
             string label = $"Command {commandIndex + 1}";
-            if (ImGui.Selectable(label, isSelected)) {
-                SelectedCommandIndex = commandIndex;
+            using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
+            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, isSelected)
+            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, isSelected)) {
+                if (ImGui.Selectable(label, isSelected)) {
+                    SelectedCommandIndex = commandIndex;
+                }
+                ImGuiUtil.ToolTip($"Drag to reorder");
             }
-            ImGuiUtil.ToolTip($"Drag to reorder");
-
-            if (isSelected)
-                ImGui.PopStyleColor(3);
 
             if (ImGui.BeginDragDropSource()) {
                 ImGui.SetDragDropPayload("DND_COMMAND_LIST", new ReadOnlySpan<byte>(&commandIndex, sizeof(int)), ImGuiCond.None);
@@ -461,12 +458,13 @@ public class MacroEditorWindow : Window {
 
         ImGui.Spacing();
 
-        ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal);
-        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered);
-        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive);
-        if (ImGui.Button(Language.RemoveAllBtn)) {
-            if (ImGui.GetIO().KeyCtrl) {
-                MacroItem.Commands[commandIndex].Cids = new();
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
+        .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
+        .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+            if (ImGui.Button(Language.RemoveAllBtn)) {
+                if (ImGui.GetIO().KeyCtrl) {
+                    MacroItem.Commands[commandIndex].Cids = new();
+                }
             }
         }
         ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);

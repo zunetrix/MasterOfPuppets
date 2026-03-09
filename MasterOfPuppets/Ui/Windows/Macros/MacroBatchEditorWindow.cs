@@ -62,9 +62,7 @@ public class MacroBatchEditorWindow : Window {
 
             ImGui.Spacing();
             ImGui.Spacing();
-            // ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-            // ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-            // ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
+
             if (ImGui.Button($"Replace Actions In All Selected Macros ({Plugin.MacroManager.SelectedMacrosIndexes.Count})")) {
                 if (Plugin.MacroManager.SelectedMacrosIndexes.Count == 0) {
                     DalamudApi.ShowNotification($"Select at least one macro to replace", NotificationType.Warning, 5000);
@@ -74,7 +72,6 @@ public class MacroBatchEditorWindow : Window {
                 _affectedMacrosActions = Plugin.MacroManager.ReplaceInSelectedMacrosActions(_findActionInput, _replaceActionInput, _ignoreCaseAction);
                 Plugin.IpcProvider.SyncConfiguration();
             }
-            // ImGui.PopStyleColor(3);
 
             ImGui.Spacing();
             if (_affectedMacrosActions > 0) {
