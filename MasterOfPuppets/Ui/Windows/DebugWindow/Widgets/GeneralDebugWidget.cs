@@ -55,9 +55,12 @@ public sealed class GeneralDebugWidget : Widget {
             Context.Plugin.ChatWatcher.SendChatStopMacroExecution();
         }
 
-        ImGui.Button("Resset all Config data (double click)");
-        if (ImGui.IsItemHovered()) {
-            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
+        if (ImGui.Button("Chatboxc Hi")) {
+            ChatBox.SendMessage("Hi");
+        }
+
+        if (ImGui.Button("Resset all Config data (double click)")) {
+            if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
                 Context.Plugin.Config.ResetData();
                 Context.Plugin.IpcProvider.SyncConfiguration();
             }

@@ -42,6 +42,7 @@ public class DebugWindow : Window {
         _widgetManager.Add(() => new InventoryDebugWidget(_widgetContext));
         _widgetManager.Add(() => new UiElementDebugWidget(_widgetContext));
         _widgetManager.Add(() => new UiAnimationDebugWidget(_widgetContext));
+        _widgetManager.Add(() => new GameUiDebugWidget(_widgetContext));
         _widgetManager.Add(() => new DragAndDropDebugWidget(_widgetContext));
         _widgetManager.Add(() => new ConflictingPluginDebugWidget(_widgetContext));
         _widgetManager.Add(() => new FontAwesomeDebugWidget(_widgetContext));
