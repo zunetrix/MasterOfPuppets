@@ -54,7 +54,7 @@ public static class ImGuiUtil {
         using (ImRaii.PushFont(UiBuilder.IconFont)) {
             try {
                 var iconButtonSize = ImGui.CalcTextSize(icon.ToIconString()) + ImGui.GetStyle().FramePadding * 2;
-                using (ImRaii.PushColor(ImGuiCol.Text, (Vector4)color, color != null)) {
+                using (ImRaii.PushColor(ImGuiCol.Text, color ?? Vector4.One, color.HasValue)) {
                     var buttonSize = size != null ? size.Value : iconButtonSize;
                     return ImGui.Button($"{icon.ToIconString()}##{id}", buttonSize);
                 }
