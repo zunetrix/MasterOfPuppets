@@ -31,7 +31,7 @@ public static class ImGuiGroupPanel {
     /// <summary>
     /// Internal implementation of BeginGroupPanel.
     /// </summary>
-    private static unsafe void BeginGroupPanelInternal(string name, Vector2 size) {
+    private static void BeginGroupPanelInternal(string name, Vector2 size) {
         ImGui.BeginGroup();
         var cursorPos = ImGui.GetCursorScreenPos();
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
@@ -64,15 +64,12 @@ public static class ImGuiGroupPanel {
 
         ImGui.PopStyleVar(2);
 
-        igGetContentRegionMax()->X -= frameHeight * 0.5f;
-        igGetWindowSize()->X -= frameHeight;
-
         var itemWidth = ImGui.CalcItemWidth();
         ImGui.PushItemWidth(Math.Max(0.0f, itemWidth - frameHeight));
 
         s_GroupPanelLabelStack.Push(new RectF(labelMin, labelMax));
 
-        ImGui.PushTextWrapPos(igGetContentRegionMax()->X);
+        ImGui.PushTextWrapPos(ImGui.GetContentRegionMax().X);
     }
 
     /// <summary>
@@ -82,7 +79,7 @@ public static class ImGuiGroupPanel {
         EndGroupPanelInternal();
     }
 
-    private static unsafe void EndGroupPanelInternal() {
+    private static void EndGroupPanelInternal() {
         ImGui.PopTextWrapPos();
         ImGui.PopItemWidth();
 
@@ -138,9 +135,6 @@ public static class ImGuiGroupPanel {
 
         ImGui.PopStyleVar(2);
 
-        igGetContentRegionMax()->X += frameHeight * 0.5f;
-        igGetWindowSize()->X += frameHeight;
-
         ImGui.Dummy(new Vector2(0.0f, 0.0f));
 
         ImGui.EndGroup();
@@ -153,18 +147,6 @@ public static class ImGuiGroupPanel {
         public void Dispose() {
             EndGroupPanel();
         }
-    }
-
-    private static unsafe Vector2* igGetWindowSize() {
-        Vector2 v;
-        ImGuiNative.GetWindowSize(&v);
-        return &v;
-    }
-
-    private static unsafe Vector2* igGetContentRegionMax() {
-        Vector2 v;
-        ImGuiNative.GetContentRegionMax(&v);
-        return &v;
     }
 
     struct RectF {

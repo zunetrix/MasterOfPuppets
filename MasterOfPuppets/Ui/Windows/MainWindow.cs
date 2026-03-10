@@ -20,7 +20,6 @@ namespace MasterOfPuppets;
 public class MainWindow : Window {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
-    public bool IsVisible { get; private set; }
     private static readonly Version Version = typeof(MainWindow).Assembly.GetName().Version;
     // private static readonly string VersionString = Version?.ToString();
 
@@ -76,8 +75,6 @@ public class MainWindow : Window {
     }
 
     public override void Draw() {
-        IsVisible = true;
-
         // prevent change macro index while editing
         ImGui.BeginDisabled(Ui.MacroEditorWindow.IsOpen);
         DrawMenuBar();

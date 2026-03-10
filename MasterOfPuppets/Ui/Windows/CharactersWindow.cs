@@ -133,7 +133,6 @@ public class CharactersWindow : Window {
             for (int i = 0; i < characters.Count; i++) {
                 ImGui.PushID(i);
                 ImGui.TableNextRow();
-                ImGui.TableSetColumnIndex(0);
                 ImGui.Text($"{i + 1:00}");
 
                 ImGui.TableNextColumn();

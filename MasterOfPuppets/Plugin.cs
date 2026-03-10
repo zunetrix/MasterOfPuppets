@@ -57,25 +57,6 @@ public class Plugin : IDalamudPlugin {
         }
     }
 
-    public void Dispose() {
-        DalamudApi.PluginInterface.UiBuilder.OpenConfigUi -= Ui.SettingsWindow.Toggle;
-        DalamudApi.PluginInterface.UiBuilder.OpenMainUi -= Ui.MainWindow.Toggle;
-        DalamudApi.PluginInterface.UiBuilder.Draw -= Ui.Draw;
-        DalamudApi.ClientState.Logout -= OnLogout;
-        DalamudApi.ClientState.Login -= OnLogin;
-        DalamudApi.PluginInterface.LanguageChanged -= OnLanguageChange;
-        DalamudApi.Framework.Update -= OnFrameworkUpdate;
-
-        IpcProvider.Dispose();
-        ChatWatcher.Dispose();
-        ItemMover.Dispose();
-        MacroHandler.Dispose();
-        PluginCommandManager.Dispose();
-        MovementManager.Dispose();
-        FollowPath.Dispose();
-        Ui.Dispose();
-    }
-
     private void OnFrameworkUpdate(IFramework framework) {
         if (!DalamudApi.ClientState.IsLoggedIn) { return; }
 
@@ -95,6 +76,25 @@ public class Plugin : IDalamudPlugin {
 
     private void OnLogout(int type, int code) {
         Ui.MainWindow.IsOpen = false;
+    }
+
+    public void Dispose() {
+        DalamudApi.PluginInterface.UiBuilder.OpenConfigUi -= Ui.SettingsWindow.Toggle;
+        DalamudApi.PluginInterface.UiBuilder.OpenMainUi -= Ui.MainWindow.Toggle;
+        DalamudApi.PluginInterface.UiBuilder.Draw -= Ui.Draw;
+        DalamudApi.ClientState.Logout -= OnLogout;
+        DalamudApi.ClientState.Login -= OnLogin;
+        DalamudApi.PluginInterface.LanguageChanged -= OnLanguageChange;
+        DalamudApi.Framework.Update -= OnFrameworkUpdate;
+
+        IpcProvider.Dispose();
+        ChatWatcher.Dispose();
+        ItemMover.Dispose();
+        MacroHandler.Dispose();
+        PluginCommandManager.Dispose();
+        MovementManager.Dispose();
+        FollowPath.Dispose();
+        Ui.Dispose();
     }
 }
 

@@ -5,6 +5,9 @@ namespace MasterOfPuppets.Extensions.Dalamud;
 public static class ChatTypeExtensions {
     public static string ToChatPrefix(this XivChatType type) {
         return type switch {
+            XivChatType.Say => "/s",
+            XivChatType.Yell => "/y",
+            XivChatType.Shout => "/sh",
             XivChatType.Party => "/p",
             XivChatType.FreeCompany => "/fc",
 

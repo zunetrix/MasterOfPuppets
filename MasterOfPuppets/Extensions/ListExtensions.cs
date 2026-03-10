@@ -24,6 +24,18 @@ public static class ListExtensions {
         list.Insert(targetIndex, item);
     }
 
+    public static void SafeRemoveAt<T>(this IList<T> list, int itemIndex) {
+        var isEmptyList = list == null || list.Count == 0;
+
+        if (isEmptyList)
+            return;
+
+        if (!list.IndexExists(itemIndex))
+            return;
+
+        list.RemoveAt(itemIndex);
+    }
+
     public static bool IndexExists<T>(this IList<T> list, int index) {
         return index >= 0 && index < list.Count;
     }
@@ -47,5 +59,4 @@ public static class ListExtensions {
             list.AddUnique(item);
         }
     }
-
 }
