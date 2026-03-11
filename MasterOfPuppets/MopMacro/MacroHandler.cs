@@ -1,18 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-using MasterOfPuppets.Util;
-
 namespace MasterOfPuppets;
 
-public class MacroHandler : IDisposable {
+public partial class MacroHandler : IDisposable {
     private Plugin Plugin { get; }
 
     private readonly Channel<(string macroId, string[] actions, double delay)> _macroChannel =
@@ -28,290 +24,40 @@ public class MacroHandler : IDisposable {
     public List<string> CurrentActionsLoopExecutionList { get; private set; } = new();
     public int CurrentActionLoopExecutionIndex { get; private set; } = -1;
 
-    private static readonly HashSet<string> NoGlobalDelayCommands = new(StringComparer.OrdinalIgnoreCase) {
-        "moptarget",
-        "moptargetof",
-        "moptargetclear",
-        "moptargetmyminion",
-        "mopwait",
-        "moploop",
-        "mopmacro",
-        "mopobjectquantity",
-        "mopenablewalk",
-        "mopdisablewalk",
-        "moptogglewalk"
-    };
+    private static readonly Regex ActionRegex = new(@"^\/(\w+)\s*(.*)$", RegexOptions.Compiled);
 
-    private readonly Dictionary<string, Func<string, string, CancellationToken, Task>> CustomMacroActionHandlers;
+    private record MacroCommand(
+        Func<string, string, CancellationToken, Task> Handler,
+        bool SkipGlobalDelay = false
+    );
+
+    private readonly Dictionary<string, MacroCommand> _commands;
 
     public MacroHandler(Plugin plugin) {
         Plugin = plugin;
 
-        // TODO: refactor into individual handlers strategy pattern with help stuff
-        CustomMacroActionHandlers = new(StringComparer.OrdinalIgnoreCase) {
-            ["mopwait"] = async (macroId, args, token) => {
-                if (string.IsNullOrWhiteSpace(args) ||
-                !double.TryParse(args, NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds)) {
-                    DalamudApi.PluginLog.Warning($"[mopwait] invalid argument: \"{args}\"");
-                    return;
-                }
-
-                var secondsRound = Math.Round(seconds, 2, MidpointRounding.AwayFromZero);
-                var delayMs = TimeSpan.FromSeconds(secondsRound);
-
-                DalamudApi.PluginLog.Debug($"[mopwait] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}...");
-                await Task.Delay(delayMs, token);
-            },
-
-            ["moploop"] = async (macroId, args, token) => {
-                var actions = this.GetLocalPlayerMacroActions(macroId);
-
-                // no args run indefinitely
-                if (string.IsNullOrWhiteSpace(args)) {
-                    DalamudApi.PluginLog.Debug($"[moploop]");
-                    this.ClearActionsLoopExecutionList();
-                    this.EnqueueMacroActions(macroId, actions, Plugin.Config.DelayBetweenActions);
-                    return;
-                }
-
-                if (!uint.TryParse(args, out uint runAmount)) {
-                    DalamudApi.PluginLog.Warning($"[moploop] invalid argument: \"{args}\"");
-                    return;
-                }
-
-                // remove loop and add n times
-                string[] noLoopActions = actions
-                .Where((action) => !action.StartsWith("/moploop", StringComparison.OrdinalIgnoreCase))
-                .ToArray();
-
-                this.ClearActionsLoopExecutionList();
-                for (int i = 0; i < runAmount; i++) {
-                    this.EnqueueMacroActions(macroId, noLoopActions, Plugin.Config.DelayBetweenActions);
-                }
-
-                DalamudApi.PluginLog.Debug($"[moploop] {runAmount}");
-                await Task.CompletedTask;
-            },
-
-            ["mopmacro"] = async (macroId, args, token) => {
-                // tirar aspas
-                var macroName = args.Trim().Trim('"');
-                if (string.IsNullOrWhiteSpace(macroName)) {
-                    DalamudApi.PluginLog.Warning($"[mopmacro] invalid argument: \"{args}\"");
-                    return;
-                }
-
-                var actions = this.GetLocalPlayerMacroActions(macroName);
-                this.EnqueueMacroActions(args, actions, Plugin.Config.DelayBetweenActions);
-
-                await Task.CompletedTask;
-            },
-
-            ["mopobjectquantity"] = async (macroId, args, token) => {
-                if (!Enum.TryParse<SettingsDisplayObjectLimitType>(args, ignoreCase: true, out var displayObjectLimitType)
-                    || !Enum.IsDefined(typeof(SettingsDisplayObjectLimitType), displayObjectLimitType)) {
-                    DalamudApi.PluginLog.Warning($"[mopsetobjectquantity] Invalid object quantity value (0-5): {displayObjectLimitType}");
-                    return;
-                }
-
-                GameSettingsManager.SetDisplayObjectLimit(displayObjectLimitType);
-                await Task.CompletedTask;
-            },
-
-            ["mopaction"] = async (macroId, args, token) => {
-                var actionIdOrName = args.Trim().Trim('"');
-                if (string.IsNullOrWhiteSpace(actionIdOrName)) {
-                    DalamudApi.PluginLog.Warning($"[mopaction] invalid argument: \"{actionIdOrName}\"");
-                    return;
-                }
-
-                if (uint.TryParse(actionIdOrName, out uint actionId)) {
-                    GameActionManager.UseAction(actionId);
-                    DalamudApi.PluginLog.Debug($"[mopaction] {actionId}");
-                } else {
-                    GameActionManager.UseAction(actionIdOrName);
-                    DalamudApi.PluginLog.Debug($"[mopaction] {actionIdOrName}");
-                }
-
-                await Task.CompletedTask;
-            },
-
-            ["mopitem"] = async (macroId, args, token) => {
-                var itemIdOrName = args.Trim().Trim('"');
-                if (string.IsNullOrWhiteSpace(itemIdOrName)) {
-                    DalamudApi.PluginLog.Warning($"[mopitem] invalid argument: \"{itemIdOrName}\"");
-                    return;
-                }
-
-                if (uint.TryParse(itemIdOrName, out uint itemId)) {
-                    GameActionManager.UseItem(itemId);
-                    DalamudApi.PluginLog.Debug($"[mopitem] {itemId}");
-                } else {
-                    GameActionManager.UseItem(itemIdOrName);
-                    DalamudApi.PluginLog.Debug($"[mopitem] {itemIdOrName}");
-                }
-
-                await Task.CompletedTask;
-            },
-
-            ["moptargetmyminion"] = async (macroId, args, token) => {
-                GameTargetManager.TargetMyMinion();
-                DalamudApi.PluginLog.Debug($"[moptargetmyminion]");
-                await Task.CompletedTask;
-            },
-
-            ["moptarget"] = async (macroId, args, token) => {
-                string targetName = args.Trim().Trim('"');
-                GameTargetManager.TargetObject(targetName);
-                DalamudApi.PluginLog.Debug($"[moptarget] {targetName}");
-                await Task.CompletedTask;
-            },
-
-            ["moptargetof"] = async (macroId, args, token) => {
-                string targetName = args.Trim().Trim('"');
-                GameTargetManager.TargetOf(targetName);
-                DalamudApi.PluginLog.Debug($"[moptargetof] {targetName}");
-                await Task.CompletedTask;
-            },
-
-            ["moptargetclear"] = async (macroId, args, token) => {
-                GameTargetManager.TargetClear();
-                DalamudApi.PluginLog.Debug($"[moptargetclear]");
-                await Task.CompletedTask;
-            },
-
-            ["moppetbarslot"] = async (macroId, args, token) => {
-                if (string.IsNullOrWhiteSpace(args) || !int.TryParse(args, out int slotIndex)) {
-                    DalamudApi.PluginLog.Warning($"[moppetbarslot] invalid argument: \"{args}\"");
-                    return;
-                }
-
-                HotbarManager.ExecutePetHotbarActionByIndex((uint)(slotIndex - 1));
-                DalamudApi.PluginLog.Debug($"[moppetbarslot] {slotIndex}");
-                await Task.CompletedTask;
-            },
-
-            ["mophotbar"] = async (macroId, args, token) => {
-                if (string.IsNullOrWhiteSpace(args)) {
-                    DalamudApi.PluginLog.Warning($"[mophotbar] missing arguments");
-                    return;
-                }
-
-                var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                if (parts.Length < 2) {
-                    DalamudApi.PluginLog.Warning($"[mophotbar] expected 2 arguments, got {parts.Length}: \"{args}\"");
-                    return;
-                }
-
-                if (!int.TryParse(parts[0], out int hotbarIndex) || !int.TryParse(parts[1], out int slotIndex)) {
-                    DalamudApi.PluginLog.Warning($"[mophotbar] invalid numbers: \"{args}\"");
-                    return;
-                }
-
-                int realHotbarIndex = hotbarIndex - 1;
-                int realSlotIndex = slotIndex - 1;
-
-                if (realHotbarIndex < 0 || realSlotIndex < 0) {
-                    DalamudApi.PluginLog.Warning($"[mophotbar] invalid index (must be >= 1): \"{args}\"");
-                    return;
-                }
-
-                HotbarManager.ExecuteHotbarActionByIndex((uint)realHotbarIndex, (uint)realSlotIndex);
-                DalamudApi.PluginLog.Debug($"[mophotbar] {realHotbarIndex} {realSlotIndex}");
-                await Task.CompletedTask;
-            },
-
-            ["mophotbaremote"] = async (macroId, args, token) => {
-                if (string.IsNullOrWhiteSpace(args)) {
-                    DalamudApi.PluginLog.Warning($"[mophotbaremote] missing arguments");
-                    return;
-                }
-
-                if (!int.TryParse(args, out int actionId)) {
-                    DalamudApi.PluginLog.Warning($"[mophotbaremote] invalid numbers: \"{args}\"");
-                    return;
-                }
-
-                HotbarManager.ExecuteHotbarEmoteAction((uint)actionId);
-                DalamudApi.PluginLog.Debug($"[mophotbaremote] {actionId}");
-                await Task.CompletedTask;
-            },
-
-            ["mopmove"] = async (macroId, args, token) => {
-                if (string.IsNullOrWhiteSpace(args)) return;
-                var parts = ArgumentParser.ParseMacroArgs(args);
-                if (parts.Count != 3) return;
-
-                if (!float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
-                || !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
-                || !float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
-                    DalamudApi.PluginLog.Warning($"[mopmove] invalid argument parse: \"{args}\"");
-                    return;
-                }
-
-                Plugin.MovementManager.MoveToPosition(new Vector3(x, y, z));
-                DalamudApi.PluginLog.Debug($"[mopmove] {x}, {y}, {z}");
-                await Task.CompletedTask;
-            },
-
-            ["mopmoverelativeto"] = async (macroId, args, token) => {
-                var parts = ArgumentParser.ParseMacroArgs(args);
-                if (parts.Count != 4) return;
-                string relativeCharacterName = parts[3];
-
-                if (!float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
-                || !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
-                || !float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
-                    DalamudApi.PluginLog.Warning($"[mopmoverelativeto] invalid argument parse: \"{args}\"");
-                    return;
-                }
-
-                Plugin.MovementManager.MoveToPositionRelative(new Vector3(x, y, z), relativeCharacterName);
-                DalamudApi.PluginLog.Debug($"[mopmoverelativeto] {x}, {y}, {z} ({relativeCharacterName})");
-                await Task.CompletedTask;
-            },
-
-            ["mopmovetotarget"] = async (macroId, args, token) => {
-                Plugin.MovementManager.MoveToTargetPosition();
-                DalamudApi.PluginLog.Debug($"[mopmovetotarget]");
-                await Task.CompletedTask;
-            },
-
-            ["mopmovetocharacter"] = async (macroId, args, token) => {
-                if (string.IsNullOrWhiteSpace(args)) {
-                    DalamudApi.PluginLog.Warning($"Invalid arguments expected character name");
-                    return;
-                }
-
-                Plugin.MovementManager.MoveToObject(args.Replace("\"", ""));
-                DalamudApi.PluginLog.Debug($"[mopmovetocharacter] {args}");
-                await Task.CompletedTask;
-            },
-
-            ["mopstopmove"] = async (macroId, args, token) => {
-                Plugin.MovementManager.StopMove();
-                DalamudApi.PluginLog.Debug($"[mopstopmove] {args}");
-                await Task.CompletedTask;
-            },
-
-            ["mopenablewalk"] = async (macroId, args, token) => {
-                Plugin.MovementManager.SetWalking(true);
-                DalamudApi.PluginLog.Debug($"[mopenablewalk]");
-                await Task.CompletedTask;
-            },
-
-            ["mopdisablewalk"] = async (macroId, args, token) => {
-                Plugin.MovementManager.SetWalking(false);
-                DalamudApi.PluginLog.Debug($"[mopdisablewalk]");
-                await Task.CompletedTask;
-            },
-
-            ["moptogglewalk"] = async (macroId, args, token) => {
-                Plugin.MovementManager.ToggleWalking();
-                DalamudApi.PluginLog.Debug($"[moptogglewalk]");
-                await Task.CompletedTask;
-            },
+        _commands = new Dictionary<string, MacroCommand>(StringComparer.OrdinalIgnoreCase) {
+            ["mopwait"]            = new(HandleMopWait,            SkipGlobalDelay: true),
+            ["moploop"]            = new(HandleMopLoop,            SkipGlobalDelay: true),
+            ["mopmacro"]           = new(HandleMopMacro,           SkipGlobalDelay: true),
+            ["mopobjectquantity"]  = new(HandleMopObjectQuantity,  SkipGlobalDelay: true),
+            ["moptarget"]          = new(HandleMopTarget,          SkipGlobalDelay: true),
+            ["moptargetof"]        = new(HandleMopTargetOf,        SkipGlobalDelay: true),
+            ["moptargetclear"]     = new(HandleMopTargetClear,     SkipGlobalDelay: true),
+            ["moptargetmyminion"]  = new(HandleMopTargetMyMinion,  SkipGlobalDelay: true),
+            ["mopaction"]          = new(HandleMopAction),
+            ["mopitem"]            = new(HandleMopItem),
+            ["moppetbarslot"]      = new(HandleMopPetBarSlot),
+            ["mophotbar"]          = new(HandleMopHotbar),
+            ["mophotbaremote"]     = new(HandleMopHotbarEmote),
+            ["mopmove"]            = new(HandleMopMove),
+            ["mopmoverelativeto"]  = new(HandleMopMoveRelativeTo),
+            ["mopmovetotarget"]    = new(HandleMopMoveToTarget),
+            ["mopmovetocharacter"] = new(HandleMopMoveToCharacter),
+            ["mopstopmove"]        = new(HandleMopStopMove),
+            ["mopenablewalk"]      = new(HandleMopEnableWalk,      SkipGlobalDelay: true),
+            ["mopdisablewalk"]     = new(HandleMopDisableWalk,     SkipGlobalDelay: true),
+            ["moptogglewalk"]      = new(HandleMopToggleWalk,      SkipGlobalDelay: true),
         };
 
         Task.Run(() => RunWorker(_macroChannel, isLoop: false, _cts.Token));
@@ -348,18 +94,18 @@ public class MacroHandler : IDisposable {
             if (isLoop) CurrentActionLoopExecutionIndex++;
             else CurrentActionExecutionIndex++;
 
-            var match = Regex.Match(action, @"^\/(\w+)\s*(.*)$");
+            var match = ActionRegex.Match(action);
             bool handled = false;
 
             if (match.Success) {
                 var command = match.Groups[1].Value;
                 var args = match.Groups[2].Value.Trim();
 
-                if (CustomMacroActionHandlers.TryGetValue(command, out var handlerFn)) {
-                    await handlerFn(macroId, args, token);
+                if (_commands.TryGetValue(command, out var cmd)) {
+                    await cmd.Handler(macroId, args, token);
                     handled = true;
 
-                    if (!NoGlobalDelayCommands.Contains(command) && delayBetweenActions > 0.0) {
+                    if (!cmd.SkipGlobalDelay && delayBetweenActions > 0.0) {
                         var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
                         DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
                         await Task.Delay(delayMs, token);
