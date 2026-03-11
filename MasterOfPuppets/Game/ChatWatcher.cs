@@ -79,29 +79,22 @@ internal class ChatWatcher : IDisposable {
         if (!Plugin.Config.UseChatSync) return;
         if (isHandled) return;
 
+        var senderName = SanitizeSenderName(sender.ToString());
+
         if (!AllowedChatTypes.Contains(type)
             || !Plugin.Config.ListenedChatTypes.Contains(type)
-            || (Plugin.Config.UseChatCommandSenderWhitelist && !Plugin.Config.ChatCommandSenderWhitelist.Contains(sender.ToString()))
+            || (Plugin.Config.UseChatCommandSenderWhitelist && !Plugin.Config.ChatCommandSenderWhitelist.Contains(senderName))
         ) {
             return;
         }
 
-        // listen only to known commands
-        var messageString = message.ToString();
-        if (!CommandHandlers.Keys.Any(cmd => messageString.StartsWith(cmd, StringComparison.OrdinalIgnoreCase))) {
-            return;
-        }
-
-        var parsedArgs = ArgumentParser.ParseChatArgs(messageString);
+        var parsedArgs = ArgumentParser.ParseChatArgs(message.ToString());
         if (!parsedArgs.Any()) return;
 
-        string command = parsedArgs[0].ToLower();
-        string[] args = parsedArgs.Skip(1).ToArray();
+        // DalamudApi.PluginLog.Debug($"OnChatMessage: [{parsedArgs[0]}]: {string.Join("|", parsedArgs.Skip(1))}");
 
-        // DalamudApi.PluginLog.Debug($"OnChatMessage: [{command}]: {string.Join("|", args)}");
-
-        if (CommandHandlers.TryGetValue(command, out var action)) {
-            action.Invoke(args, sender.ToString());
+        if (CommandHandlers.TryGetValue(parsedArgs[0], out var action)) {
+            action.Invoke(parsedArgs.Skip(1).ToArray(), senderName);
             // prevent show chat text
             // isHandled = true;
         }
@@ -113,12 +106,10 @@ internal class ChatWatcher : IDisposable {
             return;
         }
 
-        // macro execution
         string macroNameOrIndex = args[0];
         int macroIndex = Plugin.MacroManager.FindMacroIndex(macroNameOrIndex);
-        var macro = Plugin.Config.Macros[macroIndex];
-        var playerCid = DalamudApi.PlayerState.ContentId;
-        var playerActions = macro.GetCidActions(playerCid);
+        var macro = Plugin.MacroManager.GetMacroByIndex(macroIndex);
+        var playerActions = macro.GetCidActions(DalamudApi.PlayerState.ContentId);
 
         Plugin.MacroHandler.EnqueueMacroActions(macro.Name, playerActions, Plugin.Config.DelayBetweenActions);
     }
@@ -167,6 +158,12 @@ internal class ChatWatcher : IDisposable {
         if (!localPlayerName.Contains(characterName, StringComparison.InvariantCultureIgnoreCase)) return;
 
         Plugin.MacroHandler.EnqueueMacroActions("#mopbrc-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
+    }
+
+    private static string SanitizeSenderName(string raw) {
+        var i = 0;
+        while (i < raw.Length && !char.IsLetter(raw[i])) i++;
+        return i > 0 ? raw[i..] : raw;
     }
 }
 
