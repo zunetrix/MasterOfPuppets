@@ -7,14 +7,14 @@ using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Dalamud.Hooking;
 using System.Threading;
 
-namespace MasterOfPuppets;
+namespace MasterOfPuppets.Cam;
 
-public unsafe class GameCameraControl : IDisposable {
-    private static readonly Lazy<GameCameraControl> LazyInstance = new(static () => new GameCameraControl());
+public unsafe class CamHack : IDisposable {
+    private static readonly Lazy<CamHack> LazyInstance = new(static () => new CamHack());
 
-    private GameCameraControl() { }
+    private CamHack() { }
 
-    public static GameCameraControl Instance => LazyInstance.Value;
+    public static CamHack Instance => LazyInstance.Value;
 
     private static readonly CameraManager* CameraManager = (CameraManager*)FFXIVClientStructs.FFXIV.Client.Game.Control.CameraManager.Instance();
 
