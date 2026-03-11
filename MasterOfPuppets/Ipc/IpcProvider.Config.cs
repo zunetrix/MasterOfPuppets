@@ -1,0 +1,21 @@
+using MasterOfPuppets.Extensions;
+
+namespace MasterOfPuppets.Ipc;
+
+internal partial class IpcProvider {
+
+    public void SyncConfiguration() {
+        Plugin.Config.Save();
+        var message = IpcMessage.Create(IpcMessageType.SyncConfiguration, Plugin.Config.JsonSerialize(), Plugin.Config.SaveConfigAfterSync.ToString()).Serialize();
+        BroadCast(message, includeSelf: false);
+    }
+
+    [IpcHandle(IpcMessageType.SyncConfiguration)]
+    private void HandleSyncConfiguration(IpcMessage message) {
+        var configString = message.StringData[0];
+        bool saveConfigAfterSync = bool.TryParse(message.StringData[1], out var parsed) && parsed;
+        Plugin.Config.UpdateFromJson(configString);
+        if (saveConfigAfterSync)
+            Plugin.Config.Save();
+    }
+}

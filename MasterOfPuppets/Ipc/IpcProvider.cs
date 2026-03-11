@@ -1,39 +1,37 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-
-using MasterOfPuppets.Extensions;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
 using TinyIpc.IO;
 using TinyIpc.Messaging;
 
 namespace MasterOfPuppets.Ipc;
 
-internal class IpcProvider : IDisposable {
+internal partial class IpcProvider : IDisposable {
     private readonly TinyMessageBus MessageBus;
-    private readonly ConcurrentQueue<(byte[] serialized, bool includeSelf)> MessageQueue = new();
-    private readonly AutoResetEvent _autoResetEvent = new(false);
+    private readonly Channel<(byte[] serialized, bool includeSelf)> _channel =
+        Channel.CreateUnbounded<(byte[], bool)>(new UnboundedChannelOptions { SingleReader = true });
+    private readonly CancellationTokenSource _cts = new();
     private readonly Dictionary<IpcMessageType, Action<IpcMessage>> _ipcHandlers = new();
     private readonly bool _initFailed;
-    private bool _messagesQueueRunning = true;
 
     private Plugin Plugin { get; }
 
     public IpcProvider(Plugin plugin) {
         Plugin = plugin;
 
-        RegisterHandlersFromType(typeof(IpcHandlers), new IpcHandlers(plugin));
+        RegisterHandlersFromType(typeof(IpcProvider), this);
 
         try {
             const long maxFileSize = 1 << 24;
             MessageBus = new TinyMessageBus(new TinyMemoryMappedFile("MasterOfPuppets.IPC", maxFileSize), true);
             MessageBus.MessageReceived += OnMessageReceived;
 
-            var thread = new Thread(ProcessMessageQueue) { IsBackground = true };
-            thread.Start();
+            Task.Run(() => ProcessMessageQueue(_cts.Token));
         } catch (Exception e) {
             DalamudApi.PluginLog.Error(e, "TinyIpc init failed.");
             _initFailed = true;
@@ -41,9 +39,9 @@ internal class IpcProvider : IDisposable {
     }
 
     public void Dispose() {
-        _messagesQueueRunning = false;
-        _autoResetEvent.Set();
-        _autoResetEvent.Dispose();
+        _cts.Cancel();
+        _channel.Writer.Complete();
+        _cts.Dispose();
         MessageBus.MessageReceived -= OnMessageReceived;
     }
 
@@ -69,149 +67,24 @@ internal class IpcProvider : IDisposable {
         }
     }
 
-    private void ProcessMessageQueue() {
+    private async Task ProcessMessageQueue(CancellationToken ct) {
         DalamudApi.PluginLog.Information("IPC message queue worker started");
-        while (_messagesQueueRunning) {
-            while (MessageQueue.TryDequeue(out var dequeue)) {
+        try {
+            await foreach (var (data, includeSelf) in _channel.Reader.ReadAllAsync(ct)) {
                 try {
-                    if (MessageBus.PublishAsync(dequeue.serialized).Wait(5000) && dequeue.includeSelf)
-                        OnMessageReceived(null, new TinyMessageReceivedEventArgs(dequeue.serialized));
+                    await MessageBus.PublishAsync(data);
+                    if (includeSelf)
+                        OnMessageReceived(null, new TinyMessageReceivedEventArgs(data));
                 } catch (Exception e) {
                     DalamudApi.PluginLog.Warning(e, "Error publishing IPC");
                 }
             }
-            _autoResetEvent.WaitOne();
-        }
+        } catch (OperationCanceledException) { }
         DalamudApi.PluginLog.Information("IPC message queue worker ended");
     }
 
     public void BroadCast(byte[] serialized, bool includeSelf = false) {
         if (_initFailed || !Plugin.Config.SyncClients) return;
-
-        MessageQueue.Enqueue(new(serialized, includeSelf));
-        _autoResetEvent.Set();
-    }
-
-    public void SyncConfiguration() {
-        Plugin.Config.Save();
-        var message = IpcMessage.Create(IpcMessageType.SyncConfiguration, Plugin.Config.JsonSerialize(), Plugin.Config.SaveConfigAfterSync.ToString()).Serialize();
-        BroadCast(message, includeSelf: false);
-    }
-
-    public void ExecuteTextCommand(string text, bool includeSelf = true) {
-        var message = IpcMessage.Create(IpcMessageType.ExecuteTextCommand, text).Serialize();
-        BroadCast(message, includeSelf);
-    }
-
-    public void ExecuteActionCommand(uint actionId) {
-        var message = IpcMessage.Create(IpcMessageType.ExecuteActionCommand, actionId).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void ExecuteGeneralActionCommand(uint actionId) {
-        var message = IpcMessage.Create(IpcMessageType.ExecuteGeneralActionCommand, actionId).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void ExecuteItemCommand(uint itemId) {
-        var message = IpcMessage.Create(IpcMessageType.ExecuteItemCommand, itemId).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void ExecuteTargetMyTarget() {
-        if (DalamudApi.ObjectTable.LocalPlayer == null) return;
-        // string asssistCharacterName = DalamudApi.PlayerState.CharacterName;
-        var assitTargetObjectId = DalamudApi.ObjectTable.LocalPlayer.TargetObjectId;
-        if (assitTargetObjectId == 0) return;
-
-        var message = IpcMessage.Create(IpcMessageType.ExecuteTargetMyTarget, assitTargetObjectId).Serialize();
-        BroadCast(message, includeSelf: false);
-    }
-
-    public void ExecuteInteractWithMyTarget() {
-        if (DalamudApi.ObjectTable.LocalPlayer == null) return;
-        var assitTargetObjectId = DalamudApi.ObjectTable.LocalPlayer.TargetObjectId;
-        if (assitTargetObjectId == 0) return;
-
-        var message = IpcMessage.Create(IpcMessageType.ExecuteInteractWithMyTarget, assitTargetObjectId).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void ExecuteInteractWithTarget() {
-        var message = IpcMessage.Create(IpcMessageType.ExecuteInteractWithTarget).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void ExecuteMoveToMyTarget() {
-        if (DalamudApi.ObjectTable.LocalPlayer == null) return;
-        var assitTargetObjectId = DalamudApi.ObjectTable.LocalPlayer.TargetObjectId;
-        if (assitTargetObjectId == 0) return;
-
-        var message = IpcMessage.Create(IpcMessageType.ExecuteMoveToMyTarget, assitTargetObjectId).Serialize();
-        BroadCast(message, includeSelf: false);
-    }
-
-    public void ExecuteStackOnMe() {
-        if (DalamudApi.ObjectTable.LocalPlayer == null) return;
-        var targetObjectId = DalamudApi.ObjectTable.LocalPlayer.GameObjectId;
-
-        var message = IpcMessage.Create(IpcMessageType.ExecuteStackOnMe, targetObjectId).Serialize();
-        BroadCast(message, includeSelf: false);
-    }
-
-    public void ExecuteToggleWalking() {
-        var message = IpcMessage.Create(IpcMessageType.ExecuteToggleWalking).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void ExecuteTargetClear() {
-        var message = IpcMessage.Create(IpcMessageType.ExecuteTargetClear).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void ExecuteAbandonDuty() {
-        var message = IpcMessage.Create(IpcMessageType.ExecuteAbandonDuty).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void ExecuteChangeGearset(int gearsetIndex) {
-        var message = IpcMessage.Create(IpcMessageType.ExecuteChangeGearset, gearsetIndex).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void EnqueueMacroActions(string textCommand, bool includeSelf) {
-        var message = IpcMessage.Create(IpcMessageType.EnqueueMacroActions, textCommand).Serialize();
-        BroadCast(message, includeSelf: includeSelf);
-    }
-
-    public void EnqueueCharacterMacroActions(string textCommand, string characterName) {
-        var message = IpcMessage.Create(IpcMessageType.EnqueueCharacterMacroActions, textCommand, characterName).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void SetGameSettingsObjectQuantity(SettingsDisplayObjectLimitType displayObjectLimitType) {
-        var message = IpcMessage.Create(IpcMessageType.SetGameSettingsObjectQuantity, displayObjectLimitType).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void StopMacroExecution() {
-        var message = IpcMessage.Create(IpcMessageType.StopMacroExecution).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void StopMovement() {
-        var message = IpcMessage.Create(IpcMessageType.StopMovement).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void SetWindowTitle(bool enabled) {
-        var message = IpcMessage.Create(IpcMessageType.SetWindowTitle, enabled).Serialize();
-        BroadCast(message, includeSelf: true);
-    }
-
-    public void RunMacro(int macroIndex, bool includeSelf = true) {
-        DalamudApi.PluginLog.Debug($"[Run Macro] {macroIndex + 1}");
-        var message = IpcMessage.Create(IpcMessageType.RunMacro, macroIndex).Serialize();
-        BroadCast(message, includeSelf);
+        _channel.Writer.TryWrite((serialized, includeSelf));
     }
 }
