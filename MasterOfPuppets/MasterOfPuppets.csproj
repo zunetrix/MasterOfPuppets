@@ -7,14 +7,13 @@
         <Author>Zune</Author>
         <Name>Master Of Puppets</Name>
         <InternalName>MasterOfPuppets</InternalName>
-        <Punchline>Gremlins Control Center</Punchline>
+        <Punchline><![CDATA[Gremlins Control Center]]></Punchline>
         <Description>
-            An FFXIV plugin that lets you create and send custom actions, similar to in-game macros,
-            either locally or via chat-based broadcasting.
-            Actions can be broadcast to multiple clients locally or through in-game chat channels
-            such as Party, Linkshell, and Cross-World Linkshell.
-            Use it to trigger custom actions like emotes, minions, mounts, glamour changes, and
-            more.
+<![CDATA[
+An FFXIV plugin that lets you create and send custom actions, similar to in-game macros, either locally or via chat-based broadcasting.
+Actions can be broadcast to multiple clients locally or through in-game chat channels such as Party, Linkshell, and Cross-World Linkshell.
+Use it to trigger custom actions like emotes, minions, mounts, glamour changes, and more.
+]]>
         </Description>
         <RepoUrl>https://github.com/zunetrix/MasterOfPuppets</RepoUrl>
         <IconUrl>https://i.imgur.com/uFq8py7.png</IconUrl>

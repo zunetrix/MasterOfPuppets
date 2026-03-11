@@ -203,4 +203,24 @@ public static class GameTargetManager {
             }
         });
     }
+
+    internal static IGameObject GetNearestEntrance(out float Distance) {
+        var currentDistance = float.MaxValue;
+        IGameObject currentObject = null;
+
+        foreach (var x in DalamudApi.ObjectTable) {
+            if (x.IsTargetable && Langstrings.Entrance.Any(r => r.IsMatch(x.Name.TextValue))) {
+                var distance = Vector3.Distance(DalamudApi.ObjectTable.LocalPlayer.Position, x.Position);
+                if (distance < currentDistance) {
+                    currentDistance = distance;
+                    currentObject = x;
+
+                    Distance = currentDistance;
+                    return currentObject;
+                }
+            }
+        }
+        Distance = currentDistance;
+        return currentObject;
+    }
 }

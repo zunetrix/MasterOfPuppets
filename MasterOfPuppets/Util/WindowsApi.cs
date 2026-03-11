@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace MasterOfPuppets.Util;
 
@@ -53,4 +54,10 @@ public static class WindowsApi {
             DalamudApi.PluginLog.Error(e.Message);
         }
     }
+
+    [DllImport("user32.dll")]
+    public static extern int SetWindowText(IntPtr hWnd, string text);
+
+    // SetWindowText(Process.GetCurrentProcess().MainWindowHandle, DalamudApi.ObjectTable.LocalPlayer.Name.TextValue + "@" + DalamudApi.ObjectTable.LocalPlayer.HomeWorld.ValueNullable?.Name.ToDalamudString().TextValue);
+    // SetWindowText(Process.GetCurrentProcess().MainWindowHandle, "FINAL FANTASY XIV");
 }
