@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
@@ -18,33 +22,26 @@ public class MacroQueueWindow : Window {
 
         Size = ImGuiHelpers.ScaledVector2(550, 300);
         SizeCondition = ImGuiCond.FirstUseEver;
-        // SizeCondition = ImGuiCond.Always;
-        // Flags = ImGuiWindowFlags.NoResize;
-    }
-
-    public override void PreDraw() {
-        base.PreDraw();
     }
 
     public override void Draw() {
-        ImGui.BeginDisabled(true);
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, $"##StartMacroExecutionQueueBtn", "Start")) {
-            // Plugin.IpcProvider.StartMacroExecution();
-        }
+        bool isPaused = Plugin.MacroHandler.IsPaused;
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Pause, $"##PauseMacroExecutionQueueBtn", "Pause")) {
-            // Plugin.IpcProvider.PauseMacroExecution();
+        if (isPaused) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, "##ResumeMacroExecutionQueueBtn", "Resume"))
+                Plugin.IpcProvider.ResumeMacroExecution();
+        } else {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Pause, "##PauseMacroExecutionQueueBtn", "Pause"))
+                Plugin.IpcProvider.PauseMacroExecution();
         }
-        ImGui.EndDisabled();
 
         ImGui.SameLine();
         using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
-        .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
-        .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionQueueBtn", Language.StopMacroExecutionBtn)) {
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, "##StopMacroExecutionQueueBtn", Language.StopMacroExecutionBtn)) {
                 Plugin.IpcProvider.StopMacroExecution();
-                DalamudApi.ShowNotification($"Macro execution queue stoped", NotificationType.Info, 3000);
+                DalamudApi.ShowNotification("Macro execution queue stopped", NotificationType.Info, 3000);
             }
         }
 
@@ -52,37 +49,41 @@ public class MacroQueueWindow : Window {
         ImGui.Separator();
         ImGui.Spacing();
 
+        // Snapshot for thread safety — lists are modified by the worker thread
+        var macroList = Plugin.MacroHandler.CurrentActionsExecutionList.ToList();
+        var macroIndex = Plugin.MacroHandler.CurrentActionExecutionIndex;
+        var loopList = Plugin.MacroHandler.CurrentActionsLoopExecutionList.ToList();
+        var loopIndex = Plugin.MacroHandler.CurrentActionLoopExecutionIndex;
 
-        ImGui.BeginChild("##CurrentActionsExecutionListLeftPane", ImGuiHelpers.ScaledVector2(300, 250));
-        ImGui.Text("Macro Queue");
-        if (ImGui.BeginListBox($"##CurrentActionsExecutionList", ImGuiHelpers.ScaledVector2(300, 220))) {
-            for (int i = 0; i < Plugin.MacroHandler.CurrentActionsExecutionList.Count; i++) {
-                var isCurrentItemActive = i == Plugin.MacroHandler.CurrentActionExecutionIndex;
-
-                using (ImRaii.PushColor(ImGuiCol.Text, Style.Colors.Green, isCurrentItemActive)) {
-                    ImGui.Selectable($"[{i + 1:000}] {Plugin.MacroHandler.CurrentActionsExecutionList[i]}##CurrentActionsExecutionList_{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
-                    // var windowWidth = ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
-                    // ImGui.SameLine(windowWidth - ImGui.CalcTextSize(time).X);
-                }
-            }
-
-            ImGui.EndListBox();
-        }
-        ImGui.EndChild();
-
+        DrawQueuePanel("Macro Queue", macroList, macroIndex, "##MacroQueuePane", "##MacroQueueList");
         ImGui.SameLine();
-        ImGui.BeginChild("##CurrentActionsExecutionListRightPane", ImGuiHelpers.ScaledVector2(300, 250));
-        ImGui.Text($"Loop Queue");
-        if (ImGui.BeginListBox($"##CurrentActionsLoopExecutionList", ImGuiHelpers.ScaledVector2(300, 220))) {
-            for (int i = 0; i < Plugin.MacroHandler.CurrentActionsLoopExecutionList.Count; i++) {
-                var isCurrentItemActive = i == Plugin.MacroHandler.CurrentActionLoopExecutionIndex;
+        DrawQueuePanel("Loop Queue", loopList, loopIndex, "##LoopQueuePane", "##LoopQueueList");
+    }
 
-                using (ImRaii.PushColor(ImGuiCol.Text, Style.Colors.Green, isCurrentItemActive)) {
-                    ImGui.Selectable($"[{i + 1:000}] {Plugin.MacroHandler.CurrentActionsLoopExecutionList[i]}##CurrentActionsLoopExecutionList_{i}", isCurrentItemActive, ImGuiSelectableFlags.None);
+    private static void DrawQueuePanel(string label, List<string> list, int currentIndex, string childId, string listId) {
+        ImGui.BeginChild(childId, ImGuiHelpers.ScaledVector2(260, 250));
+
+        string header = list.Count > 0
+            ? $"{label} [{Math.Max(currentIndex + 1, 0)} / {list.Count}]"
+            : label;
+        ImGui.Text(header);
+
+        if (ImGui.BeginListBox(listId, ImGuiHelpers.ScaledVector2(260, 220))) {
+            if (list.Count == 0) {
+                ImGui.TextDisabled("No actions queued");
+            } else {
+                for (int i = 0; i < list.Count; i++) {
+                    bool isActive = i == currentIndex;
+                    using (ImRaii.PushColor(ImGuiCol.Text, Style.Colors.Green, isActive)) {
+                        ImGui.Selectable($"[{i + 1:000}] {list[i]}{listId}_{i}", isActive);
+                    }
+                    if (isActive)
+                        ImGui.SetScrollHereY(0.5f);
                 }
             }
             ImGui.EndListBox();
         }
+
         ImGui.EndChild();
     }
 }

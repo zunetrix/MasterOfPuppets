@@ -17,6 +17,12 @@ public partial class MacroHandler : IDisposable {
         Channel.CreateUnbounded<(string, string[], double)>(new UnboundedChannelOptions { SingleReader = true });
 
     private CancellationTokenSource _cts = new();
+    private readonly ManualResetEventSlim _pauseGate = new(initialState: true);
+
+    public bool IsPaused => !_pauseGate.IsSet;
+
+    public void Pause()  => _pauseGate.Reset();
+    public void Resume() => _pauseGate.Set();
 
     public List<string> CurrentActionsExecutionList { get; private set; } = new();
     public int CurrentActionExecutionIndex { get; private set; } = -1;
@@ -91,6 +97,8 @@ public partial class MacroHandler : IDisposable {
         foreach (var action in actions) {
             if (token.IsCancellationRequested) break;
 
+            _pauseGate.Wait(token);
+
             if (isLoop) CurrentActionLoopExecutionIndex++;
             else CurrentActionExecutionIndex++;
 
@@ -153,6 +161,7 @@ public partial class MacroHandler : IDisposable {
     }
 
     public void StopMacroQueueExecution() {
+        _pauseGate.Set();
         _cts.Cancel();
         _cts.Dispose();
 
@@ -168,9 +177,11 @@ public partial class MacroHandler : IDisposable {
     }
 
     public void Dispose() {
+        _pauseGate.Set();
         _cts.Cancel();
         _macroChannel.Writer.Complete();
         _loopChannel.Writer.Complete();
         _cts.Dispose();
+        _pauseGate.Dispose();
     }
 }

@@ -47,4 +47,22 @@ internal partial class IpcProvider {
     private void HandleStopMacroExecution(IpcMessage message) {
         Plugin.MacroHandler.StopMacroQueueExecution();
     }
+
+    public void PauseMacroExecution() {
+        BroadCast(IpcMessage.Create(IpcMessageType.PauseMacroExecution).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.PauseMacroExecution)]
+    private void HandlePauseMacroExecution(IpcMessage message) {
+        Plugin.MacroHandler.Pause();
+    }
+
+    public void ResumeMacroExecution() {
+        BroadCast(IpcMessage.Create(IpcMessageType.ResumeMacroExecution).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.ResumeMacroExecution)]
+    private void HandleResumeMacroExecution(IpcMessage message) {
+        Plugin.MacroHandler.Resume();
+    }
 }

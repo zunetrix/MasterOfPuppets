@@ -154,7 +154,7 @@ public class SettingsWindow : Window {
 
         using (ImGuiGroupPanel.BeginGroupPanel("Multibox")) {
             var multiboxEnabled = Plugin.Config.MultiboxEnabled;
-            if (ImGui.Checkbox("Remove client mutex on startup", ref multiboxEnabled)) {
+            if (ImGui.Checkbox("Enable Multibox (Remove client mutex on startup)", ref multiboxEnabled)) {
                 Plugin.Config.MultiboxEnabled = multiboxEnabled;
                 Plugin.Config.Save();
             }
