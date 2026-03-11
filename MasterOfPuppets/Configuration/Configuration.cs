@@ -34,12 +34,15 @@ internal class Configuration : IPluginConfiguration {
     public bool IncludeCidOnImport { get; set; } = true;
     public bool BackupBeforeImport { get; set; } = true;
 
-    // chat commands
+    // Chat commands
     public bool UseChatSync { get; set; } = false;
     public HashSet<XivChatType> ListenedChatTypes { get; set; } = new();
     public bool UseChatCommandSenderWhitelist { get; set; } = false;
     public List<string> ChatCommandSenderWhitelist { get; set; } = new();
     public string DefaultChatSyncPrefix { get; set; } = "/p";
+
+    // General
+    public bool MultiboxEnabled { get; set; } = false;
 
     // Interface
     public bool OpenOnStartup { get; set; } = false;

@@ -98,7 +98,6 @@ public class SettingsWindow : Window {
         ImGui.Spacing();
         ImGui.Spacing();
 
-
         using (ImGuiGroupPanel.BeginGroupPanel("Window")) {
             var openOnStartup = Plugin.Config.OpenOnStartup;
             if (ImGui.Checkbox(Language.SettingsWindowOpenOnStartup, ref openOnStartup)) {
@@ -140,6 +139,18 @@ public class SettingsWindow : Window {
             //     Plugin.Config.AllowResize = allowResizing;
             //     Plugin.Config.Save();
             // }
+        }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        using (ImGuiGroupPanel.BeginGroupPanel("Multibox")) {
+            var multiboxEnabled = Plugin.Config.MultiboxEnabled;
+            if (ImGui.Checkbox("Remove client mutex on startup", ref multiboxEnabled)) {
+                Plugin.Config.MultiboxEnabled = multiboxEnabled;
+                Plugin.Config.Save();
+            }
+            ImGuiUtil.HelpMarker("Removes the FFXIV mutex to allow opening more than 2 game instances");
         }
 
         ImGui.Spacing();

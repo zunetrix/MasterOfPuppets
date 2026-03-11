@@ -57,7 +57,4 @@ public static class WindowsApi {
 
     [DllImport("user32.dll")]
     public static extern int SetWindowText(IntPtr hWnd, string text);
-
-    // SetWindowText(Process.GetCurrentProcess().MainWindowHandle, DalamudApi.ObjectTable.LocalPlayer.Name.TextValue + "@" + DalamudApi.ObjectTable.LocalPlayer.HomeWorld.ValueNullable?.Name.ToDalamudString().TextValue);
-    // SetWindowText(Process.GetCurrentProcess().MainWindowHandle, "FINAL FANTASY XIV");
 }

@@ -24,6 +24,7 @@ public class Plugin : IDalamudPlugin {
     internal CompletionIndex CompletionIndex { get; }
     internal MovementManager MovementManager { get; }
     internal FollowPath FollowPath { get; }
+    internal MultiboxManager MultiboxManager { get; }
 
     public Plugin(IDalamudPluginInterface pluginInterface) {
         pluginInterface.Create<DalamudApi>();
@@ -41,6 +42,7 @@ public class Plugin : IDalamudPlugin {
 
         FollowPath = new FollowPath(this);
         MovementManager = new MovementManager(FollowPath);
+        MultiboxManager = new MultiboxManager(this);
 
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
         DalamudApi.PluginInterface.LanguageChanged += OnLanguageChange;
@@ -94,6 +96,7 @@ public class Plugin : IDalamudPlugin {
         PluginCommandManager.Dispose();
         MovementManager.Dispose();
         FollowPath.Dispose();
+        MultiboxManager.Dispose();
         Ui.Dispose();
     }
 }
