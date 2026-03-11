@@ -118,6 +118,14 @@ public class SettingsWindow : Window {
                 Plugin.Ui.MainWindow.UpdateWindowConfig();
             }
 
+            var showCharacterNameInTitle = Plugin.Config.ShowCharacterNameInTitle;
+            if (ImGui.Checkbox("Show character name in title bar", ref showCharacterNameInTitle)) {
+                Plugin.Config.ShowCharacterNameInTitle = showCharacterNameInTitle;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+                Plugin.IpcProvider.SetWindowTitle(showCharacterNameInTitle);
+            }
+
             // var showSettingsButton = Plugin.Config.ShowSettingsButton;
             // if (ImGui.Checkbox(Language.SettingsWindowShowConfigButton, ref showSettingsButton))
             // {

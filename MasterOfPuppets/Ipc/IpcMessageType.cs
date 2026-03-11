@@ -23,5 +23,6 @@ public enum IpcMessageType {
     EnqueueMacroActions,
     EnqueueCharacterMacroActions,
     SetGameSettingsObjectQuantity,
-    ExecuteChangeGearset
+    ExecuteChangeGearset,
+    SetWindowTitle,
 }

@@ -204,6 +204,11 @@ internal class IpcProvider : IDisposable {
         BroadCast(message, includeSelf: true);
     }
 
+    public void SetWindowTitle(bool enabled) {
+        var message = IpcMessage.Create(IpcMessageType.SetWindowTitle, enabled).Serialize();
+        BroadCast(message, includeSelf: true);
+    }
+
     public void RunMacro(int macroIndex, bool includeSelf = true) {
         DalamudApi.PluginLog.Debug($"[Run Macro] {macroIndex + 1}");
         var message = IpcMessage.Create(IpcMessageType.RunMacro, macroIndex).Serialize();

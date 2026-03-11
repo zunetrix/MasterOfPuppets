@@ -43,6 +43,7 @@ internal class Configuration : IPluginConfiguration {
 
     // General
     public bool MultiboxEnabled { get; set; } = false;
+    public bool ShowCharacterNameInTitle { get; set; } = false;
 
     // Interface
     public bool OpenOnStartup { get; set; } = false;

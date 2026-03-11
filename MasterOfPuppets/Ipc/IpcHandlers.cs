@@ -1,4 +1,7 @@
 using System;
+using System.Diagnostics;
+
+using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets.Ipc;
 
@@ -148,6 +151,17 @@ internal class IpcHandlers {
             if (!localPlayerName.Contains(characterName, StringComparison.InvariantCultureIgnoreCase)) return;
 
             Plugin.MacroHandler.EnqueueMacroActions("#mop-inline-macro-char", actions: [textCommand], delayBetweenActions: 0);
+        });
+    }
+
+    [IpcHandle(IpcMessageType.SetWindowTitle)]
+    private void HandleSetWindowTitle(IpcMessage message) {
+        var enabled = message.DataStruct<bool>();
+        DalamudApi.Framework.RunOnTick(() => {
+            var title = enabled
+                ? $"{DalamudApi.PlayerState.CharacterName}@{DalamudApi.PlayerState.HomeWorld.Value.Name}"
+                : "FINAL FANTASY XIV";
+            WindowsApi.SetWindowText(Process.GetCurrentProcess().MainWindowHandle, title);
         });
     }
 }
