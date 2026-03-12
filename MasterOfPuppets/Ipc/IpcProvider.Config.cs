@@ -18,4 +18,13 @@ internal partial class IpcProvider {
         if (saveConfigAfterSync)
             Plugin.Config.Save();
     }
+
+    public void RefreshCommands() {
+        BroadCast(IpcMessage.Create(IpcMessageType.RefreshCommands).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.RefreshCommands)]
+    private void HandleRefreshCommands(IpcMessage message) {
+        Plugin.PluginCommandManager.RefreshCustomCommands();
+    }
 }

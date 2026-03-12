@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
@@ -13,66 +14,104 @@ namespace MasterOfPuppets;
 public class PluginCommandManager : IDisposable {
     private Plugin Plugin { get; }
 
+    public record MopCommandDef(
+        string Key,
+        string DefaultCommand,
+        string[] DefaultAliases,
+        string HelpMessage
+    );
+
+    private static readonly MopCommandDef[] CommandDefs = [
+        new("mop",    "/mop",    [],        "Show/hide UI. Subcommands: run, stop, queue, move, ..."),
+        new("mopbr",  "/mopbr",  ["/br"],   "Broadcast a command to all local clients"),
+        new("mopbrn", "/mopbrn", ["/brn"],  "Broadcast a command to all local clients except yourself"),
+        new("mopbrc", "/mopbrc", ["/brc"],  "Broadcast a command to a specific character"),
+    ];
+
+    public static IReadOnlyList<MopCommandDef> Definitions => CommandDefs;
+
+    // key → all currently registered command names (main + aliases)
+    private readonly Dictionary<string, List<string>> _registered = new();
+
     public PluginCommandManager(Plugin plugin) {
         Plugin = plugin;
+        RegisterAll();
+    }
 
-        DalamudApi.CommandManager.AddHandler("/mop", new CommandInfo(OnMainCommand) {
-            HelpMessage = """
-            Subcommands:
-                /mop -> show / hide UI
-                /mop run "Macro name" -> execute macro
-                /mop stop -> stop macro execution
-                /mop queue -> toggle queue window
-                /mop emote -> toggle emote window
-                /mop fashion -> toggle fashion window
-                /mop facewear -> toggle facewear window
-                /mop mount -> toggle mount window
-                /mop minion -> shtoggleow minion window
-                /mop item -> toggle item window
-                /mop targetmytarget -> make all clients target your current target
-                /mop interactwithmytarget -> make all clients interact with you current target
-                /mop targetclear - > clear all targets
-                /mop invite - > invite a character by name@world
-            """,
-        });
+    public void RefreshCustomCommands() {
+        UnregisterAll();
+        RegisterAll();
+    }
 
-        DalamudApi.CommandManager.AddHandler("/mopbr", new CommandInfo(OnBroadcastCommand) {
-            HelpMessage = """
-            Broadcast a command to all local clients
-            Example:
-                /mopbr /clap
-            """,
-        });
+    private void RegisterAll() {
+        foreach (var def in CommandDefs) {
+            var registered = new List<string>();
+            var mainCmd = GetEffectiveCommand(def);
 
-        DalamudApi.CommandManager.AddHandler("/mopbrn", new CommandInfo(OnBroadcastNotMeCommand) {
-            HelpMessage = """
-            Broadcast a command to local clients except yourself
-            Example:
-                /mopbrn /clap
-            """,
-        });
+            TryRegister(mainCmd, GetHandlerForKey(def.Key), def.HelpMessage, showInHelp: true, registered);
 
-        DalamudApi.CommandManager.AddHandler("/mopbrc", new CommandInfo(OnBroadcastCharacterCommand) {
-            HelpMessage = """
-            Broadcast a command to a specific character
-            Example:
-                /mopbrc "Character Name" /clap
-                /mopbrc "Character Name" /s hello
-                /mopbrc "Character Name" /moptarget "Character Name2"
-            """,
-        });
+            Plugin.Config.EnabledCommandAliases.TryGetValue(def.Key, out var enabled);
+
+            foreach (var alias in def.DefaultAliases) {
+                if (enabled == null || !enabled.Contains(alias, StringComparer.OrdinalIgnoreCase)) continue;
+                if (alias.Equals(mainCmd, StringComparison.OrdinalIgnoreCase)) continue;
+                TryRegister(alias, GetHandlerForKey(def.Key), $"Alias for {mainCmd}", showInHelp: false, registered);
+            }
+
+            _registered[def.Key] = registered;
+        }
+    }
+
+    private void TryRegister(string cmd, IReadOnlyCommandInfo.HandlerDelegate handler, string helpMessage, bool showInHelp, List<string> registered) {
+        if (DalamudApi.CommandManager.Commands.ContainsKey(cmd)) {
+            DalamudApi.PluginLog.Warning($"[PluginCommandManager] '{cmd}' is already registered.");
+            return;
+        }
+        try {
+            DalamudApi.CommandManager.AddHandler(cmd, new CommandInfo(handler) {
+                HelpMessage = helpMessage,
+                ShowInHelp = showInHelp,
+            });
+            registered.Add(cmd);
+        } catch (Exception ex) {
+            DalamudApi.PluginLog.Warning(ex, $"[PluginCommandManager] Failed to register '{cmd}'.");
+        }
+    }
+
+    private void UnregisterAll() {
+        foreach (var (_, cmds) in _registered)
+            foreach (var cmd in cmds)
+                DalamudApi.CommandManager.RemoveHandler(cmd);
+        _registered.Clear();
+    }
+
+    private string GetEffectiveCommand(MopCommandDef def) {
+        if (Plugin.Config.CustomizedCommands.TryGetValue(def.Key, out var custom) && IsValidCommand(custom))
+            return custom;
+        return def.DefaultCommand;
+    }
+
+    private IReadOnlyCommandInfo.HandlerDelegate GetHandlerForKey(string key) => key switch {
+        "mopbr"  => OnBroadcastCommand,
+        "mopbrn" => OnBroadcastNotMeCommand,
+        "mopbrc" => OnBroadcastCharacterCommand,
+        _        => OnMainCommand,
+    };
+
+    public static bool IsValidCommand(string? command) {
+        command = command?.Trim() ?? "";
+        return !string.IsNullOrWhiteSpace(command)
+            && command.StartsWith('/')
+            && command.Length >= 2
+            && !command.Contains(' ');
     }
 
     public void Dispose() {
-        DalamudApi.CommandManager.RemoveHandler("/mop");
-        DalamudApi.CommandManager.RemoveHandler("/mopbr");
-        DalamudApi.CommandManager.RemoveHandler("/mopbrn");
-        DalamudApi.CommandManager.RemoveHandler("/mopbrc");
+        UnregisterAll();
     }
 
     private void OnMainCommand(string command, string arguments) {
         var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
-        // DalamudApi.PluginLog.Warning($"command: [{command}] {string.Join('|', parsedArgs)}");
 
         if (parsedArgs.Any()) {
             var subcommand = parsedArgs[0];
@@ -129,30 +168,24 @@ public class PluginCommandManager : IDisposable {
                             return;
                         }
 
-                        var offsetXYZ = new Vector3(x, y, z);
-                        Plugin.MovementManager.MoveToPosition(offsetXYZ);
+                        Plugin.MovementManager.MoveToPosition(new Vector3(x, y, z));
                     }
                     break;
-                case "stopmove": {
-                        Plugin.IpcProvider.StopMovement();
-                    }
+                case "stopmove":
+                    Plugin.IpcProvider.StopMovement();
                     break;
-                case "movetotarget": {
-                        Plugin.MovementManager.MoveToTargetPosition();
-                    }
+                case "movetotarget":
+                    Plugin.MovementManager.MoveToTargetPosition();
                     break;
-                case "stackonme": {
-                        Plugin.IpcProvider.ExecuteStackOnMe();
-                    }
+                case "stackonme":
+                    Plugin.IpcProvider.ExecuteStackOnMe();
                     break;
                 case "movetocharacter": {
                         if (parsedArgs.Count <= 1) {
                             DalamudApi.ShowNotification($"Invalid arguments expected character name", NotificationType.Error, 5000);
                             return;
                         }
-
-                        var characterName = parsedArgs[1];
-                        Plugin.MovementManager.MoveToObject(characterName);
+                        Plugin.MovementManager.MoveToObject(parsedArgs[1]);
                     }
                     break;
                 case "movetomytarget":
@@ -171,83 +204,55 @@ public class PluginCommandManager : IDisposable {
                         if (parsedArgs.Count < 2 ||
                             !int.TryParse(parsedArgs[1], out var gearsetIndex) ||
                             gearsetIndex is <= 0 or > 100) {
-                            DalamudApi.ShowNotification(
-                                "Invalid arguments. Expected gearset number (1-100)",
-                                NotificationType.Error,
-                                5000
-                            );
+                            DalamudApi.ShowNotification("Invalid arguments. Expected gearset number (1-100)", NotificationType.Error, 5000);
                             return;
                         }
-
                         GearsetManager.ChangeGearset(Plugin, gearsetIndex - 1);
-                        break;
                     }
+                    break;
                 case "invite": {
                         if (parsedArgs.Count < 2) {
-                            DalamudApi.ShowNotification(
-                                "Invalid arguments. Expected \"Character Name@World\"",
-                                NotificationType.Error,
-                                5000
-                            );
+                            DalamudApi.ShowNotification("Invalid arguments. Expected \"Character Name@World\"", NotificationType.Error, 5000);
                             return;
                         }
-
                         GameFunctions.InviteToParty(parsedArgs[1]);
-                        break;
                     }
+                    break;
+                case "objectquantity": {
+                        if (parsedArgs.Count <= 1) {
+                            DalamudApi.ShowNotification($"Invalid arguments to setobjectquantity", NotificationType.Error, 5000);
+                            return;
+                        }
+                        if (!Enum.TryParse<SettingsDisplayObjectLimitType>(parsedArgs[1], ignoreCase: true, out var displayObjectLimitType)
+                            || !Enum.IsDefined(typeof(SettingsDisplayObjectLimitType), displayObjectLimitType)) {
+                            DalamudApi.PluginLog.Warning($"Invalid object quantity value (0-5): {displayObjectLimitType}");
+                            return;
+                        }
+                        Plugin.IpcProvider.SetGameSettingsObjectQuantity(displayObjectLimitType);
+                    }
+                    break;
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");
-                    return;
-                    // case "objectquantity":
-                    //     {
-                    //         if (args.Count <= 1)
-                    //         {
-                    //             DalamudApi.ShowNotification($"Invalid arguments to setobjectquantity", NotificationType.Error, 5000);
-                    //             return;
-                    //         }
-
-                    //         if (!Enum.TryParse<SettingsDisplayObjectLimitType>(args[1], ignoreCase: true, out var displayObjectLimitType)
-                    //             || !Enum.IsDefined(typeof(SettingsDisplayObjectLimitType), displayObjectLimitType))
-                    //         {
-                    //             DalamudApi.PluginLog.Warning($"Invalid object quantity value (0-5): {displayObjectLimitType}");
-                    //             return;
-                    //         }
-
-                    //         IpcProvider.SetGameSettingsObjectQuantity(displayObjectLimitType);
-                    //     }
-                    //     break;
-                    // try {
-
-                    // } catch (ArgumentException ex) {
-                    //     DalamudApi.ChatGui.PrintError(ex.Message);
-                    // }
+                    break;
             }
         } else {
-            // no args toggle plugin window
             Plugin.Ui.MainWindow.Toggle();
         }
     }
 
     private void OnBroadcastCommand(string command, string arguments) {
-        if (arguments.Any()) {
+        if (arguments.Any())
             Plugin.IpcProvider.EnqueueMacroActions(arguments, includeSelf: true);
-        }
     }
 
     private void OnBroadcastNotMeCommand(string command, string arguments) {
-        if (arguments.Any()) {
+        if (arguments.Any())
             Plugin.IpcProvider.EnqueueMacroActions(arguments, includeSelf: false);
-        }
     }
 
     private void OnBroadcastCharacterCommand(string command, string arguments) {
         var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
-        // DalamudApi.PluginLog.Warning($"command: [{command}] {string.Join('|', parsedArgs)}");
-
-        if (parsedArgs.Count >= 2) {
-            string characterName = parsedArgs[0];
-            string textCommand = parsedArgs[1];
-            Plugin.IpcProvider.EnqueueCharacterMacroActions(textCommand, characterName);
-        }
+        if (parsedArgs.Count >= 2)
+            Plugin.IpcProvider.EnqueueCharacterMacroActions(parsedArgs[1], parsedArgs[0]);
     }
 }

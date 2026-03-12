@@ -10,6 +10,7 @@ public enum IpcMessageType {
     ResumeMacroExecution,
     StopMovement,
     SyncConfiguration,
+    RefreshCommands,
     ExecuteTextCommand,
     ExecuteActionCommand,
     ExecuteGeneralActionCommand,

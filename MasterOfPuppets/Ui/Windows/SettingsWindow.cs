@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -18,6 +19,7 @@ namespace MasterOfPuppets;
 public class SettingsWindow : Window {
     private Plugin Plugin { get; }
     private string _characterName = string.Empty;
+    private readonly Dictionary<string, string> _commandInputs = new();
     private SettingsDisplayObjectLimitType _objectQuantityType;
 
     public SettingsWindow(Plugin plugin) : base($"{Plugin.Name} {Language.SettingsTitle}###SettingsWindow") {
@@ -33,6 +35,8 @@ public class SettingsWindow : Window {
 
     public override void OnOpen() {
         _objectQuantityType = GameSettingsManager.GetDisplayObjectLimit();
+        foreach (var def in PluginCommandManager.Definitions)
+            _commandInputs[def.Key] = Plugin.Config.CustomizedCommands.TryGetValue(def.Key, out var v) ? v : def.DefaultCommand;
         base.OnOpen();
     }
 
@@ -43,6 +47,7 @@ public class SettingsWindow : Window {
         DrawGeneralTab();
         DrawChatSyncTab();
         DrawGameSettingsTab();
+        DrawCommandsTab();
     }
 
     private void DrawGeneralTab() {
@@ -332,5 +337,78 @@ public class SettingsWindow : Window {
             Plugin.IpcProvider.SetGameSettingsObjectQuantity(_objectQuantityType);
         }
         ImGuiUtil.ToolTip("Change object quantity limit");
+    }
+
+    private void DrawCommandsTab() {
+        using var tabItem = ImRaii.TabItem("Commands###CommandsTab");
+        if (!tabItem) return;
+
+        ImGui.TextWrapped("Rename Commands");
+        ImGuiUtil.HelpMarker("""
+        Rename built-in commands or toggle their default aliases. Changes are synced to all clients.
+        Example: rename '/mopbr' to '/br', or enable the '/br' alias so both work at the same time.
+        """);
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        foreach (var def in PluginCommandManager.Definitions) {
+            if (!_commandInputs.ContainsKey(def.Key))
+                _commandInputs[def.Key] = Plugin.Config.CustomizedCommands.TryGetValue(def.Key, out var v) ? v : def.DefaultCommand;
+
+            var input = _commandInputs[def.Key];
+            bool hasCustom = Plugin.Config.CustomizedCommands.ContainsKey(def.Key);
+            bool inputDiffers = !input.Equals(hasCustom ? Plugin.Config.CustomizedCommands[def.Key] : def.DefaultCommand, StringComparison.OrdinalIgnoreCase);
+
+            ImGui.Text($"{def.DefaultCommand,-10}");
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(130);
+            if (ImGui.InputText($"##cmd_{def.Key}", ref input, 64, ImGuiInputTextFlags.AutoSelectAll))
+                _commandInputs[def.Key] = input;
+
+            ImGui.SameLine();
+            using (ImRaii.Disabled(!inputDiffers || !PluginCommandManager.IsValidCommand(input))) {
+                if (ImGui.Button($"Apply##apply_{def.Key}")) {
+                    Plugin.Config.CustomizedCommands[def.Key] = input.Trim().ToLowerInvariant();
+                    SaveAndRefreshCommands();
+                }
+            }
+
+            ImGui.SameLine();
+            using (ImRaii.Disabled(!hasCustom)) {
+                if (ImGui.Button($"Reset##reset_{def.Key}")) {
+                    Plugin.Config.CustomizedCommands.Remove(def.Key);
+                    _commandInputs[def.Key] = def.DefaultCommand;
+                    SaveAndRefreshCommands();
+                }
+            }
+
+            if (def.DefaultAliases.Length > 0) {
+                ImGui.SameLine();
+                ImGui.TextDisabled("Aliases:");
+                Plugin.Config.EnabledCommandAliases.TryGetValue(def.Key, out var enabledAliases);
+
+                foreach (var alias in def.DefaultAliases) {
+                    ImGui.SameLine();
+                    bool enabled = enabledAliases != null && enabledAliases.Contains(alias, StringComparer.OrdinalIgnoreCase);
+                    if (ImGui.Checkbox($"{alias}##alias_{def.Key}_{alias}", ref enabled)) {
+                        if (!Plugin.Config.EnabledCommandAliases.ContainsKey(def.Key))
+                            Plugin.Config.EnabledCommandAliases[def.Key] = new();
+                        if (enabled)
+                            Plugin.Config.EnabledCommandAliases[def.Key].Add(alias);
+                        else
+                            Plugin.Config.EnabledCommandAliases[def.Key].Remove(alias);
+                        SaveAndRefreshCommands();
+                    }
+                }
+            }
+        }
+    }
+
+    private void SaveAndRefreshCommands() {
+        Plugin.Config.Save();
+        Plugin.IpcProvider.SyncConfiguration();
+        Plugin.IpcProvider.RefreshCommands();
     }
 }

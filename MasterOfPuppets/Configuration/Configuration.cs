@@ -34,6 +34,9 @@ internal class Configuration : IPluginConfiguration {
     public bool IncludeCidOnImport { get; set; } = true;
     public bool BackupBeforeImport { get; set; } = true;
 
+    public Dictionary<string, string> CustomizedCommands { get; set; } = new();
+    public Dictionary<string, List<string>> EnabledCommandAliases { get; set; } = new();
+
     // Chat commands
     public bool UseChatSync { get; set; } = false;
     public HashSet<XivChatType> ListenedChatTypes { get; set; } = new();
@@ -182,6 +185,7 @@ internal class Configuration : IPluginConfiguration {
             return;
 
         UpdateFrom(incoming);
+        OnConfigurationChanged?.Invoke();
     }
 
     static bool AreEqual(object? a, object? b) {
