@@ -19,8 +19,9 @@ namespace MasterOfPuppets;
 public class SettingsWindow : Window {
     private Plugin Plugin { get; }
     private string _characterName = string.Empty;
-    private readonly Dictionary<string, string> _commandInputs = new();
     private SettingsDisplayObjectLimitType _objectQuantityType;
+    // commandKey → { defaultAlias → current input text }
+    private readonly Dictionary<string, Dictionary<string, string>> _aliasInputs = new();
 
     public SettingsWindow(Plugin plugin) : base($"{Plugin.Name} {Language.SettingsTitle}###SettingsWindow") {
         Plugin = plugin;
@@ -35,8 +36,13 @@ public class SettingsWindow : Window {
 
     public override void OnOpen() {
         _objectQuantityType = GameSettingsManager.GetDisplayObjectLimit();
-        foreach (var def in PluginCommandManager.Definitions)
-            _commandInputs[def.Key] = Plugin.Config.CustomizedCommands.TryGetValue(def.Key, out var v) ? v : def.DefaultCommand;
+        foreach (var def in PluginCommandManager.Definitions) {
+            _aliasInputs[def.Key] = new();
+            foreach (var alias in def.DefaultAliases) {
+                if (alias.Equals(def.DefaultCommand, StringComparison.OrdinalIgnoreCase)) continue;
+                _aliasInputs[def.Key][alias] = GetEffectiveAliasName(def.Key, alias);
+            }
+        }
         base.OnOpen();
     }
 
@@ -343,67 +349,85 @@ public class SettingsWindow : Window {
         using var tabItem = ImRaii.TabItem("Commands###CommandsTab");
         if (!tabItem) return;
 
-        ImGui.TextWrapped("Rename Commands");
-        ImGuiUtil.HelpMarker("""
-        Rename built-in commands or toggle their default aliases. Changes are synced to all clients.
-        Example: rename '/mopbr' to '/br', or enable the '/br' alias so both work at the same time.
-        """);
+        ImGui.TextWrapped("Enable and rename aliases for built-in commands. Changes are synced to all clients.");
+        ImGuiUtil.HelpMarker("Example: enable '/br' as alias for '/mopbr', or rename it to '/broadcast'.");
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
         foreach (var def in PluginCommandManager.Definitions) {
-            if (!_commandInputs.ContainsKey(def.Key))
-                _commandInputs[def.Key] = Plugin.Config.CustomizedCommands.TryGetValue(def.Key, out var v) ? v : def.DefaultCommand;
+            var visibleAliases = def.DefaultAliases
+                .Where(a => !a.Equals(def.DefaultCommand, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+            if (visibleAliases.Length == 0) continue;
 
-            var input = _commandInputs[def.Key];
-            bool hasCustom = Plugin.Config.CustomizedCommands.ContainsKey(def.Key);
-            bool inputDiffers = !input.Equals(hasCustom ? Plugin.Config.CustomizedCommands[def.Key] : def.DefaultCommand, StringComparison.OrdinalIgnoreCase);
+            ImGui.TextDisabled(def.DefaultCommand);
 
-            ImGui.Text($"{def.DefaultCommand,-10}");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(130);
-            if (ImGui.InputText($"##cmd_{def.Key}", ref input, 64, ImGuiInputTextFlags.AutoSelectAll))
-                _commandInputs[def.Key] = input;
+            Plugin.Config.EnabledCommandAliases.TryGetValue(def.Key, out var enabledAliases);
+            if (!_aliasInputs.ContainsKey(def.Key)) _aliasInputs[def.Key] = new();
 
-            ImGui.SameLine();
-            using (ImRaii.Disabled(!inputDiffers || !PluginCommandManager.IsValidCommand(input))) {
-                if (ImGui.Button($"Apply##apply_{def.Key}")) {
-                    Plugin.Config.CustomizedCommands[def.Key] = input.Trim().ToLowerInvariant();
+            foreach (var alias in visibleAliases) {
+                ImGui.Indent(16);
+
+                bool enabled = enabledAliases != null && enabledAliases.Contains(alias, StringComparer.OrdinalIgnoreCase);
+                if (ImGui.Checkbox($"##chk_{def.Key}_{alias}", ref enabled)) {
+                    if (!Plugin.Config.EnabledCommandAliases.ContainsKey(def.Key))
+                        Plugin.Config.EnabledCommandAliases[def.Key] = new();
+                    if (enabled)
+                        Plugin.Config.EnabledCommandAliases[def.Key].Add(alias);
+                    else
+                        Plugin.Config.EnabledCommandAliases[def.Key].Remove(alias);
                     SaveAndRefreshCommands();
                 }
-            }
 
-            ImGui.SameLine();
-            using (ImRaii.Disabled(!hasCustom)) {
-                if (ImGui.Button($"Reset##reset_{def.Key}")) {
-                    Plugin.Config.CustomizedCommands.Remove(def.Key);
-                    _commandInputs[def.Key] = def.DefaultCommand;
-                    SaveAndRefreshCommands();
-                }
-            }
-
-            if (def.DefaultAliases.Length > 0) {
                 ImGui.SameLine();
-                ImGui.TextDisabled("Aliases:");
-                Plugin.Config.EnabledCommandAliases.TryGetValue(def.Key, out var enabledAliases);
 
-                foreach (var alias in def.DefaultAliases) {
-                    ImGui.SameLine();
-                    bool enabled = enabledAliases != null && enabledAliases.Contains(alias, StringComparer.OrdinalIgnoreCase);
-                    if (ImGui.Checkbox($"{alias}##alias_{def.Key}_{alias}", ref enabled)) {
-                        if (!Plugin.Config.EnabledCommandAliases.ContainsKey(def.Key))
-                            Plugin.Config.EnabledCommandAliases[def.Key] = new();
-                        if (enabled)
-                            Plugin.Config.EnabledCommandAliases[def.Key].Add(alias);
-                        else
-                            Plugin.Config.EnabledCommandAliases[def.Key].Remove(alias);
+                if (!_aliasInputs[def.Key].TryGetValue(alias, out var aliasInput))
+                    aliasInput = _aliasInputs[def.Key][alias] = GetEffectiveAliasName(def.Key, alias);
+
+                string stored = GetEffectiveAliasName(def.Key, alias);
+                bool inputDiffers = !aliasInput.Equals(stored, StringComparison.OrdinalIgnoreCase);
+                bool isValid = aliasInput.StartsWith('/') && aliasInput.Length >= 2 && !aliasInput.Contains(' ');
+
+                ImGui.SetNextItemWidth(120 * ImGuiHelpers.GlobalScale);
+                if (ImGui.InputText($"##inp_{def.Key}_{alias}", ref aliasInput, 64))
+                    _aliasInputs[def.Key][alias] = aliasInput;
+
+                ImGui.SameLine();
+                using (ImRaii.Disabled(!inputDiffers || !isValid)) {
+                    if (ImGui.Button($"Apply##aliasApply_{def.Key}_{alias}")) {
+                        if (!Plugin.Config.CustomAliasNames.ContainsKey(def.Key))
+                            Plugin.Config.CustomAliasNames[def.Key] = new();
+                        Plugin.Config.CustomAliasNames[def.Key][alias] = aliasInput.Trim().ToLowerInvariant();
                         SaveAndRefreshCommands();
                     }
                 }
+
+                bool hasCustom = Plugin.Config.CustomAliasNames.TryGetValue(def.Key, out var cn) && cn.ContainsKey(alias);
+                ImGui.SameLine();
+                using (ImRaii.Disabled(!hasCustom)) {
+                    if (ImGui.Button($"Reset##aliasReset_{def.Key}_{alias}")) {
+                        Plugin.Config.CustomAliasNames.TryGetValue(def.Key, out var rn);
+                        rn?.Remove(alias);
+                        _aliasInputs[def.Key][alias] = alias;
+                        SaveAndRefreshCommands();
+                    }
+                }
+
+                ImGui.Unindent(16);
             }
+
+            ImGui.Spacing();
         }
+    }
+
+    private string GetEffectiveAliasName(string key, string defaultAlias) {
+        if (Plugin.Config.CustomAliasNames.TryGetValue(key, out var names) &&
+            names.TryGetValue(defaultAlias, out var custom) &&
+            !string.IsNullOrWhiteSpace(custom))
+            return custom;
+        return defaultAlias;
     }
 
     private void SaveAndRefreshCommands() {

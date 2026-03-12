@@ -22,7 +22,7 @@ public class PluginCommandManager : IDisposable {
     );
 
     private static readonly MopCommandDef[] CommandDefs = [
-        new("mop",    "/mop",    [],        "Show/hide UI. Subcommands: run, stop, queue, move, ..."),
+        new("mop",    "/mop",    ["/mop"],        "Show/hide UI. Subcommands: run, stop, queue, move, ..."),
         new("mopbr",  "/mopbr",  ["/br"],   "Broadcast a command to all local clients"),
         new("mopbrn", "/mopbrn", ["/brn"],  "Broadcast a command to all local clients except yourself"),
         new("mopbrc", "/mopbrc", ["/brc"],  "Broadcast a command to a specific character"),
@@ -46,16 +46,19 @@ public class PluginCommandManager : IDisposable {
     private void RegisterAll() {
         foreach (var def in CommandDefs) {
             var registered = new List<string>();
-            var mainCmd = GetEffectiveCommand(def);
-
-            TryRegister(mainCmd, GetHandlerForKey(def.Key), def.HelpMessage, showInHelp: true, registered);
+            TryRegister(def.DefaultCommand, GetHandlerForKey(def.Key), def.HelpMessage, showInHelp: true, registered);
 
             Plugin.Config.EnabledCommandAliases.TryGetValue(def.Key, out var enabled);
 
             foreach (var alias in def.DefaultAliases) {
                 if (enabled == null || !enabled.Contains(alias, StringComparer.OrdinalIgnoreCase)) continue;
-                if (alias.Equals(mainCmd, StringComparison.OrdinalIgnoreCase)) continue;
-                TryRegister(alias, GetHandlerForKey(def.Key), $"Alias for {mainCmd}", showInHelp: false, registered);
+                var effectiveAlias = alias;
+                if (Plugin.Config.CustomAliasNames.TryGetValue(def.Key, out var aliasNames) &&
+                    aliasNames.TryGetValue(alias, out var custom) &&
+                    !string.IsNullOrWhiteSpace(custom))
+                    effectiveAlias = custom;
+                if (effectiveAlias.Equals(def.DefaultCommand, StringComparison.OrdinalIgnoreCase)) continue;
+                TryRegister(effectiveAlias, GetHandlerForKey(def.Key), $"Alias for {def.DefaultCommand}", showInHelp: false, registered);
             }
 
             _registered[def.Key] = registered;
@@ -85,26 +88,12 @@ public class PluginCommandManager : IDisposable {
         _registered.Clear();
     }
 
-    private string GetEffectiveCommand(MopCommandDef def) {
-        if (Plugin.Config.CustomizedCommands.TryGetValue(def.Key, out var custom) && IsValidCommand(custom))
-            return custom;
-        return def.DefaultCommand;
-    }
-
     private IReadOnlyCommandInfo.HandlerDelegate GetHandlerForKey(string key) => key switch {
-        "mopbr"  => OnBroadcastCommand,
+        "mopbr" => OnBroadcastCommand,
         "mopbrn" => OnBroadcastNotMeCommand,
         "mopbrc" => OnBroadcastCharacterCommand,
-        _        => OnMainCommand,
+        _ => OnMainCommand,
     };
-
-    public static bool IsValidCommand(string? command) {
-        command = command?.Trim() ?? "";
-        return !string.IsNullOrWhiteSpace(command)
-            && command.StartsWith('/')
-            && command.Length >= 2
-            && !command.Contains(' ');
-    }
 
     public void Dispose() {
         UnregisterAll();

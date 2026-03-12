@@ -34,8 +34,9 @@ internal class Configuration : IPluginConfiguration {
     public bool IncludeCidOnImport { get; set; } = true;
     public bool BackupBeforeImport { get; set; } = true;
 
-    public Dictionary<string, string> CustomizedCommands { get; set; } = new();
     public Dictionary<string, List<string>> EnabledCommandAliases { get; set; } = new();
+    // commandKey → { defaultAlias → customAlias }
+    public Dictionary<string, Dictionary<string, string>> CustomAliasNames { get; set; } = new();
 
     // Chat commands
     public bool UseChatSync { get; set; } = false;
