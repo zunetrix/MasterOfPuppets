@@ -103,80 +103,79 @@ public class MainWindow : Window {
     }
 
     private void DrawMacroMenu() {
-        if (ImGui.BeginMenu("Macro")) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddMacroMenu")) {
-                Ui.MacroEditorWindow.AddNewMacro();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.AddMacroBtn)) {
-                Ui.MacroEditorWindow.AddNewMacro();
-            }
+        using var menu = ImRaii.Menu("Macro");
+        if (!menu) return;
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteSelectedMacrosMenu")) {
-                if (ImGui.GetIO().KeyCtrl) {
-                    Plugin.MacroManager.DeleteSelectedMacros();
-                    Plugin.IpcProvider.SyncConfiguration();
-                }
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.DeleteSelectedMacrosBtn)) {
-                if (ImGui.GetIO().KeyCtrl) {
-                    Plugin.MacroManager.DeleteSelectedMacros();
-                    Plugin.IpcProvider.SyncConfiguration();
-                }
-            }
-            ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddMacroMenu")) {
+            Ui.MacroEditorWindow.AddNewMacro();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable(Language.AddMacroBtn)) {
+            Ui.MacroEditorWindow.AddNewMacro();
+        }
 
-            // -----------------------
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteSelectedMacrosMenu")) {
+            if (ImGui.GetIO().KeyCtrl) {
+                Plugin.MacroManager.DeleteSelectedMacros();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable(Language.DeleteSelectedMacrosBtn)) {
+            if (ImGui.GetIO().KeyCtrl) {
+                Plugin.MacroManager.DeleteSelectedMacros();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+        }
+        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.ExchangeAlt, $"##MacroImportExportMenu")) {
-                Ui.MacroImportExportWindow.Toggle();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable("Import Export Macros")) {
-                Ui.MacroImportExportWindow.Toggle();
-            }
+        // -----------------------
 
-            // -----------------------
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.ExchangeAlt, $"##MacroImportExportMenu")) {
+            Ui.MacroImportExportWindow.Toggle();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Import Export Macros")) {
+            Ui.MacroImportExportWindow.Toggle();
+        }
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportFromClipboardMenu")) {
-                ImportMacroFromClipboard();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.ImportMacroBtn)) {
-                ImportMacroFromClipboard();
-            }
-            // -----------------------
+        // -----------------------
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.FilePen, $"##MacroBatchEditorMenu")) {
-                Ui.MacroBatchEditorWindow.Toggle();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.MacroBatchEditorTitle)) {
-                Ui.MacroBatchEditorWindow.Toggle();
-            }
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportFromClipboardMenu")) {
+            ImportMacroFromClipboard();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable(Language.ImportMacroBtn)) {
+            ImportMacroFromClipboard();
+        }
+        // -----------------------
 
-            // -----------------------
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.FilePen, $"##MacroBatchEditorMenu")) {
+            Ui.MacroBatchEditorWindow.Toggle();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable(Language.MacroBatchEditorTitle)) {
+            Ui.MacroBatchEditorWindow.Toggle();
+        }
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.FileArchive, $"##MacroBackupMenu")) {
-                Plugin.MacroManager.BackupMacros();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.MacroBackup)) {
-                Plugin.MacroManager.BackupMacros();
-            }
+        // -----------------------
 
-            // -----------------------
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.FileArchive, $"##MacroBackupMenu")) {
+            Plugin.MacroManager.BackupMacros();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable(Language.MacroBackup)) {
+            Plugin.MacroManager.BackupMacros();
+        }
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##CharactersMenu")) {
-                Ui.CharactersWindow.Toggle();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable(Language.ShowCharactersBtn)) {
-                Ui.CharactersWindow.Toggle();
-            }
+        // -----------------------
 
-            ImGui.EndMenu();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##CharactersMenu")) {
+            Ui.CharactersWindow.Toggle();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable(Language.ShowCharactersBtn)) {
+            Ui.CharactersWindow.Toggle();
         }
     }
 
@@ -254,110 +253,101 @@ public class MainWindow : Window {
     // }
 
     private void DrawCommandsMenu() {
-        if (ImGui.BeginMenu("Commands")) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##ExecuteTargetMyTargetCommand")) {
-                Plugin.IpcProvider.ExecuteTargetMyTarget();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable("Target My Target")) {
-                Plugin.IpcProvider.ExecuteTargetMyTarget();
-            }
+        using var menu = ImRaii.Menu("Commands");
+        if (!menu) return;
 
-            // -----------------------
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##ExecuteTargetMyTargetCommand")) {
+            Plugin.IpcProvider.ExecuteTargetMyTarget();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Target My Target")) {
+            Plugin.IpcProvider.ExecuteTargetMyTarget();
+        }
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonChalkboard, $"##ExecuteInteractWIthMyTargetCommand")) {
-                Plugin.IpcProvider.ExecuteInteractWithMyTarget();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable("Interact With My Target")) {
-                Plugin.IpcProvider.ExecuteInteractWithMyTarget();
-            }
+        // -----------------------
 
-            // -----------------------
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonChalkboard, $"##ExecuteInteractWIthMyTargetCommand")) {
+            Plugin.IpcProvider.ExecuteInteractWithMyTarget();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Interact With My Target")) {
+            Plugin.IpcProvider.ExecuteInteractWithMyTarget();
+        }
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Times, $"##ExecuteTargetClearCommand")) {
-                Plugin.IpcProvider.ExecuteTargetClear();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable("Target Clear")) {
-                Plugin.IpcProvider.ExecuteTargetClear();
-            }
+        // -----------------------
 
-            // -----------------------
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Times, $"##ExecuteTargetClearCommand")) {
+            Plugin.IpcProvider.ExecuteTargetClear();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Target Clear")) {
+            Plugin.IpcProvider.ExecuteTargetClear();
+        }
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowRight, $"##ExecuteMoveToMyTargetCommand")) {
-                Plugin.IpcProvider.ExecuteMoveToMyTarget();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable("Move To My Target")) {
-                Plugin.IpcProvider.ExecuteMoveToMyTarget();
-            }
+        // -----------------------
 
-            // -----------------------
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowRight, $"##ExecuteMoveToMyTargetCommand")) {
+            Plugin.IpcProvider.ExecuteMoveToMyTarget();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Move To My Target")) {
+            Plugin.IpcProvider.ExecuteMoveToMyTarget();
+        }
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonArrowDownToLine, $"##ExecuteStackOnMeCommand")) {
-                Plugin.IpcProvider.ExecuteStackOnMe();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable("Stack On Me")) {
-                Plugin.IpcProvider.ExecuteStackOnMe();
-            }
+        // -----------------------
 
-            // -----------------------
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonArrowDownToLine, $"##ExecuteStackOnMeCommand")) {
+            Plugin.IpcProvider.ExecuteStackOnMe();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Stack On Me")) {
+            Plugin.IpcProvider.ExecuteStackOnMe();
+        }
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingDashedLineArrowRight, $"##ExecuteToggleWalkingCommand")) {
-                Plugin.IpcProvider.ExecuteToggleWalking();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable("Toggle Walking")) {
-                Plugin.IpcProvider.ExecuteToggleWalking();
-            }
+        // -----------------------
 
-            // -----------------------
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingDashedLineArrowRight, $"##ExecuteToggleWalkingCommand")) {
+            Plugin.IpcProvider.ExecuteToggleWalking();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Toggle Walking")) {
+            Plugin.IpcProvider.ExecuteToggleWalking();
+        }
 
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowLoopLeft, $"##ExecuteAbandonDutyCommand")) {
-                Plugin.IpcProvider.ExecuteAbandonDuty();
-            }
-            ImGui.SameLine();
-            if (ImGui.Selectable("Abandon Duty")) {
-                Plugin.IpcProvider.ExecuteAbandonDuty();
-            }
+        // -----------------------
 
-            ImGui.EndMenu();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowLoopLeft, $"##ExecuteAbandonDutyCommand")) {
+            Plugin.IpcProvider.ExecuteAbandonDuty();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Abandon Duty")) {
+            Plugin.IpcProvider.ExecuteAbandonDuty();
         }
     }
 
     private void DrawMenuBar() {
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
+        using var color = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
+        using var menuBar = ImRaii.MenuBar();
+        if (!menuBar) return;
 
-        if (ImGui.BeginMenuBar()) {
-            DrawMacroMenu();
-            // DrawActionsMenu();
+        DrawMacroMenu();
+        // DrawActionsMenu();
 
-            if (ImGui.MenuItem("Actions")) {
-                Plugin.Ui.ActionsBroadcastWindow.Toggle();
-            }
+        if (ImGui.MenuItem("Actions"))
+            Plugin.Ui.ActionsBroadcastWindow.Toggle();
 
-            DrawCommandsMenu();
+        DrawCommandsMenu();
 
-            if (ImGui.MenuItem("Help")) {
-                Plugin.Ui.MacroHelpWindow.Toggle();
-            }
+        if (ImGui.MenuItem("Help"))
+            Plugin.Ui.MacroHelpWindow.Toggle();
 
-            var versionText = $"v{Version}";
-            var textSize = ImGui.CalcTextSize(versionText);
-            var padding = ImGui.GetStyle().FramePadding.X + 5;
-            var regionMaxX = ImGui.GetWindowContentRegionMax().X;
-            // align to right
-            ImGui.SameLine(regionMaxX - textSize.X - (padding * 2));
-            ImGui.Text(versionText);
-
-            ImGui.EndMenuBar();
-        }
-
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
+        var versionText = $"v{Version}";
+        var textSize = ImGui.CalcTextSize(versionText);
+        var padding = ImGui.GetStyle().FramePadding.X + 5;
+        var regionMaxX = ImGui.GetWindowContentRegionMax().X;
+        ImGui.SameLine(regionMaxX - textSize.X - (padding * 2));
+        ImGui.Text(versionText);
     }
 
     private void DrawMacroHeader() {
