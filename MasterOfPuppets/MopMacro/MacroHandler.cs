@@ -44,7 +44,6 @@ public partial class MacroHandler : IDisposable {
 
         _commands = new Dictionary<string, MacroCommand>(StringComparer.OrdinalIgnoreCase) {
             ["mopwait"]            = new(HandleMopWait,            SkipGlobalDelay: true),
-            ["moploop"]            = new(HandleMopLoop,            SkipGlobalDelay: true),
             ["mopmacro"]           = new(HandleMopMacro,           SkipGlobalDelay: true),
             ["mopobjectquantity"]  = new(HandleMopObjectQuantity,  SkipGlobalDelay: true),
             ["moptarget"]          = new(HandleMopTarget,          SkipGlobalDelay: true),
@@ -94,46 +93,64 @@ public partial class MacroHandler : IDisposable {
     }
 
     private async Task ExecuteActions(string macroId, string[] actions, double delayBetweenActions, CancellationToken token, bool isLoop) {
-        foreach (var action in actions) {
-            if (token.IsCancellationRequested) break;
+        bool shouldLoop;
+        int? loopsLeft = null;
 
-            _pauseGate.Wait(token);
+        do {
+            shouldLoop = false;
+            if (isLoop) CurrentActionLoopExecutionIndex = -1;
 
-            if (isLoop) CurrentActionLoopExecutionIndex++;
-            else CurrentActionExecutionIndex++;
+            foreach (var action in actions) {
+                if (token.IsCancellationRequested) return;
+                _pauseGate.Wait(token);
 
-            var match = ActionRegex.Match(action);
-            bool handled = false;
+                if (isLoop) CurrentActionLoopExecutionIndex++;
+                else CurrentActionExecutionIndex++;
 
-            if (match.Success) {
+                var match = ActionRegex.Match(action);
+                if (!match.Success) {
+                    DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
+                    _ = DalamudApi.Framework.RunOnFrameworkThread(delegate { Chat.SendMessage(action); });
+                    if (delayBetweenActions > 0.0)
+                        await Task.Delay(TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero)), token);
+                    continue;
+                }
+
                 var command = match.Groups[1].Value;
-                var args = match.Groups[2].Value.Trim();
+                var args    = match.Groups[2].Value.Trim();
+
+                // moploop handled inline to avoid re-entrancy on the channel
+                if (command.Equals("moploop", StringComparison.OrdinalIgnoreCase)) {
+                    if (string.IsNullOrWhiteSpace(args)) {
+                        shouldLoop = true;
+                    } else if (uint.TryParse(args, out uint count)) {
+                        if (loopsLeft == null) loopsLeft = (int)count - 1;
+                        else loopsLeft--;
+                        shouldLoop = loopsLeft > 0;
+                    } else {
+                        DalamudApi.PluginLog.Warning($"[moploop] invalid argument: \"{args}\"");
+                    }
+                    break; // exit foreach; do-while decides whether to restart
+                }
 
                 if (_commands.TryGetValue(command, out var cmd)) {
                     await cmd.Handler(macroId, args, token);
-                    handled = true;
-
                     if (!cmd.SkipGlobalDelay && delayBetweenActions > 0.0) {
+                        var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
+                        DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
+                        await Task.Delay(delayMs, token);
+                    }
+                } else {
+                    DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
+                    _ = DalamudApi.Framework.RunOnFrameworkThread(delegate { Chat.SendMessage(action); });
+                    if (delayBetweenActions > 0.0) {
                         var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
                         DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
                         await Task.Delay(delayMs, token);
                     }
                 }
             }
-
-            if (!handled) {
-                DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
-                _ = DalamudApi.Framework.RunOnFrameworkThread(delegate {
-                    Chat.SendMessage(action);
-                });
-
-                if (delayBetweenActions > 0.0) {
-                    var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
-                    DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
-                    await Task.Delay(delayMs, token);
-                }
-            }
-        }
+        } while (shouldLoop && !token.IsCancellationRequested);
     }
 
     private string[] GetLocalPlayerMacroActions(string macroNameOrNumber) {

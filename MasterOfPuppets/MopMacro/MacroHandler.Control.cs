@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,33 +17,6 @@ public partial class MacroHandler {
 
         DalamudApi.PluginLog.Debug($"[mopwait] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}...");
         await Task.Delay(delayMs, token);
-    }
-
-    private Task HandleMopLoop(string macroId, string args, CancellationToken token) {
-        var actions = GetLocalPlayerMacroActions(macroId);
-
-        if (string.IsNullOrWhiteSpace(args)) {
-            DalamudApi.PluginLog.Debug("[moploop]");
-            ClearActionsLoopExecutionList();
-            EnqueueMacroActions(macroId, actions, Plugin.Config.DelayBetweenActions);
-            return Task.CompletedTask;
-        }
-
-        if (!uint.TryParse(args, out uint runAmount)) {
-            DalamudApi.PluginLog.Warning($"[moploop] invalid argument: \"{args}\"");
-            return Task.CompletedTask;
-        }
-
-        string[] noLoopActions = actions
-            .Where(a => !a.StartsWith("/moploop", StringComparison.OrdinalIgnoreCase))
-            .ToArray();
-
-        ClearActionsLoopExecutionList();
-        for (int i = 0; i < runAmount; i++)
-            EnqueueMacroActions(macroId, noLoopActions, Plugin.Config.DelayBetweenActions);
-
-        DalamudApi.PluginLog.Debug($"[moploop] {runAmount}");
-        return Task.CompletedTask;
     }
 
     private Task HandleMopMacro(string macroId, string args, CancellationToken token) {

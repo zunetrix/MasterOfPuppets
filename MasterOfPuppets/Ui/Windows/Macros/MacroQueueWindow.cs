@@ -49,7 +49,7 @@ public class MacroQueueWindow : Window {
         ImGui.Separator();
         ImGui.Spacing();
 
-        // Snapshot for thread safety — lists are modified by the worker thread
+        // Snapshot for thread safety - lists are modified by the worker thread
         var macroList = Plugin.MacroHandler.CurrentActionsExecutionList.ToList();
         var macroIndex = Plugin.MacroHandler.CurrentActionExecutionIndex;
         var loopList = Plugin.MacroHandler.CurrentActionsLoopExecutionList.ToList();
