@@ -8,14 +8,24 @@ public static class MopMacroActionsHelper {
     {
         new MopAction {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop run <\"Macro Name\" | macro number>",
+            TextCommand = "/mop run <\"Macro Name\" | macro number> [--var=$name=value;...]",
             SuggestionCommand = "/mop run ",
             Example = """
             /mop run "My macro"
             /mop run 10
+
+            With inline variable overrides:
+            /mop run "My macro" --var=$emote=/clap
+            /mop run "My macro" --var=$emote=/clap;$delay=0.5;$target="Warrior of Light"
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
+            Broadcasts macro execution to all local clients via IPC.
+
+            Inline variables (--var=) override macro-level and command-local variables at runtime.
+            Format: --var=$name=value;$name2="value with spaces";$name3=/command
+            Variable names must start with a letter or underscore.
+            Priority: inline vars > command-local vars > macro-level vars
             """
         },
         new MopAction {
@@ -51,7 +61,7 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Open actions broadcast window
+            Opens the Actions Broadcast window to manually trigger broadcast commands
             """
         },
 
@@ -64,7 +74,8 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Useful to complete event quests
+            All local clients will target whatever your main client is currently targeting.
+            Useful for syncing targets during event quests
             """
         },
 
@@ -77,7 +88,8 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Useful to complete event quests, interacts with main client target
+            All local clients interact with the main client's current target.
+            Useful to complete event quests where all characters must interact with the same object
             """
         },
 
@@ -90,7 +102,8 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Useful to complete event quests, interacts with current target
+            Each local client interacts with their own current target.
+            Useful for event quests where each character must interact with their own nearby object
             """
         },
 
@@ -117,7 +130,8 @@ public static class MopMacroActionsHelper {
             /mop invite "Character Name@World"
             """,
             Notes = """
-            Invites a character by Name@World
+            * This is a plugin command (works only on local clients)
+            Invites a character by Name@World to your party
             """
         },
 
@@ -178,7 +192,7 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Stacks on the requester character
+            All local clients move to your current position
             """
         },
 
@@ -207,7 +221,7 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Broadcast a command to move all local clients to you target except yourself
+            Broadcasts to all local clients (except yourself) to move to your current target's position
             """
         },
 
@@ -223,6 +237,7 @@ public static class MopMacroActionsHelper {
             /mopbr /mop enablewalk
             """,
             Notes = """
+            * This is a plugin command (works only on local clients)
             Enable walking
             """
         },
@@ -239,6 +254,7 @@ public static class MopMacroActionsHelper {
             /mopbr /mop disablewalk
             """,
             Notes = """
+            * This is a plugin command (works only on local clients)
             Disable walking
             """
         },
@@ -255,6 +271,7 @@ public static class MopMacroActionsHelper {
             /mopbr /mop togglewalk
             """,
             Notes = """
+            * This is a plugin command (works only on local clients)
             Toggle walking
             """
         },
@@ -272,7 +289,8 @@ public static class MopMacroActionsHelper {
             /mopbr /mop gs 5
             """,
             Notes = """
-            Change the gearset using inventory items, the command first moves the gearset items from the inventory to the armoury, then equips the gearset. It prioritizes empty armoury slots, if none are available, it uses the first slot and swaps that item back into the inventory.
+            * This is a plugin command (works only on local clients)
+            Change the gearset using inventory items. First moves the gearset items from the inventory to the armoury, then equips the gearset. Prioritizes empty armoury slots; if none are available, uses the first slot and swaps that item back into inventory.
             """
         },
 
@@ -312,7 +330,7 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Broadcast a command to local clients to a specific character
+            Broadcast a command to a specific local client by character name
             """
         },
 
@@ -321,14 +339,23 @@ public static class MopMacroActionsHelper {
         new MopAction
         {
             Category = MopActionCategory.ChatSyncCommand,
-            TextCommand = "moprun <macro number> \"Macro Name\"",
+            TextCommand = "moprun <\"Macro Name\" | macro number> [--var=$name=value;...]",
             SuggestionCommand = "moprun ",
             Example = """
             moprun "my macro"
             moprun 10
+
+            With inline variable overrides:
+            moprun "my macro" --var=$emote=/clap
+            moprun "my macro" --var=$emote=/clap;$delay=0.5;$target="Warrior of Light"
             """,
             Notes = """
-            * This is a chat sync command to execute mop macros via chat
+            * This is a chat sync command - all local clients reading the chat will execute the macro.
+
+            Inline variables (--var=) override macro-level and command-local variables at runtime.
+            Format: --var=$name=value;$name2="value with spaces";$name3=/command
+            Variable names must start with a letter or underscore.
+            Priority: inline vars > command-local vars > macro-level vars
             """
         },
         new MopAction
@@ -337,14 +364,14 @@ public static class MopMacroActionsHelper {
             TextCommand = "mopbr <command>",
             SuggestionCommand = "mopbr ",
             Example = """
-            Use inline chat broadcast execution for single action
+            Broadcast a command to all local clients via chat:
                 mopbr /clap
                 mopbr /cheer
                 mopbr /mopaction "Action Name"
                 mopbr /moptargetof "Warrior of Light@World"
             """,
             Notes = """
-            * This is a chat sync command, broadcast a command via chat
+            * This is a chat sync command - broadcast a command to all local clients via chat
 
             Some special game characters need to be replaced to work correctly,
             for example, <me> will be translated to the current character's name instead of being printed in the chat,
@@ -359,14 +386,14 @@ public static class MopMacroActionsHelper {
             TextCommand = "mopbrn <command>",
             SuggestionCommand = "mopbrn ",
             Example = """
-            Use inline chat broadcast execution for single action except yourself
+            Broadcast a command to all local clients except yourself via chat:
                 mopbrn /clap
                 mopbrn /cheer
                 mopbrn /mopaction "Action Name"
                 mopbrn /moptargetof "Warrior of Light@World"
             """,
             Notes = """
-            * This is a chat sync command, broadcast a command via chat except yourself
+            * This is a chat sync command - broadcast a command to all local clients except yourself via chat
 
             Some special game characters need to be replaced to work correctly,
             for example, <me> will be translated to the current character's name instead of being printed in the chat,
@@ -381,14 +408,14 @@ public static class MopMacroActionsHelper {
             TextCommand = "mopbrc \"Character Name\" <command>",
             SuggestionCommand = "mopbrc ",
             Example = """
-            Use inline chat broadcast execution for single action to specific character
+            Broadcast a command to a specific local client via chat:
                 mopbrc "Character Name" /clap
                 mopbrc "Character Name" /cheer
                 mopbrc "Character Name" /mopaction "Action Name"
                 mopbrc "Character Name" /moptargetof "Warrior of Light@World"
             """,
             Notes = """
-            * This is a chat sync command, broadcast a command via chat to specific character
+            * This is a chat sync command - broadcast a command to a specific local client via chat
 
             Some special game characters need to be replaced to work correctly,
             for example, <me> will be translated to the current character's name instead of being printed in the chat,
@@ -405,8 +432,7 @@ public static class MopMacroActionsHelper {
             mopstop
             """,
             Notes = """
-            * This is a chat sync command
-            Stops all macro execution
+            * This is a chat sync command - all local clients reading the chat will stop macro execution
             """
         },
 
@@ -437,13 +463,13 @@ public static class MopMacroActionsHelper {
                 /moploop 3
             """,
             Notes = """
-            Use this action to loop current macro for a certain number of times or empty to run indefinitely,
-             usually this should be the last action in the actions and you may have only one per command
+            Loops the current macro a set number of times, or indefinitely if no number is given.
+            Should be the last action in the macro. Only one /moploop per macro.
             """
          },
         new MopAction {
             Category = MopActionCategory.MacroAction,
-            TextCommand = "/mopmacro <macro number> \"Macro Name\"",
+            TextCommand = "/mopmacro <\"Macro Name\" | macro number>",
             SuggestionCommand = "/mopmacro ",
             Example = """
             /clap
@@ -494,8 +520,8 @@ public static class MopMacroActionsHelper {
                 /cheer
             """,
             Notes = """
-            Use especial pet hotbat slots like mount specials and parasol actions
-            As alternativa it can also be used with skill name
+            Use special pet hotbar slots like mount specials and parasol actions.
+            As an alternative it can also be used with skill name:
                 /mopaction "Umbrella Dance"
             """
         },
@@ -509,13 +535,13 @@ public static class MopMacroActionsHelper {
 
             -----------------------------
 
-            Sit on groud <pose 1>
+            Sit on ground <pose 1>
                 /mophotbaremote 97
 
-            Sit on groud <pose 2>
+            Sit on ground <pose 2>
                 /mophotbaremote 98
 
-            Sit on groud <pose 3>
+            Sit on ground <pose 3>
                 /mophotbaremote 117
 
             Stand up from groundsit
@@ -575,7 +601,8 @@ public static class MopMacroActionsHelper {
                 /mophotbaremote 253
             """,
             Notes = """
-            Use emotes as if they were assigned to a hotbar slot, works with hidden emotes like sleep / wake or sit anywhere (beware using unknown emote ID may crash game)
+            Use emotes as if they were assigned to a hotbar slot. Works with hidden emotes like sleep/wake or sit anywhere.
+            Warning: using an unknown emote ID may crash the game.
             """
         },
         new MopAction {
@@ -590,7 +617,7 @@ public static class MopMacroActionsHelper {
             Umbrella Dance:
                 /mopaction "Umbrella Dance"
             """,
-            Notes = "Similar to native game macro commands /action /ac but allows some actions that cant be used with /ac"
+            Notes = "Similar to native game macro commands /action /ac but allows some actions that can't be used with /ac"
         },
         new MopAction {
             Category = MopActionCategory.MacroAction,
@@ -619,8 +646,9 @@ public static class MopMacroActionsHelper {
                 /moptargetof "Sephiroth"
             """,
             Notes = """
-            Useful for targetable emotes,
-            target someone with main char then for the others use
+            Targets whoever the specified character is currently targeting.
+            Useful to sync a targetable emote: have your main character target someone,
+            then have other clients target that same person using:
                 /moptargetof "Main Char Name"
                 /mopwait 0.5
                 /dote
@@ -719,8 +747,8 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mopmoverelativeto X Y Z \"Character Name\"",
             SuggestionCommand = "/mopmoverelativeto 0 0 0 \"Character Name\"",
             Example = """
-            /mopmove 0 0 4 "Character Name"
-            /mopmove 4 0 0 "Character Name"
+            /mopmoverelativeto 0 0 4 "Character Name"
+            /mopmoverelativeto 4 0 0 "Character Name"
             """,
             Notes = """
             Moves to the desired position using the specified character as the reference point (origin)
@@ -844,7 +872,7 @@ public static class MopMacroActionsHelper {
             /mount "behemoth"
             """,
             Notes = """
-            Use mounts
+            Summon a mount by name
             """
         },
         new MopAction {
@@ -856,7 +884,7 @@ public static class MopMacroActionsHelper {
             /action "Peloton"
             """,
             Notes = """
-            Use native macro actions
+            Native game command to use skills and actions in macros (/ac and /action are aliases)
             """
         },
         new MopAction {

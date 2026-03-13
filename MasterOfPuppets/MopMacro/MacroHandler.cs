@@ -145,7 +145,7 @@ public partial class MacroHandler : IDisposable {
                 } catch (OperationCanceledException) when (lifetimeCt.IsCancellationRequested) {
                     return;
                 } catch (OperationCanceledException) {
-                    // stopped mid-execution — continue waiting for next item
+                    // stopped mid-execution - continue waiting for next item
                 } catch (Exception ex) {
                     DalamudApi.PluginLog.Error(ex, "[MacroHandler] Unexpected error executing actions");
                 } finally {
@@ -199,7 +199,7 @@ public partial class MacroHandler : IDisposable {
                         await Task.Delay(delayMs, token);
                     }
                 } else {
-                    // No regex match OR unrecognised command — forward raw to chat
+                    // No regex match OR unrecognised command - forward raw to chat
                     DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
                     _ = DalamudApi.Framework.RunOnFrameworkThread(delegate { Chat.SendMessage(action); });
                     if (delayBetweenActions > 0.0) {
