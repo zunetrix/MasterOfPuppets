@@ -16,6 +16,8 @@ public class ArgsParserTests
 
     [Theory]
     [InlineData("moprun \"My Macro Name\"", "moprun", "My Macro Name")]
+    [InlineData("moprun \"My Macro Name\" --var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"", "moprun", "My Macro Name", "--var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"")]
+    [InlineData("moprun \"My -- Macro\" --var=$x=1", "moprun", "My -- Macro", "--var=$x=1")]
     [InlineData("mopstop", "mopstop")]
     [InlineData("mopbr Text", "mopbr", "Text")]
     [InlineData("mopbr \"Text with spaces\"", "mopbr", "Text with spaces")]
@@ -42,6 +44,8 @@ public class ArgsParserTests
     [Theory]
     // /mop
     [InlineData("run \"Macro Name\"", "run", "Macro Name")]
+    [InlineData("run \"My Macro Name\" --var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"", "run", "My Macro Name", "--var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"")]
+    [InlineData("run \"My -- Macro\" --var=$x=1", "run", "My -- Macro", "--var=$x=1")]
     [InlineData("run 1", "run", "1")]
     [InlineData("run \"1\"", "run", "1")]
     [InlineData("move \"10.01 11.02 12.03\"", "move", "10.01 11.02 12.03")]
@@ -85,6 +89,81 @@ public class ArgsParserTests
         var result = ArgumentParser.ParseCommandArgs("\"Character Name1\" /moptarget \"Character Name2\"");
         var expectedResult = new List<string> { "Character Name1", "/moptarget \"Character Name2\"" };
         Assert.Equal(expectedResult, result);
+    }
+
+    [Fact]
+    public void ParseInlineVars_SemicolonSeparated_ReturnsAllPairs()
+    {
+        var result = ArgumentParser.ParseInlineVars(
+            "--var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"");
+
+        Assert.Equal(5, result.Count);
+        Assert.Equal("/clap", result["var1"]);
+        Assert.Equal("0.5", result["var2"]);
+        Assert.Equal("Character Name", result["var3"]);
+        Assert.Equal("/clap", result["emote"]);
+        Assert.Equal("/clap", result["emote2"]);
+    }
+
+    [Fact]
+    public void ParseInlineVars_WrongPrefix_ReturnsEmpty()
+    {
+        var result = ArgumentParser.ParseInlineVars("--flags=$x=1;$y=2");
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void ParseInlineVars_EmptyString_ReturnsEmpty()
+    {
+        var result = ArgumentParser.ParseInlineVars(string.Empty);
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void ParseInlineVars_PrefixOnly_ReturnsEmpty()
+    {
+        // --var= with nothing after it
+        Assert.Empty(ArgumentParser.ParseInlineVars("--var="));
+    }
+
+    [Fact]
+    public void ParseInlineVars_SingleVar_ReturnsOnePair()
+    {
+        var result = ArgumentParser.ParseInlineVars("--var=$x=hello");
+        Assert.Single(result);
+        Assert.Equal("hello", result["x"]);
+    }
+
+    [Fact]
+    public void ParseInlineVars_UnderscoreInName_Parsed()
+    {
+        var result = ArgumentParser.ParseInlineVars("--var=$my_var=hello");
+        Assert.Equal("hello", result["my_var"]);
+    }
+
+    [Fact]
+    public void ParseInlineVars_SingleQuotedValue_StripsQuotes()
+    {
+        // single-quoted value preserving spaces
+        var result = ArgumentParser.ParseInlineVars("--var=$x='hello world'");
+        Assert.Equal("hello world", result["x"]);
+    }
+
+    [Fact]
+    public void ParseInlineVars_ValueContainsEquals_CapturedFully()
+    {
+        // unquoted value that itself contains '=' should be captured up to ';' or end
+        var result = ArgumentParser.ParseInlineVars("--var=$x=a=b;$y=c");
+        Assert.Equal("a=b", result["x"]);
+        Assert.Equal("c", result["y"]);
+    }
+
+    [Fact]
+    public void ParseInlineVars_DuplicateKey_LastValueWins()
+    {
+        var result = ArgumentParser.ParseInlineVars("--var=$x=first;$x=second");
+        Assert.Single(result);
+        Assert.Equal("second", result["x"]);
     }
 }
 

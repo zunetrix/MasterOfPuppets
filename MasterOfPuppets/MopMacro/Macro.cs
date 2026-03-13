@@ -152,7 +152,9 @@ public class Command {
         return result;
     }
 
-    public string[] GetActionList(Dictionary<string, string>? macroVariables = null) {
+    public string[] GetActionList(
+        Dictionary<string, string>? macroVariables = null,
+        Dictionary<string, string>? inlineOverrides = null) {
         if (string.IsNullOrWhiteSpace(Actions))
             return Array.Empty<string>();
 
@@ -161,6 +163,9 @@ public class Command {
         var commandVars = ExtractVariables(lines);
 
         var mergedVars = MergeVariables(macroVariables, commandVars);
+
+        if (inlineOverrides != null)
+            foreach (var (k, v) in inlineOverrides) mergedVars[k] = v;
 
         var actionLines = RemoveVariableDefinitions(lines);
 
@@ -208,12 +213,12 @@ public class Macro {
         return Command.ExtractVariables(lines);
     }
 
-    public string[] GetCidActions(ulong cid) {
+    public string[] GetCidActions(ulong cid, Dictionary<string, string>? inlineVars = null) {
         var macroVars = GetMacroVariables();
 
         return Commands
             .FirstOrDefault(c => c.Cids.Contains(cid))
-            ?.GetActionList(macroVars)
+            ?.GetActionList(macroVars, inlineVars)
             ?? Array.Empty<string>();
     }
 

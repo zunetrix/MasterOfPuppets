@@ -10,6 +10,24 @@ public static class ArgumentParser {
     private static readonly Regex TokenRegex =
         new("\"[^\"]*\"|[^ ]+", RegexOptions.Compiled);
 
+    private static readonly Regex InlineVarRegex =
+        new(@"\$(?<name>[A-Za-z_]\w*)\s*=\s*(?<value>""[^""]*""|'[^']*'|[^;$\s]+)",
+            RegexOptions.Compiled);
+
+    /// <summary>
+    /// Scans for the first occurrence of ` --` (space + double-dash) outside
+    /// double-quoted groups. Returns the index of the space, or -1 if not found.
+    /// </summary>
+    private static int IndexOfFlagsStart(string input) {
+        bool inQuotes = false;
+        for (int i = 0; i < input.Length - 2; i++) {
+            if (input[i] == '"') { inQuotes = !inQuotes; continue; }
+            if (!inQuotes && input[i] == ' ' && input[i + 1] == '-' && input[i + 2] == '-')
+                return i;
+        }
+        return -1;
+    }
+
     /// <summary>
     /// Parses a full chat message into tokens, delegating to ParseCommandArgs
     /// and applying FFXIV token transpilation ([t] -> &lt;t&gt;, [me] -> &lt;me&gt;, etc.)
@@ -44,9 +62,10 @@ public static class ArgumentParser {
     /// <summary>
     /// Parses a command argument string into tokens, respecting double-quoted groups
     /// and treating everything from the first slash-prefixed token onwards as a single
-    /// raw token (preserving inner quotes for nested game commands).
+    /// raw token (preserving inner quotes for nested game commands). Any `--flags` token
+    /// (starting with `--` outside quotes) is extracted as one raw trailing token.
     ///
-    /// Fast path (no quotes, no slash):
+    /// Fast path (no quotes, no slash, no double-dash):
     ///   0 spaces  -> single token:  "mopstop"           -> ["mopstop"]
     ///   1 space   -> two tokens:    "run 1"              -> ["run", "1"]
     ///   2+ spaces -> single token:  "text with spaces"   -> ["text with spaces"]
@@ -57,6 +76,7 @@ public static class ArgumentParser {
     ///   "\"Character Name\" /clap"                      -> ["Character Name", "/clap"]
     ///   "\"Character Name\" /moptarget \"Name2\""       -> ["Character Name", "/moptarget \"Name2\""]
     ///   "mopbr /ac heal [t]"                            -> ["mopbr", "/ac heal [t]"]
+    ///   "run \"My Macro\" --var=$x=1;$y=2"              -> ["run", "My Macro", "--var=$x=1;$y=2"]
     /// </summary>
     public static List<string> ParseCommandArgs(string input) {
         var result = new List<string>();
@@ -65,19 +85,30 @@ public static class ArgumentParser {
 
         input = input.Trim();
 
+        // Extract any --flags portion as a single raw trailing token before tokenization.
+        string? flagsToken = null;
+        int flagsIdx = IndexOfFlagsStart(input);
+        if (flagsIdx >= 0) {
+            flagsToken = input[(flagsIdx + 1)..];
+            input = input[..flagsIdx];
+        }
+
         if (!input.Contains('"') && !input.Contains('/')) {
             int spaceCount = input.Count(c => c == ' ');
             if (spaceCount == 0) {
                 result.Add(input);
+                if (flagsToken != null) result.Add(flagsToken);
                 return result;
             }
             if (spaceCount == 1) {
                 result.AddRange(input.Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries));
+                if (flagsToken != null) result.Add(flagsToken);
                 return result;
             }
 
             // 2+ spaces without quotes or slash: treat entire input as single broadcast argument
             result.Add(input);
+            if (flagsToken != null) result.Add(flagsToken);
             return result;
         }
 
@@ -100,7 +131,33 @@ public static class ArgumentParser {
         }
 
         result.AddRange(tokens);
+        if (flagsToken != null) result.Add(flagsToken);
         return result;
+    }
+
+    /// <summary>
+    /// Parses inline variable overrides from a <c>--var=</c> flags token into a dictionary.
+    /// Pairs are semicolon-separated: <c>$name=value</c> where quoted values preserve spaces.
+    /// Keys are returned without the leading <c>$</c> (consistent with variable extraction).
+    ///
+    /// Example: <c>--var=$emote=/clap;$delay=0.5;$target="Character Name"</c>
+    ///   -> <c>{ "emote": "/clap", "delay": "0.5", "target": "Character Name" }</c>
+    /// </summary>
+    public static Dictionary<string, string> ParseInlineVars(string flagsToken) {
+        const string prefix = "--var=";
+        if (!flagsToken.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return new Dictionary<string, string>();
+
+        var vars = new Dictionary<string, string>();
+        foreach (Match m in InlineVarRegex.Matches(flagsToken[prefix.Length..])) {
+            var name = m.Groups["name"].Value;
+            var value = m.Groups["value"].Value;
+            if ((value.StartsWith('"') && value.EndsWith('"')) ||
+                (value.StartsWith('\'') && value.EndsWith('\'')))
+                value = value[1..^1];
+            vars[name] = value;
+        }
+        return vars;
     }
 
     /// <summary>

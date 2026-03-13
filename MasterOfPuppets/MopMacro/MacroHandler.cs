@@ -218,10 +218,10 @@ public partial class MacroHandler : IDisposable {
         return macro.GetCidActions(playerCid);
     }
 
-    public void ExecuteMacro(int macroIndex) {
+    public void ExecuteMacro(int macroIndex, Dictionary<string, string>? inlineVars = null) {
         var macro = Plugin.MacroManager.GetMacroByIndex(macroIndex);
         var playerCid = DalamudApi.PlayerState.ContentId;
-        var actions = macro.GetCidActions(playerCid);
+        var actions = macro.GetCidActions(playerCid, inlineVars);
         EnqueueMacroActions(macro.Name, actions, Plugin.Config.DelayBetweenActions);
     }
 

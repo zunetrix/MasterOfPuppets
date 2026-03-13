@@ -113,7 +113,12 @@ public class PluginCommandManager : IDisposable {
 
                         var macroNameOrNumber = parsedArgs[1];
                         int macroIndex = Plugin.MacroManager.FindMacroIndex(macroNameOrNumber);
-                        Plugin.IpcProvider.RunMacro(macroIndex);
+
+                        var inlineVars = parsedArgs.Count > 2
+                            ? ArgumentParser.ParseInlineVars(parsedArgs[2])
+                            : null;
+
+                        Plugin.IpcProvider.RunMacro(macroIndex, inlineVars);
                     }
                     break;
 

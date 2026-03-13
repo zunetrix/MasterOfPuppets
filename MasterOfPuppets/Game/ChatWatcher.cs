@@ -106,10 +106,14 @@ internal class ChatWatcher : IDisposable {
             return;
         }
 
+        var inlineVars = args.Length > 1
+            ? ArgumentParser.ParseInlineVars(args[1])
+            : null;
+
         string macroNameOrIndex = args[0];
         int macroIndex = Plugin.MacroManager.FindMacroIndex(macroNameOrIndex);
         var macro = Plugin.MacroManager.GetMacroByIndex(macroIndex);
-        var playerActions = macro.GetCidActions(DalamudApi.PlayerState.ContentId);
+        var playerActions = macro.GetCidActions(DalamudApi.PlayerState.ContentId, inlineVars);
 
         Plugin.MacroHandler.EnqueueMacroActions(macro.Name, playerActions, Plugin.Config.DelayBetweenActions);
     }
