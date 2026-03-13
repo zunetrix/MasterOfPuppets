@@ -468,7 +468,6 @@ public class MacroEditorWindow : Window {
             }
         }
         ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
-        ImGui.PopStyleColor(3);
 
         ImGui.EndGroup();
         ImGui.EndGroup();
