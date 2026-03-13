@@ -16,6 +16,14 @@ public static class ImGuiUtil {
     // ------------------------
     // COMPONENTS
     // ------------------------
+    public static bool DangerIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+            return IconButton(icon, id, tooltip);
+        }
+    }
+
     public static bool IconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null, Vector4? color = null, Vector2? size = null) {
         using (ImRaii.PushFont(UiBuilder.IconFont))
         using (ImRaii.PushColor(ImGuiCol.Text, color ?? Vector4.One, color != null)) {

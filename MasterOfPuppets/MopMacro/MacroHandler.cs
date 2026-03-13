@@ -11,17 +11,37 @@ namespace MasterOfPuppets;
 public partial class MacroHandler : IDisposable {
     private Plugin Plugin { get; }
 
-    private sealed class MacroQueueState {
-        public List<string> ActionList { get; } = new();
+    private sealed class MacroQueueState : IDisposable {
+        public List<string> PendingMacros { get; } = new();  // macro names waiting in queue
+        public string? CurrentMacroId { get; set; }           // name of macro being executed
+        public List<string> CurrentActions { get; } = new(); // actions of current macro
         public int ActionIndex { get; set; } = -1;
-        public Queue<int> BaseIndexQueue { get; } = new();
-        public int CurrentBaseIndex { get; set; }
+
+        public ManualResetEventSlim PauseGate { get; } = new(initialState: true);
+        public CancellationTokenSource StopCts { get; private set; } = new();
+
+        public bool IsPaused => !PauseGate.IsSet;
+
+        public void Pause() => PauseGate.Reset();
+        public void Resume() => PauseGate.Set();
+
+        public void RequestStop() {
+            PauseGate.Set();
+            var old = StopCts;
+            StopCts = new CancellationTokenSource();
+            old.Cancel();
+            old.Dispose();
+        }
 
         public void Clear() {
-            ActionList.Clear();
+            CurrentMacroId = null;
+            CurrentActions.Clear();
             ActionIndex = -1;
-            CurrentBaseIndex = 0;
-            BaseIndexQueue.Clear();
+        }
+
+        public void Dispose() {
+            PauseGate.Dispose();
+            StopCts.Dispose();
         }
     }
 
@@ -29,10 +49,15 @@ public partial class MacroHandler : IDisposable {
     private readonly MacroQueueState _loopState = new();
 
     // Public surface used by MacroQueueWindow
-    public List<string> CurrentActionsExecutionList => _macroState.ActionList;
-    public int CurrentActionExecutionIndex => _macroState.ActionIndex;
-    public List<string> CurrentActionsLoopExecutionList => _loopState.ActionList;
-    public int CurrentActionLoopExecutionIndex => _loopState.ActionIndex;
+    public List<string> MacroPendingQueue => _macroState.PendingMacros;
+    public string? MacroCurrentId => _macroState.CurrentMacroId;
+    public List<string> MacroCurrentActions => _macroState.CurrentActions;
+    public int MacroCurrentIndex => _macroState.ActionIndex;
+
+    public List<string> LoopPendingQueue => _loopState.PendingMacros;
+    public string? LoopCurrentId => _loopState.CurrentMacroId;
+    public List<string> LoopCurrentActions => _loopState.CurrentActions;
+    public int LoopCurrentIndex => _loopState.ActionIndex;
 
     private readonly Channel<(string macroId, string[] actions, double delay)> _macroChannel =
         Channel.CreateUnbounded<(string, string[], double)>(new UnboundedChannelOptions { SingleReader = true });
@@ -40,13 +65,19 @@ public partial class MacroHandler : IDisposable {
         Channel.CreateUnbounded<(string, string[], double)>(new UnboundedChannelOptions { SingleReader = true });
 
     private readonly CancellationTokenSource _cts = new();
-    private CancellationTokenSource _executionCts = new();
-    private readonly ManualResetEventSlim _pauseGate = new(initialState: true);
 
-    public bool IsPaused => !_pauseGate.IsSet;
+    // Global pause/resume (IPC broadcast path)
+    public bool IsPaused => _macroState.IsPaused || _loopState.IsPaused;
+    public void Pause() { _macroState.Pause(); _loopState.Pause(); }
+    public void Resume() { _macroState.Resume(); _loopState.Resume(); }
 
-    public void Pause() => _pauseGate.Reset();
-    public void Resume() => _pauseGate.Set();
+    // Per-queue pause/resume
+    public bool IsMacroQueuePaused => _macroState.IsPaused;
+    public bool IsLoopQueuePaused => _loopState.IsPaused;
+    public void PauseMacroQueue() => _macroState.Pause();
+    public void ResumeMacroQueue() => _macroState.Resume();
+    public void PauseLoopQueue() => _loopState.Pause();
+    public void ResumeLoopQueue() => _loopState.Resume();
 
     private static readonly Regex ActionRegex = new(@"^\/(\w+)\s*(.*)$", RegexOptions.Compiled);
 
@@ -92,8 +123,7 @@ public partial class MacroHandler : IDisposable {
         var state = hasLoop ? _loopState : _macroState;
         var channel = hasLoop ? _loopChannel : _macroChannel;
 
-        state.BaseIndexQueue.Enqueue(state.ActionList.Count);
-        state.ActionList.AddRange(actions);
+        state.PendingMacros.Add(macroId);
         channel.Writer.TryWrite((macroId, actions, delayBetweenActions));
     }
 
@@ -103,23 +133,23 @@ public partial class MacroHandler : IDisposable {
         CancellationToken lifetimeCt) {
         try {
             await foreach (var (macroId, actions, delay) in channel.Reader.ReadAllAsync(lifetimeCt)) {
-                state.CurrentBaseIndex = state.BaseIndexQueue.Count > 0 ? state.BaseIndexQueue.Dequeue() : 0;
-                state.ActionIndex = state.CurrentBaseIndex - 1;
+                if (state.PendingMacros.Count > 0) state.PendingMacros.RemoveAt(0);
+                state.CurrentMacroId = macroId;
+                state.CurrentActions.Clear();
+                state.CurrentActions.AddRange(actions);
+                state.ActionIndex = -1;
 
-                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(lifetimeCt, _executionCts.Token);
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(lifetimeCt, state.StopCts.Token);
                 try {
                     await ExecuteActions(macroId, actions, delay, linkedCts.Token, state);
                 } catch (OperationCanceledException) when (lifetimeCt.IsCancellationRequested) {
                     return;
                 } catch (OperationCanceledException) {
-                    // stopped mid-execution - continue waiting for next item
+                    // stopped mid-execution — continue waiting for next item
                 } catch (Exception ex) {
                     DalamudApi.PluginLog.Error(ex, "[MacroHandler] Unexpected error executing actions");
                 } finally {
-                    if (state.ActionIndex >= state.ActionList.Count - 1 &&
-                    state.BaseIndexQueue.Count == 0) {
-                        state.Clear();
-                    }
+                    state.Clear();
                 }
             }
         } catch (OperationCanceledException) { }
@@ -136,11 +166,11 @@ public partial class MacroHandler : IDisposable {
 
         do {
             shouldLoop = false;
-            state.ActionIndex = state.CurrentBaseIndex - 1;
+            state.ActionIndex = -1;
 
             foreach (var action in actions) {
                 if (token.IsCancellationRequested) return;
-                _pauseGate.Wait(token);
+                state.PauseGate.Wait(token);
 
                 state.ActionIndex++;
 
@@ -169,7 +199,7 @@ public partial class MacroHandler : IDisposable {
                         await Task.Delay(delayMs, token);
                     }
                 } else {
-                    // No regex match OR unrecognised command - forward raw to chat
+                    // No regex match OR unrecognised command — forward raw to chat
                     DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
                     _ = DalamudApi.Framework.RunOnFrameworkThread(delegate { Chat.SendMessage(action); });
                     if (delayBetweenActions > 0.0) {
@@ -195,28 +225,35 @@ public partial class MacroHandler : IDisposable {
         EnqueueMacroActions(macro.Name, actions, Plugin.Config.DelayBetweenActions);
     }
 
-    public void StopMacroQueueExecution() {
-        _pauseGate.Set();
-
-        _executionCts.Cancel();
-        _executionCts.Dispose();
-        _executionCts = new CancellationTokenSource();
-
+    // Per-queue stop
+    public void StopMacroQueue() {
+        _macroState.RequestStop();
         while (_macroChannel.Reader.TryRead(out _)) { }
-        while (_loopChannel.Reader.TryRead(out _)) { }
-
+        _macroState.PendingMacros.Clear();
         _macroState.Clear();
+    }
+
+    public void StopLoopQueue() {
+        _loopState.RequestStop();
+        while (_loopChannel.Reader.TryRead(out _)) { }
+        _loopState.PendingMacros.Clear();
         _loopState.Clear();
     }
 
+    // Global stop (IPC broadcast path)
+    public void StopMacroQueueExecution() {
+        StopMacroQueue();
+        StopLoopQueue();
+    }
+
     public void Dispose() {
-        _pauseGate.Set();
-        _executionCts.Cancel();
+        _macroState.RequestStop();
+        _loopState.RequestStop();
         _cts.Cancel();
         _macroChannel.Writer.Complete();
         _loopChannel.Writer.Complete();
-        _executionCts.Dispose();
         _cts.Dispose();
-        _pauseGate.Dispose();
+        _macroState.Dispose();
+        _loopState.Dispose();
     }
 }
