@@ -8,22 +8,22 @@ public static class MopMacroActionsHelper {
     {
         new MopAction {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop run <\"Macro Name\" | macro number> [--var=$name=value;...]",
+            TextCommand = "/mop run <\"Macro Name\" | macro number> [-var=$name=value;...]",
             SuggestionCommand = "/mop run ",
             Example = """
             /mop run "My macro"
             /mop run 10
 
             With inline variable overrides:
-            /mop run "My macro" --var=$emote=/clap
-            /mop run "My macro" --var=$emote=/clap;$delay=0.5;$target="Warrior of Light"
+            /mop run "My macro" -var=$emote=/clap
+            /mop run "My macro" -var=$emote=/clap;$delay=0.5;$target="Warrior of Light"
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
             Broadcasts macro execution to all local clients via IPC.
 
-            Inline variables (--var=) override macro-level and command-local variables at runtime.
-            Format: --var=$name=value;$name2="value with spaces";$name3=/command
+            Inline variables (-var=) override macro-level and command-local variables at runtime.
+            Format: -var=$name=value;$name2="value with spaces";$name3=/command
             Variable names must start with a letter or underscore.
             Priority: inline vars > command-local vars > macro-level vars
             """
@@ -339,21 +339,21 @@ public static class MopMacroActionsHelper {
         new MopAction
         {
             Category = MopActionCategory.ChatSyncCommand,
-            TextCommand = "moprun <\"Macro Name\" | macro number> [--var=$name=value;...]",
+            TextCommand = "moprun <\"Macro Name\" | macro number> [-var=$name=value;...]",
             SuggestionCommand = "moprun ",
             Example = """
             moprun "my macro"
             moprun 10
 
             With inline variable overrides:
-            moprun "my macro" --var=$emote=/clap
-            moprun "my macro" --var=$emote=/clap;$delay=0.5;$target="Warrior of Light"
+            moprun "my macro" -var=$emote=/clap
+            moprun "my macro" -var=$emote=/clap;$delay=0.5;$target="Warrior of Light"
             """,
             Notes = """
             * This is a chat sync command - all local clients reading the chat will execute the macro.
 
-            Inline variables (--var=) override macro-level and command-local variables at runtime.
-            Format: --var=$name=value;$name2="value with spaces";$name3=/command
+            Inline variables (-var=) override macro-level and command-local variables at runtime.
+            Format: -var=$name=value;$name2="value with spaces";$name3=/command
             Variable names must start with a letter or underscore.
             Priority: inline vars > command-local vars > macro-level vars
             """

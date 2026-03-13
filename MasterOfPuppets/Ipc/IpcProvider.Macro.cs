@@ -11,7 +11,7 @@ internal partial class IpcProvider {
     public void RunMacro(int macroIndex, Dictionary<string, string>? inlineVars = null, bool includeSelf = true) {
         DalamudApi.PluginLog.Debug($"[Run Macro] {macroIndex + 1}");
         if (inlineVars is { Count: > 0 }) {
-            var varsToken = "--var=" + string.Join(";", inlineVars.Select(kv => $"${kv.Key}={kv.Value}"));
+            var varsToken = "-var=" + string.Join(";", inlineVars.Select(kv => $"${kv.Key}={kv.Value}"));
             BroadCast(IpcMessage.Create(IpcMessageType.RunMacro, macroIndex.ToString(), varsToken).Serialize(), includeSelf);
         } else {
             BroadCast(IpcMessage.Create(IpcMessageType.RunMacro, macroIndex.ToString()).Serialize(), includeSelf);
