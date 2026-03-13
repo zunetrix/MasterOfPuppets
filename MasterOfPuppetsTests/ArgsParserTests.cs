@@ -20,6 +20,7 @@ public class ArgsParserTests
     [InlineData("mopbr Text", "mopbr", "Text")]
     [InlineData("mopbr \"Text with spaces\"", "mopbr", "Text with spaces")]
     [InlineData("mopbr /command", "mopbr", "/command")]
+    [InlineData("mopbr /gs change 6", "mopbr", "/gs change 6")]
     [InlineData("mopbr /command param", "mopbr", "/command param")]
     [InlineData("mopbr /command \"param with space\"", "mopbr", "/command \"param with space\"")]
     [InlineData("mopbr /ac heal [t]", "mopbr", "/ac heal <t>")]

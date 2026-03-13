@@ -130,7 +130,7 @@ internal class ChatWatcher : IDisposable {
         }
 
         var textCommand = args[0];
-        Plugin.MacroHandler.EnqueueMacroActions("#mopbr-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
+        Plugin.MacroHandler.EnqueueMacroActions("#mopbr-inline-macro", actions: [textCommand], delayBetweenActions: 0);
     }
 
     private void HandleBroadcastNotMeCommandExecution(string[] args, string senderName) {
@@ -143,7 +143,7 @@ internal class ChatWatcher : IDisposable {
         if (string.Equals(localPlayerName, senderName, StringComparison.OrdinalIgnoreCase)) return;
 
         var textCommand = args[0];
-        Plugin.MacroHandler.EnqueueMacroActions("#mopbrn-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
+        Plugin.MacroHandler.EnqueueMacroActions("#mopbrn-inline-macro", actions: [textCommand], delayBetweenActions: 0);
     }
 
     private void HandleBroadcastCharacterCommandExecution(string[] args, string senderName) {
@@ -157,7 +157,7 @@ internal class ChatWatcher : IDisposable {
         var localPlayerName = $"{DalamudApi.PlayerState.CharacterName}@{DalamudApi.PlayerState.HomeWorld.Value.Name}";
         if (!localPlayerName.Contains(characterName, StringComparison.InvariantCultureIgnoreCase)) return;
 
-        Plugin.MacroHandler.EnqueueMacroActions("#mopbrc-inline-macro", actions: [textCommand], Plugin.Config.DelayBetweenActions);
+        Plugin.MacroHandler.EnqueueMacroActions("#mopbrc-inline-macro", actions: [textCommand], delayBetweenActions: 0);
     }
 
     private static string SanitizeSenderName(string raw) {
