@@ -278,7 +278,7 @@ public static class ImGuiUtil {
         bool changed = false;
         string filter = "";
         ImGui.PushID(label);
-        if (ImGui.BeginCombo(label, selected)) {
+        if (ImGui.BeginCombo(label, selected, ImGuiComboFlags.HeightLargest)) {
             ImGui.SetNextItemWidth(-1);
             ImGui.InputTextWithHint("##search", "Search...", ref filter, 64);
             var filtered = string.IsNullOrEmpty(filter)
