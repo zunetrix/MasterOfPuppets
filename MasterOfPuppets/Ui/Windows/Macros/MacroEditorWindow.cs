@@ -27,6 +27,7 @@ public class MacroEditorWindow : Window {
     private int SelectedCommandIndex = 0;
     private bool EditingExistingMacro = false;
     private string TagName = string.Empty;
+    private string TagSelected = string.Empty;
     private uint _inputLines = 15;
 
     private List<string> MacrosTags = new();
@@ -214,13 +215,9 @@ public class MacroEditorWindow : Window {
 
             ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
             ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-            if (ImGui.BeginCombo($"##MacroTagsSelectList", "Select tag to add")) {
-                foreach (var macroTag in MacrosTags) {
-                    if (ImGui.Selectable($"{macroTag}", false)) {
-                        MacroItem.Tags.AddUnique(macroTag);
-                    }
-                }
-                ImGui.EndCombo();
+            if (ImGuiUtil.DrawComboSearch("##MacroTagsSelectList", MacrosTags, ref TagSelected)) {
+                MacroItem.Tags.AddUnique(TagSelected);
+                TagSelected = string.Empty;
             }
             ImGui.PopStyleVar();
             ImGui.PopStyleColor();
