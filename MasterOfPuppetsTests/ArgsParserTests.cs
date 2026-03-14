@@ -16,6 +16,7 @@ public class ArgsParserTests
 
     [Theory]
     [InlineData("moprun \"My Macro Name\"", "moprun", "My Macro Name")]
+    [InlineData("moprun \"My Macro Name\" -var=$emote=/ac \"standard step\";$emote2=/clap", "moprun", "My Macro Name", "-var=$emote=/ac \"standard step\";$emote2=/clap")]
     [InlineData("moprun \"My Macro Name\" -var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"", "moprun", "My Macro Name", "-var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"")]
     [InlineData("moprun \"My -- Macro\" -var=$x=1", "moprun", "My -- Macro", "-var=$x=1")]
     [InlineData("mopstop", "mopstop")]
@@ -164,6 +165,24 @@ public class ArgsParserTests
         var result = ArgumentParser.ParseInlineVars("-var=$x=first;$x=second");
         Assert.Single(result);
         Assert.Equal("second", result["x"]);
+    }
+
+    [Fact]
+    public void ParseInlineVars_UnquotedValueWithSpaces_CapturedFully()
+    {
+        // value like /ac "standard step" has spaces — should capture the full thing
+        var result = ArgumentParser.ParseInlineVars("-var=$cmd=/ac \"standard step\"");
+        Assert.Single(result);
+        Assert.Equal("/ac \"standard step\"", result["cmd"]);
+    }
+
+    [Fact]
+    public void ParseInlineVars_UnquotedValueWithSpacesThenNextVar_BothCaptured()
+    {
+        var result = ArgumentParser.ParseInlineVars("-var=$cmd=/ac \"standard step\";$emote=/clap");
+        Assert.Equal(2, result.Count);
+        Assert.Equal("/ac \"standard step\"", result["cmd"]);
+        Assert.Equal("/clap", result["emote"]);
     }
 }
 

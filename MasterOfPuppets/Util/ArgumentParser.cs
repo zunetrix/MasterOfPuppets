@@ -11,7 +11,7 @@ public static class ArgumentParser {
         new("\"[^\"]*\"|[^ ]+", RegexOptions.Compiled);
 
     private static readonly Regex InlineVarRegex =
-        new(@"\$(?<name>[A-Za-z_]\w*)\s*=\s*(?<value>""[^""]*""|'[^']*'|[^;$\s]+)",
+        new(@"\$(?<name>[A-Za-z_]\w*)\s*=\s*(?<value>""[^""]*""|'[^']*'|[^;$]+)",
             RegexOptions.Compiled);
 
     /// <summary>
@@ -30,7 +30,7 @@ public static class ArgumentParser {
 
     /// <summary>
     /// Parses a full chat message into tokens, delegating to ParseCommandArgs
-    /// and applying FFXIV token transpilation ([t] -> &lt;t&gt;, [me] -> &lt;me&gt;, etc.)
+    /// and applying FFXIV token transpilation ([t] -> <t>, [me] -> <me>, etc.)
     /// to all argument tokens (everything after the command).
     ///
     /// Examples:
@@ -47,7 +47,7 @@ public static class ArgumentParser {
 
     /// <summary>
     /// Replaces FFXIV chat macro tokens from bracket notation to angle bracket notation,
-    /// e.g. [t] -> &lt;t&gt;, [me] -> &lt;me&gt;, [tt] -> &lt;tt&gt;, [1]..[8] -> &lt;1&gt;..&lt;8&gt;.
+    /// e.g. [t] -> <t>, [me] -> <me>, [tt] -> <tt>, [1]..[8] -> <1>..<8>.
     /// Used so commands typed in chat can include target placeholders.
     /// </summary>
     public static string TranspileChatTextCommand(string textCommand) {
@@ -155,6 +155,8 @@ public static class ArgumentParser {
             if ((value.StartsWith('"') && value.EndsWith('"')) ||
                 (value.StartsWith('\'') && value.EndsWith('\'')))
                 value = value[1..^1];
+            else
+                value = value.TrimEnd();
             vars[name] = value;
         }
         return vars;
