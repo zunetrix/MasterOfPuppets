@@ -28,7 +28,10 @@ public class MacroEditorWindow : Window {
     private bool EditingExistingMacro = false;
     private string TagName = string.Empty;
     private string TagSelected = string.Empty;
+    private string CharSelected = string.Empty;
+    private string GroupSelected = string.Empty;
     private uint _inputLines = 15;
+    private float _rightPanelWidth = 320f;
 
     private List<string> MacrosTags = new();
 
@@ -75,6 +78,8 @@ public class MacroEditorWindow : Window {
         MacroIndex = Plugin.MacroManager.GetMacrosCount();
         SelectedCommandIndex = 0;
         TagName = string.Empty;
+        CharSelected = string.Empty;
+        GroupSelected = string.Empty;
     }
 
     public void EditMacro(int macroIndex) {
@@ -119,10 +124,17 @@ public class MacroEditorWindow : Window {
         DrawHeader();
         ImGui.EndGroup();
 
-        // Main area: left = commands + editor, right = details (tags, variables, icon/color)
+        DrawMainArea();
+    }
+
+    private void DrawMainArea() {
         var contentAvail = ImGui.GetContentRegionAvail();
-        var rightPanelWidth = Math.Max(320f * ImGuiHelpers.GlobalScale, contentAvail.X * 0.30f);
-        var leftPanelWidth = Math.Max(220f, contentAvail.X - rightPanelWidth - ImGui.GetStyle().ItemSpacing.X);
+        var splitterWidth = 6f * ImGuiHelpers.GlobalScale;
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var minRightPx = 250f * ImGuiHelpers.GlobalScale;
+        var maxRightPx = MathF.Max(minRightPx, contentAvail.X - 200f * ImGuiHelpers.GlobalScale);
+        _rightPanelWidth = MathF.Max(minRightPx, MathF.Min(_rightPanelWidth, maxRightPx));
+        var leftPanelWidth = contentAvail.X - _rightPanelWidth - splitterWidth - spacing * 2f;
 
         ImGui.BeginChild("##MacroEditorMain", new Vector2(0, 0), false);
 
@@ -131,7 +143,25 @@ public class MacroEditorWindow : Window {
         ImGui.EndChild();
 
         ImGui.SameLine();
-        ImGui.BeginChild("##MacroEditorRight", new Vector2(rightPanelWidth, 0), true);
+        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
+        ImGui.InvisibleButton("##MacroEditorSplitter", new Vector2(splitterWidth, -1));
+        if (ImGui.IsItemHovered())
+            ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
+        if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+            _rightPanelWidth -= ImGui.GetIO().MouseDelta.X;
+            _rightPanelWidth = MathF.Max(minRightPx, MathF.Min(_rightPanelWidth, maxRightPx));
+        }
+        ImGui.PopStyleVar();
+
+        ImGui.SameLine();
+        ImGui.BeginChild("##MacroEditorRight", new Vector2(_rightPanelWidth, 0), true);
+        DrawDetailsPanel();
+        ImGui.EndChild();
+
+        ImGui.EndChild(); // ##MacroEditorMain
+    }
+
+    private void DrawDetailsPanel() {
         ImGui.Text("Details");
         ImGui.Separator();
 
@@ -160,9 +190,14 @@ public class MacroEditorWindow : Window {
         }
 
         if (ImGui.CollapsingHeader("Macro Variables")) {
-            ImGui.Text(Language.MacroVariablesLabel);
-            ImGui.SameLine();
-            ImGuiUtil.HelpMarker("""
+            DrawMacroVariables();
+        }
+    }
+
+    private void DrawMacroVariables() {
+        ImGui.Text(Language.MacroVariablesLabel);
+        ImGui.SameLine();
+        ImGuiUtil.HelpMarker("""
             * Macro variables can be overridden by action variables
             Variables usage:
             $name = "Character Name"
@@ -170,14 +205,9 @@ public class MacroEditorWindow : Window {
             /moptarget "$name"
             /mopwait $time
             """);
-            ImGui.InputTextMultiline("##MacroVariablesInput", ref MacroItem.Variables, size: new Vector2(-1, 250));
-            ImGui.Spacing();
-            ImGui.Spacing();
-        }
-
-        ImGui.EndChild(); // ##MacroEditorRight
-
-        ImGui.EndChild(); // ##MacroEditorMain
+        ImGui.InputTextMultiline("##MacroVariablesInput", ref MacroItem.Variables, size: new Vector2(-1, 250));
+        ImGui.Spacing();
+        ImGui.Spacing();
     }
 
     private void DrawIconColorPicker() {
@@ -232,6 +262,7 @@ public class MacroEditorWindow : Window {
 
             ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
             ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
+            ImGui.SetNextItemWidth(-1);
             if (ImGuiUtil.DrawComboSearch("##MacroTagsSelectList", MacrosTags, ref TagSelected)) {
                 MacroItem.Tags.AddUnique(TagSelected);
                 TagSelected = string.Empty;
@@ -412,6 +443,35 @@ public class MacroEditorWindow : Window {
         var availableCharacters = Plugin.Config.Characters
             .Where(c => !usedCids.Contains(c.Cid))
             .ToList();
+        var charNames = availableCharacters.Select(c => c.Name).ToList();
+
+        float removeAllBtnWidth = ImGui.CalcTextSize(Language.RemoveAllBtn).X + ImGui.GetStyle().FramePadding.X * 2;
+
+        ImGui.BeginDisabled(charNames.Count == 0);
+        ImGui.SetNextItemWidth(-removeAllBtnWidth - ImGui.GetStyle().ItemSpacing.X);
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
+        if (ImGuiUtil.DrawComboSearch($"##CharSearch_{commandIndex}", charNames, ref CharSelected)) {
+            var found = availableCharacters.FirstOrDefault(c => c.Name == CharSelected);
+            if (found != null) {
+                MacroItem.Commands[commandIndex].Cids.AddUnique(found.Cid);
+                CharSelected = string.Empty;
+            }
+        }
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
+        ImGui.EndDisabled();
+
+        ImGui.SameLine();
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+            if (ImGui.Button($"{Language.RemoveAllBtn}##RemoveAllChars_{commandIndex}") && ImGui.GetIO().KeyCtrl)
+                MacroItem.Commands[commandIndex].Cids = new();
+        }
+        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+
+        ImGui.Separator();
 
         float deleteColWidth = ImGui.GetFrameHeight();
         int deleteIndex = -1;
@@ -443,36 +503,6 @@ public class MacroEditorWindow : Window {
         if (deleteIndex >= 0)
             MacroItem.Commands[commandIndex].Cids.RemoveAt(deleteIndex);
 
-        ImGui.BeginDisabled(availableCharacters.Count == 0);
-        ImGui.SetNextItemWidth(-1);
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        var previewLabel = Plugin.Config.Characters.Count == 0 ? "Set up characters first" : "Add character";
-        if (ImGui.BeginCombo($"##CharacterSelectList_command_{commandIndex}", previewLabel)) {
-            foreach (var character in availableCharacters) {
-                if (ImGui.Selectable($"{character.Name}##Cid_{character.Cid}", false)) {
-                    MacroItem.Commands[commandIndex].Cids.AddUnique(character.Cid);
-                }
-            }
-            ImGui.EndCombo();
-        }
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
-        ImGui.EndDisabled();
-
-        ImGui.Spacing();
-
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
-            if (ImGui.Button($"Remove All##RemoveAllChars_{commandIndex}")) {
-                if (ImGui.GetIO().KeyCtrl)
-                    MacroItem.Commands[commandIndex].Cids = new();
-            }
-        }
-        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
-
-        ImGui.Spacing();
         ImGui.Spacing();
     }
 
@@ -483,6 +513,34 @@ public class MacroEditorWindow : Window {
         var availableGroups = allGroups
             .Where(g => !assignedGroupIds.Contains(g.Name))
             .ToList();
+        var groupNames = availableGroups.Select(g => g.Name).ToList();
+
+        float removeAllBtnWidth = ImGui.CalcTextSize(Language.RemoveAllBtn).X + ImGui.GetStyle().FramePadding.X * 2;
+
+        ImGui.BeginDisabled(groupNames.Count == 0);
+        ImGui.SetNextItemWidth(-removeAllBtnWidth - ImGui.GetStyle().ItemSpacing.X);
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
+        if (ImGuiUtil.DrawComboSearch($"##GroupSearch_{commandIndex}", groupNames, ref GroupSelected)) {
+            if (!string.IsNullOrEmpty(GroupSelected)) {
+                assignedGroupIds.AddUnique(GroupSelected);
+                GroupSelected = string.Empty;
+            }
+        }
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
+        ImGui.EndDisabled();
+
+        ImGui.SameLine();
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+            if (ImGui.Button($"{Language.RemoveAllBtn}##RemoveAllGroups_{commandIndex}") && ImGui.GetIO().KeyCtrl)
+                MacroItem.Commands[commandIndex].GroupIds = new();
+        }
+        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+
+        ImGui.Separator();
 
         float deleteColWidth = ImGui.GetFrameHeight();
         int deleteIndex = -1;
@@ -513,36 +571,6 @@ public class MacroEditorWindow : Window {
         if (deleteIndex >= 0)
             assignedGroupIds.RemoveAt(deleteIndex);
 
-        ImGui.BeginDisabled(availableGroups.Count == 0);
-        ImGui.SetNextItemWidth(-1);
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        var previewLabel = allGroups.Count == 0 ? "No groups available" : "Add group";
-        if (ImGui.BeginCombo($"##GroupSelectList_command_{commandIndex}", previewLabel)) {
-            foreach (var group in availableGroups) {
-                if (ImGui.Selectable($"{group.Name}##GroupId_{group.Name}", false)) {
-                    assignedGroupIds.Add(group.Name);
-                }
-            }
-            ImGui.EndCombo();
-        }
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
-        ImGui.EndDisabled();
-
-        ImGui.Spacing();
-
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
-            if (ImGui.Button($"Remove All##RemoveAllGroups_{commandIndex}")) {
-                if (ImGui.GetIO().KeyCtrl)
-                    MacroItem.Commands[commandIndex].GroupIds = new();
-            }
-        }
-        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
-
-        ImGui.Spacing();
         ImGui.Spacing();
     }
 

@@ -50,10 +50,6 @@ public class CharactersWindow : Window {
         DrawCidsGroupsTab();
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Tab 1: Characters List
-    // ─────────────────────────────────────────────────────────────
-
     private void DrawCharactersTab() {
         using var tabItem = ImRaii.TabItem($"Characters List###CharactersTab");
         if (!tabItem) return;
@@ -193,10 +189,6 @@ public class CharactersWindow : Window {
         ImGui.Spacing();
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Tab 2: Characters Groups
-    // ─────────────────────────────────────────────────────────────
-
     private void DrawCidsGroupsTab() {
         using var tabItem = ImRaii.TabItem($"Characters Groups###CidsGroupsTab");
         if (!tabItem) return;
@@ -235,7 +227,7 @@ public class CharactersWindow : Window {
         var groups = Plugin.Config.CidsGroups;
         float leftWidth = 130 * ImGuiHelpers.GlobalScale;
 
-        // ─── left panel: scrollable group list ───
+        //  left panel: scrollable group list
         using (var left = ImRaii.Child("##GroupsList", new Vector2(leftWidth, -1), true)) {
             if (left) {
                 for (int gi = 0; gi < groups.Count; gi++) {
@@ -247,7 +239,7 @@ public class CharactersWindow : Window {
 
         ImGui.SameLine();
 
-        // ─── right panel: selected group content ───
+        //  right panel: selected group content
         using (var right = ImRaii.Child("##GroupContent", new Vector2(-1, -1), false)) {
             if (!right) return;
             if (!IsValidGroup()) {
@@ -265,12 +257,17 @@ public class CharactersWindow : Window {
             _editGroupNameLastIndex = _selectedCidGroupIndex;
         }
 
+        float renameBtnWidth = ImGui.GetFrameHeight();
         float deleteBtnWidth = ImGui.CalcTextSize("Delete Group").X + ImGui.GetStyle().FramePadding.X * 2;
-        ImGui.SetNextItemWidth(-deleteBtnWidth - ImGui.GetStyle().ItemSpacing.X);
-        if (ImGui.InputText("##GroupRenameInput", ref _editGroupName, 255, ImGuiInputTextFlags.EnterReturnsTrue)) {
+        float spacing = ImGui.GetStyle().ItemSpacing.X;
+
+        ImGui.SetNextItemWidth(-renameBtnWidth - deleteBtnWidth - spacing * 2);
+        ImGui.InputText("##GroupRenameInput", ref _editGroupName, 255);
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Check, "##RenameGroupBtn", "Rename group")) {
             ApplyGroupRename(cidGroup, _editGroupName);
         }
-        ImGuiUtil.ToolTip("Press Enter to rename");
 
         ImGui.SameLine();
 
