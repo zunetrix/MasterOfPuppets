@@ -5,6 +5,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Utility;
 
+using MasterOfPuppets.Movement;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -190,7 +191,7 @@ public sealed class MovementDebugWidget : Widget {
 
         ImGui.SameLine();
         if (ImGui.Button("Rotate")) {
-            Context.Plugin.MovementManager.Rotate(_angleInput);
+            Context.Plugin.MovementManager.FaceDirection(_angleInput.Degrees());
         }
 
         ImGui.Spacing();
@@ -243,7 +244,7 @@ public sealed class MovementDebugWidget : Widget {
         }
 
         if (ImGui.Button("Move to Path")) {
-            Context.Plugin.MovementManager.MoveByOffsetPathCommand(_pathOffset);
+            Context.Plugin.MovementManager.MoveByOffsetPath(_pathOffset);
         }
     }
 

@@ -744,34 +744,42 @@ public static class MopMacroActionsHelper {
         new MopAction
         {
             Category = MopActionCategory.MacroAction,
-            TextCommand = "/mopmove X Y Z",
+            TextCommand = "/mopmove X Y Z [angle]",
             SuggestionCommand = "/mopmove 0 0 0",
             Example = """
             /mopmove 0 0 4
             /mopmove 4 0 0
+
+            Move and face east (90°) after arriving:
+                /mopmove 0 0 4 90
             """,
             Notes = """
-            Moves to the desired position using your current position as reference (origin)
+            Moves to the desired position using your current position as reference (origin).
             X (+Left | -Right)
             Y (+Fly Up | -Fly Down) *Inactive
             Z (+Forward | -Back)
+            Optional 4th argument: face this direction in degrees after arriving (0=north, 90=east, 180=south, 270=west).
             """
         },
 
         new MopAction
         {
             Category = MopActionCategory.MacroAction,
-            TextCommand = "/mopmoverelativeto X Y Z \"Character Name\"",
+            TextCommand = "/mopmoverelativeto X Y Z \"Character Name\" [angle]",
             SuggestionCommand = "/mopmoverelativeto 0 0 0 \"Character Name\"",
             Example = """
             /mopmoverelativeto 0 0 4 "Character Name"
             /mopmoverelativeto 4 0 0 "Character Name"
+
+            Move relative and face south (180°) after arriving:
+                /mopmoverelativeto 0 0 2 "Character Name" 180
             """,
             Notes = """
-            Moves to the desired position using the specified character as the reference point (origin)
+            Moves to the desired position using the specified character as the reference point (origin).
             X (+Left | -Right)
             Y (+Fly Up | -Fly Down) *Inactive
             Z (+Forward | -Back)
+            Optional 5th argument: face this direction in degrees after arriving (0=north, 90=east, 180=south, 270=west).
             """
         },
 
@@ -785,6 +793,35 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             Stops all movements
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopface <angle>",
+            SuggestionCommand = "/mopface ",
+            Example = """
+            Face north:
+                /mopface 0
+
+            Face east:
+                /mopface 90
+
+            Face south:
+                /mopface 180
+
+            Face west:
+                /mopface 270
+
+            Move then face a specific direction:
+                /mopmove 0 0 4
+                /mopwait 2
+                /mopface 180
+            """,
+            Notes = """
+            Rotates the character to face the given direction in degrees without moving.
+            0 = north, 90 = east, 180 = south, 270 = west (increases clockwise).
             """
         },
 
