@@ -204,6 +204,23 @@ public class PluginCommandManager : IDisposable {
                         GearsetManager.ChangeGearset(Plugin, gearsetIndex - 1);
                     }
                     break;
+                case "movegearsets": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ShowNotification("Invalid arguments. Expected gearset numbers (e.g. 1,2,3)", NotificationType.Error, 5000);
+                            return;
+                        }
+                        var indices = new List<int>();
+                        foreach (var part in parsedArgs[1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
+                            if (int.TryParse(part, out int n) && n is >= 1 and <= 100)
+                                indices.Add(n - 1);
+                        }
+                        if (indices.Count == 0) {
+                            DalamudApi.ShowNotification("No valid gearset numbers provided (1-100)", NotificationType.Error, 5000);
+                            return;
+                        }
+                        GearsetManager.MoveGearsetsToArmoury(Plugin, indices);
+                    }
+                    break;
                 case "invite": {
                         if (parsedArgs.Count < 2) {
                             DalamudApi.ShowNotification("Invalid arguments. Expected \"Character Name@World\"", NotificationType.Error, 5000);

@@ -297,6 +297,23 @@ public static class MopMacroActionsHelper {
         new MopAction
         {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop movegearsets <gearset1,gearset2,...>",
+            SuggestionCommand = "/mop movegearsets ",
+            Example = """
+            /mop movegearsets 12,13,14
+
+            Broadcast:
+            /mopbr /mop movegearsets 12,13,14
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Moves any items from the specified gearsets (comma-separated, 1-based) that are in inventory bags to the armoury chest. Does not equip any gearset.
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mopbr <command>",
             SuggestionCommand = "/mopbr ",
             Example = """
