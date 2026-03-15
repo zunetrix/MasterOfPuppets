@@ -25,6 +25,9 @@ public class CharactersWindow : Window {
     private string _editGroupName = string.Empty;
     private int _editGroupNameLastIndex = -1;
     private int _selectedCidGroupIndex { get; set; } = 0;
+    private string _charSearchFilter = string.Empty;
+    private string _addCharSelected = string.Empty;
+    private readonly ImGuiComboSearch _addCharCombo = new();
     public HashSet<ulong> _copiedCids = new();
 
     public CharactersWindow(Plugin plugin) : base($"{Plugin.Name} Characters###CharactersWindow") {
@@ -53,8 +56,52 @@ public class CharactersWindow : Window {
     private void DrawCharactersTab() {
         using var tabItem = ImRaii.TabItem($"Characters List###CharactersTab");
         if (!tabItem) return;
-        DrawPartyMemberSelector();
-        DrawCharactersTable();
+        using (ImRaii.Group()) {
+            DrawCharactersHeader();
+        }
+
+        using var scroll = ImRaii.Child("##CharactersScrollArea", new Vector2(-1, -1), false);
+        if (scroll) DrawCharactersTable();
+    }
+
+    private void DrawCharactersHeader() {
+        var availablePartyMembers = GetAvailablePartyMembers();
+
+        // row 1: search filter + reset copied
+        float resetBtnWidth = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X;
+        ImGui.SetNextItemWidth(-resetBtnWidth);
+        ImGui.InputTextWithHint("##CharSearchFilter", "Search...", ref _charSearchFilter, 128);
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetCopiedCidsBtn", "Reset Copied"))
+            ResetCopiedCids();
+
+        // row 2: add party member combo + help marker
+        ImGui.BeginDisabled(availablePartyMembers.Count == 0);
+        float helpBtnWidth = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X;
+        ImGui.SetNextItemWidth(-helpBtnWidth);
+        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
+        var partyNames = availablePartyMembers.Select(pm => pm.Name).ToList();
+        if (_addCharCombo.Draw("##PartyMemberSelectList", partyNames, ref _addCharSelected)) {
+            var found = availablePartyMembers.FirstOrDefault(pm => pm.Name == _addCharSelected);
+            if (found != null) {
+                Plugin.Config.AddCharacter(found);
+                Plugin.IpcProvider.SyncConfiguration();
+                _addCharSelected = string.Empty;
+            }
+        }
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
+        ImGui.EndDisabled();
+        ImGui.SameLine();
+        ImGuiUtil.HelpMarker("""
+            Added characters are used to assign macro actions, once in the list they dont need be in the party to be assigned in macros
+
+            Drag to reorder
+            """);
+
+        ImGui.Separator();
+        ImGui.Spacing();
     }
 
     private List<Character> GetAvailablePartyMembers() {
@@ -69,48 +116,12 @@ public class CharactersWindow : Window {
             .ToList();
     }
 
-    private void DrawPartyMemberSelector() {
-        var availablePartyMembers = GetAvailablePartyMembers();
-
-        ImGui.BeginDisabled(availablePartyMembers.Count == 0);
-        ImGui.Text(Language.CharactersLabel);
-
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginCombo("##PartyMemberSelectList", "Select a party character to add")) {
-            foreach (var partyMember in availablePartyMembers) {
-                if (ImGui.Selectable($"{partyMember.Name}##{partyMember.Cid}", false)) {
-                    Plugin.Config.AddCharacter(partyMember);
-                    Plugin.IpcProvider.SyncConfiguration();
-                }
-            }
-            ImGui.EndCombo();
-        }
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
-
-        ImGui.EndDisabled();
-        ImGuiUtil.HelpMarker("""
-        Added characters are used to assign macro actions, once in the list they dont need be in the party to be assigned in macros
-
-        Drag to reorder
-        """);
-
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetCopiedCidsBtn", "Reset Copied")) {
-            ResetCopiedCids();
-        }
-
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
-    }
-
     private void DrawCharactersTable() {
-        var characters = Plugin.Config.Characters;
+        var allCharacters = Plugin.Config.Characters;
+        var filteredIndices = Enumerable.Range(0, allCharacters.Count)
+            .Where(i => string.IsNullOrEmpty(_charSearchFilter) ||
+                        allCharacters[i].Name.Contains(_charSearchFilter, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
         float actionsColWidth = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.X;
 
@@ -124,7 +135,8 @@ public class CharactersWindow : Window {
         ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, actionsColWidth);
         ImGui.TableHeadersRow();
 
-        for (int i = 0; i < characters.Count; i++) {
+        for (int fi = 0; fi < filteredIndices.Count; fi++) {
+            int i = filteredIndices[fi];
             ImGui.PushID(i);
             ImGui.TableNextRow();
 
@@ -134,13 +146,13 @@ public class CharactersWindow : Window {
 
             // col 1: name + drag-drop
             ImGui.TableNextColumn();
-            ImGui.Selectable($"{characters[i].Name}");
+            ImGui.Selectable($"{allCharacters[i].Name}");
             ImGuiUtil.ToolTip("Drag to reorder");
 
             if (ImGui.BeginDragDropSource()) {
                 unsafe {
                     ImGui.SetDragDropPayload("DND_CHARACTER_LIST", new ReadOnlySpan<byte>(&i, sizeof(int)), ImGuiCond.None);
-                    ImGui.Button($"({i + 1}) {characters[i].Name}");
+                    ImGui.Button($"({i + 1}) {allCharacters[i].Name}");
                 }
                 ImGui.EndDragDropSource();
             }
@@ -166,17 +178,17 @@ public class CharactersWindow : Window {
 
             // col 2: action buttons (right-aligned by column sizing)
             ImGui.TableNextColumn();
-            bool alreadyCopied = _copiedCids.Contains(characters[i].Cid);
+            bool alreadyCopied = _copiedCids.Contains(allCharacters[i].Cid);
             var copyColor = alreadyCopied ? Style.Colors.Green : Style.Colors.White;
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CopyCharacterName_{characters[i].Cid}", "Copy Name", copyColor)) {
-                ImGui.SetClipboardText(characters[i].Name);
-                _copiedCids.Add(characters[i].Cid);
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CopyCharacterName_{allCharacters[i].Cid}", "Copy Name", copyColor)) {
+                ImGui.SetClipboardText(allCharacters[i].Name);
+                _copiedCids.Add(allCharacters[i].Cid);
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             }
             ImGui.SameLine();
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{characters[i].Cid}", Language.DeleteInstructionTooltip)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{allCharacters[i].Cid}", Language.DeleteInstructionTooltip)) {
                 if (ImGui.GetIO().KeyCtrl) {
-                    Plugin.Config.RemoveCharacter(characters[i].Cid);
+                    Plugin.Config.RemoveCharacter(allCharacters[i].Cid);
                     Plugin.IpcProvider.SyncConfiguration();
                 }
             }

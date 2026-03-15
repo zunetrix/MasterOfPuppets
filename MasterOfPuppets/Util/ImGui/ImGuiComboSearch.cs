@@ -29,6 +29,7 @@ public class ImGuiComboSearch {
 
             var itemHeight = ImGui.GetTextLineHeightWithSpacing();
             var visibleRows = Math.Max(3, Math.Min(filtered.Count, maxVisible));
+            bool shouldClose = false;
             {
                 using var child = ImRaii.Child("##cs_list", new Vector2(-1, visibleRows * itemHeight), false);
                 if (child) {
@@ -36,11 +37,12 @@ public class ImGuiComboSearch {
                         if (ImGui.Selectable(option, option == selected)) {
                             selected = option;
                             changed = true;
-                            ImGui.CloseCurrentPopup();
+                            shouldClose = true;
                         }
                     }
                 }
             }
+            if (shouldClose) ImGui.CloseCurrentPopup();
             ImGui.EndCombo();
         } else {
             _filter = string.Empty;

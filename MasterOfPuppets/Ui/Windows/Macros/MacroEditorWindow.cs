@@ -82,6 +82,7 @@ public class MacroEditorWindow : Window {
         MacroIndex = Plugin.MacroManager.GetMacrosCount();
         SelectedCommandIndex = 0;
         TagName = string.Empty;
+        TagSelected = string.Empty;
         CharSelected = string.Empty;
         GroupSelected = string.Empty;
     }
@@ -267,9 +268,11 @@ public class MacroEditorWindow : Window {
             ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
             ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
             ImGui.SetNextItemWidth(-1);
-            if (_tagCombo.Draw("##MacroTagsSelectList", MacrosTags, ref TagSelected)) {
+            var availableTags = MacrosTags.Except(MacroItem.Tags).ToList();
+            if (_tagCombo.Draw("##MacroTagsSelectList", availableTags, ref TagSelected)) {
                 MacroItem.Tags.AddUnique(TagSelected);
                 TagSelected = string.Empty;
+                RefreshMacrosTags();
             }
             ImGui.PopStyleVar();
             ImGui.PopStyleColor();
