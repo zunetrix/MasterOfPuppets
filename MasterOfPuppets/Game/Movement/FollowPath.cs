@@ -57,6 +57,7 @@ public class FollowPath : IDisposable {
     private DateTime _nextJump;
     private Vector3? _posPreviousFrame;
     private int _msWithNoSignificantMovement = 0;
+    private Vector3? _facingTarget;
 
     public FollowPath(Plugin plugin) {
         Plugin = plugin;
@@ -183,7 +184,13 @@ public class FollowPath : IDisposable {
     /// </summary>
     private void ApplyFacing(Vector3 playerPos, float playerRotation) {
         var desiredDir = DesiredFacing!.Value.ToDirectionXZ();
-        _movement.DesiredPosition = playerPos + desiredDir * 0.5f;
+
+        // Set a fixed target once per activation. Using a small offset (0.1 m) keeps
+        // character movement negligible while still sending a movement input so the game
+        // engine rotates the character. The target is NOT updated each frame so the
+        // Precision guard in OverrideMovement can actually terminate the walk.
+        _facingTarget ??= playerPos + desiredDir * 0.1f;
+        _movement.DesiredPosition = _facingTarget.Value;
         _movement.Enabled = true;
 
         _camera.Enabled = Plugin.Config.AlignCameraToMovement;
@@ -193,6 +200,7 @@ public class FollowPath : IDisposable {
         var diff = (playerRotation.Radians() - DesiredFacing.Value).Normalized().Abs().Rad;
         if (diff <= FacingTolerance) {
             DesiredFacing = null;
+            _facingTarget = null;
             StopMovementAndCamera();
         }
     }
@@ -216,6 +224,7 @@ public class FollowPath : IDisposable {
         IgnoreDeltaY = ignoreDeltaY;
         DestinationTolerance = destTolerance;
         DesiredFacing = facing;
+        _facingTarget = null;
     }
 
     /// <summary>
@@ -224,6 +233,7 @@ public class FollowPath : IDisposable {
     /// </summary>
     public void FaceDirection(Angle angle) {
         DesiredFacing = angle;
+        _facingTarget = null; // reset so ApplyFacing picks a fresh target
     }
 
     /// <summary>Stops all movement, clears waypoints and any pending facing rotation.</summary>
@@ -231,6 +241,7 @@ public class FollowPath : IDisposable {
         _msWithNoSignificantMovement = 0;
         Waypoints.Clear();
         DesiredFacing = null;
+        _facingTarget = null;
         StopMovementAndCamera();
     }
 

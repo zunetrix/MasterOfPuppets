@@ -177,7 +177,20 @@ public class PluginCommandManager : IDisposable {
                             DalamudApi.ShowNotification("Invalid arguments. Expected angle in degrees", NotificationType.Error, 5000);
                             return;
                         }
-                        Plugin.MovementManager.FaceDirection(faceAngle.Degrees());
+                        var player = DalamudApi.ObjectTable.LocalPlayer;
+                        if (player == null) return;
+                        var target = (player.Rotation.Radians() - faceAngle.Degrees()).Normalized();
+                        Plugin.MovementManager.FaceDirection(target);
+                    }
+                    break;
+                case "faceabs": {
+                        if (parsedArgs.Count < 2 ||
+                            !float.TryParse(parsedArgs[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float faceAngle)) {
+                            DalamudApi.ShowNotification("Invalid arguments. Expected angle in degrees", NotificationType.Error, 5000);
+                            return;
+                        }
+                        var target = (180f - faceAngle).Degrees().Normalized();
+                        Plugin.MovementManager.FaceDirection(target);
                     }
                     break;
                 case "stopmove":

@@ -802,26 +802,54 @@ public static class MopMacroActionsHelper {
             TextCommand = "/mopface <angle>",
             SuggestionCommand = "/mopface ",
             Example = """
-            Face north:
-                /mopface 0
-
-            Face east:
+            Turn right 90°:
                 /mopface 90
 
-            Face south:
+            Turn left 90°:
+                /mopface -90
+
+            Turn around:
                 /mopface 180
 
+            Move then turn right 90°:
+                /mopmove 0 0 4
+                /mopwait 2
+                /mopface 90
+            """,
+            Notes = """
+            Rotates the character by the given offset relative to their current facing.
+            Positive values turn clockwise (right), negative values counter-clockwise (left).
+            Use /mopfaceabs for absolute compass directions.
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopfaceabs <angle>",
+            SuggestionCommand = "/mopfaceabs ",
+            Example = """
+            Face north:
+                /mopfaceabs 0
+
+            Face east:
+                /mopfaceabs 90
+
+            Face south:
+                /mopfaceabs 180
+
             Face west:
-                /mopface 270
+                /mopfaceabs 270
 
             Move then face a specific direction:
                 /mopmove 0 0 4
                 /mopwait 2
-                /mopface 180
+                /mopfaceabs 180
             """,
             Notes = """
-            Rotates the character to face the given direction in degrees without moving.
+            Rotates the character to face an absolute compass direction.
             0 = north, 90 = east, 180 = south, 270 = west (increases clockwise).
+            Use /mopface for relative turns from the current facing.
             """
         },
 

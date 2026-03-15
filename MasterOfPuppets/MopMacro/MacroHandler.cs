@@ -113,6 +113,7 @@ public partial class MacroHandler : IDisposable {
             ["mopdisablewalk"] = new(HandleMopDisableWalk, SkipGlobalDelay: true),
             ["moptogglewalk"] = new(HandleMopToggleWalk, SkipGlobalDelay: true),
             ["mopface"] = new(HandleMopFace, SkipGlobalDelay: true),
+            ["mopfaceabs"] = new(HandleMopFaceAbs, SkipGlobalDelay: true),
             ["mopmovegearsets"] = new(HandleMopMoveGearsets, SkipGlobalDelay: true),
         };
 
