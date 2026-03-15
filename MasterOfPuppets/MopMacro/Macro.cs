@@ -25,6 +25,9 @@ public class Command {
     [JsonPropertyName("cids")]
     public List<ulong> Cids = new List<ulong>();
 
+    [JsonPropertyName("groupIds")]
+    public List<string> GroupIds = new List<string>();
+
     [JsonPropertyName("actions")]
     public string Actions = string.Empty;
 
@@ -33,8 +36,27 @@ public class Command {
             Cids = includeCids
                 ? (this.Cids?.ToList() ?? new List<ulong>())
                 : new List<ulong>(),
+            GroupIds = includeCids
+                ? (this.GroupIds?.ToList() ?? new List<string>())
+                : new List<string>(),
             Actions = this.Actions
         };
+    }
+
+    public HashSet<ulong> GetEffectiveCids(IReadOnlyList<CidGroup>? groups = null) {
+        var result = new HashSet<ulong>(Cids);
+
+        if (groups != null && GroupIds.Count > 0) {
+            foreach (var groupName in GroupIds) {
+                var group = groups.FirstOrDefault(g => g.Name == groupName);
+                if (group != null) {
+                    foreach (var cid in group.Cids)
+                        result.Add(cid);
+                }
+            }
+        }
+
+        return result;
     }
 
     public void SanitizeActionsText() {
@@ -213,11 +235,11 @@ public class Macro {
         return Command.ExtractVariables(lines);
     }
 
-    public string[] GetCidActions(ulong cid, Dictionary<string, string>? inlineVars = null) {
+    public string[] GetCidActions(ulong cid, IReadOnlyList<CidGroup>? groups = null, Dictionary<string, string>? inlineVars = null) {
         var macroVars = GetMacroVariables();
 
         return Commands
-            .FirstOrDefault(c => c.Cids.Contains(cid))
+            .FirstOrDefault(c => c.GetEffectiveCids(groups).Contains(cid))
             ?.GetActionList(macroVars, inlineVars)
             ?? Array.Empty<string>();
     }

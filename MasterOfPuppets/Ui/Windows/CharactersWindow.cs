@@ -22,6 +22,8 @@ public class CharactersWindow : Window {
     private Plugin Plugin { get; }
 
     private string _tmpGroupName = string.Empty;
+    private string _editGroupName = string.Empty;
+    private int _editGroupNameLastIndex = -1;
     private int _selectedCidGroupIndex { get; set; } = 0;
     public HashSet<ulong> _copiedCids = new();
 
@@ -211,11 +213,18 @@ public class CharactersWindow : Window {
         ImGui.SameLine();
         if (ImGui.Button("Add Group##AddNewGroupBtn")) {
             if (!_tmpGroupName.IsNullOrEmpty()) {
-                Plugin.Config.CidsGroups.Add(new CidGroup { Name = _tmpGroupName, Cids = new() });
-                _selectedCidGroupIndex = Plugin.Config.CidsGroups.Count - 1;
-                _tmpGroupName = string.Empty;
-                Plugin.Config.Save();
-                Plugin.IpcProvider.SyncConfiguration();
+                var trimmedName = _tmpGroupName.Trim();
+                var nameExists = Plugin.Config.CidsGroups.Any(g => g.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase));
+
+                if (nameExists) {
+                    DalamudApi.ShowNotification($"A group named \"{trimmedName}\" already exists", NotificationType.Warning, 3000);
+                } else {
+                    Plugin.Config.CidsGroups.Add(new CidGroup { Name = trimmedName, Cids = new() });
+                    _selectedCidGroupIndex = Plugin.Config.CidsGroups.Count - 1;
+                    _tmpGroupName = string.Empty;
+                    Plugin.Config.Save();
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
             }
         }
         ImGui.Separator();
@@ -250,18 +259,33 @@ public class CharactersWindow : Window {
     }
 
     private void DrawGroupContentPanel(CidGroup cidGroup) {
-        // group name + right-aligned delete button
-        ImGui.Text(cidGroup.Name);
+        // sync edit buffer when selection changes
+        if (_editGroupNameLastIndex != _selectedCidGroupIndex) {
+            _editGroupName = cidGroup.Name;
+            _editGroupNameLastIndex = _selectedCidGroupIndex;
+        }
 
         float deleteBtnWidth = ImGui.CalcTextSize("Delete Group").X + ImGui.GetStyle().FramePadding.X * 2;
-        ImGui.SameLine(ImGui.GetContentRegionMax().X - deleteBtnWidth);
+        ImGui.SetNextItemWidth(-deleteBtnWidth - ImGui.GetStyle().ItemSpacing.X);
+        if (ImGui.InputText("##GroupRenameInput", ref _editGroupName, 255, ImGuiInputTextFlags.EnterReturnsTrue)) {
+            ApplyGroupRename(cidGroup, _editGroupName);
+        }
+        ImGuiUtil.ToolTip("Press Enter to rename");
+
+        ImGui.SameLine();
 
         using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
                      .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
                      .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
             if (ImGui.Button("Delete Group##DeleteGroupBtn")) {
                 if (ImGui.GetIO().KeyCtrl) {
+                    var deletedName = cidGroup.Name;
                     Plugin.Config.CidsGroups.RemoveAt(_selectedCidGroupIndex);
+
+                    foreach (var macro in Plugin.Config.Macros)
+                        foreach (var command in macro.Commands)
+                            command.GroupIds.RemoveAll(n => n == deletedName);
+
                     _selectedCidGroupIndex = Math.Max(0, _selectedCidGroupIndex - 1);
                     Plugin.Config.Save();
                     Plugin.IpcProvider.SyncConfiguration();
@@ -301,6 +325,35 @@ public class CharactersWindow : Window {
         ImGui.Spacing();
 
         DrawCidGroupCharactersTable(cidGroup);
+    }
+
+    private void ApplyGroupRename(CidGroup group, string newName) {
+        newName = newName.Trim();
+
+        if (string.IsNullOrEmpty(newName) || newName == group.Name) {
+            _editGroupName = group.Name;
+            return;
+        }
+
+        var nameExists = Plugin.Config.CidsGroups.Any(g => g != group && g.Name.Equals(newName, StringComparison.OrdinalIgnoreCase));
+        if (nameExists) {
+            DalamudApi.ShowNotification($"A group named \"{newName}\" already exists", NotificationType.Warning, 3000);
+            _editGroupName = group.Name;
+            return;
+        }
+
+        var oldName = group.Name;
+        group.Name = newName;
+        _editGroupName = newName;
+
+        foreach (var macro in Plugin.Config.Macros)
+            foreach (var command in macro.Commands)
+                for (int i = 0; i < command.GroupIds.Count; i++)
+                    if (command.GroupIds[i] == oldName)
+                        command.GroupIds[i] = newName;
+
+        Plugin.Config.Save();
+        Plugin.IpcProvider.SyncConfiguration();
     }
 
     private void DrawCidGroupCharactersTable(CidGroup cidGroup) {
