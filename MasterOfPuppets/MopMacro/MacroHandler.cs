@@ -112,6 +112,7 @@ public partial class MacroHandler : IDisposable {
             ["mopenablewalk"] = new(HandleMopEnableWalk, SkipGlobalDelay: true),
             ["mopdisablewalk"] = new(HandleMopDisableWalk, SkipGlobalDelay: true),
             ["moptogglewalk"] = new(HandleMopToggleWalk, SkipGlobalDelay: true),
+            ["mopmovegearsets"] = new(HandleMopMoveGearsets, SkipGlobalDelay: true),
         };
 
         Task.Run(() => RunWorker(_macroChannel, _macroState, _cts.Token));

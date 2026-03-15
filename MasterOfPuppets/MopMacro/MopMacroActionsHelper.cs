@@ -837,6 +837,26 @@ public static class MopMacroActionsHelper {
             """
         },
 
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopmovegearsets <gearset1,gearset2,...>",
+            SuggestionCommand = "/mopmovegearsets ",
+            Example = """
+            /mopmovegearsets 12,13,14
+
+            Prepare multiple gearsets before equipping:
+                /mopmovegearsets 1,2,3
+                /mopwait 3
+                /gs change 1
+            """,
+            Notes = """
+            Moves any items from the specified gearsets (comma-separated, 1-based) that are in inventory bags to the armoury chest.
+            Awaits completion before continuing to the next macro action.
+            Use /mopwait after if you need extra time for the game to process the moves.
+            """
+        },
+
         // ---------------------------
 
         new MopAction {

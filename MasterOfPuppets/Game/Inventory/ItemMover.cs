@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 using Dalamud.Plugin.Services;
 
@@ -12,7 +13,7 @@ public unsafe class ItemMover : IDisposable {
     private Plugin Plugin { get; }
 
     public Queue<(InventoryDescriptor from, InventoryType to)> ItemsToMove = new();
-    public Action? OnAllItemsMoved;
+    public event Action? ItemsMoved;
 
     private bool isWorking;
     private ItemSignature? expectedItem;
@@ -102,8 +103,16 @@ public unsafe class ItemMover : IDisposable {
         isWorking = false;
         expectedItem = null;
 
-        OnAllItemsMoved?.Invoke();
-        OnAllItemsMoved = null;
+        var handlers = ItemsMoved;
+        ItemsMoved = null;
+        handlers?.Invoke();
+    }
+
+    public Task WhenComplete() {
+        if (!isWorking) return Task.CompletedTask;
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        ItemsMoved += () => tcs.TrySetResult();
+        return tcs.Task;
     }
 
     private void Reset() {

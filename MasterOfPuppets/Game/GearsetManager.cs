@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
 using MasterOfPuppets.Extensions.Dalamud;
@@ -6,14 +8,27 @@ namespace MasterOfPuppets;
 
 public static class GearsetManager {
 
-    public static unsafe void ChangeGearset(Plugin plugin, int gearsetIndex) {
+    public static void ChangeGearset(Plugin plugin, int gearsetIndex) {
+        if (!EnqueueGearsetItemsToArmoury(plugin, gearsetIndex)) {
+            EquipGearset(gearsetIndex);
+            return;
+        }
+
+        plugin.ItemMover.ItemsMoved += () => EquipGearset(gearsetIndex);
+    }
+
+    public static void MoveGearsetsToArmoury(Plugin plugin, IReadOnlyList<int> gearsetIndices) {
+        foreach (var idx in gearsetIndices)
+            EnqueueGearsetItemsToArmoury(plugin, idx);
+    }
+
+    private static unsafe bool EnqueueGearsetItemsToArmoury(Plugin plugin, int gearsetIndex) {
         var rapture = RaptureGearsetModule.Instance();
         if (!rapture->IsValidGearset(gearsetIndex))
-            return;
+            return false;
 
         var gearset = rapture->GetGearset(gearsetIndex);
-
-        bool needsMove = false;
+        bool any = false;
 
         foreach (var item in gearset->Items) {
             if (item.ItemId == 0)
@@ -23,24 +38,11 @@ public static class GearsetManager {
             if (inventoryItem == null)
                 continue;
 
-            var targetInventory = item.GetInventoryType();
-
-            plugin.ItemMover.Enqueue(
-                inventoryItem.Value,
-                targetInventory
-            );
-
-            needsMove = true;
+            plugin.ItemMover.Enqueue(inventoryItem.Value, item.GetInventoryType());
+            any = true;
         }
 
-        if (!needsMove) {
-            EquipGearset(gearsetIndex);
-            return;
-        }
-
-        plugin.ItemMover.OnAllItemsMoved = () => {
-            EquipGearset(gearsetIndex);
-        };
+        return any;
     }
 
     private static void EquipGearset(int gearsetIndex) {
@@ -59,4 +61,3 @@ public static class GearsetManager {
         });
     }
 }
-
