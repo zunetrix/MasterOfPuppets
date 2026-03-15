@@ -9,6 +9,7 @@ using Dalamud.Game.Text;
 using Dalamud.Plugin;
 
 using MasterOfPuppets.Extensions;
+using MasterOfPuppets.Formations;
 
 namespace MasterOfPuppets;
 
@@ -26,6 +27,7 @@ internal class Configuration : IPluginConfiguration {
     public List<Macro> Macros { get; set; } = new();
     public List<Character> Characters { get; set; } = new();
     public List<CidGroup> CidsGroups { get; set; } = new();
+    public List<Formation> Formations { get; set; } = new();
     public double DelayBetweenActions { get; set; } = 1.00;
     public bool AutoSaveMacro { get; set; } = false;
     public string MacroExportPath { get; set; } = DalamudApi.PluginInterface.ConfigDirectory.FullName ?? string.Empty;
@@ -91,6 +93,7 @@ internal class Configuration : IPluginConfiguration {
         Macros = new();
         Characters = new();
         CidsGroups = new();
+        Formations = new();
         ListenedChatTypes = new();
     }
 

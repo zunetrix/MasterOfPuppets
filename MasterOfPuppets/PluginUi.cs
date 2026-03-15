@@ -21,6 +21,8 @@ public class PluginUi : IDisposable {
     public MacroImportExportWindow MacroImportExportWindow { get; }
     public IconPickerDialogWindow IconPickerDialogWindow { get; }
     public DebugWindow DebugWindow { get; }
+    public FormationWindow FormationWindow { get; }
+    public FormationImPlotWindow FormationImPlotWindow { get; }
 
     public PluginUi(Plugin plugin) {
         Plugin = plugin;
@@ -36,6 +38,8 @@ public class PluginUi : IDisposable {
         MacroImportExportWindow = AddWindow(new MacroImportExportWindow(Plugin));
         IconPickerDialogWindow = AddWindow(new IconPickerDialogWindow());
         DebugWindow = AddWindow(new DebugWindow(Plugin));
+        FormationWindow = AddWindow(new FormationWindow(Plugin));
+        FormationImPlotWindow = AddWindow(new FormationImPlotWindow(Plugin));
     }
 
     private T AddWindow<T>(T window) where T : Window {
@@ -44,6 +48,7 @@ public class PluginUi : IDisposable {
     }
 
     public void Dispose() {
+        FormationImPlotWindow.Dispose();
         WindowSystem.RemoveAllWindows();
     }
 

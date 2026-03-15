@@ -972,6 +972,32 @@ public static class MopMacroActionsHelper {
             Notes = """
             Switch gear sets
             """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop formations",
+            SuggestionCommand = "/mop formations",
+            Example = """
+            /mop formations
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Opens the Formations window to create and manage formations.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop formation \"<Formation Name>\"",
+            SuggestionCommand = "/mop formation ",
+            Example = """
+            /mop formation "My Formation"
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Broadcasts formation execution to all local clients.
+            The issuing character's world position is used as the leader origin.
+            Each client moves to the formation point whose assigned CIDs/groups include it.
+            """
         }
     };
 

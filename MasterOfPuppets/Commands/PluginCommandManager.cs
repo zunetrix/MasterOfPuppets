@@ -7,6 +7,7 @@ using System.Numerics;
 using Dalamud.Game.Command;
 using Dalamud.Interface.ImGuiNotification;
 
+using MasterOfPuppets.Movement;
 using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
@@ -22,10 +23,10 @@ public class PluginCommandManager : IDisposable {
     );
 
     private static readonly MopCommandDef[] CommandDefs = [
-        new("mop",    "/mop",    ["/mop"],        "Show/hide UI. Subcommands: run, stop, queue, move, ..."),
-        new("mopbr",  "/mopbr",  ["/br"],   "Broadcast a command to all local clients"),
-        new("mopbrn", "/mopbrn", ["/brn"],  "Broadcast a command to all local clients except yourself"),
-        new("mopbrc", "/mopbrc", ["/brc"],  "Broadcast a command to a specific character"),
+        new("mop",    "/mop",    ["/mop"], "Show/hide UI. Subcommands: run, stop, queue, move, ..."),
+        new("mopbr",  "/mopbr",  ["/br"],  "Broadcast a command to all local clients"),
+        new("mopbrn", "/mopbrn", ["/brn"], "Broadcast a command to all local clients except yourself"),
+        new("mopbrc", "/mopbrc", ["/brc"], "Broadcast a command to a specific character"),
     ];
 
     public static IReadOnlyList<MopCommandDef> Definitions => CommandDefs;
@@ -162,7 +163,21 @@ public class PluginCommandManager : IDisposable {
                             return;
                         }
 
-                        Plugin.MovementManager.MoveToPosition(new Vector3(x, y, z));
+                        Angle? facing = null;
+                        if (parsedArgs.Count >= 3 &&
+                            float.TryParse(parsedArgs[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float angleDeg))
+                            facing = angleDeg.Degrees();
+
+                        Plugin.MovementManager.MoveToPosition(new Vector3(x, y, z), facing);
+                    }
+                    break;
+                case "face": {
+                        if (parsedArgs.Count < 2 ||
+                            !float.TryParse(parsedArgs[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float faceAngle)) {
+                            DalamudApi.ShowNotification("Invalid arguments. Expected angle in degrees", NotificationType.Error, 5000);
+                            return;
+                        }
+                        Plugin.MovementManager.FaceDirection(faceAngle.Degrees());
                     }
                     break;
                 case "stopmove":
@@ -240,6 +255,17 @@ public class PluginCommandManager : IDisposable {
                             return;
                         }
                         Plugin.IpcProvider.SetGameSettingsObjectQuantity(displayObjectLimitType);
+                    }
+                    break;
+                case "formations":
+                    Plugin.Ui.FormationWindow.Toggle();
+                    break;
+                case "formation": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ShowNotification("Invalid arguments. Expected formation name", NotificationType.Error, 5000);
+                            return;
+                        }
+                        Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
                     }
                     break;
                 default:

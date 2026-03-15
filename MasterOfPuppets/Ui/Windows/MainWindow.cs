@@ -339,6 +339,12 @@ public class MainWindow : Window {
 
         DrawCommandsMenu();
 
+        if (ImGui.MenuItem("Formations"))
+            Plugin.Ui.FormationWindow.Toggle();
+
+        if (ImGui.MenuItem("Formations2"))
+            Plugin.Ui.FormationImPlotWindow.Toggle();
+
         if (ImGui.MenuItem("Help"))
             Plugin.Ui.MacroHelpWindow.Toggle();
 

@@ -28,4 +28,5 @@ public enum IpcMessageType {
     SetGameSettingsObjectQuantity,
     ExecuteChangeGearset,
     SetWindowTitle,
+    ExecuteFormation,
 }
