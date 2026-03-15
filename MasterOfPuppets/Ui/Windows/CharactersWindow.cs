@@ -30,7 +30,6 @@ public class CharactersWindow : Window {
 
         Size = ImGuiHelpers.ScaledVector2(450, 400);
         SizeCondition = ImGuiCond.FirstUseEver;
-        // SizeCondition = ImGuiCond.Always;
     }
 
     public override void PreDraw() {
@@ -38,8 +37,7 @@ public class CharactersWindow : Window {
     }
 
     private bool IsValidGroup() {
-        var isValidGroup = Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex) && Plugin.Config.CidsGroups.Count > 0;
-        return isValidGroup;
+        return Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex) && Plugin.Config.CidsGroups.Count > 0;
     }
 
     public override void Draw() {
@@ -50,35 +48,27 @@ public class CharactersWindow : Window {
         DrawCidsGroupsTab();
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // Tab 1: Characters List
+    // ─────────────────────────────────────────────────────────────
+
     private void DrawCharactersTab() {
         using var tabItem = ImRaii.TabItem($"Characters List###CharactersTab");
         if (!tabItem) return;
         DrawPartyMemberSelector();
         DrawCharactersTable();
-
-    }
-
-    private void DrawCidsGroupsTab() {
-        using var tabItem = ImRaii.TabItem($"Characters Groups###CidsGroupsTab");
-        if (!tabItem) return;
-        DrawCidsGroupsHeader();
-        DrawCidsGroupsSelector();
-        DrawGroupAvailableCharacterSelector();
-        DrawCidGroupCharactersList();
     }
 
     private List<Character> GetAvailablePartyMembers() {
         var usedCids = Plugin.Config.Characters
-       .Select(c => c.Cid)
-       .ToHashSet() ?? new HashSet<ulong>();
+            .Select(c => c.Cid)
+            .ToHashSet();
 
-        var availablePartyMembers = DalamudApi.PartyList
-       .Select((partyMember) => partyMember.GetPartyMemberData())
-       .Where(partyMember => !usedCids.Contains(partyMember.Cid))
-       .Select(partyMember => new Character { Cid = partyMember.Cid, Name = $"{partyMember.Name}@{partyMember.World}" })
-       .ToList();
-
-        return availablePartyMembers;
+        return DalamudApi.PartyList
+            .Select(pm => pm.GetPartyMemberData())
+            .Where(pm => !usedCids.Contains(pm.Cid))
+            .Select(pm => new Character { Cid = pm.Cid, Name = $"{pm.Name}@{pm.World}" })
+            .ToList();
     }
 
     private void DrawPartyMemberSelector() {
@@ -89,7 +79,7 @@ public class CharactersWindow : Window {
 
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginCombo($"##PartyMemberSelectList", "Select a party character to add")) {
+        if (ImGui.BeginCombo("##PartyMemberSelectList", "Select a party character to add")) {
             foreach (var partyMember in availablePartyMembers) {
                 if (ImGui.Selectable($"{partyMember.Name}##{partyMember.Cid}", false)) {
                     Plugin.Config.AddCharacter(partyMember);
@@ -100,7 +90,6 @@ public class CharactersWindow : Window {
         }
         ImGui.PopStyleVar();
         ImGui.PopStyleColor();
-
 
         ImGui.EndDisabled();
         ImGuiUtil.HelpMarker("""
@@ -124,198 +113,179 @@ public class CharactersWindow : Window {
 
     private void DrawCharactersTable() {
         var characters = Plugin.Config.Characters;
-        if (ImGui.BeginTable("##CharactersTable", 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
-        ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV)) {
-            ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Options", ImGuiTableColumnFlags.WidthFixed);
 
-            for (int i = 0; i < characters.Count; i++) {
-                ImGui.PushID(i);
-                ImGui.TableNextRow();
-                ImGui.Text($"{i + 1:00}");
+        float actionsColWidth = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.X;
 
-                ImGui.TableNextColumn();
-                ImGui.Selectable($"{characters[i].Name}");
-                ImGuiUtil.ToolTip($"Drag to reorder");
+        if (!ImGui.BeginTable("##CharactersTable", 3,
+            ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
+            ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV))
+            return;
 
-                if (ImGui.BeginDragDropSource()) {
-                    unsafe {
-                        ImGui.SetDragDropPayload("DND_CHARACTER_LIST", new ReadOnlySpan<byte>(&i, sizeof(int)), ImGuiCond.None);
-                        ImGui.Button($"({i + 1}) {characters[i].Name}");
-                    }
+        ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 28 * ImGuiHelpers.GlobalScale);
+        ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, actionsColWidth);
+        ImGui.TableHeadersRow();
 
-                    // DalamudApi.PluginLog.Warning($"Drag start [{i}]: {characters[i].Name}");
-                    ImGui.EndDragDropSource();
+        for (int i = 0; i < characters.Count; i++) {
+            ImGui.PushID(i);
+            ImGui.TableNextRow();
+
+            // col 0: index
+            ImGui.TableNextColumn();
+            ImGui.Text($"{i + 1:00}");
+
+            // col 1: name + drag-drop
+            ImGui.TableNextColumn();
+            ImGui.Selectable($"{characters[i].Name}");
+            ImGuiUtil.ToolTip("Drag to reorder");
+
+            if (ImGui.BeginDragDropSource()) {
+                unsafe {
+                    ImGui.SetDragDropPayload("DND_CHARACTER_LIST", new ReadOnlySpan<byte>(&i, sizeof(int)), ImGuiCond.None);
+                    ImGui.Button($"({i + 1}) {characters[i].Name}");
                 }
-
-                ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
-                if (ImGui.BeginDragDropTarget()) {
-                    ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_CHARACTER_LIST");
-
-                    bool isDropping = false;
-                    unsafe {
-                        isDropping = !dragDropPayload.IsNull;
-                    }
-
-                    if (isDropping && dragDropPayload.IsDelivery()) {
-                        unsafe {
-                            int originalIndex = *(int*)dragDropPayload.Data;
-
-                            int offset = i - originalIndex;
-                            if (offset != 0 && originalIndex + offset >= 0) {
-                                int targetIndex = originalIndex + offset;
-                                // DalamudApi.PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
-                                Plugin.Config.MoveCharacterToIndex(originalIndex, targetIndex);
-                                Plugin.IpcProvider.SyncConfiguration();
-                            }
-                        }
-                    }
-                    ImGui.EndDragDropTarget();
-                }
-                ImGui.PopStyleColor();
-
-                ImGui.TableNextColumn();
-                // ImGui.BeginDisabled(i == 0);
-                // if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowUp, $"##MoveUpCharacter_{i}", "Move Up"))
-                // {
-                //     Plugin.Config.MoveCharacterToIndex(i, i - 1);
-                //     Plugin.IpcProvider.SyncConfiguration();
-                // }
-                // ImGui.EndDisabled();
-
-
-                // ImGui.SameLine();
-                // ImGui.BeginDisabled(i == characters.Count - 1);
-                // if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowDown, $"##MoveDownCharacter_{i}", "Move Down"))
-                // {
-                //     Plugin.Config.MoveCharacterToIndex(i, i + 1);
-                //     Plugin.IpcProvider.SyncConfiguration();
-                // }
-                // ImGui.EndDisabled();
-
-                // ImGui.SameLine();
-                bool alreadyCopied = _copiedCids.Contains(characters[i].Cid);
-
-                var buttonColor = alreadyCopied
-                    ? Style.Colors.Green
-                    : Style.Colors.White;
-
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CopyCharacterName_{characters[i].Cid}", "Copy Name", buttonColor)) {
-                    ImGui.SetClipboardText(characters[i].Name);
-                    _copiedCids.Add(characters[i].Cid);
-                    DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-                }
-
-                ImGui.SameLine();
-                if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{characters[i].Cid}", Language.DeleteInstructionTooltip)) {
-                    if (ImGui.GetIO().KeyCtrl) {
-                        Plugin.Config.RemoveCharacter(characters[i].Cid);
-                        Plugin.IpcProvider.SyncConfiguration();
-                    }
-                }
-
-                ImGui.PopID();
+                ImGui.EndDragDropSource();
             }
 
-            ImGui.EndTable();
+            ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
+            if (ImGui.BeginDragDropTarget()) {
+                var dragDropPayload = ImGui.AcceptDragDropPayload("DND_CHARACTER_LIST");
+                bool isDropping = false;
+                unsafe { isDropping = !dragDropPayload.IsNull; }
+                if (isDropping && dragDropPayload.IsDelivery()) {
+                    unsafe {
+                        int originalIndex = *(int*)dragDropPayload.Data;
+                        int offset = i - originalIndex;
+                        if (offset != 0 && originalIndex + offset >= 0) {
+                            Plugin.Config.MoveCharacterToIndex(originalIndex, originalIndex + offset);
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+                    }
+                }
+                ImGui.EndDragDropTarget();
+            }
+            ImGui.PopStyleColor();
+
+            // col 2: action buttons (right-aligned by column sizing)
+            ImGui.TableNextColumn();
+            bool alreadyCopied = _copiedCids.Contains(characters[i].Cid);
+            var copyColor = alreadyCopied ? Style.Colors.Green : Style.Colors.White;
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CopyCharacterName_{characters[i].Cid}", "Copy Name", copyColor)) {
+                ImGui.SetClipboardText(characters[i].Name);
+                _copiedCids.Add(characters[i].Cid);
+                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+            }
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{characters[i].Cid}", Language.DeleteInstructionTooltip)) {
+                if (ImGui.GetIO().KeyCtrl) {
+                    Plugin.Config.RemoveCharacter(characters[i].Cid);
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+            }
+
+            ImGui.PopID();
         }
 
+        ImGui.EndTable();
         ImGui.Spacing();
         ImGui.Spacing();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Tab 2: Characters Groups
+    // ─────────────────────────────────────────────────────────────
+
+    private void DrawCidsGroupsTab() {
+        using var tabItem = ImRaii.TabItem($"Characters Groups###CidsGroupsTab");
+        if (!tabItem) return;
+        DrawCidsGroupsHeader();
+        DrawCidsGroupsSplitView();
     }
 
     private void DrawCidsGroupsHeader() {
+        float addBtnWidth = ImGui.CalcTextSize("Add Group").X
+            + ImGui.GetStyle().FramePadding.X * 2
+            + ImGui.GetStyle().ItemSpacing.X;
+        ImGui.SetNextItemWidth(-addBtnWidth);
         ImGui.InputTextWithHint("##GroupNameInput", "Group name", ref _tmpGroupName, 255, ImGuiInputTextFlags.AutoSelectAll);
-
         ImGui.SameLine();
-        ImGuiHelpers.ScaledDummy(0, 20);
-        ImGui.SameLine();
-
-        if (ImGui.Button($"Add new group##AddNewGroupBtn")) {
-            if (_tmpGroupName.IsNullOrEmpty()) return;
-
-            var newGroup = new CidGroup { Name = _tmpGroupName, Cids = new() };
-            Plugin.Config.CidsGroups.Add(newGroup);
-            _selectedCidGroupIndex = Plugin.Config.CidsGroups.Count - 1;
-            _tmpGroupName = string.Empty;
-            Plugin.Config.Save();
-            Plugin.IpcProvider.SyncConfiguration();
+        if (ImGui.Button("Add Group##AddNewGroupBtn")) {
+            if (!_tmpGroupName.IsNullOrEmpty()) {
+                Plugin.Config.CidsGroups.Add(new CidGroup { Name = _tmpGroupName, Cids = new() });
+                _selectedCidGroupIndex = Plugin.Config.CidsGroups.Count - 1;
+                _tmpGroupName = string.Empty;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
         }
-
-        ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
     }
 
-    private void DrawCidsGroupsSelector() {
-        if (Plugin.Config.CidsGroups.Count == 0) return;
+    private void DrawCidsGroupsSplitView() {
+        var groups = Plugin.Config.CidsGroups;
+        float leftWidth = 130 * ImGuiHelpers.GlobalScale;
 
-        var cidsGroups = Plugin.Config.CidsGroups;
-
-        ImGui.Text(Language.GroupsLabel);
-
-        string previewGroupValue = cidsGroups.Count > 0
-        && Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex)
-        ? cidsGroups[_selectedCidGroupIndex].Name
-        : "Select a group";
-
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginCombo($"##CidsGroupsSelectList", previewGroupValue)) {
-            for (var groupIndex = 0; groupIndex < cidsGroups.Count; groupIndex++) {
-                bool isGroupSelected = _selectedCidGroupIndex == groupIndex;
-                if (ImGui.Selectable($"{cidsGroups[groupIndex].Name}##group_{groupIndex}", isGroupSelected)) {
-                    _selectedCidGroupIndex = groupIndex;
-
-                    if (isGroupSelected)
-                        ImGui.SetItemDefaultFocus();
+        // ─── left panel: scrollable group list ───
+        using (var left = ImRaii.Child("##GroupsList", new Vector2(leftWidth, -1), true)) {
+            if (left) {
+                for (int gi = 0; gi < groups.Count; gi++) {
+                    if (ImGui.Selectable($"{groups[gi].Name}##grp_{gi}", gi == _selectedCidGroupIndex))
+                        _selectedCidGroupIndex = gi;
                 }
             }
-            ImGui.EndCombo();
         }
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
 
         ImGui.SameLine();
-        ImGuiHelpers.ScaledDummy(0, 20);
-        ImGui.SameLine();
 
-        ImGui.BeginDisabled(!Plugin.Config.CidsGroups.IndexExists(_selectedCidGroupIndex));
+        // ─── right panel: selected group content ───
+        using (var right = ImRaii.Child("##GroupContent", new Vector2(-1, -1), false)) {
+            if (!right) return;
+            if (!IsValidGroup()) {
+                ImGui.TextDisabled("Select a group");
+                return;
+            }
+            DrawGroupContentPanel(groups[_selectedCidGroupIndex]);
+        }
+    }
+
+    private void DrawGroupContentPanel(CidGroup cidGroup) {
+        // group name + right-aligned delete button
+        ImGui.Text(cidGroup.Name);
+
+        float deleteBtnWidth = ImGui.CalcTextSize("Delete Group").X + ImGui.GetStyle().FramePadding.X * 2;
+        ImGui.SameLine(ImGui.GetContentRegionMax().X - deleteBtnWidth);
+
         using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
-            if (ImGui.Button($"Delete Group")) {
+                     .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
+                     .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+            if (ImGui.Button("Delete Group##DeleteGroupBtn")) {
                 if (ImGui.GetIO().KeyCtrl) {
                     Plugin.Config.CidsGroups.RemoveAt(_selectedCidGroupIndex);
+                    _selectedCidGroupIndex = Math.Max(0, _selectedCidGroupIndex - 1);
                     Plugin.Config.Save();
                     Plugin.IpcProvider.SyncConfiguration();
+                    return;
                 }
             }
         }
-        ImGui.EndDisabled();
         ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
-    }
 
-    private void DrawGroupAvailableCharacterSelector() {
-        if (!IsValidGroup()) return;
+        ImGui.Spacing();
 
-        var characters = Plugin.Config.Characters;
-        var cidGroup = Plugin.Config.CidsGroups[_selectedCidGroupIndex];
-
+        // add-character combo
         var availableCharacters = Plugin.Config.Characters
-                .Where(character => !cidGroup.Cids.Contains(character.Cid))
-                .ToList();
+            .Where(c => !cidGroup.Cids.Contains(c.Cid))
+            .ToList();
 
         ImGui.BeginDisabled(availableCharacters.Count == 0);
-        ImGui.Text(Language.CharactersLabel);
-
+        ImGui.SetNextItemWidth(-1);
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginCombo($"##CidGroupCharactersSelectList_cidGroup_{_selectedCidGroupIndex}", "Select a character to add to the group")) {
-            foreach (var character in availableCharacters) {
-                if (ImGui.Selectable($"{character.Name}##{character.Cid}", false)) {
-                    cidGroup.Cids.Add(character.Cid);
+        if (ImGui.BeginCombo($"##AddCharToGroup_{_selectedCidGroupIndex}", "Add character to group")) {
+            foreach (var c in availableCharacters) {
+                if (ImGui.Selectable($"{c.Name}##{c.Cid}", false)) {
+                    cidGroup.Cids.Add(c.Cid);
                     Plugin.Config.Save();
                     Plugin.IpcProvider.SyncConfiguration();
                 }
@@ -324,35 +294,92 @@ public class CharactersWindow : Window {
         }
         ImGui.PopStyleVar();
         ImGui.PopStyleColor();
-
         ImGui.EndDisabled();
-    }
-
-    private void DrawCidGroupCharactersList() {
-        if (!IsValidGroup()) return;
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
-        if (ImGui.BeginListBox($"##CidsGroupsCharactersList_group{_selectedCidGroupIndex}", new Vector2(-1, 200))) {
-            for (var characterIndex = 0; characterIndex < Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids.Count; characterIndex++) {
-                var targetCid = Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids[characterIndex];
-                // find cid name
-                var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
-                    ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
+        DrawCidGroupCharactersTable(cidGroup);
+    }
 
-                if (ImGui.Selectable($"{character.Name}##CidsGroups{_selectedCidGroupIndex}_character{characterIndex}", false)) {
-                    if (ImGui.GetIO().KeyCtrl) {
-                        Plugin.Config.CidsGroups[_selectedCidGroupIndex].Cids.RemoveAll(cid => cid == targetCid);
-                        Plugin.Config.Save();
-                        Plugin.IpcProvider.SyncConfiguration();
-                    }
+    private void DrawCidGroupCharactersTable(CidGroup cidGroup) {
+        float deleteColWidth = ImGui.GetFrameHeight() + ImGui.GetStyle().FramePadding.X;
 
+        if (!ImGui.BeginTable($"##CidGroupTable_{_selectedCidGroupIndex}", 3,
+            ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX | ImGuiTableFlags.ScrollY |
+            ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV))
+            return;
+
+        ImGui.TableSetupScrollFreeze(0, 1);
+        ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 28 * ImGuiHelpers.GlobalScale);
+        ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, deleteColWidth);
+        ImGui.TableHeadersRow();
+
+        int deleteIndex = -1;
+
+        for (int i = 0; i < cidGroup.Cids.Count; i++) {
+            var targetCid = cidGroup.Cids[i];
+            var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
+                ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
+
+            ImGui.PushID(i);
+            ImGui.TableNextRow();
+
+            // col 0: index
+            ImGui.TableNextColumn();
+            ImGui.Text($"{i + 1:00}");
+
+            // col 1: name + drag-drop
+            ImGui.TableNextColumn();
+            ImGui.Selectable($"{character.Name}##cgsel");
+            ImGuiUtil.ToolTip("Drag to reorder");
+
+            if (ImGui.BeginDragDropSource()) {
+                unsafe {
+                    ImGui.SetDragDropPayload("DND_CIDGROUP_CHARS", new ReadOnlySpan<byte>(&i, sizeof(int)), ImGuiCond.None);
+                    ImGui.Text($"({i + 1}) {character.Name}");
                 }
-                ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                ImGui.EndDragDropSource();
             }
-            ImGui.EndListBox();
+
+            ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
+            if (ImGui.BeginDragDropTarget()) {
+                var payload = ImGui.AcceptDragDropPayload("DND_CIDGROUP_CHARS");
+                bool isDropping = false;
+                unsafe { isDropping = !payload.IsNull; }
+                if (isDropping && payload.IsDelivery()) {
+                    unsafe {
+                        int from = *(int*)payload.Data;
+                        if (from != i) {
+                            var cid = cidGroup.Cids[from];
+                            cidGroup.Cids.RemoveAt(from);
+                            cidGroup.Cids.Insert(i, cid);
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+                    }
+                }
+                ImGui.EndDragDropTarget();
+            }
+            ImGui.PopStyleColor();
+
+            // col 2: delete button
+            ImGui.TableNextColumn();
+            if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##del_{i}", Language.DeleteInstructionTooltip))
+                deleteIndex = i;
+
+            ImGui.PopID();
+        }
+
+        ImGui.EndTable();
+
+        // deferred delete to avoid modifying list mid-loop
+        if (deleteIndex >= 0) {
+            cidGroup.Cids.RemoveAt(deleteIndex);
+            Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
         }
     }
 
