@@ -33,6 +33,10 @@ public class MacroEditorWindow : Window {
     private uint _inputLines = 15;
     private float _rightPanelWidth = 320f;
 
+    private readonly ImGuiComboSearch _tagCombo = new();
+    private readonly ImGuiComboSearch _charCombo = new();
+    private readonly ImGuiComboSearch _groupCombo = new();
+
     private List<string> MacrosTags = new();
 
     private readonly ImGuiInputTextMultiline InputTextMultiline;
@@ -263,7 +267,7 @@ public class MacroEditorWindow : Window {
             ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
             ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
             ImGui.SetNextItemWidth(-1);
-            if (ImGuiUtil.DrawComboSearch("##MacroTagsSelectList", MacrosTags, ref TagSelected)) {
+            if (_tagCombo.Draw("##MacroTagsSelectList", MacrosTags, ref TagSelected)) {
                 MacroItem.Tags.AddUnique(TagSelected);
                 TagSelected = string.Empty;
             }
@@ -451,7 +455,7 @@ public class MacroEditorWindow : Window {
         ImGui.SetNextItemWidth(-removeAllBtnWidth - ImGui.GetStyle().ItemSpacing.X);
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGuiUtil.DrawComboSearch($"##CharSearch_{commandIndex}", charNames, ref CharSelected)) {
+        if (_charCombo.Draw($"##CharSearch_{commandIndex}", charNames, ref CharSelected)) {
             var found = availableCharacters.FirstOrDefault(c => c.Name == CharSelected);
             if (found != null) {
                 MacroItem.Commands[commandIndex].Cids.AddUnique(found.Cid);
@@ -521,7 +525,7 @@ public class MacroEditorWindow : Window {
         ImGui.SetNextItemWidth(-removeAllBtnWidth - ImGui.GetStyle().ItemSpacing.X);
         ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGuiUtil.DrawComboSearch($"##GroupSearch_{commandIndex}", groupNames, ref GroupSelected)) {
+        if (_groupCombo.Draw($"##GroupSearch_{commandIndex}", groupNames, ref GroupSelected)) {
             if (!string.IsNullOrEmpty(GroupSelected)) {
                 assignedGroupIds.AddUnique(GroupSelected);
                 GroupSelected = string.Empty;
