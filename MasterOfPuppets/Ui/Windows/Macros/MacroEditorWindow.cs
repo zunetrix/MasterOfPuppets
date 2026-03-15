@@ -135,6 +135,22 @@ public class MacroEditorWindow : Window {
         ImGui.Text("Details");
         ImGui.Separator();
 
+        var hasValidCommand = MacroItem.Commands != null && MacroItem.Commands.IndexExists(SelectedCommandIndex);
+
+        if (ImGui.CollapsingHeader("Character Assignments")) {
+            if (hasValidCommand)
+                DrawCharacterAssignList(SelectedCommandIndex);
+            else
+                ImGui.TextDisabled("Select a command");
+        }
+
+        if (ImGui.CollapsingHeader("Group Assignments")) {
+            if (hasValidCommand)
+                DrawGroupAssignList(SelectedCommandIndex);
+            else
+                ImGui.TextDisabled("Select a command");
+        }
+
         if (ImGui.CollapsingHeader("Appearance")) {
             DrawIconColorPicker();
         }
@@ -157,22 +173,6 @@ public class MacroEditorWindow : Window {
             ImGui.InputTextMultiline("##MacroVariablesInput", ref MacroItem.Variables, size: new Vector2(-1, 250));
             ImGui.Spacing();
             ImGui.Spacing();
-        }
-
-        var hasValidCommand = MacroItem.Commands != null && MacroItem.Commands.IndexExists(SelectedCommandIndex);
-
-        if (ImGui.CollapsingHeader("Character Assignments")) {
-            if (hasValidCommand)
-                DrawCharacterAssignList(SelectedCommandIndex);
-            else
-                ImGui.TextDisabled("Select a command");
-        }
-
-        if (ImGui.CollapsingHeader("Group Assignments")) {
-            if (hasValidCommand)
-                DrawGroupAssignList(SelectedCommandIndex);
-            else
-                ImGui.TextDisabled("Select a command");
         }
 
         ImGui.EndChild(); // ##MacroEditorRight
@@ -243,23 +243,35 @@ public class MacroEditorWindow : Window {
 
         ImGuiHelpers.ScaledDummy(0, 10);
 
-        ImGui.BeginGroup();
         {
-            ImGui.Text(Language.MacroTagsLabel);
-            if (ImGui.BeginListBox("##MacroTagsList", new Vector2(-1, 200))) {
-                for (var tagIndex = 0; tagIndex < MacroItem.Tags.Count; tagIndex++) {
-                    if (ImGui.Selectable($"{MacroItem.Tags[tagIndex]}", false)) {
-                        if (ImGui.GetIO().KeyCtrl) {
-                            MacroItem.Tags.RemoveAt(tagIndex);
-                            RefreshMacrosTags();
-                        }
-                    }
-                    ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+            float deleteColWidth = ImGui.GetFrameHeight();
+            int deleteTagIndex = -1;
+
+            if (ImGui.BeginTable("##MacroTagsTable", 2,
+                ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,
+                new Vector2(-1, 150))) {
+                ImGui.TableSetupScrollFreeze(0, 1);
+                ImGui.TableSetupColumn("Tag", ImGuiTableColumnFlags.WidthStretch);
+                ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, deleteColWidth);
+                ImGui.TableHeadersRow();
+
+                for (var i = 0; i < MacroItem.Tags.Count; i++) {
+                    ImGui.TableNextRow();
+                    ImGui.TableNextColumn();
+                    ImGui.Text(MacroItem.Tags[i]);
+                    ImGui.TableNextColumn();
+                    if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##DeleteTag_{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                        deleteTagIndex = i;
                 }
-                ImGui.EndListBox();
+
+                ImGui.EndTable();
+            }
+
+            if (deleteTagIndex >= 0) {
+                MacroItem.Tags.RemoveAt(deleteTagIndex);
+                RefreshMacrosTags();
             }
         }
-        ImGui.EndGroup();
         ImGui.Spacing();
         ImGui.Spacing();
     }
@@ -401,22 +413,35 @@ public class MacroEditorWindow : Window {
             .Where(c => !usedCids.Contains(c.Cid))
             .ToList();
 
-        if (ImGui.BeginListBox($"##CharactersList_command_{commandIndex}", new Vector2(-1, 120))) {
+        float deleteColWidth = ImGui.GetFrameHeight();
+        int deleteIndex = -1;
+
+        if (ImGui.BeginTable($"##CidsTable_cmd_{commandIndex}", 2,
+            ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,
+            new Vector2(-1, 120))) {
+            ImGui.TableSetupScrollFreeze(0, 0);
+            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, deleteColWidth);
+
             for (var i = 0; i < MacroItem.Commands[commandIndex].Cids.Count; i++) {
                 var targetCid = MacroItem.Commands[commandIndex].Cids[i];
                 var character = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == targetCid)
                     ?? new Character { Cid = targetCid, Name = $"Unknown ({targetCid})" };
 
-                if (ImGui.Selectable($"{character.Name}##cmd_{commandIndex}_char_{i}", false)) {
-                    if (ImGui.GetIO().KeyCtrl) {
-                        MacroItem.Commands[commandIndex].Cids.RemoveAll(cid => cid == targetCid);
-                        break;
-                    }
-                }
-                ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGui.Text(character.Name);
+
+                ImGui.TableNextColumn();
+                if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##DeleteChar_{commandIndex}_{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                    deleteIndex = i;
             }
-            ImGui.EndListBox();
+
+            ImGui.EndTable();
         }
+
+        if (deleteIndex >= 0)
+            MacroItem.Commands[commandIndex].Cids.RemoveAt(deleteIndex);
 
         ImGui.BeginDisabled(availableCharacters.Count == 0);
         ImGui.SetNextItemWidth(-1);
@@ -459,22 +484,34 @@ public class MacroEditorWindow : Window {
             .Where(g => !assignedGroupIds.Contains(g.Name))
             .ToList();
 
-        if (ImGui.BeginListBox($"##GroupsList_command_{commandIndex}", new Vector2(-1, 120))) {
+        float deleteColWidth = ImGui.GetFrameHeight();
+        int deleteIndex = -1;
+
+        if (ImGui.BeginTable($"##GroupsTable_cmd_{commandIndex}", 2,
+            ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,
+            new Vector2(-1, 120))) {
+            ImGui.TableSetupScrollFreeze(0, 0);
+            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, deleteColWidth);
+
             for (var i = 0; i < assignedGroupIds.Count; i++) {
                 var groupName = assignedGroupIds[i];
-                var group = allGroups.FirstOrDefault(g => g.Name == groupName);
-                var displayName = group?.Name ?? $"Unknown ({groupName})";
+                var displayName = allGroups.FirstOrDefault(g => g.Name == groupName)?.Name ?? $"Unknown ({groupName})";
 
-                if (ImGui.Selectable($"{displayName}##cmd_{commandIndex}_group_{i}", false)) {
-                    if (ImGui.GetIO().KeyCtrl) {
-                        assignedGroupIds.RemoveAt(i);
-                        break;
-                    }
-                }
-                ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGui.Text(displayName);
+
+                ImGui.TableNextColumn();
+                if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##DeleteGroup_{commandIndex}_{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                    deleteIndex = i;
             }
-            ImGui.EndListBox();
+
+            ImGui.EndTable();
         }
+
+        if (deleteIndex >= 0)
+            assignedGroupIds.RemoveAt(deleteIndex);
 
         ImGui.BeginDisabled(availableGroups.Count == 0);
         ImGui.SetNextItemWidth(-1);
