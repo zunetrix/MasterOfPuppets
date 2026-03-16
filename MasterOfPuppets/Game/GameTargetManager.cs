@@ -223,4 +223,21 @@ public static class GameTargetManager {
         Distance = currentDistance;
         return currentObject;
     }
+
+    // public static (ulong Cid, string Name, string HomeWorld, string FullName)? GetTargetPlayerInfo() {
+    //     var target = DalamudApi.TargetManager.Target;
+    //     if (target == null || target.ObjectKind != ObjectKind.Player)
+    //         return null;
+
+    //     var player = target as IPlayerCharacter;
+    //     if (player == null) return null;
+
+    //     var world = player.HomeWorld.ValueNullable?.Name;
+    //     ulong targetCid = player.????;
+    //     string targetName = player.Name.TextValue;
+    //     string targetHomeWorld = world != null ? $"{world}" : "";
+    //     string targetFullName = $"{player.Name.TextValue}@{world}";
+
+    //     return (targetCid, targetName, targetHomeWorld, targetFullName);
+    // }
 }

@@ -76,6 +76,7 @@ public class CharactersWindow : Window {
             ResetCopiedCids();
 
         // row 2: add party member combo + help marker
+        ImGui.Text("Add From Party:");
         ImGui.BeginDisabled(availablePartyMembers.Count == 0);
         float helpBtnWidth = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X;
         ImGui.SetNextItemWidth(-helpBtnWidth);
@@ -93,15 +94,22 @@ public class CharactersWindow : Window {
         ImGui.PopStyleVar();
         ImGui.PopStyleColor();
         ImGui.EndDisabled();
+
+        // ImGui.SameLine();
+        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##AddFromTargetBtn", "Add From Target")) {
+        //     if (GameTargetManager.GetTargetPlayerInfo() is { } target) {
+        //         Plugin.Config.AddCharacter(new Character { Cid = target.Cid, Name = target.FullName });
+        //         Plugin.IpcProvider.SyncConfiguration();
+        //     }
+        // }
+
         ImGui.SameLine();
         ImGuiUtil.HelpMarker("""
-            Added characters are used to assign macro actions, once in the list they dont need be in the party to be assigned in macros
-
-            Drag to reorder
+            dded characters are used for assigning macro actions; once they’re in the list, they don’t need to be in the party to be used in macros
             """);
 
         ImGui.Separator();
-        ImGui.Spacing();
+        ImGuiHelpers.ScaledDummy(0, 5);
     }
 
     private List<Character> GetAvailablePartyMembers() {
@@ -117,21 +125,23 @@ public class CharactersWindow : Window {
     }
 
     private void DrawCharactersTable() {
-        var allCharacters = Plugin.Config.Characters;
+        var allCharacters = Plugin.Config.Characters.ToList();
         var filteredIndices = Enumerable.Range(0, allCharacters.Count)
             .Where(i => string.IsNullOrEmpty(_charSearchFilter) ||
                         allCharacters[i].Name.Contains(_charSearchFilter, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         float actionsColWidth = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.X;
+        float kbColWidth = ImGui.GetFrameHeight();
 
-        if (!ImGui.BeginTable("##CharactersTable", 3,
+        if (!ImGui.BeginTable("##CharactersTable", 4,
             ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
             ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV))
             return;
 
         ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 28 * ImGuiHelpers.GlobalScale);
         ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn("KB", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
         ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, actionsColWidth);
         ImGui.TableHeadersRow();
 
@@ -176,7 +186,17 @@ public class CharactersWindow : Window {
             }
             ImGui.PopStyleColor();
 
-            // col 2: action buttons (right-aligned by column sizing)
+            // col 2: keyboard broadcast toggle
+            ImGui.TableNextColumn();
+            bool kbEnabled = allCharacters[i].KeyboardBroadcastEnabled;
+            if (ImGui.Checkbox($"##KB_{allCharacters[i].Cid}", ref kbEnabled)) {
+                allCharacters[i].KeyboardBroadcastEnabled = kbEnabled;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.ToolTip("Allow this character to receive keyboard broadcast from the master client");
+
+            // col 3: action buttons (right-aligned by column sizing)
             ImGui.TableNextColumn();
             bool alreadyCopied = _copiedCids.Contains(allCharacters[i].Cid);
             var copyColor = alreadyCopied ? Style.Colors.Green : Style.Colors.White;

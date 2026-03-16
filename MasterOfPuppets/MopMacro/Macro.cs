@@ -11,6 +11,9 @@ public class Character {
 
     [JsonPropertyName("name")]
     public string Name = string.Empty;
+
+    [JsonPropertyName("keyboardBroadcast")]
+    public bool KeyboardBroadcastEnabled = true;
 }
 
 public class CidGroup {

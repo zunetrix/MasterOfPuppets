@@ -31,4 +31,6 @@ public enum IpcMessageType {
     ExecuteFormation,
     RequestEmoteList,
     EmoteList,
+    KeyboardBroadcastToggle,
+    KeyboardInput,
 }

@@ -281,6 +281,9 @@ public class PluginCommandManager : IDisposable {
                         Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
                     }
                     break;
+                case "keyboard":
+                    Plugin.IpcProvider.ToggleKeyboardBroadcast();
+                    break;
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");
                     break;
