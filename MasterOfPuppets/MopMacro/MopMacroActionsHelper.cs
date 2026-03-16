@@ -486,6 +486,102 @@ public static class MopMacroActionsHelper {
          },
         new MopAction {
             Category = MopActionCategory.MacroAction,
+            TextCommand = "/moploopstart [loop amount]",
+            SuggestionCommand = "/moploopstart",
+            Example = """
+            Run a setup block once, then loop a section 5 times:
+                /mopmovegearsets 12,13,14
+                /mopwait 3
+
+                /moploopstart 5
+                /gs change 12
+                /mopwait 1
+                /gs change 13
+                /mopwait 1
+                /moploopend
+
+            Loop a section indefinitely (no argument):
+                /mopwait 1
+
+                /moploopstart
+                /clap
+                /mopwait 2
+                /moploopend
+            """,
+            Notes = """
+            Marks the start of a loop block. Actions before /moploopstart run once.
+            Actions between /moploopstart and /moploopend repeat N times, or indefinitely if no number is given.
+            Use /moploopend to close the block.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/moploopend",
+            SuggestionCommand = "/moploopend",
+            Example = """
+            /moploopstart 3
+            /clap
+            /mopwait 1
+            /moploopend
+            """,
+            Notes = """
+            Marks the end of a loop block started by /moploopstart.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "{random(min,max)}",
+            SuggestionCommand = "{random(",
+            Example = """
+            Random integer wait between 1 and 3 seconds:
+                /mopwait {random(1,3)}
+
+            Random float wait between 1.5 and 3.5 seconds:
+                /mopwait {random(1.5,3.5)}
+
+            Use inside any command or chat line:
+                /say Rolling {random(1,100)}!
+
+            Works inside loop blocks (new value each iteration):
+                /moploopstart 5
+                /mopwait {random(0.5,2.0)}
+                /clap
+                /moploopend
+            """,
+            Notes = """
+            Replaced at execution time by a random value between min and max (inclusive).
+            Integer inputs produce an integer result: {random(1,5)} → 1, 2, 3, 4, or 5.
+            Decimal inputs produce a float result with 2 decimal places: {random(1.5,3.5)} → e.g. 2.17.
+            The value is re-evaluated on every execution, including each loop iteration.
+            Use {random(a,b,c,...)} with three or more values to pick from a specific list.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "{random(v1,v2,v3,...)}",
+            SuggestionCommand = "{random(",
+            Example = """
+            Pick one gearset slot at random from a specific list:
+                /gs change {random(1,3,7,12)}
+
+            Pick a random float wait from specific values:
+                /mopwait {random(0.5,1.0,1.5,2.0)}
+
+            Works inside loop blocks (new pick each iteration):
+                /moploopstart
+                /gs change {random(1,3,7,12)}
+                /mopwait {random(0.5,1.0,2.0)}
+                /moploopend
+            """,
+            Notes = """
+            When three or more values are given, picks one at random from the list instead of generating a range.
+            Two values always produce a range: {random(1,5)} = any integer 1–5.
+            Three+ values pick from the exact set: {random(1,3,5)} = 1, 3, or 5 only.
+            Supports decimals in lists: {random(0.5,1.0,1.5)} = 0.5, 1.0, or 1.5.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
             TextCommand = "/mopmacro <\"Macro Name\" | macro number>",
             SuggestionCommand = "/mopmacro ",
             Example = """

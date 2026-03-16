@@ -122,7 +122,9 @@ public partial class MacroHandler : IDisposable {
     }
 
     public void EnqueueMacroActions(string macroId, string[] actions, double delayBetweenActions) {
-        bool hasLoop = actions.Any(a => a.Contains("/moploop", StringComparison.OrdinalIgnoreCase));
+        bool hasLoop = actions.Any(a =>
+            a.Contains("/moploop", StringComparison.OrdinalIgnoreCase) ||
+            a.Contains("/moploopstart", StringComparison.OrdinalIgnoreCase));
         var state = hasLoop ? _loopState : _macroState;
         var channel = hasLoop ? _loopChannel : _macroChannel;
 
@@ -171,16 +173,24 @@ public partial class MacroHandler : IDisposable {
             shouldLoop = false;
             state.ActionIndex = -1;
 
-            foreach (var action in actions) {
+            // State for /moploopstart … /moploopend block (reset each outer loop pass).
+            int loopBlockStart = -1;
+            int? loopBlockIterLeft = null;
+
+            for (int i = 0; i < actions.Length; i++) {
                 if (token.IsCancellationRequested) return;
                 state.PauseGate.Wait(token);
 
-                state.ActionIndex++;
+                state.ActionIndex = i;
+
+                // Apply dynamic token substitution ({random(min,max)}, etc.)
+                var action = MacroTokenProcessor.Process(actions[i]);
 
                 var match = ActionRegex.Match(action);
                 var command = match.Success ? match.Groups[1].Value : null;
                 var args = match.Success ? match.Groups[2].Value.Trim() : null;
 
+                // /moploop — whole-macro loop (existing behaviour)
                 if (command != null && command.Equals("moploop", StringComparison.OrdinalIgnoreCase)) {
                     if (string.IsNullOrWhiteSpace(args)) {
                         shouldLoop = true;
@@ -194,6 +204,34 @@ public partial class MacroHandler : IDisposable {
                     break;
                 }
 
+                // /moploopstart [N] — begin a loop block (runs N times, or forever)
+                if (command != null && command.Equals("moploopstart", StringComparison.OrdinalIgnoreCase)) {
+                    loopBlockStart = i + 1;
+                    if (string.IsNullOrWhiteSpace(args)) {
+                        loopBlockIterLeft = null; // infinite
+                    } else if (uint.TryParse(args, out uint count) && count > 0) {
+                        loopBlockIterLeft = (int)count - 1; // -1: first pass already in progress
+                    } else {
+                        DalamudApi.PluginLog.Warning($"[moploopstart] invalid argument: \"{args}\"");
+                    }
+                    continue;
+                }
+
+                // /moploopend — jump back to loopBlockStart, or fall through when exhausted
+                if (command != null && command.Equals("moploopend", StringComparison.OrdinalIgnoreCase)) {
+                    if (loopBlockStart < 0) {
+                        DalamudApi.PluginLog.Warning("[moploopend] no matching /moploopstart found");
+                    } else if (loopBlockIterLeft == null || loopBlockIterLeft > 0) {
+                        if (loopBlockIterLeft != null) loopBlockIterLeft--;
+                        i = loopBlockStart - 1; // -1 because the for loop will i++
+                    } else {
+                        // loop exhausted — reset block state and continue
+                        loopBlockStart = -1;
+                        loopBlockIterLeft = null;
+                    }
+                    continue;
+                }
+
                 if (command != null && _commands.TryGetValue(command, out var cmd)) {
                     await cmd.Handler(macroId, args!, token);
                     if (!cmd.SkipGlobalDelay && delayBetweenActions > 0.0) {
@@ -202,7 +240,7 @@ public partial class MacroHandler : IDisposable {
                         await Task.Delay(delayMs, token);
                     }
                 } else {
-                    // No regex match OR unrecognised command - forward raw to chat
+                    // No regex match OR unrecognised command — forward raw to chat
                     DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
                     _ = DalamudApi.Framework.RunOnFrameworkThread(delegate { Chat.SendMessage(action); });
                     if (delayBetweenActions > 0.0) {
