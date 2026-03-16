@@ -29,4 +29,6 @@ public enum IpcMessageType {
     ExecuteChangeGearset,
     SetWindowTitle,
     ExecuteFormation,
+    RequestEmoteList,
+    EmoteList,
 }
