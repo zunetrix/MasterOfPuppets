@@ -458,7 +458,7 @@ public class FormationWindow : Window {
         var formation = SelectedFormation;
         if (formation == null) { ImGui.TextDisabled("No formation selected"); return; }
 
-        // ── Header: Execute | Delete | Name ──────────────────────────────
+        //  Header: Execute | Delete | Name
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, "##execfm", "Execute formation"))
             Plugin.IpcProvider.ExecuteFormation(formation.Name);
         ImGui.SameLine();
@@ -481,7 +481,7 @@ public class FormationWindow : Window {
         var pt2 = _selPoint >= 0 && _selPoint < formation.Points.Count
             ? formation.Points[_selPoint] : null;
 
-        // ── Points list ──────────────────────────────────────────────────
+        //  Points list
         ImGui.SetNextItemOpen(true, ImGuiCond.Once);
         if (ImGui.CollapsingHeader($"Points ({formation.Points.Count})##fwpts")) {
             if (formation.Points.Count == 0) {
@@ -521,7 +521,7 @@ public class FormationWindow : Window {
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("Ctrl+Click to clear all points");
         }
 
-        // ── Point Editor ─────────────────────────────────────────────────
+        //  Point Editor
         ImGui.SetNextItemOpen(true, ImGuiCond.Once);
         if (ImGui.CollapsingHeader("Point Editor##fwptedit")) {
             if (pt2 == null) {
@@ -547,7 +547,7 @@ public class FormationWindow : Window {
             }
         }
 
-        // ── Characters ───────────────────────────────────────────────────
+        //  Characters
         if (ImGui.CollapsingHeader("Characters##fwchars")) {
             if (pt2 == null) {
                 ImGui.TextDisabled("Select a point");
@@ -583,7 +583,7 @@ public class FormationWindow : Window {
             }
         }
 
-        // ── Groups ───────────────────────────────────────────────────────
+        //  Groups
         if (ImGui.CollapsingHeader("Groups##fwgrps")) {
             if (pt2 == null) {
                 ImGui.TextDisabled("Select a point");

@@ -24,7 +24,7 @@ public class SettingsWindow : Window {
     // commandKey → { defaultAlias → current input text }
     private readonly Dictionary<string, Dictionary<string, string>> _aliasInputs = new();
 
-    // ── keyboard filter popup ─────────────────────────────────────────────────
+    //  keyboard filter popup
     private const string KbFilterPopupId = "Key Filter##KbFilter";
 
     private readonly record struct KeyDef(int Vk, string Label, float W);

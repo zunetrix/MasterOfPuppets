@@ -252,6 +252,25 @@ public class MainWindow : Window {
     //     }
     // }
 
+    private void DrawPartyMenu() {
+        using var menu = ImRaii.Menu("Party");
+        if (!menu) return;
+
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonCirclePlus, $"##ExecuteInviteLocalClientsToParty")) {
+            // Plugin.IpcProvider.ExecuteTargetMyTarget();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Invite To Party")) {
+            // Plugin.MacroManager.BackupMacros();
+        }
+
+        if (ImGui.MenuItem("Formations"))
+            Plugin.Ui.FormationWindow.Toggle();
+
+        if (ImGui.MenuItem("Formations2"))
+            Plugin.Ui.FormationImPlotWindow.Toggle();
+    }
+
     private void DrawCommandsMenu() {
         using var menu = ImRaii.Menu("Commands");
         if (!menu) return;
@@ -368,11 +387,7 @@ public class MainWindow : Window {
 
         DrawCommandsMenu();
 
-        // if (ImGui.MenuItem("Formations"))
-        //     Plugin.Ui.FormationWindow.Toggle();
-
-        // if (ImGui.MenuItem("Formations2"))
-        //     Plugin.Ui.FormationImPlotWindow.Toggle();
+        DrawPartyMenu();
 
         if (ImGui.MenuItem("Help"))
             Plugin.Ui.MacroHelpWindow.Toggle();

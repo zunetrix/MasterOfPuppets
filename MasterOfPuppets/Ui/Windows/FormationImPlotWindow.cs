@@ -13,9 +13,8 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class FormationImPlotWindow : Window, IDisposable {
+public class FormationImPlotWindow : Window {
     private Plugin Plugin { get; }
-    private ImPlotContextPtr _plotCtx;
 
     //  Left panel
     private string _searchFilter = string.Empty;
@@ -37,8 +36,8 @@ public class FormationImPlotWindow : Window, IDisposable {
 
     //  World overlay
     private bool _worldOverlay;
-    private float _markerSizePlot = 36f;
-    private float _markerSizeWorld = 12f;
+    private float _arrowSize = 0.5f;
+    private float _markerSizeWorld = 1.5f;
 
     //  Right panel
     private float _rightPanelWidth = 300f;
@@ -55,19 +54,9 @@ public class FormationImPlotWindow : Window, IDisposable {
         Plugin = plugin;
         Size = new Vector2(960, 620);
         SizeCondition = ImGuiCond.FirstUseEver;
-
-        ImPlot.SetImGuiContext(ImGui.GetCurrentContext());
-        _plotCtx = ImPlot.CreateContext();
-        ImPlot.SetCurrentContext(_plotCtx);
-    }
-
-    public void Dispose() {
-        ImPlot.DestroyContext(_plotCtx);
     }
 
     public override void Draw() {
-        ImPlot.SetCurrentContext(_plotCtx);
-
         const float leftW = 220f;
         const float splitterW = 6f;
         const float minRightW = 150f;
@@ -162,15 +151,17 @@ public class FormationImPlotWindow : Window, IDisposable {
 
         DrawShapeToolbar(formation);
         ImGui.SameLine();
-        ImGui.Text("Pt:");
+        ImGui.Text("Size:");
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(38);
-        ImGui.DragFloat("##mszpi", ref _markerSizePlot, 0.5f, 5f, 80f, "%.0f");
+        ImGui.SetNextItemWidth(46);
+        ImGui.DragFloat("##mszpi", ref _arrowSize, 0.01f, 0.1f, 3f, "%.2f");
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Arrow size in plot units (scales with zoom)");
         ImGui.SameLine();
         ImGui.Text("W:");
         ImGui.SameLine();
         ImGui.SetNextItemWidth(38);
-        ImGui.DragFloat("##mszwi", ref _markerSizeWorld, 0.5f, 2f, 30f, "%.0f");
+        ImGui.DragFloat("##mszwi", ref _markerSizeWorld, 0.05f, 0.2f, 5f, "%.1f");
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("World arrow size in meters");
         ImGui.SameLine();
         if (ImGui.Button("From Party##fi") && formation != null)
             SnapshotParty(formation);
@@ -212,6 +203,9 @@ public class FormationImPlotWindow : Window, IDisposable {
 
         bool anyDragged = false;
         int pointId = 0;
+        bool keyAlt = ImGui.GetIO().KeyAlt;
+        bool keyCtrl = ImGui.GetIO().KeyCtrl;
+        bool keyShift = ImGui.GetIO().KeyShift;
 
         for (int i = 0; i < formation.Points.Count; i++) {
             var pt = formation.Points[i];
@@ -222,28 +216,49 @@ public class FormationImPlotWindow : Window, IDisposable {
             double x = pt.Offset.X;
             double y = -pt.Offset.Z;
 
-            // Fixed-pixel oriented triangle
-            var ptPx = ImPlot.PlotToPixels((float)x, (float)y);
-            DrawTri(dl, ptPx, pt.Angle, color, _markerSizePlot);
+            // Arrow drawn in plot-space — scales naturally with zoom
+            DrawArrow(dl, (float)x, (float)y, pt.Angle, color, _arrowSize);
 
-            // Label centered on triangle in screen space, on foreground so DragPoint doesn't cover it
+            // Label centered on point in screen space
+            var ptPx = ImPlot.PlotToPixels((float)x, (float)y);
             var label = $"{i + 1}";
             var labelSz = ImGui.CalcTextSize(label);
             ImGui.GetForegroundDrawList().AddText(ptPx - labelSz * 0.5f, 0xFFFFFFFF, label);
 
-            // Click detection before DragPoint so the click isn't consumed first
+            // Click radius derived from plot-space size so it scales with zoom
+            var edgePx = ImPlot.PlotToPixels((float)x + _arrowSize * 0.5f, (float)y);
+            float clickR = MathF.Max(Vector2.Distance(ptPx, edgePx), 8f);
+
             if (ImPlot.IsPlotHovered() &&
-                Vector2.Distance(ptPx, ImGui.GetMousePos()) < _markerSizePlot * 0.5f &&
+                Vector2.Distance(ptPx, ImGui.GetMousePos()) < clickR &&
                 ImGui.IsMouseClicked(ImGuiMouseButton.Left)) {
                 _selPoint = i;
-                anyDragged = true; // prevent empty-area deselect this frame
+                anyDragged = true;
             }
 
-            // DragPoint for dragging; only commit offset when mouse actually moved
+            double origX = x, origY = y;
+
             if (ImPlot.DragPoint(pointId++, ref x, ref y, ImGui.ColorConvertU32ToFloat4(color))) {
                 anyDragged = true;
-                if (ImGui.GetMouseDragDelta(ImGuiMouseButton.Left).LengthSquared() > 16f) {
-                    _selPoint = i;
+                _selPoint = i;
+
+                if (keyAlt) {
+                    // Alt+drag: adjust rotation via horizontal mouse movement, don't move position
+                    x = origX;
+                    y = origY;
+                    pt.Angle += ImGui.GetIO().MouseDelta.X;
+                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                        Plugin.Config.Save();
+                } else if (ImGui.GetMouseDragDelta(ImGuiMouseButton.Left).LengthSquared() > 4f) {
+                    if (keyCtrl) {
+                        // Ctrl: snap to 1-unit grid
+                        x = Math.Round(x, MidpointRounding.AwayFromZero);
+                        y = Math.Round(y, MidpointRounding.AwayFromZero);
+                    } else if (keyShift) {
+                        // Shift: snap to 0.25-unit grid
+                        x = Math.Round(x * 4, MidpointRounding.AwayFromZero) / 4;
+                        y = Math.Round(y * 4, MidpointRounding.AwayFromZero) / 4;
+                    }
                     pt.Offset.X = (float)x;
                     pt.Offset.Z = -(float)y;
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
@@ -254,7 +269,7 @@ public class FormationImPlotWindow : Window, IDisposable {
 
         // Shift+Click on empty area → add point
         if (!anyDragged && ImPlot.IsPlotHovered() &&
-                ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.GetIO().KeyShift) {
+                ImGui.IsMouseClicked(ImGuiMouseButton.Left) && keyShift) {
             var mp = ImPlot.GetPlotMousePos();
             formation.Points.Add(new FormationPoint {
                 Offset = new Vector3((float)mp.X, 0f, -(float)mp.Y),
@@ -265,7 +280,7 @@ public class FormationImPlotWindow : Window, IDisposable {
 
         // Click on empty area → deselect
         if (!anyDragged && ImPlot.IsPlotHovered() &&
-                ImGui.IsMouseClicked(ImGuiMouseButton.Left) && !ImGui.GetIO().KeyShift) {
+                ImGui.IsMouseClicked(ImGuiMouseButton.Left) && !keyShift) {
             _selPoint = -1;
         }
 
@@ -273,18 +288,27 @@ public class FormationImPlotWindow : Window, IDisposable {
         ImPlot.EndPlot();
     }
 
-    /// <summary>Fixed-pixel-size oriented triangle drawn at a screen-space center.</summary>
-    private static void DrawTri(ImDrawListPtr dl, Vector2 center, float angleDeg, uint color, float r = 36f) {
+    /// <summary>Arrow drawn in plot-space coordinates — scales naturally with zoom.
+    /// Vertices are rotated in plot-space then converted to pixels via ImPlot.PlotToPixels.
+    /// At angleDeg=0 the tip points north (+Y_plot). Clockwise = east at 90°.</summary>
+    private static void DrawArrow(ImDrawListPtr dl, float px, float py, float angleDeg, uint color, float size = 0.5f) {
         float rad = angleDeg * Angle.DegToRad;
-        var fwd = new Vector2(MathF.Sin(rad), -MathF.Cos(rad));
-        var right = new Vector2(MathF.Cos(rad), MathF.Sin(rad));
+        float cosA = MathF.Cos(rad), sinA = MathF.Sin(rad);
+        float h = size * 0.5f;
 
-        var p0 = center + fwd * r;
-        var p1 = center - fwd * 0.4f * r + right * 0.6f * r;
-        var p2 = center - fwd * 0.4f * r - right * 0.6f * r;
+        // Kite-shape vertices in local plot-space (forward = north = +Y_plot)
+        (float lx, float ly)[] local = [(0f, 1f), (1f, -1f), (0f, -0.5f), (-1f, -1f)];
 
-        dl.AddTriangleFilled(p0, p1, p2, color);
-        dl.AddTriangle(p0, p1, p2, 0xFFFFFFFF);
+        var pts = new Vector2[4];
+        for (int i = 0; i < 4; i++) {
+            float lx = local[i].lx * h, ly = local[i].ly * h;
+            // CW rotation: tip (0, 1) at angle α → (sin α, cos α) in plot-space
+            pts[i] = ImPlot.PlotToPixels(px + lx * cosA + ly * sinA,
+                                         py - lx * sinA + ly * cosA);
+        }
+
+        dl.AddConvexPolyFilled(ref pts[0], 4, color);
+        dl.AddPolyline(ref pts[0], 4, 0xFFFFFFFF, ImDrawFlags.Closed, 1.5f);
     }
 
     private void DrawShapeToolbar(Formation? formation) {
@@ -365,48 +389,58 @@ public class FormationImPlotWindow : Window, IDisposable {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
 
-        var fgDl = ImGui.GetForegroundDrawList();
+        var bdl = ImGui.GetBackgroundDrawList(ImGui.GetMainViewport());
         var playerPos = player.Position;
-
-        float cosR = MathF.Cos(player.Rotation);
-        float sinR = MathF.Sin(player.Rotation);
-
-        DalamudApi.GameGui.WorldToScreen(playerPos, out var originPx);
-        var screenFwdFallback = DalamudApi.GameGui.WorldToScreen(
-                new Vector3(playerPos.X + sinR, playerPos.Y, playerPos.Z + cosR), out var fwdOriginPx)
-            ? Vector2.Normalize(fwdOriginPx - originPx)
-            : new Vector2(0f, -1f);
+        float R = player.Rotation;
+        float cosR = MathF.Cos(R), sinR = MathF.Sin(R);
 
         for (int i = 0; i < formation.Points.Count; i++) {
             var pt = formation.Points[i];
 
+            // Rotate formation offset by player yaw to get world position
             var worldPos = playerPos + new Vector3(
                  pt.Offset.X * cosR + pt.Offset.Z * sinR,
                  pt.Offset.Y,
                 -pt.Offset.X * sinR + pt.Offset.Z * cosR);
-            if (!DalamudApi.GameGui.WorldToScreen(worldPos, out var screenPos)) continue;
 
-            float A = pt.Angle * Angle.DegToRad;
-            float sinA = MathF.Sin(A), cosA = MathF.Cos(A);
-            var facingWorld = new Vector3(
-                worldPos.X + sinA * cosR - cosA * sinR,
-                worldPos.Y,
-                worldPos.Z - sinA * sinR - cosA * cosR);
-            var fwd = DalamudApi.GameGui.WorldToScreen(facingWorld, out var facingPx)
-                ? Vector2.Normalize(screenPos - facingPx)
-                : screenFwdFallback;
-            var right = new Vector2(-fwd.Y, fwd.X);
-
-            float r = _markerSizeWorld;
             uint c = i == _selPoint ? 0xFFFFAA00u : 0xFF3388FFu;
-            var p0 = screenPos + fwd * r;
-            var p1 = screenPos - fwd * 0.4f * r + right * 0.6f * r;
-            var p2 = screenPos - fwd * 0.4f * r - right * 0.6f * r;
-            fgDl.AddTriangleFilled(p0, p1, p2, c);
-            fgDl.AddTriangle(p0, p1, p2, 0xFFFFFFFF);
-            var label = (i + 1).ToString();
-            fgDl.AddText(screenPos - ImGui.CalcTextSize(label) * 0.5f, 0xFFFFFFFF, label);
+
+            // θ = π − A_rad + R maps our ImPlot convention (angle 0 = north = −Z FFXIV)
+            // onto BardToolbox's Matrix4x4.CreateRotationY which uses tip at (0,0,1)
+            float worldRot = MathF.PI - pt.Angle * Angle.DegToRad + R;
+
+            if (!DrawWorldArrow(bdl, worldPos, worldRot, c, _markerSizeWorld)) continue;
+
+            if (DalamudApi.GameGui.WorldToScreen(worldPos, out var centerPx)) {
+                var label = (i + 1).ToString();
+                var labelSz = ImGui.CalcTextSize(label);
+                bdl.AddText(centerPx - labelSz * 0.5f, 0xFFFFFFFF, label);
+            }
         }
+    }
+
+    /// <summary>
+    /// Projects a kite-shaped arrow into screen space by rotating each 3D vertex
+    /// independently with WorldToScreen — perspective-accurate, matches BardToolbox approach.
+    /// </summary>
+    private static bool DrawWorldArrow(ImDrawListPtr dl, Vector3 worldPos, float worldRot, uint color, float sizeM) {
+        if (!DalamudApi.GameGui.WorldToScreen(worldPos, out _)) return false;
+
+        var mat = Matrix4x4.CreateRotationY(worldRot);
+
+        // Same kite vertices as BardToolbox (tip = +Z before rotation, scaled by sizeM/2)
+        var local = new Vector3[] {
+            new(0, 0, 1), new(1, 0, -1), new(0, 0, -0.5f), new(-1, 0, -1),
+        };
+        var pts = new Vector2[4];
+        for (int i = 0; i < 4; i++) {
+            var v = Vector3.Transform(local[i] * (sizeM * 0.5f), mat) + worldPos;
+            if (!DalamudApi.GameGui.WorldToScreen(v, out pts[i])) return false;
+        }
+
+        dl.AddConvexPolyFilled(ref pts[0], 4, color);
+        dl.AddPolyline(ref pts[0], 4, 0xFFFFFFFF, ImDrawFlags.Closed, 1.5f);
+        return true;
     }
 
     // =========================================================================
@@ -417,7 +451,7 @@ public class FormationImPlotWindow : Window, IDisposable {
         var formation = SelectedFormation;
         if (formation == null) { ImGui.TextDisabled("No formation selected"); return; }
 
-        // ── Header: Execute | Delete | Name ──────────────────────────────
+        //  Header: Execute | Delete | Name
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, "##execfmi", "Execute formation"))
             Plugin.IpcProvider.ExecuteFormation(formation.Name);
         ImGui.SameLine();
@@ -440,7 +474,7 @@ public class FormationImPlotWindow : Window, IDisposable {
         var pt2 = _selPoint >= 0 && _selPoint < formation.Points.Count
             ? formation.Points[_selPoint] : null;
 
-        // ── Points list ──────────────────────────────────────────────────
+        //  Points list
         ImGui.SetNextItemOpen(true, ImGuiCond.Once);
         if (ImGui.CollapsingHeader($"Points ({formation.Points.Count})##fipts")) {
             if (formation.Points.Count == 0) {
@@ -480,7 +514,7 @@ public class FormationImPlotWindow : Window, IDisposable {
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("Ctrl+Click to clear all points");
         }
 
-        // ── Point Editor ─────────────────────────────────────────────────
+        //  Point Editor
         ImGui.SetNextItemOpen(true, ImGuiCond.Once);
         if (ImGui.CollapsingHeader("Point Editor##fiptedit")) {
             if (pt2 == null) {
@@ -506,7 +540,7 @@ public class FormationImPlotWindow : Window, IDisposable {
             }
         }
 
-        // ── Characters ───────────────────────────────────────────────────
+        //  Characters
         if (ImGui.CollapsingHeader("Characters##fichars")) {
             if (pt2 == null) {
                 ImGui.TextDisabled("Select a point");
@@ -542,7 +576,7 @@ public class FormationImPlotWindow : Window, IDisposable {
             }
         }
 
-        // ── Groups ───────────────────────────────────────────────────────
+        //  Groups
         if (ImGui.CollapsingHeader("Groups##figrps")) {
             if (pt2 == null) {
                 ImGui.TextDisabled("Select a point");

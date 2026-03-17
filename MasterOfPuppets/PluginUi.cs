@@ -48,7 +48,6 @@ public class PluginUi : IDisposable {
     }
 
     public void Dispose() {
-        FormationImPlotWindow.Dispose();
         WindowSystem.RemoveAllWindows();
     }
 
