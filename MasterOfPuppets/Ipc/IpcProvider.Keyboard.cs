@@ -5,20 +5,27 @@ namespace MasterOfPuppets.Ipc;
 
 internal partial class IpcProvider {
 
+    public void EnableKeyboardBroadcast() => SetKeyboardBroadcast(true);
+    public void DisableKeyboardBroadcast() => SetKeyboardBroadcast(false);
+
     /// <summary>
     /// Toggles keyboard capture on this client and notifies peers to start/stop receiving.
     /// When capturing: master polls keys and broadcasts each transition via <see cref="KeyboardInput"/>.
     /// When peers receive <see cref="IpcMessageType.KeyboardBroadcastToggle"/>, they enable/disable
     /// forwarding keys to their own FFXIV window.
     /// </summary>
-    public void ToggleKeyboardBroadcast() {
-        bool nowCapturing = !Plugin.KeyboardBroadcastManager.IsCapturing;
-        if (nowCapturing)
-            Plugin.KeyboardBroadcastManager.StartCapture();
-        else
-            Plugin.KeyboardBroadcastManager.StopCapture();
+    public void ToggleKeyboardBroadcast() => SetKeyboardBroadcast(!Plugin.KeyboardBroadcastManager.IsCapturing);
 
-        var payload = new byte[] { nowCapturing ? (byte)1 : (byte)0 };
+    private void SetKeyboardBroadcast(bool enable) {
+        if (enable) {
+            Plugin.KeyboardBroadcastManager.StartCapture();
+            DalamudApi.ChatGui.Print("", "MOP: Key Broadcast ON", Style.Colors.SeGreen);
+        } else {
+            Plugin.KeyboardBroadcastManager.StopCapture();
+            DalamudApi.ChatGui.Print("", "MOP: Key Broadcast OFF", Style.Colors.SeRed);
+        }
+
+        var payload = new byte[] { enable ? (byte)1 : (byte)0 };
         BroadCast(IpcMessage.Create(IpcMessageType.KeyboardBroadcastToggle, payload).Serialize());
     }
 
@@ -61,10 +68,10 @@ internal partial class IpcProvider {
         // Master should never receive its own broadcasts (defence-in-depth).
         if (Plugin.KeyboardBroadcastManager.IsCapturing) return;
         if (message.Data.Length < 16) return;
-        uint msg_     = BitConverter.ToUInt32(message.Data, 0);
-        uint vkCode   = BitConverter.ToUInt32(message.Data, 4);
+        uint msg_ = BitConverter.ToUInt32(message.Data, 0);
+        uint vkCode = BitConverter.ToUInt32(message.Data, 4);
         uint scanCode = BitConverter.ToUInt32(message.Data, 8);
-        uint flags    = BitConverter.ToUInt32(message.Data, 12);
+        uint flags = BitConverter.ToUInt32(message.Data, 12);
         Plugin.KeyboardBroadcastManager.ForwardKey(msg_, vkCode, scanCode, flags);
     }
 }

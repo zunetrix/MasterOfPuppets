@@ -281,8 +281,15 @@ public class PluginCommandManager : IDisposable {
                         Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
                     }
                     break;
-                case "keyboard":
-                    Plugin.IpcProvider.ToggleKeyboardBroadcast();
+                case "keybroadcast":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
+                        return;
+                    }
+                    if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
+                        Plugin.IpcProvider.EnableKeyboardBroadcast();
+                    else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
+                        Plugin.IpcProvider.DisableKeyboardBroadcast();
                     break;
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");

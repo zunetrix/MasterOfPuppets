@@ -263,6 +263,7 @@ public class MainWindow : Window {
         if (ImGui.Selectable("Target My Target")) {
             Plugin.IpcProvider.ExecuteTargetMyTarget();
         }
+        ImGuiUtil.ToolTip("/mop targetmytarget");
 
         // -----------------------
 
@@ -273,6 +274,7 @@ public class MainWindow : Window {
         if (ImGui.Selectable("Interact With My Target")) {
             Plugin.IpcProvider.ExecuteInteractWithMyTarget();
         }
+        ImGuiUtil.ToolTip("/mop interactwithmytarget");
 
         // -----------------------
 
@@ -283,6 +285,7 @@ public class MainWindow : Window {
         if (ImGui.Selectable("Target Clear")) {
             Plugin.IpcProvider.ExecuteTargetClear();
         }
+        ImGuiUtil.ToolTip("/mop targetclear");
 
         // -----------------------
 
@@ -293,6 +296,7 @@ public class MainWindow : Window {
         if (ImGui.Selectable("Move To My Target")) {
             Plugin.IpcProvider.ExecuteMoveToMyTarget();
         }
+        ImGuiUtil.ToolTip("/mop movetotarget");
 
         // -----------------------
 
@@ -303,6 +307,7 @@ public class MainWindow : Window {
         if (ImGui.Selectable("Stack On Me")) {
             Plugin.IpcProvider.ExecuteStackOnMe();
         }
+        ImGuiUtil.ToolTip("/mop stackonme");
 
         // -----------------------
 
@@ -313,6 +318,7 @@ public class MainWindow : Window {
         if (ImGui.Selectable("Toggle Walking")) {
             Plugin.IpcProvider.ExecuteToggleWalking();
         }
+        ImGuiUtil.ToolTip("/mop togglewalk");
 
         // -----------------------
 
@@ -323,6 +329,29 @@ public class MainWindow : Window {
         if (ImGui.Selectable("Abandon Duty")) {
             Plugin.IpcProvider.ExecuteAbandonDuty();
         }
+
+        // -----------------------
+
+        ImGui.Separator();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.ToggleOn, $"##ExecuteEmableKB")) {
+            Plugin.IpcProvider.EnableKeyboardBroadcast();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Enable Key Broadcast")) {
+            Plugin.IpcProvider.EnableKeyboardBroadcast();
+        }
+        ImGuiUtil.ToolTip("/mop keybroadcast on");
+
+        // -----------------------
+
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.ToggleOff, $"##ExecuteDisableKB")) {
+            Plugin.IpcProvider.DisableKeyboardBroadcast();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Disable Key Broadcast")) {
+            Plugin.IpcProvider.DisableKeyboardBroadcast();
+        }
+        ImGuiUtil.ToolTip("/mop keybroadcast off");
     }
 
     private void DrawMenuBar() {

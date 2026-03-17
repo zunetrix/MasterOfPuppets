@@ -144,6 +144,15 @@ public class ColorPalette {
         54 / 255.0f,
         1.0f
     ); // #DD3636
+
+    public ushort SeOrange = 500;
+    public ushort SeCyan = 502;
+    public ushort SeGreen = 504;
+    public ushort SeYellow = 506;
+    public ushort SeRed = 518;
+    public ushort SeBlue = 543;
+    public ushort SePurple = 522; // 541
+    public ushort SePink = 578;
 }
 
 public static class ColorUtil {

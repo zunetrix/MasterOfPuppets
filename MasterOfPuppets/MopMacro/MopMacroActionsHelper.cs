@@ -314,6 +314,24 @@ public static class MopMacroActionsHelper {
         new MopAction
         {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop keybroadcast on|off",
+            SuggestionCommand = "/mop keybroadcast ",
+            Example = """
+            /mop keybroadcast on
+            /mop keybroadcast off
+
+            Broadcast:
+            /mopbr /mop keybroadcast on
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Enable or disable keyboard broadcast on this client. Use /mopbr to toggle all clients at once.
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mopbr <command>",
             SuggestionCommand = "/mopbr ",
             Example = """
