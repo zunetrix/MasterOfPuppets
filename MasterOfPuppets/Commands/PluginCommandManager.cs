@@ -251,11 +251,18 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "invite": {
                         if (parsedArgs.Count < 2) {
-                            DalamudApi.ShowNotification("Invalid arguments. Expected \"Character Name@World\"", NotificationType.Error, 5000);
+                            Plugin.IpcProvider.RequestInviteAllToParty();
                             return;
                         }
-                        GameFunctions.InviteToParty(parsedArgs[1]);
+                        // with characterFullname arg name@world
+                        Party.Invite(parsedArgs[1]);
                     }
+                    break;
+                case "getleader":
+                    Plugin.IpcProvider.RequestPartyLeader();
+                    break;
+                case "disband":
+                    Plugin.IpcProvider.RequestDisbandParty();
                     break;
                 case "objectquantity": {
                         if (parsedArgs.Count <= 1) {

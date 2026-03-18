@@ -1,5 +1,3 @@
-using Dalamud.Interface.ImGuiNotification;
-
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 
@@ -9,6 +7,44 @@ namespace MasterOfPuppets;
 
 // https://github.com/Infiziert90/ChatTwo/blob/main/ChatTwo/GameFunctions/Party.cs
 internal static unsafe class Party {
+
+    // full character name: name@world
+    public static void Invite(string characterFullName) {
+        if (string.IsNullOrWhiteSpace(characterFullName))
+            return;
+
+        var atIndex = characterFullName.IndexOf('@');
+
+        if (atIndex <= 0 || atIndex == characterFullName.Length - 1)
+            return;
+
+        var charName = characterFullName[..atIndex];
+        var worldName = characterFullName[(atIndex + 1)..];
+
+        var worldId = WorldHelper.GetWorldId(worldName);
+        if (worldId is null)
+            return;
+
+        Invite(charName, (ushort)worldId);
+    }
+
+    public static void Invite(string characterName, ushort worldId) {
+        if (string.IsNullOrWhiteSpace(characterName))
+            return;
+
+        var atIndex = characterName.IndexOf('@');
+        var charName = atIndex >= 0
+            ? characterName[..atIndex].Trim()
+            : characterName.Trim();
+
+        if (string.IsNullOrEmpty(charName))
+            return;
+
+        DalamudApi.Framework.RunOnTick(() => {
+            InfoProxyPartyInvite.Instance()->InviteToParty(0, charName, worldId);
+        });
+    }
+
     internal static void InviteSameWorld(string name, ushort world, ulong contentId) {
         // this only works if target is on the same world
         fixed (byte* namePtr = name.ToTerminatedBytes()) {

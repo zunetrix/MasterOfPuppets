@@ -25,27 +25,4 @@ public static class GameFunctions {
             Marshal.GetDelegateForFunctionPointer<AbandonDutyDelegate>(EventFramework.Addresses.LeaveCurrentContent.Value);
 
     public static void AbandonDuty() => _abandonDuty(false);
-
-
-    // full character name data: name@world
-    public static unsafe void InviteToParty(string character) {
-        if (string.IsNullOrWhiteSpace(character))
-            return;
-
-        var atIndex = character.IndexOf('@');
-
-        if (atIndex <= 0 || atIndex == character.Length - 1)
-            return;
-
-        var charName = character[..atIndex];
-        var worldName = character[(atIndex + 1)..];
-
-        var worldId = WorldHelper.GetWorldId(worldName);
-        if (worldId is null)
-            return;
-
-        DalamudApi.Framework.RunOnTick(() => {
-            InfoProxyPartyInvite.Instance()->InviteToParty(0, charName, (ushort)worldId.Value);
-        });
-    }
 }

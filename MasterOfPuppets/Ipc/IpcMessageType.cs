@@ -33,4 +33,11 @@ public enum IpcMessageType {
     EmoteList,
     KeyboardBroadcastToggle,
     KeyboardInput,
+    // Party
+    InviteToParty,
+    DisbandParty,
+    RequestPartyLeader,
+    RequestCharacterData,
+    CharacterData,
+    RequestInviteAllToParty,
 }

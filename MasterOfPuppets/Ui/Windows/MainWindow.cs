@@ -256,19 +256,45 @@ public class MainWindow : Window {
         using var menu = ImRaii.Menu("Party");
         if (!menu) return;
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonCirclePlus, $"##ExecuteInviteLocalClientsToParty")) {
-            // Plugin.IpcProvider.ExecuteTargetMyTarget();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserPlus, $"##RequestInviteAllToParty")) {
+            Plugin.IpcProvider.RequestInviteAllToParty();
         }
         ImGui.SameLine();
         if (ImGui.Selectable("Invite To Party")) {
-            // Plugin.MacroManager.BackupMacros();
+            Plugin.IpcProvider.RequestInviteAllToParty();
         }
+        ImGuiUtil.ToolTip("/mop invite");
 
-        if (ImGui.MenuItem("Formations"))
-            Plugin.Ui.FormationWindow.Toggle();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonRays, $"##RequestPartyLeader")) {
+            Plugin.IpcProvider.RequestPartyLeader();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Get Party Leader")) {
+            Plugin.IpcProvider.RequestPartyLeader();
+        }
+        ImGuiUtil.ToolTip("/mop getleader");
 
-        if (ImGui.MenuItem("Formations2"))
-            Plugin.Ui.FormationImPlotWindow.Toggle();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserMinus, $"##RequestDisbandParty")) {
+            Plugin.IpcProvider.RequestDisbandParty();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Disband Party")) {
+            Plugin.IpcProvider.RequestDisbandParty();
+        }
+        ImGuiUtil.ToolTip("/mop disband");
+
+        // if (ImGui.MenuItem("Formations"))
+        //     Plugin.Ui.FormationWindow.Toggle();
+
+        // if (ImGui.MenuItem("Formations2"))
+        //     Plugin.Ui.FormationImPlotWindow.Toggle();
+
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.UsersViewfinder, $"##Peer Monitor")) {
+            Plugin.Ui.PeerMonitorWindow.Toggle();
+        }
+        ImGui.SameLine();
+        if (ImGui.MenuItem("Peer Monitor"))
+            Plugin.Ui.PeerMonitorWindow.Toggle();
     }
 
     private void DrawCommandsMenu() {

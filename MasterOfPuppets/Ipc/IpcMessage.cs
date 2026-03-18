@@ -27,6 +27,8 @@ internal class IpcMessage {
 
     public static IpcMessage Create<T>(IpcMessageType messageType, T data) where T : unmanaged => new(messageType, data.ToBytesUnmanaged());
 
+    public static IpcMessage Create<T>(IpcMessageType messageType, T data, params string[] stringData) where T : unmanaged => new(messageType, data.ToBytesUnmanaged(), stringData);
+
     public static IpcMessage Create(IpcMessageType messageType, byte[] data) => new(messageType, data);
 
     public static IpcMessage Create(IpcMessageType messageType, params string[] stringData) => new(messageType, null, stringData);
