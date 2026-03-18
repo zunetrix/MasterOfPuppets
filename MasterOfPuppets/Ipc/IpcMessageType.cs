@@ -42,4 +42,6 @@ public enum IpcMessageType {
     RequestCharacterData,
     CharacterData,
     RequestInviteAllToParty,
+    // Housing
+    TeleportToWard,
 }

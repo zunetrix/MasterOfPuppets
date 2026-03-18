@@ -11,7 +11,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.ExecuteMoveToMyTarget)]
     private void HandleExecuteMoveToMyTarget(IpcMessage message) {
-        Plugin.MovementManager.MoveToObject(message.DataStruct<ulong>());
+        Plugin.MovementManager.MoveTo(message.DataStruct<ulong>());
     }
 
     public void ExecuteStackOnMe() {
@@ -22,7 +22,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.ExecuteStackOnMe)]
     private void HandleExecuteStackOnMe(IpcMessage message) {
-        Plugin.MovementManager.MoveToObject(message.DataStruct<ulong>());
+        Plugin.MovementManager.MoveTo(message.DataStruct<ulong>());
     }
 
     public void ExecuteToggleWalking() {

@@ -55,7 +55,7 @@ public sealed class GeneralDebugWidget : Widget {
             Context.Plugin.ChatWatcher.SendChatStopMacroExecution();
         }
 
-        if (ImGui.Button("Chatboxc Hi")) {
+        if (ImGui.Button("Chatbox Hi")) {
             ChatBox.SendMessage("Hi");
         }
 

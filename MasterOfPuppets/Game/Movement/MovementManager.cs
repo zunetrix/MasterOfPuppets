@@ -30,13 +30,13 @@ public class MovementManager : IDisposable {
 
         _follow.OnStuck += (dest, fly, range) => {
             if (_stuckRetryCount >= MaxStuckRetries) {
-                DalamudApi.PluginLog.Warning($"[MovementManager] Stuck at destination after {MaxStuckRetries} retries, giving up.");
+                DalamudApi.PluginLog.Warning($"[MovementManager] Stuck after {MaxStuckRetries} retries, giving up.");
                 _stuckRetryCount = 0;
                 return;
             }
             _stuckRetryCount++;
             DalamudApi.PluginLog.Warning($"[MovementManager] Stuck, retrying ({_stuckRetryCount}/{MaxStuckRetries})...");
-            MoveTo(dest, fly, range);
+            EnqueueMove(dest, fly, range);
         };
     }
 
@@ -49,42 +49,38 @@ public class MovementManager : IDisposable {
         }
     }
 
-    /// <summary>
-    /// Called every frame. Applies a resolved path from a pending <see cref="QueryPath"/> task
-    /// to <see cref="FollowPath"/> once it completes.
-    /// </summary>
+    //  Frame update
+
+    /// <summary>Called every frame. Applies a completed path query to FollowPath.</summary>
     public void Update() {
         if (_pendingTask != null && _pendingTask.IsCompleted) {
             try {
                 _follow.Move(_pendingTask.Result, !_pendingFly, _pendingDestRange);
             } catch (Exception ex) {
-                DalamudApi.PluginLog.Error(ex, "Update->Move");
+                DalamudApi.PluginLog.Error(ex, "MovementManager.Update");
             }
             _pendingTask.Dispose();
             _pendingTask = null;
         }
     }
 
-    /// <summary>
-    /// Placeholder for future pathfinding integration (e.g. VNavMesh).
-    /// Currently returns a straight-line path of one waypoint.
-    /// </summary>
-    public async Task<List<Vector3>> QueryPath(Vector3 from, Vector3 to, bool flying, float range = 0) {
-        return await Task.Run(() => new List<Vector3> { to });
-    }
+    //  Pathfinding (stub)
 
     /// <summary>
-    /// Placeholder for future pathfinding integration.
-    /// Currently returns the provided points unchanged.
+    /// Placeholder for future pathfinding (e.g. VNavMesh).
+    /// Currently returns a straight-line single-waypoint path.
     /// </summary>
-    public async Task<List<Vector3>> QueryPath(List<Vector3> pathPoints) {
-        return await Task.Run(() => pathPoints.ToList());
-    }
+    public async Task<List<Vector3>> QueryPath(Vector3 from, Vector3 to, bool flying, float range = 0) =>
+        await Task.Run(() => new List<Vector3> { to });
 
-    /// <summary>Enqueues a straight-line move to an absolute world position.</summary>
-    public bool MoveTo(Vector3 dest, bool fly, float range = 0) {
+    public async Task<List<Vector3>> QueryPath(List<Vector3> pathPoints) =>
+        await Task.Run(() => pathPoints.ToList());
+
+    //  Internal movement entry points
+
+    private bool EnqueueMove(Vector3 dest, bool fly = false, float range = 0) {
         if (_pendingTask != null) return false;
-        _pendingTask = QueryPath(default, dest, fly, range: range);
+        _pendingTask = QueryPath(default, dest, fly, range);
         _pendingFly = fly;
         _pendingDestRange = range;
         return true;
@@ -100,174 +96,110 @@ public class MovementManager : IDisposable {
         return true;
     }
 
-    /// <summary>
-    /// Moves along a path of offset vectors, each resolved relative to <paramref name="origin"/>
-    /// (defaults to the player's current position if null).
-    /// </summary>
+    /// <summary>Moves along a path of offset vectors relative to <paramref name="origin"/> (defaults to player position).</summary>
+
     public void MoveByOffsetPath(List<Vector3> offsets, Vector3? origin = null, bool fly = false) {
         var baseOrigin = origin ?? DalamudApi.ObjectTable.LocalPlayer?.Position ?? Vector3.Zero;
         MoveToPath(offsets.Select(o => baseOrigin + o).ToList(), fly);
     }
 
-    // -----------------------------------------------------------------------
-    // Internal helper: resolves destination = origin + offset, then calls MoveTo.
-    // origin: null = player position (relative move), Vector3.Zero = world origin (absolute coord).
-    // -----------------------------------------------------------------------
-    private void MoveByOffset(Vector3 offset, Vector3? origin = null, bool fly = false) {
-        var baseOrigin = origin ?? DalamudApi.ObjectTable.LocalPlayer?.Position ?? Vector3.Zero;
-        _stuckRetryCount = 0;
-        MoveTo(baseOrigin + offset, fly);
-    }
+    //  Public movement API
 
-    // -----------------------------------------------------------------------
-    // Object / position lookup
-    // -----------------------------------------------------------------------
-
-    /// <summary>
-    /// Finds the world position of the first targetable object whose name contains
-    /// <paramref name="objectName"/> (case-insensitive). For players, matches "Name@World".
-    /// Returns null if not found.
-    /// </summary>
-    public static unsafe Vector3? GetObjectPosition(string objectName) {
-        if (string.IsNullOrWhiteSpace(objectName)) {
-            DalamudApi.PluginLog.Warning($"Invalid objectName: \"{objectName}\"");
-            return null;
-        }
-
-        foreach (var actor in DalamudApi.ObjectTable) {
-            if (actor == null) continue;
-
-            var lookupName = actor.Name.TextValue;
-            if (lookupName.Length == 0) continue;
-
-            if (actor.ObjectKind == ObjectKind.Player &&
-                actor is IPlayerCharacter player &&
-                player.HomeWorld.ValueNullable is { } world)
-                lookupName = $"{lookupName}@{world.Name}";
-
-            if (!lookupName.Contains(objectName, StringComparison.InvariantCultureIgnoreCase))
-                continue;
-
-            try {
-                if (!((GameObjectStruct*)actor.Address)->GetIsTargetable())
-                    continue;
-            } catch {
-                continue;
-            }
-
-            return actor.Position;
-        }
-
-        return null;
-    }
-
-    /// <summary>Returns the world position of the object with the given game object ID, or null.</summary>
-    public static Vector3? GetObjectPosition(ulong objectId) {
-        foreach (var actor in DalamudApi.ObjectTable)
-            if (actor != null && actor.GameObjectId == objectId)
-                return actor.Position;
-        return null;
-    }
-
-    // -----------------------------------------------------------------------
-    // Public movement API
-    // -----------------------------------------------------------------------
-
-    /// <summary>
-    /// Moves to a position offset from the player's current location.
-    /// X = left(+) / right(-), Y = up(+) / down(-) [inactive], Z = forward(+) / back(-).
-    /// Optionally faces <paramref name="facing"/> direction (degrees) after arriving.
-    /// </summary>
-    public void MoveToPosition(Vector3 offset, Angle? facing = null) {
+    /// <summary>Moves to an absolute world coordinate.</summary>
+    public void MoveTo(Vector3 destination, Angle? facing = null) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             _follow.DesiredFacing = facing;
-            MoveByOffset(offset);
+            _stuckRetryCount = 0;
+            EnqueueMove(destination);
         });
     }
 
-    /// <summary>
-    /// Moves to an absolute world coordinate (origin = world zero).
-    /// Optionally faces <paramref name="facing"/> direction (degrees) after arriving.
-    /// </summary>
-    public void MoveToCoord(Vector3 worldPosition, Angle? facing = null) {
+    /// <summary>Moves to <paramref name="origin"/> + <paramref name="offset"/>.</summary>
+    public void MoveTo(Vector3 offset, Vector3 origin, Angle? facing = null) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             _follow.DesiredFacing = facing;
-            MoveByOffset(worldPosition, Vector3.Zero);
+            _stuckRetryCount = 0;
+            EnqueueMove(origin + offset);
         });
     }
 
-    /// <summary>
-    /// Moves to a position offset relative to <paramref name="objectName"/>'s current location.
-    /// Optionally faces <paramref name="facing"/> direction (degrees) after arriving.
-    /// </summary>
-    public void MoveToPositionRelative(Vector3 offset, string objectName, Angle? facing = null) {
+    /// <summary>Moves to an offset relative to a named object's position.</summary>
+    public void MoveTo(Vector3 offset, string objectName, Angle? facing = null) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var origin = GetObjectPosition(objectName);
             if (origin == null) {
-                DalamudApi.PluginLog.Debug($"MoveToPositionRelative: object not found \"{objectName}\"");
+                DalamudApi.PluginLog.Debug($"MoveTo: object not found \"{objectName}\"");
                 return;
             }
             _follow.DesiredFacing = facing;
-            MoveByOffset(offset, origin);
+            _stuckRetryCount = 0;
+            EnqueueMove(origin.Value + offset);
         });
     }
 
     /// <summary>Moves to the world position of the object with the given ID.</summary>
-    public void MoveToObject(ulong objectId) {
+    public void MoveTo(ulong objectId) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var pos = GetObjectPosition(objectId);
             if (pos == null) {
-                DalamudApi.PluginLog.Debug($"MoveToObject: object not found id={objectId}");
+                DalamudApi.PluginLog.Debug($"MoveTo: object not found id={objectId}");
                 return;
             }
-            MoveByOffset(pos.Value, Vector3.Zero);
+            _stuckRetryCount = 0;
+            EnqueueMove(pos.Value);
         });
     }
 
     /// <summary>Moves to the world position of the first matching object by name.</summary>
-    public void MoveToObject(string objectName) {
+    public void MoveTo(string objectName) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var pos = GetObjectPosition(objectName);
             if (pos == null) {
-                DalamudApi.PluginLog.Debug($"MoveToObject: object not found \"{objectName}\"");
+                DalamudApi.PluginLog.Debug($"MoveTo: object not found \"{objectName}\"");
                 return;
             }
-            MoveByOffset(pos.Value, Vector3.Zero);
+            _stuckRetryCount = 0;
+            EnqueueMove(pos.Value);
         });
     }
 
     /// <summary>Moves to the current target's world position.</summary>
-    public void MoveToTargetPosition() {
+    public void MoveToTarget() {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var targetId = GameTargetManager.GetTargetObjectId();
             if (targetId == null) return;
-            MoveToObject(targetId.Value);
-        });
-    }
-
-    /// <summary>Immediately stops all movement and clears any pending waypoints.</summary>
-    public void StopMove() {
-        DalamudApi.Framework.RunOnFrameworkThread(() => {
-            _stuckRetryCount = 0;
-            _follow.Stop();
+            MoveTo(targetId.Value);
         });
     }
 
     /// <summary>
-    /// Rotates the character to face the given angle (in degrees) without moving.
-    /// Takes effect immediately if not currently moving, or after the current move completes.
+    /// Stops all movement: clears waypoints, deactivates native follow,
+    /// and injects zero RMI input for one frame to override any external movement source.
     /// </summary>
-    public void FaceDirection(Angle angle) {
+    public void StopMove() {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
-            _follow.FaceDirection(angle);
+            _stuckRetryCount = 0;
+            GameFunctions.FollowStop();
+            _follow.ForceStop();
         });
     }
 
-    // -----------------------------------------------------------------------
-    // Walking control
-    // -----------------------------------------------------------------------
+    /// <summary>Rotates the character to face the given angle without moving.</summary>
+    public void FaceDirection(Angle angle) {
+        DalamudApi.Framework.RunOnFrameworkThread(() => _follow.FaceDirection(angle));
+    }
 
-    /// <summary>Enables or disables walk mode (character walks instead of runs).</summary>
+    //  Native follow
+
+    /// <summary>Activates the game's native follow mode to follow the given entity.</summary>
+    public void FollowNative(uint entityId) => GameFunctions.FollowStart(entityId);
+
+    /// <summary>Stops the game's native follow mode.</summary>
+    public void StopFollowNative() => GameFunctions.FollowStop();
+
+    //  Walking control
+
+    /// <summary>Enables or disables walk mode.</summary>
     public unsafe void SetWalking(bool isWalking) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var control = Control.Instance();
@@ -285,17 +217,51 @@ public class MovementManager : IDisposable {
         });
     }
 
-    /// <summary>
-    /// Forces walk mode to apply during auto-run as well as manual movement.
-    /// Uses a secondary memory offset that controls walking while auto-run is active.
-    /// </summary>
+    /// <summary>Forces walk mode during auto-run as well as manual movement.</summary>
     public unsafe void SetWalkingAutoRun(bool isWalking) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var control = Control.Instance();
             if (control == null) return;
             control->IsWalking = true;
-            const int IsWalkingWhileAutoRunOffset = 29976;
-            Marshal.WriteByte((nint)control, IsWalkingWhileAutoRunOffset, 0x1);
+            const int isWalkingWhileAutoRunOffset = 29976;
+            Marshal.WriteByte((nint)control, isWalkingWhileAutoRunOffset, 0x1);
         });
+    }
+
+    //  Object lookup
+
+    public static unsafe Vector3? GetObjectPosition(string objectName) {
+        if (string.IsNullOrWhiteSpace(objectName)) return null;
+
+        foreach (var actor in DalamudApi.ObjectTable) {
+            if (actor == null) continue;
+
+            var name = actor.Name.TextValue;
+            if (name.Length == 0) continue;
+
+            if (actor.ObjectKind == ObjectKind.Player &&
+                actor is IPlayerCharacter player &&
+                player.HomeWorld.ValueNullable is { } world)
+                name = $"{name}@{world.Name}";
+
+            if (!name.Contains(objectName, StringComparison.InvariantCultureIgnoreCase)) continue;
+
+            try {
+                if (!((GameObjectStruct*)actor.Address)->GetIsTargetable()) continue;
+            } catch {
+                continue;
+            }
+
+            return actor.Position;
+        }
+
+        return null;
+    }
+
+    public static Vector3? GetObjectPosition(ulong objectId) {
+        foreach (var actor in DalamudApi.ObjectTable)
+            if (actor != null && actor.GameObjectId == objectId)
+                return actor.Position;
+        return null;
     }
 }

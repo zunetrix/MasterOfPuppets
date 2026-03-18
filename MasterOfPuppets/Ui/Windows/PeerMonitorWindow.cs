@@ -86,9 +86,9 @@ public class PeerMonitorWindow : Window {
         foreach (var (pair, index) in Plugin.IpcProvider.PeerCharacterData.Select((x, i) => (x, i))) {
             var (_, info) = pair;
             ImGui.TableNextRow();
+            ImGui.TableNextColumn();
             ImGui.Text($"{index + 1:00}");
 
-            ImGui.TableNextColumn();
             // Status icon
             ImGui.TableNextColumn();
             var isOnline = DateTime.UtcNow - info.LastSeen < offlineThreshold;

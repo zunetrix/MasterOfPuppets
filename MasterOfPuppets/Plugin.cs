@@ -31,6 +31,7 @@ public class Plugin : IDalamudPlugin {
         pluginInterface.Create<DalamudApi>();
         Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(DalamudApi.PluginInterface);
+        GameFunctions.Initialize();
 
         Ui = new PluginUi(this);
         IpcProvider = new IpcProvider(this);

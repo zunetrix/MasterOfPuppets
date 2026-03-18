@@ -102,6 +102,35 @@ public class MainWindow : Window {
         }
     }
 
+    private void DrawMenuBar() {
+        using var color = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
+        using var menuBar = ImRaii.MenuBar();
+        if (!menuBar) return;
+
+        DrawMacroMenu();
+        // DrawActionsMenu();
+
+        if (ImGui.MenuItem("Actions"))
+            Plugin.Ui.ActionsBroadcastWindow.Toggle();
+
+        DrawCommandsMenu();
+
+        DrawTeleportMenu();
+
+        DrawPartyMenu();
+
+        if (ImGui.MenuItem("Help"))
+            Plugin.Ui.MacroHelpWindow.Toggle();
+
+        var versionText = $"v{Version}";
+        var textSize = ImGui.CalcTextSize(versionText);
+        var padding = ImGui.GetStyle().FramePadding.X + 5;
+        var regionMaxX = ImGui.GetWindowContentRegionMax().X;
+        ImGui.SameLine(regionMaxX - textSize.X - (padding * 2));
+        ImGui.Text(versionText);
+    }
+
     private void DrawMacroMenu() {
         using var menu = ImRaii.Menu("Macro");
         if (!menu) return;
@@ -254,59 +283,6 @@ public class MainWindow : Window {
     //     }
     // }
 
-    private void DrawPartyMenu() {
-        using var menu = ImRaii.Menu("Party");
-        if (!menu) return;
-
-        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.UserPlus, $"##RequestInviteAllToParty")) {
-            Plugin.IpcProvider.RequestInviteAllToParty();
-        }
-        ImGui.SameLine();
-        if (ImGui.Selectable("Invite To Party")) {
-            Plugin.IpcProvider.RequestInviteAllToParty();
-        }
-        ImGuiUtil.ToolTip("/mop invite");
-
-        // -----------------------
-
-        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.UserMinus, $"##RequestDisbandParty")) {
-            Plugin.IpcProvider.RequestDisbandParty();
-        }
-        ImGui.SameLine();
-        if (ImGui.Selectable("Disband Party")) {
-            Plugin.IpcProvider.RequestDisbandParty();
-        }
-        ImGuiUtil.ToolTip("/mop disband");
-
-        // -----------------------
-
-        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.PersonRays, $"##RequestPartyLeader")) {
-            Plugin.IpcProvider.RequestPartyLeader();
-        }
-        ImGui.SameLine();
-        if (ImGui.Selectable("Get Party Leader")) {
-            Plugin.IpcProvider.RequestPartyLeader();
-        }
-        ImGuiUtil.ToolTip("/mop getleader");
-
-        // -----------------------
-
-        // if (ImGui.MenuItem("Formations"))
-        //     Plugin.Ui.FormationWindow.Toggle();
-
-        // if (ImGui.MenuItem("Formations2"))
-        //     Plugin.Ui.FormationImPlotWindow.Toggle();
-
-        // -----------------------
-
-        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.UsersViewfinder, $"##Peer Monitor")) {
-            Plugin.Ui.PeerMonitorWindow.Toggle();
-        }
-        ImGui.SameLine();
-        if (ImGui.MenuItem("Peer Monitor"))
-            Plugin.Ui.PeerMonitorWindow.Toggle();
-    }
-
     private void DrawCommandsMenu() {
         using var menu = ImRaii.Menu("Commands");
         if (!menu) return;
@@ -388,27 +364,6 @@ public class MainWindow : Window {
         // -----------------------
 
         ImGui.Separator();
-        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.HouseCircleCheck, $"##ExecuteEnterHouse")) {
-            Plugin.IpcProvider.ExecuteEnterHouse();
-        }
-        ImGui.SameLine();
-        if (ImGui.Selectable("Enter House")) {
-            Plugin.IpcProvider.ExecuteEnterHouse();
-        }
-        ImGuiUtil.ToolTip("/mop enterhouse");
-        // -----------------------
-
-        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.HouseCircleXmark, $"##ExecuteExitHouse")) {
-            Plugin.IpcProvider.ExecuteExitHouse();
-        }
-        ImGui.SameLine();
-        if (ImGui.Selectable("Exit House")) {
-            Plugin.IpcProvider.ExecuteExitHouse();
-        }
-        ImGuiUtil.ToolTip("/mop exithouse");
-        // -----------------------
-
-        ImGui.Separator();
         if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.ToggleOn, $"##ExecuteEmableKB")) {
             Plugin.IpcProvider.EnableKeyboardBroadcast();
         }
@@ -430,32 +385,98 @@ public class MainWindow : Window {
         ImGuiUtil.ToolTip("/mop keybroadcast off");
     }
 
-    private void DrawMenuBar() {
-        using var color = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
-        using var menuBar = ImRaii.MenuBar();
-        if (!menuBar) return;
+    private void DrawTeleportMenu() {
+        using var menu = ImRaii.Menu("Teleport");
+        if (!menu) return;
 
-        DrawMacroMenu();
-        // DrawActionsMenu();
+        ImGui.Separator();
+        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.HouseCircleCheck, $"##ExecuteEnterHouse")) {
+            Plugin.IpcProvider.ExecuteEnterHouse();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Enter House")) {
+            Plugin.IpcProvider.ExecuteEnterHouse();
+        }
+        ImGuiUtil.ToolTip("/mop enterhouse");
+        // -----------------------
 
-        if (ImGui.MenuItem("Actions"))
-            Plugin.Ui.ActionsBroadcastWindow.Toggle();
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.HouseCircleXmark, $"##ExecuteExitHouse")) {
+            Plugin.IpcProvider.ExecuteExitHouse();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Exit House")) {
+            Plugin.IpcProvider.ExecuteExitHouse();
+        }
+        ImGuiUtil.ToolTip("/mop exithouse");
 
-        DrawCommandsMenu();
-
-        DrawPartyMenu();
-
-        if (ImGui.MenuItem("Help"))
-            Plugin.Ui.MacroHelpWindow.Toggle();
-
-        var versionText = $"v{Version}";
-        var textSize = ImGui.CalcTextSize(versionText);
-        var padding = ImGui.GetStyle().FramePadding.X + 5;
-        var regionMaxX = ImGui.GetWindowContentRegionMax().X;
-        ImGui.SameLine(regionMaxX - textSize.X - (padding * 2));
-        ImGui.Text(versionText);
+        ImGui.Separator();
+        ImGui.TextUnformatted("Teleport to Ward");
+        ImGuiUtil.ToolTip("/mop ward <1-30>");
+        if (ImGui.BeginTable("WardTable", 3, ImGuiTableFlags.None)) {
+            for (var ward = 1; ward <= 30; ward++) {
+                ImGui.TableNextColumn();
+                if (ImGui.SmallButton($"Ward {ward:D2}##Ward{ward}")) {
+                    Plugin.IpcProvider.ExecuteTeleportToWard(ward);
+                }
+            }
+            ImGui.EndTable();
+        }
+        // -----------------------
     }
+
+    private void DrawPartyMenu() {
+        using var menu = ImRaii.Menu("Party");
+        if (!menu) return;
+
+        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.UserPlus, $"##RequestInviteAllToParty")) {
+            Plugin.IpcProvider.RequestInviteAllToParty();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Invite To Party")) {
+            Plugin.IpcProvider.RequestInviteAllToParty();
+        }
+        ImGuiUtil.ToolTip("/mop invite");
+
+        // -----------------------
+
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.UserMinus, $"##RequestDisbandParty")) {
+            Plugin.IpcProvider.RequestDisbandParty();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Disband Party")) {
+            Plugin.IpcProvider.RequestDisbandParty();
+        }
+        ImGuiUtil.ToolTip("/mop disband");
+
+        // -----------------------
+
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.PersonRays, $"##RequestPartyLeader")) {
+            Plugin.IpcProvider.RequestPartyLeader();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Get Party Leader")) {
+            Plugin.IpcProvider.RequestPartyLeader();
+        }
+        ImGuiUtil.ToolTip("/mop getleader");
+
+        // -----------------------
+
+        // if (ImGui.MenuItem("Formations"))
+        //     Plugin.Ui.FormationWindow.Toggle();
+
+        // if (ImGui.MenuItem("Formations2"))
+        //     Plugin.Ui.FormationImPlotWindow.Toggle();
+
+        // -----------------------
+
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.UsersViewfinder, $"##Peer Monitor")) {
+            Plugin.Ui.PeerMonitorWindow.Toggle();
+        }
+        ImGui.SameLine();
+        if (ImGui.MenuItem("Peer Monitor"))
+            Plugin.Ui.PeerMonitorWindow.Toggle();
+    }
+
 
     private void DrawMacroHeader() {
         DrawConflictingPluginAlert();

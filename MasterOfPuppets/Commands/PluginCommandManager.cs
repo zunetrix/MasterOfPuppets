@@ -168,7 +168,7 @@ public class PluginCommandManager : IDisposable {
                             float.TryParse(parsedArgs[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float angleDeg))
                             facing = angleDeg.Degrees();
 
-                        Plugin.MovementManager.MoveToPosition(new Vector3(x, y, z), facing);
+                        Plugin.MovementManager.MoveTo(new Vector3(x, y, z), facing);
                     }
                     break;
                 case "face": {
@@ -197,7 +197,7 @@ public class PluginCommandManager : IDisposable {
                     Plugin.IpcProvider.StopMovement();
                     break;
                 case "movetotarget":
-                    Plugin.MovementManager.MoveToTargetPosition();
+                    Plugin.MovementManager.MoveToTarget();
                     break;
                 case "stackonme":
                     Plugin.IpcProvider.ExecuteStackOnMe();
@@ -207,7 +207,7 @@ public class PluginCommandManager : IDisposable {
                             DalamudApi.ShowNotification($"Invalid arguments expected character name", NotificationType.Error, 5000);
                             return;
                         }
-                        Plugin.MovementManager.MoveToObject(parsedArgs[1]);
+                        Plugin.MovementManager.MoveTo(parsedArgs[1]);
                     }
                     break;
                 case "movetomytarget":
@@ -269,6 +269,16 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "exithouse":
                     Plugin.IpcProvider.ExecuteExitHouse();
+                    break;
+                case "ward": {
+                        if (parsedArgs.Count < 2 ||
+                            !int.TryParse(parsedArgs[1], out var wardNum) ||
+                            wardNum is < 1 or > 30) {
+                            DalamudApi.ShowNotification("Invalid arguments. Expected ward number (1-30)", NotificationType.Error, 5000);
+                            return;
+                        }
+                        Plugin.IpcProvider.ExecuteTeleportToWard(wardNum);
+                    }
                     break;
                 case "objectquantity": {
                         if (parsedArgs.Count <= 1) {

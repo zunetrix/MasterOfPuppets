@@ -46,6 +46,6 @@ internal partial class IpcProvider {
         if (point == null) return;
 
         var leaderPos = new Vector3(lx, ly, lz);
-        Plugin.MovementManager.MoveToCoord(leaderPos + point.Offset, point.Angle.Degrees());
+        Plugin.MovementManager.MoveTo(leaderPos + point.Offset, point.Angle.Degrees());
     }
 }

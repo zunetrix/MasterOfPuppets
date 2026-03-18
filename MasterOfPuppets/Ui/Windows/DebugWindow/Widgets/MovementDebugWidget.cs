@@ -71,18 +71,18 @@ public sealed class MovementDebugWidget : Widget {
                 var offsetXYZ = new Vector3(_xInput, _yInput, _zInput);
 
                 if (!_targetNameMoveToRelative.IsNullOrEmpty()) {
-                    Context.Plugin.MovementManager.MoveToPositionRelative(offsetXYZ, _targetNameMoveToRelative);
+                    Context.Plugin.MovementManager.MoveTo(offsetXYZ, _targetNameMoveToRelative);
                     return;
                 }
 
-                Context.Plugin.MovementManager.MoveToPosition(offsetXYZ);
+                Context.Plugin.MovementManager.MoveTo(offsetXYZ);
             }
 
             ImGui.SameLine();
             if (ImGui.Button("Move To Coord")) {
                 var offsetXYZ = new Vector3(_xInput, _yInput, _zInput);
 
-                Context.Plugin.MovementManager.MoveToCoord(offsetXYZ);
+                Context.Plugin.MovementManager.MoveTo(offsetXYZ);
             }
 
             ImGui.SameLine();
@@ -109,11 +109,11 @@ public sealed class MovementDebugWidget : Widget {
                 var targetObjectId = GameTargetManager.GetTargetObjectId();
                 if (targetObjectId == null) return;
 
-                Context.Plugin.MovementManager.MoveToObject(targetObjectId.Value);
+                Context.Plugin.MovementManager.MoveTo(targetObjectId.Value);
             }
 
             if (ImGui.Button($"MoveToTargetPosition")) {
-                Context.Plugin.MovementManager.MoveToTargetPosition();
+                Context.Plugin.MovementManager.MoveToTarget();
             }
 
             ImGui.Spacing();
@@ -144,7 +144,7 @@ public sealed class MovementDebugWidget : Widget {
 
             ImGui.SameLine();
             if (ImGui.Button("Move to Character")) {
-                Context.Plugin.MovementManager.MoveToObject(_targetNameMoveTo);
+                Context.Plugin.MovementManager.MoveTo(_targetNameMoveTo);
             }
             ImGui.SameLine();
             if (ImGui.Button("Get Target Name##GetMoveToTargetName")) {

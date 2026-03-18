@@ -46,6 +46,10 @@ public static class GameTargetManager {
         });
     }
 
+    public static void TargetNearestAetheryte() {
+        TargetNearestObjectInternal(actor => actor.ObjectKind == ObjectKind.Aetheryte);
+    }
+
     public static void TargetObject(string objectName) {
         if (string.IsNullOrWhiteSpace(objectName)) {
             DalamudApi.PluginLog.Warning($"Invalid target: \"{objectName}\"");

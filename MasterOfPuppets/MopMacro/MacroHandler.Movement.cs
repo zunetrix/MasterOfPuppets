@@ -32,7 +32,7 @@ public partial class MacroHandler {
         if (parts.Count >= 4 && float.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out float angleDeg))
             facing = angleDeg.Degrees();
 
-        Plugin.MovementManager.MoveToPosition(new Vector3(x, y, z), facing);
+        Plugin.MovementManager.MoveTo(new Vector3(x, y, z), facing);
         DalamudApi.PluginLog.Debug($"[mopmove] offset=({x}, {y}, {z}) facing={facing?.Deg:F0}°");
         return Task.CompletedTask;
     }
@@ -59,14 +59,14 @@ public partial class MacroHandler {
         if (parts.Count >= 5 && float.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out float angleDeg))
             facing = angleDeg.Degrees();
 
-        Plugin.MovementManager.MoveToPositionRelative(new Vector3(x, y, z), relativeCharacterName, facing);
+        Plugin.MovementManager.MoveTo(new Vector3(x, y, z), relativeCharacterName, facing);
         DalamudApi.PluginLog.Debug($"[mopmoverelativeto] offset=({x}, {y}, {z}) origin=\"{relativeCharacterName}\" facing={facing?.Deg:F0}°");
         return Task.CompletedTask;
     }
 
     /// <summary>/mopmovetotarget — moves to the current target's world position.</summary>
     private Task HandleMopMoveToTarget(string macroId, string args, CancellationToken token) {
-        Plugin.MovementManager.MoveToTargetPosition();
+        Plugin.MovementManager.MoveToTarget();
         DalamudApi.PluginLog.Debug("[mopmovetotarget]");
         return Task.CompletedTask;
     }
@@ -78,7 +78,7 @@ public partial class MacroHandler {
             return Task.CompletedTask;
         }
 
-        Plugin.MovementManager.MoveToObject(args.Replace("\"", ""));
+        Plugin.MovementManager.MoveTo(args.Replace("\"", ""));
         DalamudApi.PluginLog.Debug($"[mopmovetocharacter] \"{args}\"");
         return Task.CompletedTask;
     }

@@ -53,4 +53,13 @@ internal partial class IpcProvider {
     private void HandleExecuteExitHouse(IpcMessage message) {
         GameTargetManager.InteractWithNearestHouseExit();
     }
+
+    public void ExecuteTeleportToWard(int ward) {
+        BroadCast(IpcMessage.Create(IpcMessageType.TeleportToWard, ward).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.TeleportToWard)]
+    private void HandleExecuteTeleportToWard(IpcMessage message) {
+        GameResidentialTeleportManager.TeleportToWard(message.DataStruct<int>());
+    }
 }

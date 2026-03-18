@@ -245,6 +245,19 @@ public class FollowPath : IDisposable {
         StopMovementAndCamera();
     }
 
+    /// <summary>
+    /// Like <see cref="Stop"/> but also re-enables the movement hook momentarily to inject zero input,
+    /// overriding any external movement source (native follow, auto-run) for one frame.
+    /// The hook is disabled again by the next <see cref="Update"/> call.
+    /// </summary>
+    public void ForceStop() {
+        Stop();
+        var playerPos = DalamudApi.ObjectTable.LocalPlayer?.Position;
+        if (playerPos == null) return;
+        _movement.DesiredPosition = playerPos.Value;
+        _movement.Enabled = true;
+    }
+
     private unsafe void ExecuteJump() {
         if (DalamudApi.Condition[ConditionFlag.Diving]) return;
         if (DateTime.Now >= _nextJump) {
