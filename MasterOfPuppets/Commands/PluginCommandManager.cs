@@ -264,6 +264,12 @@ public class PluginCommandManager : IDisposable {
                 case "disband":
                     Plugin.IpcProvider.RequestDisbandParty();
                     break;
+                case "enterhouse":
+                    Plugin.IpcProvider.ExecuteEnterHouse();
+                    break;
+                case "exithouse":
+                    Plugin.IpcProvider.ExecuteExitHouse();
+                    break;
                 case "objectquantity": {
                         if (parsedArgs.Count <= 1) {
                             DalamudApi.ShowNotification($"Invalid arguments to setobjectquantity", NotificationType.Error, 5000);

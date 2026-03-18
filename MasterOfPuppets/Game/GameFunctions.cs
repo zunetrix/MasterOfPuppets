@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
-using FFXIVClientStructs.FFXIV.Client.UI.Info;
 
 namespace MasterOfPuppets;
 

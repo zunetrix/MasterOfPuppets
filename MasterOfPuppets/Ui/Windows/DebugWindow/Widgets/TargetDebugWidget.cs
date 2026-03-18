@@ -33,6 +33,21 @@ public sealed class TargetDebugWidget : Widget {
         if (ImGui.Button("Target My Minion")) {
             GameTargetManager.TargetMyMinion();
         }
+
+        ImGui.Separator();
+
+        var target = DalamudApi.ObjectTable.LocalPlayer.TargetObject;
+        if (target != null) {
+            ImGui.Text($"ObjectKind: {target.ObjectKind}");
+            ImGui.Text($"Name: {target.Name}");
+            ImGui.Text($"GameObjectId: {target.GameObjectId}");
+            ImGui.Text($"BaseId: {target.BaseId}");
+            ImGui.Text($"EntityId: {target.EntityId}");
+            ImGui.Text($"IsTargetable: {target.IsTargetable}");
+            ImGui.Text($"Position: {target.Position}");
+            ImGui.Text($"Rotation: {target.Rotation}");
+            ImGui.Text($"Address: {target.Address}");
+        }
     }
 }
 

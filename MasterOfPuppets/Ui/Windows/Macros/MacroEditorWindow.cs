@@ -319,7 +319,7 @@ public class MacroEditorWindow : Window {
         ImGui.InputText("##MacroNameInput", ref MacroItem.Name);
 
         ImGui.SameLine();
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonSuccessnNormal)
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonSuccessNormal)
         .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonSuccessHovered)
         .Push(ImGuiCol.ButtonActive, Style.Components.ButtonSuccessActive)) {
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Save, $"##SaveMacroBtn", Language.SaveMacroBtn)) {

@@ -6,8 +6,8 @@ using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 namespace MasterOfPuppets;
 
 internal static unsafe class GameDialogManager {
-    public static bool ClickYes() => FireCallback("SelectYesno", 0);
-    public static bool ClickNo() => FireCallback("SelectYesno", (uint)1);
+    public static bool ClickYes() => FireCallback("SelectYesno", 0); // 0 = button index yes
+    public static bool ClickNo() => FireCallback("SelectYesno", (uint)1); // 1 = button index no
     public static bool ClickOk() => ClickAddonButton<AddonSelectOk>("SelectOk", a => a->OkButton);
     public static bool ClickRepairAll() => ClickAddonButton<AddonRepair>("Repair", a => a->RepairAllButton);
 

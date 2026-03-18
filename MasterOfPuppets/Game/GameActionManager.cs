@@ -13,7 +13,7 @@ public static class GameActionManager {
             // ActionManager.Instance()->QueuedActionId
 
             // 0 = target self, 1 = target current
-            DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            DalamudApi.Framework.RunOnFrameworkThread(() => {
                 ActionManager.Instance()->UseAction(type, actionId);
             });
         } catch (Exception e) {
@@ -22,7 +22,7 @@ public static class GameActionManager {
     }
 
     public static unsafe void UseGeneralAction(uint actionId) {
-        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+        DalamudApi.Framework.RunOnFrameworkThread(() => {
             ActionManager.Instance()->UseAction(ActionType.GeneralAction, actionId);
         });
     }
@@ -34,7 +34,7 @@ public static class GameActionManager {
             return;
         }
 
-        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+        DalamudApi.Framework.RunOnFrameworkThread(() => {
             ActionManager.Instance()->UseAction(ActionType.GeneralAction, action.ActionId);
         });
 
@@ -42,7 +42,7 @@ public static class GameActionManager {
     }
 
     public static unsafe void UseAction(uint actionId) {
-        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+        DalamudApi.Framework.RunOnFrameworkThread(() => {
             ActionManager.Instance()->UseAction(ActionType.Action, actionId);
         });
     }
@@ -54,7 +54,7 @@ public static class GameActionManager {
             return;
         }
 
-        DalamudApi.Framework.RunOnFrameworkThread(delegate {
+        DalamudApi.Framework.RunOnFrameworkThread(() => {
             ActionManager.Instance()->UseAction(ActionType.Action, action.ActionId);
         });
 
@@ -66,7 +66,7 @@ public static class GameActionManager {
         // var adjustedActionId = ActionManager.Instance()->GetAdjustedActionId(actionId);
         // AgentInventoryContext.Instance()->UseItem(actionId);
 
-        // DalamudApi.Framework.RunOnFrameworkThread(delegate
+        // DalamudApi.Framework.RunOnFrameworkThread(() =>
         // {
         //     // ActionManager.Instance()->UseAction(ActionType.Item, actionId, 0xE0000000, 65535);
         //     ActionManager.Instance()->UseAction(ActionType.Item, actionId, extraParam: 65535);
@@ -74,7 +74,7 @@ public static class GameActionManager {
 
         // AgentInventoryContext.Instance()->UseItem(actionId);
 
-        DalamudApi.Framework.RunOnTick(delegate {
+        DalamudApi.Framework.RunOnTick(() => {
             ActionManager.Instance()->UseAction(ActionType.Item, actionId, extraParam: 65535);
         }, delayTicks: 3);
 
@@ -88,12 +88,12 @@ public static class GameActionManager {
             return;
         }
 
-        // DalamudApi.Framework.RunOnFrameworkThread(delegate
+        // DalamudApi.Framework.RunOnFrameworkThread(() =>
         // {
         //     ActionManager.Instance()->UseAction(ActionType.Item, item.ActionId, extraParam: 65535);
         // });
 
-        DalamudApi.Framework.RunOnTick(delegate {
+        DalamudApi.Framework.RunOnTick(() => {
             ActionManager.Instance()->UseAction(ActionType.Item, item.ActionId, extraParam: 65535);
         }, delayTicks: 3);
 
@@ -101,12 +101,12 @@ public static class GameActionManager {
     }
 
     public static unsafe void UseInventoryItem(uint itemId) {
-        // DalamudApi.Framework.RunOnFrameworkThread(delegate
+        // DalamudApi.Framework.RunOnFrameworkThread(() =>
         // {
         //     AgentInventoryContext.Instance()->UseItem(itemId);
         // });
 
-        DalamudApi.Framework.RunOnTick(delegate {
+        DalamudApi.Framework.RunOnTick(() => {
             AgentInventoryContext.Instance()->UseItem(itemId);
         }, delayTicks: 3);
 
@@ -124,7 +124,7 @@ public static class GameActionManager {
         // {
         //     AgentInventoryContext.Instance()->UseItem(item.ActionId);
         // });
-        DalamudApi.Framework.RunOnTick(delegate {
+        DalamudApi.Framework.RunOnTick(() => {
             AgentInventoryContext.Instance()->UseItem(item.ActionId);
         }, delayTicks: 3);
 

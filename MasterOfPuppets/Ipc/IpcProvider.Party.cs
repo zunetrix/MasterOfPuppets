@@ -1,6 +1,7 @@
 using System;
 
 using MasterOfPuppets.Extensions.Dalamud;
+using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets.Ipc;
 
@@ -69,6 +70,9 @@ internal partial class IpcProvider {
         if (partyMember == null) return;
 
         Party.Promote(partyMember.Name.ToString(), (ulong)requesterCid);
-        DalamudApi.Framework.RunOnTick(GameDialogManager.ClickYes);
+        Coroutine.StartRunOnFramework(
+            runFunction: () => { },
+            timeoutMs: 500,
+            callback: () => DalamudApi.Framework.RunOnTick(GameDialogManager.ClickYes));
     }
 }

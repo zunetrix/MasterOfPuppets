@@ -242,7 +242,7 @@ public partial class MacroHandler : IDisposable {
                 } else {
                     // No regex match OR unrecognised command — forward raw to chat
                     DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
-                    _ = DalamudApi.Framework.RunOnFrameworkThread(delegate { Chat.SendMessage(action); });
+                    _ = DalamudApi.Framework.RunOnFrameworkThread(() => { Chat.SendMessage(action); });
                     if (delayBetweenActions > 0.0) {
                         var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
                         await Task.Delay(delayMs, token);

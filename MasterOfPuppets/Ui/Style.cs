@@ -67,7 +67,7 @@ public class ComponentsPalette {
     public Vector4 ModalWindowDimBg = new Vector4(0.8f, 0.8f, 0.8f, 0.35f);                      // #CCCCCC59
 
     // custom
-    public Vector4 ButtonSuccessnNormal = new Vector4(0.342857f, 0.6f, 0.24f, 1f);   // #57CC3D
+    public Vector4 ButtonSuccessNormal = new Vector4(0.342857f, 0.6f, 0.24f, 1f);   // #57CC3D
     public Vector4 ButtonSuccessHovered = new Vector4(0.35f, 0.7f, 0.21f, 1f);       // #59B335
     public Vector4 ButtonSuccessActive = new Vector4(0.342857f, 0.8f, 0.16f, 1f);    // #57CC29
 

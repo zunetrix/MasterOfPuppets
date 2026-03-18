@@ -35,4 +35,22 @@ internal partial class IpcProvider {
         }
         GameSettingsManager.SetDisplayObjectLimit(displayObjectLimitType);
     }
+
+    public void ExecuteEnterHouse() {
+        BroadCast(IpcMessage.Create(IpcMessageType.EnterHouse).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.EnterHouse)]
+    private void HandleExecuteEnterHouse(IpcMessage message) {
+        GameTargetManager.InteractWithNearestHouseEntrance();
+    }
+
+    public void ExecuteExitHouse() {
+        BroadCast(IpcMessage.Create(IpcMessageType.ExitHouse).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.ExitHouse)]
+    private void HandleExecuteExitHouse(IpcMessage message) {
+        GameTargetManager.InteractWithNearestHouseExit();
+    }
 }

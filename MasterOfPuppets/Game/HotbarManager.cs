@@ -83,7 +83,7 @@ internal static class HotbarManager {
                 return;
             }
 
-            DalamudApi.Framework.RunOnFrameworkThread(delegate {
+            DalamudApi.Framework.RunOnFrameworkThread(() => {
                 RaptureHotbarModule.Instance()->ExecuteSlot(RaptureHotbarModule.Instance()->Hotbars[(int)hotbarIndex].GetHotbarSlot(slotIndex));
             });
 

@@ -54,7 +54,7 @@ public unsafe class CamHack : IDisposable {
             return;
 
         Active = false;
-        DalamudApi.Framework.RunOnTick(delegate {
+        DalamudApi.Framework.RunOnTick(() => {
             _getPositionDeltaHook?.Disable();
         }, default(TimeSpan), 10, default(CancellationToken));
 

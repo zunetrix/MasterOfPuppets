@@ -101,7 +101,7 @@ public partial class MacroHandler {
             return;
         }
 
-        await DalamudApi.Framework.RunOnFrameworkThread(delegate {
+        await DalamudApi.Framework.RunOnFrameworkThread(() => {
             var player = DalamudApi.ObjectTable.LocalPlayer;
             if (player == null) return;
             // Subtract because the Angle struct increases CCW while user-facing degrees are CW.

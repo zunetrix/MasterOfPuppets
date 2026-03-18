@@ -106,7 +106,7 @@ public class MainWindow : Window {
         using var menu = ImRaii.Menu("Macro");
         if (!menu) return;
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddMacroMenu")) {
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Plus, $"##AddMacroMenu")) {
             Ui.MacroEditorWindow.AddNewMacro();
         }
         ImGui.SameLine();
@@ -114,7 +114,9 @@ public class MainWindow : Window {
             Ui.MacroEditorWindow.AddNewMacro();
         }
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteSelectedMacrosMenu")) {
+        // -----------------------
+
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##DeleteSelectedMacrosMenu")) {
             if (ImGui.GetIO().KeyCtrl) {
                 Plugin.MacroManager.DeleteSelectedMacros();
                 Plugin.IpcProvider.SyncConfiguration();
@@ -170,7 +172,7 @@ public class MainWindow : Window {
 
         // -----------------------
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##CharactersMenu")) {
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Users, $"##CharactersMenu")) {
             Ui.CharactersWindow.Toggle();
         }
         ImGui.SameLine();
@@ -256,7 +258,7 @@ public class MainWindow : Window {
         using var menu = ImRaii.Menu("Party");
         if (!menu) return;
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserPlus, $"##RequestInviteAllToParty")) {
+        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.UserPlus, $"##RequestInviteAllToParty")) {
             Plugin.IpcProvider.RequestInviteAllToParty();
         }
         ImGui.SameLine();
@@ -265,16 +267,9 @@ public class MainWindow : Window {
         }
         ImGuiUtil.ToolTip("/mop invite");
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonRays, $"##RequestPartyLeader")) {
-            Plugin.IpcProvider.RequestPartyLeader();
-        }
-        ImGui.SameLine();
-        if (ImGui.Selectable("Get Party Leader")) {
-            Plugin.IpcProvider.RequestPartyLeader();
-        }
-        ImGuiUtil.ToolTip("/mop getleader");
+        // -----------------------
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserMinus, $"##RequestDisbandParty")) {
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.UserMinus, $"##RequestDisbandParty")) {
             Plugin.IpcProvider.RequestDisbandParty();
         }
         ImGui.SameLine();
@@ -283,13 +278,28 @@ public class MainWindow : Window {
         }
         ImGuiUtil.ToolTip("/mop disband");
 
+        // -----------------------
+
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.PersonRays, $"##RequestPartyLeader")) {
+            Plugin.IpcProvider.RequestPartyLeader();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Get Party Leader")) {
+            Plugin.IpcProvider.RequestPartyLeader();
+        }
+        ImGuiUtil.ToolTip("/mop getleader");
+
+        // -----------------------
+
         // if (ImGui.MenuItem("Formations"))
         //     Plugin.Ui.FormationWindow.Toggle();
 
         // if (ImGui.MenuItem("Formations2"))
         //     Plugin.Ui.FormationImPlotWindow.Toggle();
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.UsersViewfinder, $"##Peer Monitor")) {
+        // -----------------------
+
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.UsersViewfinder, $"##Peer Monitor")) {
             Plugin.Ui.PeerMonitorWindow.Toggle();
         }
         ImGui.SameLine();
@@ -301,7 +311,7 @@ public class MainWindow : Window {
         using var menu = ImRaii.Menu("Commands");
         if (!menu) return;
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##ExecuteTargetMyTargetCommand")) {
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Crosshairs, $"##ExecuteTargetMyTargetCommand")) {
             Plugin.IpcProvider.ExecuteTargetMyTarget();
         }
         ImGui.SameLine();
@@ -312,7 +322,7 @@ public class MainWindow : Window {
 
         // -----------------------
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonChalkboard, $"##ExecuteInteractWIthMyTargetCommand")) {
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.PersonChalkboard, $"##ExecuteInteractWIthMyTargetCommand")) {
             Plugin.IpcProvider.ExecuteInteractWithMyTarget();
         }
         ImGui.SameLine();
@@ -323,7 +333,7 @@ public class MainWindow : Window {
 
         // -----------------------
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Times, $"##ExecuteTargetClearCommand")) {
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Times, $"##ExecuteTargetClearCommand")) {
             Plugin.IpcProvider.ExecuteTargetClear();
         }
         ImGui.SameLine();
@@ -334,7 +344,7 @@ public class MainWindow : Window {
 
         // -----------------------
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowRight, $"##ExecuteMoveToMyTargetCommand")) {
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.PersonWalkingArrowRight, $"##ExecuteMoveToMyTargetCommand")) {
             Plugin.IpcProvider.ExecuteMoveToMyTarget();
         }
         ImGui.SameLine();
@@ -345,7 +355,7 @@ public class MainWindow : Window {
 
         // -----------------------
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonArrowDownToLine, $"##ExecuteStackOnMeCommand")) {
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.PersonArrowDownToLine, $"##ExecuteStackOnMeCommand")) {
             Plugin.IpcProvider.ExecuteStackOnMe();
         }
         ImGui.SameLine();
@@ -356,7 +366,7 @@ public class MainWindow : Window {
 
         // -----------------------
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingDashedLineArrowRight, $"##ExecuteToggleWalkingCommand")) {
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.PersonWalkingDashedLineArrowRight, $"##ExecuteToggleWalkingCommand")) {
             Plugin.IpcProvider.ExecuteToggleWalking();
         }
         ImGui.SameLine();
@@ -367,7 +377,7 @@ public class MainWindow : Window {
 
         // -----------------------
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowLoopLeft, $"##ExecuteAbandonDutyCommand")) {
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.PersonWalkingArrowLoopLeft, $"##ExecuteAbandonDutyCommand")) {
             Plugin.IpcProvider.ExecuteAbandonDuty();
         }
         ImGui.SameLine();
@@ -378,7 +388,28 @@ public class MainWindow : Window {
         // -----------------------
 
         ImGui.Separator();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.ToggleOn, $"##ExecuteEmableKB")) {
+        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.HouseCircleCheck, $"##ExecuteEnterHouse")) {
+            Plugin.IpcProvider.ExecuteEnterHouse();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Enter House")) {
+            Plugin.IpcProvider.ExecuteEnterHouse();
+        }
+        ImGuiUtil.ToolTip("/mop enterhouse");
+        // -----------------------
+
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.HouseCircleXmark, $"##ExecuteExitHouse")) {
+            Plugin.IpcProvider.ExecuteExitHouse();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Exit House")) {
+            Plugin.IpcProvider.ExecuteExitHouse();
+        }
+        ImGuiUtil.ToolTip("/mop exithouse");
+        // -----------------------
+
+        ImGui.Separator();
+        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.ToggleOn, $"##ExecuteEmableKB")) {
             Plugin.IpcProvider.EnableKeyboardBroadcast();
         }
         ImGui.SameLine();
@@ -389,7 +420,7 @@ public class MainWindow : Window {
 
         // -----------------------
 
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.ToggleOff, $"##ExecuteDisableKB")) {
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.ToggleOff, $"##ExecuteDisableKB")) {
             Plugin.IpcProvider.DisableKeyboardBroadcast();
         }
         ImGui.SameLine();

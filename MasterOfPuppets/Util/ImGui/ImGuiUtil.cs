@@ -16,14 +16,6 @@ public static class ImGuiUtil {
     // ------------------------
     // COMPONENTS
     // ------------------------
-    public static bool DangerIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
-            return IconButton(icon, id, tooltip);
-        }
-    }
-
     public static bool IconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null, Vector4? color = null, Vector2? size = null) {
         using (ImRaii.PushFont(UiBuilder.IconFont))
         using (ImRaii.PushColor(ImGuiCol.Text, color ?? Vector4.One, color != null)) {
@@ -41,6 +33,66 @@ public static class ImGuiUtil {
                 ImGui.TextColored(color.Value, icon.ToIconString());
             else
                 ImGui.Text(icon.ToIconString());
+        }
+    }
+
+    // --- Colored button components -------------------------------------------------
+    // Each variant pushes the three button color slots (normal/hovered/active) from
+    // Style.Components so that color changes only need to be made in one place.
+
+    public static bool DangerIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+            return IconButton(icon, id, tooltip);
+        }
+    }
+
+    public static bool SuccessIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonSuccessNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonSuccessHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonSuccessActive)) {
+            return IconButton(icon, id, tooltip);
+        }
+    }
+
+    public static bool PrimaryIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive)) {
+            return IconButton(icon, id, tooltip);
+        }
+    }
+
+    public static bool InfoIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonInfoNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonInfoHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonInfoActive)) {
+            return IconButton(icon, id, tooltip);
+        }
+    }
+
+    public static bool DangerButton(string label, Vector2? size = null) {
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+            return ImGui.Button(label, size ?? Vector2.Zero);
+        }
+    }
+
+    public static bool SuccessButton(string label, Vector2? size = null) {
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonSuccessNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonSuccessHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonSuccessActive)) {
+            return ImGui.Button(label, size ?? Vector2.Zero);
+        }
+    }
+
+    public static bool PrimaryButton(string label, Vector2? size = null) {
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive)) {
+            return ImGui.Button(label, size ?? Vector2.Zero);
         }
     }
 

@@ -30,6 +30,8 @@ public enum IpcMessageType {
     SetWindowTitle,
     ExecuteFormation,
     RequestEmoteList,
+    EnterHouse,
+    ExitHouse,
     EmoteList,
     KeyboardBroadcastToggle,
     KeyboardInput,
