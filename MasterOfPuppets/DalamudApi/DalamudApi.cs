@@ -28,6 +28,7 @@ public class DalamudApi {
     // [PluginService] public static IUnlockState UnlockState { get; private set; } = null;
     // hook
     [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null;
+    [PluginService] public static IAddonLifecycle AddonLifecycle { get; private set; } = null;
     // [PluginService] public static IKeyState KeyState { get; private set; }
     // [PluginService] public static IGameGui GameGui { get; private set; } = null;
     // [PluginService] public static IToastGui ToastGui { get; private set; } = null;
