@@ -410,16 +410,40 @@ public class MainWindow : Window {
         ImGuiUtil.ToolTip("/mop exithouse");
 
         ImGui.Separator();
-        ImGui.TextUnformatted("Teleport to Ward");
+        ImGui.Text("Teleport to Ward");
         ImGuiUtil.ToolTip("/mop ward <1-30>");
         if (ImGui.BeginTable("WardTable", 3, ImGuiTableFlags.None)) {
             for (var ward = 1; ward <= 30; ward++) {
                 ImGui.TableNextColumn();
                 if (ImGui.SmallButton($"Ward {ward:D2}##Ward{ward}")) {
                     Plugin.IpcProvider.ExecuteTeleportToWard(ward);
+                    ImGui.CloseCurrentPopup();
                 }
             }
             ImGui.EndTable();
+        }
+
+        ImGui.Separator();
+        ImGui.Text("Travel to World");
+        ImGuiUtil.ToolTip("/mop world <WorldName>");
+        var localPlayer = DalamudApi.PlayerState;
+        if (localPlayer != null) {
+            var dcId = localPlayer.CurrentWorld.Value.DataCenter.RowId;
+            var worlds = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.Sheets.World>()
+                .Where(w => w.IsPublic && w.DataCenter.RowId == dcId)
+                .OrderBy(w => w.Name.ToString())
+                .Select(w => w.Name.ToString())
+                .ToList();
+            if (ImGui.BeginTable("WorldTable", 3, ImGuiTableFlags.None)) {
+                foreach (var world in worlds) {
+                    ImGui.TableNextColumn();
+                    if (ImGui.SmallButton($"{world}##World{world}")) {
+                        Plugin.IpcProvider.ExecuteTravelToWorld(world);
+                        ImGui.CloseCurrentPopup();
+                    }
+                }
+                ImGui.EndTable();
+            }
         }
         // -----------------------
     }

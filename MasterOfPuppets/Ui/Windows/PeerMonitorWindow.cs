@@ -102,13 +102,13 @@ public class PeerMonitorWindow : Window {
             }
 
             ImGui.TableNextColumn();
-            ImGui.TextUnformatted(info.CharacterName);
+            ImGui.Text(info.CharacterName);
 
             ImGui.TableNextColumn();
-            ImGui.TextUnformatted(info.HomeWorld);
+            ImGui.Text(info.HomeWorld);
 
             ImGui.TableNextColumn();
-            ImGui.TextUnformatted(info.CurrentWorld);
+            ImGui.Text(info.CurrentWorld);
 
             ImGui.TableNextColumn();
             var elapsed = DateTime.UtcNow - info.LastSeen;
@@ -117,7 +117,7 @@ public class PeerMonitorWindow : Window {
                 : elapsed.TotalMinutes < 60
                     ? $"{(int)elapsed.TotalMinutes}m ago"
                     : info.LastSeen.ToLocalTime().ToString("HH:mm:ss");
-            ImGui.TextUnformatted(lastSeenText);
+            ImGui.Text(lastSeenText);
         }
     }
 }

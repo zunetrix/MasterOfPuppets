@@ -79,7 +79,7 @@ public sealed class EmotesWidget : Widget {
                         return false;
 
                     // Filter to emotes all peers have in common.
-                    // Internal emotes are hardcoded and always available on every client — skip them.
+                    // Internal emotes are hardcoded and always available on every client - skip them.
                     if (_filterEmotesToCommon && !isInternalEmote) {
                         var peers = Context.Plugin.IpcProvider.PeerEmoteLists;
                         if (peers.Count > 0 && !peers.Values.All(set => set.Contains(x.item.ActionId)))

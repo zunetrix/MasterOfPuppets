@@ -280,6 +280,14 @@ public class PluginCommandManager : IDisposable {
                         Plugin.IpcProvider.ExecuteTeleportToWard(wardNum);
                     }
                     break;
+                case "world": {
+                        if (parsedArgs.Count < 2 || string.IsNullOrWhiteSpace(parsedArgs[1])) {
+                            DalamudApi.ShowNotification("Invalid arguments. Expected world name", NotificationType.Error, 5000);
+                            return;
+                        }
+                        Plugin.IpcProvider.ExecuteTravelToWorld(parsedArgs[1]);
+                    }
+                    break;
                 case "objectquantity": {
                         if (parsedArgs.Count <= 1) {
                             DalamudApi.ShowNotification($"Invalid arguments to setobjectquantity", NotificationType.Error, 5000);

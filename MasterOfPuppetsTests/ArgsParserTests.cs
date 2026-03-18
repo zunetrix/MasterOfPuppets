@@ -170,7 +170,7 @@ public class ArgsParserTests
     [Fact]
     public void ParseInlineVars_UnquotedValueWithSpaces_CapturedFully()
     {
-        // value like /ac "standard step" has spaces — should capture the full thing
+        // value like /ac "standard step" has spaces - should capture the full thing
         var result = ArgumentParser.ParseInlineVars("-var=$cmd=/ac \"standard step\"");
         Assert.Single(result);
         Assert.Equal("/ac \"standard step\"", result["cmd"]);

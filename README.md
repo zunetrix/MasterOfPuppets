@@ -62,6 +62,9 @@ loop code
  - https://github.com/NightmareXIV/Stylist
  - https://github.com/MidoriKami/VanillaPlus
  - https://github.com/Critical-Impact/DalaMock/tree/main/DalaMock.PluginTemplate
+ - https://github.com/UnknownX7/Cammy
+ - https://github.com/UnknownX7/Hypostasis/
+ - https://github.com/Infiziert90/ChatTwo
 
 # Game Sheet Preview
  - https://exd.camora.dev

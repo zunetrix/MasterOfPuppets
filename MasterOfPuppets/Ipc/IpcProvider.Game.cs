@@ -60,6 +60,15 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.TeleportToWard)]
     private void HandleExecuteTeleportToWard(IpcMessage message) {
-        GameResidentialTeleportManager.TeleportToWard(message.DataStruct<int>());
+        ResidentialTeleportManager.TeleportToWard(message.DataStruct<int>());
+    }
+
+    public void ExecuteTravelToWorld(string world) {
+        BroadCast(IpcMessage.Create(IpcMessageType.TravelToWorld, world).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.TravelToWorld)]
+    private void HandleExecuteTravelToWorld(IpcMessage message) {
+        WorldTravelManager.TravelToWorld(message.StringData[0]);
     }
 }

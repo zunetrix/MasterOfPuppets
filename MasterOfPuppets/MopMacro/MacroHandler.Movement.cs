@@ -64,14 +64,14 @@ public partial class MacroHandler {
         return Task.CompletedTask;
     }
 
-    /// <summary>/mopmovetotarget — moves to the current target's world position.</summary>
+    /// <summary>/mopmovetotarget - moves to the current target's world position.</summary>
     private Task HandleMopMoveToTarget(string macroId, string args, CancellationToken token) {
         Plugin.MovementManager.MoveToTarget();
         DalamudApi.PluginLog.Debug("[mopmovetotarget]");
         return Task.CompletedTask;
     }
 
-    /// <summary>/mopmovetocharacter "Name" — moves to the position of the named character or object.</summary>
+    /// <summary>/mopmovetocharacter "Name" - moves to the position of the named character or object.</summary>
     private Task HandleMopMoveToCharacter(string macroId, string args, CancellationToken token) {
         if (string.IsNullOrWhiteSpace(args)) {
             DalamudApi.PluginLog.Warning("[mopmovetocharacter] missing character name");
@@ -83,7 +83,7 @@ public partial class MacroHandler {
         return Task.CompletedTask;
     }
 
-    /// <summary>/mopstopmove — immediately stops all movement and clears pending waypoints.</summary>
+    /// <summary>/mopstopmove - immediately stops all movement and clears pending waypoints.</summary>
     private Task HandleMopStopMove(string macroId, string args, CancellationToken token) {
         Plugin.MovementManager.StopMove();
         DalamudApi.PluginLog.Debug("[mopstopmove]");
@@ -91,7 +91,7 @@ public partial class MacroHandler {
     }
 
     /// <summary>
-    /// /mopface angle — rotates the character by the given offset in degrees relative to their current facing.
+    /// /mopface angle - rotates the character by the given offset in degrees relative to their current facing.
     /// Positive values turn clockwise, negative values counter-clockwise.
     /// Examples: 90 turns right 90°, -90 turns left 90°, 180 turns around.
     /// </summary>
@@ -112,7 +112,7 @@ public partial class MacroHandler {
     }
 
     /// <summary>
-    /// /mopfaceabs angle — rotates the character to face an absolute compass direction.
+    /// /mopfaceabs angle - rotates the character to face an absolute compass direction.
     /// 0 = north, 90 = east, 180 = south, 270 = west (increases clockwise).
     /// </summary>
     private Task HandleMopFaceAbs(string macroId, string args, CancellationToken token) {
@@ -128,21 +128,21 @@ public partial class MacroHandler {
         return Task.CompletedTask;
     }
 
-    /// <summary>/mopenablewalk — enables walk mode.</summary>
+    /// <summary>/mopenablewalk - enables walk mode.</summary>
     private Task HandleMopEnableWalk(string macroId, string args, CancellationToken token) {
         Plugin.MovementManager.SetWalking(true);
         DalamudApi.PluginLog.Debug("[mopenablewalk]");
         return Task.CompletedTask;
     }
 
-    /// <summary>/mopdisablewalk — disables walk mode (back to running).</summary>
+    /// <summary>/mopdisablewalk - disables walk mode (back to running).</summary>
     private Task HandleMopDisableWalk(string macroId, string args, CancellationToken token) {
         Plugin.MovementManager.SetWalking(false);
         DalamudApi.PluginLog.Debug("[mopdisablewalk]");
         return Task.CompletedTask;
     }
 
-    /// <summary>/moptogglewalk — toggles between walk and run.</summary>
+    /// <summary>/moptogglewalk - toggles between walk and run.</summary>
     private Task HandleMopToggleWalk(string macroId, string args, CancellationToken token) {
         Plugin.MovementManager.ToggleWalking();
         DalamudApi.PluginLog.Debug("[moptogglewalk]");

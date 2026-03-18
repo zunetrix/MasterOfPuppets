@@ -57,6 +57,10 @@ internal static unsafe class GameDialogManager {
         return count > index && FireCallback("SelectString", index);
     }
 
+    /// <summary>Selects world at zero-based <paramref name="index"/> in the <c>WorldTravelSelect</c> addon.</summary>
+    public static bool SelectWorldTravelEntry(int index) =>
+        FireCallback("WorldTravelSelect", index + 2); // Ls: Callback.Fire(addon, true, index + 2)
+
     /// <summary>Selects ward (1-indexed) in the <c>HousingSelectBlock</c> addon.</summary>
     public static bool SelectWardInHousingBlock(int ward) {
         if (!IsAddonVisible("HousingSelectBlock")) return false;

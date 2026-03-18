@@ -190,7 +190,7 @@ public partial class MacroHandler : IDisposable {
                 var command = match.Success ? match.Groups[1].Value : null;
                 var args = match.Success ? match.Groups[2].Value.Trim() : null;
 
-                // /moploop — whole-macro loop (existing behaviour)
+                // /moploop - whole-macro loop (existing behaviour)
                 if (command != null && command.Equals("moploop", StringComparison.OrdinalIgnoreCase)) {
                     if (string.IsNullOrWhiteSpace(args)) {
                         shouldLoop = true;
@@ -204,7 +204,7 @@ public partial class MacroHandler : IDisposable {
                     break;
                 }
 
-                // /moploopstart [N] — begin a loop block (runs N times, or forever)
+                // /moploopstart [N] - begin a loop block (runs N times, or forever)
                 if (command != null && command.Equals("moploopstart", StringComparison.OrdinalIgnoreCase)) {
                     loopBlockStart = i + 1;
                     if (string.IsNullOrWhiteSpace(args)) {
@@ -217,7 +217,7 @@ public partial class MacroHandler : IDisposable {
                     continue;
                 }
 
-                // /moploopend — jump back to loopBlockStart, or fall through when exhausted
+                // /moploopend - jump back to loopBlockStart, or fall through when exhausted
                 if (command != null && command.Equals("moploopend", StringComparison.OrdinalIgnoreCase)) {
                     if (loopBlockStart < 0) {
                         DalamudApi.PluginLog.Warning("[moploopend] no matching /moploopstart found");
@@ -225,7 +225,7 @@ public partial class MacroHandler : IDisposable {
                         if (loopBlockIterLeft != null) loopBlockIterLeft--;
                         i = loopBlockStart - 1; // -1 because the for loop will i++
                     } else {
-                        // loop exhausted — reset block state and continue
+                        // loop exhausted - reset block state and continue
                         loopBlockStart = -1;
                         loopBlockIterLeft = null;
                     }
@@ -240,7 +240,7 @@ public partial class MacroHandler : IDisposable {
                         await Task.Delay(delayMs, token);
                     }
                 } else {
-                    // No regex match OR unrecognised command — forward raw to chat
+                    // No regex match OR unrecognised command - forward raw to chat
                     DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
                     _ = DalamudApi.Framework.RunOnFrameworkThread(() => { Chat.SendMessage(action); });
                     if (delayBetweenActions > 0.0) {
