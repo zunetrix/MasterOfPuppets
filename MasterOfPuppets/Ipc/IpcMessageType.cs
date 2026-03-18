@@ -29,21 +29,28 @@ public enum IpcMessageType {
     ExecuteChangeGearset,
     SetWindowTitle,
     ExecuteFormation,
+    // peer data request
     RequestEmoteList,
+    EmoteList,
+    RequestCharacterData,
+    CharacterData,
+
+    // house
     EnterHouse,
     ExitHouse,
-    EmoteList,
+    MoveToFrontDoor,
+
+    // key broadcast
     KeyboardBroadcastToggle,
     KeyboardInput,
+
     // Party
     InviteToParty,
     DisbandParty,
     RequestPartyLeader,
-    RequestCharacterData,
-    CharacterData,
     RequestInviteAllToParty,
-    // Housing
+
+    // teleport
     TeleportToWard,
-    // World
     TravelToWorld,
 }

@@ -398,6 +398,7 @@ public class MainWindow : Window {
             Plugin.IpcProvider.ExecuteEnterHouse();
         }
         ImGuiUtil.ToolTip("/mop enterhouse");
+
         // -----------------------
 
         if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.HouseCircleXmark, $"##ExecuteExitHouse")) {
@@ -408,6 +409,19 @@ public class MainWindow : Window {
             Plugin.IpcProvider.ExecuteExitHouse();
         }
         ImGuiUtil.ToolTip("/mop exithouse");
+
+        // -----------------------
+
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.DoorClosed, $"##ExecuteMoveToFrontDoot")) {
+            Plugin.IpcProvider.ExecuteMoveToFrontDoor();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Move To Front Door")) {
+            Plugin.IpcProvider.ExecuteMoveToFrontDoor();
+        }
+        ImGuiUtil.ToolTip("/mop movefrontdoor");
+
+        // -----------------------
 
         ImGui.Separator();
         ImGui.Text("Teleport to Ward");
@@ -422,6 +436,8 @@ public class MainWindow : Window {
             }
             ImGui.EndTable();
         }
+
+        // -----------------------
 
         ImGui.Separator();
         ImGui.Text("Travel to World");

@@ -270,6 +270,9 @@ public class PluginCommandManager : IDisposable {
                 case "exithouse":
                     Plugin.IpcProvider.ExecuteExitHouse();
                     break;
+                case "movefrontdoor":
+                    Plugin.IpcProvider.ExecuteMoveToFrontDoor();
+                    break;
                 case "ward": {
                         if (parsedArgs.Count < 2 ||
                             !int.TryParse(parsedArgs[1], out var wardNum) ||

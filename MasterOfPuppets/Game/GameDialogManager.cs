@@ -18,9 +18,9 @@ internal static unsafe class GameDialogManager {
         return addon != null && addon->IsVisible;
     }
 
-    /// <summary>Finds and clicks the first <c>SelectString</c> entry whose text contains <paramref name="searchText"/>.</summary>
-    public static bool SelectStringByText(string searchText) {
-        var addon = (AddonSelectString*)GetAddonByName("SelectString");
+    /// <summary>Finds and clicks the first entry whose text contains <paramref name="searchText"/> in <paramref name="addonName"/>.</summary>
+    public static bool SelectStringByText(string searchText, string addonName = "SelectString") {
+        var addon = (AddonSelectString*)GetAddonByName(addonName);
         if (addon == null) return false;
         var count = addon->PopupMenu.PopupMenu.EntryCount;
         if (count == 0) return false;
@@ -29,17 +29,17 @@ internal static unsafe class GameDialogManager {
             if (entry.Value == null) continue;
             var text = MemoryHelper.ReadSeStringNullTerminated((nint)entry.Value).ToString().Trim();
             if (text.Contains(searchText, System.StringComparison.OrdinalIgnoreCase))
-                return FireCallback("SelectString", i);
+                return FireCallback(addonName, i);
         }
         return false;
     }
 
-    /// <summary>Logs all visible <c>SelectString</c> entries to the plugin log. Useful for matching text in other locales.</summary>
-    public static void LogSelectStringEntries() {
-        var addon = (AddonSelectString*)GetAddonByName("SelectString");
-        if (addon == null) { DalamudApi.PluginLog.Debug("[SelectString] not visible"); return; }
+    /// <summary>Logs all entries in <paramref name="addonName"/> to the plugin log. Useful for finding text/indices.</summary>
+    public static void LogAddonEntries(string addonName = "SelectString") {
+        var addon = (AddonSelectString*)GetAddonByName(addonName);
+        if (addon == null) { DalamudApi.PluginLog.Debug($"[{addonName}] not visible"); return; }
         var count = addon->PopupMenu.PopupMenu.EntryCount;
-        DalamudApi.PluginLog.Debug($"[SelectString] {count} entries:");
+        DalamudApi.PluginLog.Debug($"[{addonName}] {count} entries:");
         for (var i = 0; i < count; i++) {
             var entry = addon->PopupMenu.PopupMenu.EntryNames[i];
             var text = entry.Value != null
@@ -49,12 +49,12 @@ internal static unsafe class GameDialogManager {
         }
     }
 
-    /// <summary>Clicks the first <c>SelectString</c> entry at zero-based <paramref name="index"/>. Locale-independent.</summary>
-    public static bool SelectStringAtIndex(int index) {
-        var addon = GetAddonByName("SelectString");
+    /// <summary>Clicks the entry at zero-based <paramref name="index"/> in <paramref name="addonName"/>. Locale-independent.</summary>
+    public static bool SelectStringAtIndex(int index, string addonName = "SelectString") {
+        var addon = GetAddonByName(addonName);
         if (addon == null) return false;
         var count = ((AddonSelectString*)addon)->PopupMenu.PopupMenu.EntryCount;
-        return count > index && FireCallback("SelectString", index);
+        return count > index && FireCallback(addonName, index);
     }
 
     /// <summary>Selects world at zero-based <paramref name="index"/> in the <c>WorldTravelSelect</c> addon.</summary>

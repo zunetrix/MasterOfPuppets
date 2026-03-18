@@ -16,7 +16,7 @@ namespace MasterOfPuppets;
 
 public static class GameTargetManager {
 
-    private static unsafe void TargetNearestObjectInternal(Func<IGameObject, bool> match) {
+    internal static unsafe void TargetNearestObjectInternal(Func<IGameObject, bool> match) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var player = DalamudApi.ObjectTable.LocalPlayer;
             if (player == null) return;
@@ -162,46 +162,14 @@ public static class GameTargetManager {
         TargetThenInteract(() => TargetObject(objectId));
     }
 
-    public static void InteractWithNearestHouseEntrance() {
-        uint enterHouseObjectBaseId = 2002737;
-        TargetThenInteract(
-            setTarget: () => TargetNearestObjectInternal(actor =>
-                actor.BaseId == enterHouseObjectBaseId
-                && actor.ObjectKind == ObjectKind.EventObj
-                && actor.IsTargetable
-                && actor.IsValid()),
-            afterInteract: () => GameDialogManager.ClickYes());
-    }
-
-    public static void InteractWithNearestHouseExit() {
-        uint exitHouseObjectBaseId = 2002738;
-        TargetThenInteract(
-            setTarget: () => TargetNearestObjectInternal(actor =>
-                actor.BaseId == exitHouseObjectBaseId
-                && actor.ObjectKind == ObjectKind.EventObj
-                && actor.IsTargetable
-                && actor.IsValid()),
-            afterInteract: () => GameDialogManager.ClickYes());
-    }
-
-    public static void InteractWithNearestApartmentEntrance() {
-        uint exitHouseObjectBaseId = 2007402;
-        TargetThenInteract(
-            setTarget: () => TargetNearestObjectInternal(actor =>
-                actor.BaseId == exitHouseObjectBaseId
-                && actor.ObjectKind == ObjectKind.EventObj
-                && actor.IsTargetable
-                && actor.IsValid()),
-            afterInteract: () => GameDialogManager.ClickYes());
-    }
-
-    //  Helpers
-    private static void TargetThenInteract(Action setTarget, Action? afterInteract = null) {
+    internal static void TargetThenInteract(Action setTarget, Action? afterInteract = null) {
         setTarget();
+        var ok = false;
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
-            stopWhen: () => DalamudApi.ObjectTable.LocalPlayer?.TargetObject != null,
+            stopWhen: () => ok = DalamudApi.ObjectTable.LocalPlayer?.TargetObject != null,
             callback: () => {
+                if (!ok) return;
                 var target = DalamudApi.ObjectTable.LocalPlayer?.TargetObject;
                 if (target == null) return;
                 target.Interact();

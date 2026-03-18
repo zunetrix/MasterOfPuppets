@@ -42,7 +42,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.EnterHouse)]
     private void HandleExecuteEnterHouse(IpcMessage message) {
-        GameTargetManager.InteractWithNearestHouseEntrance();
+        GameHousingManager.InteractWithNearestHouseEntrance();
     }
 
     public void ExecuteExitHouse() {
@@ -51,7 +51,16 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.ExitHouse)]
     private void HandleExecuteExitHouse(IpcMessage message) {
-        GameTargetManager.InteractWithNearestHouseExit();
+        GameHousingManager.InteractWithNearestHouseExit();
+    }
+
+    public void ExecuteMoveToFrontDoor() {
+        BroadCast(IpcMessage.Create(IpcMessageType.MoveToFrontDoor).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.MoveToFrontDoor)]
+    private void HandleExecuteMoveToFrontDoor(IpcMessage message) {
+        GameHousingManager.MoveToFrontDoor();
     }
 
     public void ExecuteTeleportToWard(int ward) {
