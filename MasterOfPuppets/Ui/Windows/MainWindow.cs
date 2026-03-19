@@ -450,14 +450,16 @@ public class MainWindow : Window {
                 .OrderBy(w => w.Name.ToString())
                 .Select(w => w.Name.ToString())
                 .ToList();
-            if (ImGui.BeginTable("WorldTable", 3, ImGuiTableFlags.None)) {
+            if (ImGui.BeginTable("WorldTable", 2, ImGuiTableFlags.SizingStretchSame)) {
                 foreach (var world in worlds) {
                     ImGui.TableNextColumn();
-                    if (ImGui.SmallButton($"{world}##World{world}")) {
+                    float width = ImGui.GetContentRegionAvail().X;
+                    if (ImGui.Button($"{world}##World{world}", new Vector2(width, 0))) {
                         Plugin.IpcProvider.ExecuteTravelToWorld(world);
                         ImGui.CloseCurrentPopup();
                     }
                 }
+
                 ImGui.EndTable();
             }
         }

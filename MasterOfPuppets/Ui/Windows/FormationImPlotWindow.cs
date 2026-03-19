@@ -23,6 +23,7 @@ public class FormationImPlotWindow : Window {
 
     //  Plot
     private int _selPoint = -1;
+    private bool _needsAxisReset = true;
 
     //  Shape generator
     private static readonly string[] ShapeNames = ["Polygon", "Square"];
@@ -128,6 +129,7 @@ public class FormationImPlotWindow : Window {
                 _selFormation != i) {
                 _selFormation = i;
                 _selPoint = -1;
+                _needsAxisReset = true;
             }
         }
         ImGui.EndChild();
@@ -138,6 +140,7 @@ public class FormationImPlotWindow : Window {
         Plugin.Config.Formations.Add(new Formation { Name = _newFmName });
         _selFormation = Plugin.Config.Formations.Count - 1;
         _selPoint = -1;
+        _needsAxisReset = true;
         _newFmName = string.Empty;
         Plugin.Config.Save();
     }
@@ -179,15 +182,19 @@ public class FormationImPlotWindow : Window {
     }
 
     private void DrawPlot(Formation formation) {
-        // Set initial axis limits centered on origin with margin around the farthest point
+        // Compute axis range; guard against NaN/Inf from corrupted offsets
         float limit = 8f;
         if (formation.Points.Count > 0) {
             float max = formation.Points.Max(p => MathF.Max(MathF.Abs(p.Offset.X), MathF.Abs(p.Offset.Z)));
-            limit = MathF.Max(max + 3f, 8f);
+            if (float.IsFinite(max)) limit = MathF.Max(max + 3f, 8f);
         }
 
-        ImPlot.SetNextAxisLimits(ImAxis.X1, -limit, limit, ImPlotCond.Once);
-        ImPlot.SetNextAxisLimits(ImAxis.Y1, -limit, limit, ImPlotCond.Once);
+        // Only reset axis limits when formation changes (allows free zoom otherwise)
+        if (_needsAxisReset) {
+            ImPlot.SetNextAxisLimits(ImAxis.X1, -limit, limit, ImPlotCond.Always);
+            ImPlot.SetNextAxisLimits(ImAxis.Y1, -limit, limit, ImPlotCond.Always);
+            _needsAxisReset = false;
+        }
 
         var plotSize = ImGui.GetContentRegionAvail();
         if (!ImPlot.BeginPlot("##fmipplot", plotSize,
@@ -216,7 +223,7 @@ public class FormationImPlotWindow : Window {
             double x = pt.Offset.X;
             double y = -pt.Offset.Z;
 
-            // Arrow drawn in plot-space — scales naturally with zoom
+            // Arrow drawn in plot-space - scales naturally with zoom
             DrawArrow(dl, (float)x, (float)y, pt.Angle, color, _arrowSize);
 
             // Label centered on point in screen space
@@ -288,7 +295,7 @@ public class FormationImPlotWindow : Window {
         ImPlot.EndPlot();
     }
 
-    /// <summary>Arrow drawn in plot-space coordinates — scales naturally with zoom.
+    /// <summary>Arrow drawn in plot-space coordinates - scales naturally with zoom.
     /// Vertices are rotated in plot-space then converted to pixels via ImPlot.PlotToPixels.
     /// At angleDeg=0 the tip points north (+Y_plot). Clockwise = east at 90°.</summary>
     private static void DrawArrow(ImDrawListPtr dl, float px, float py, float angleDeg, uint color, float size = 0.5f) {
@@ -296,7 +303,7 @@ public class FormationImPlotWindow : Window {
         float cosA = MathF.Cos(rad), sinA = MathF.Sin(rad);
         float h = size * 0.5f;
 
-        // Kite-shape vertices in local plot-space (forward = north = +Y_plot)
+        // arrow vertices in local plot-space (forward = north = +Y_plot)
         (float lx, float ly)[] local = [(0f, 1f), (1f, -1f), (0f, -0.5f), (-1f, -1f)];
 
         var pts = new Vector2[4];
@@ -394,20 +401,29 @@ public class FormationImPlotWindow : Window {
         float R = player.Rotation;
         float cosR = MathF.Cos(R), sinR = MathF.Sin(R);
 
+        // Find the formation point assigned to the local player and use its offset
+        // as the origin so all points are shown relative to where THIS player stands.
+        var localCid = DalamudApi.PlayerState.ContentId;
+        var myPoint = formation.Points.FirstOrDefault(p => p.Cids.Contains(localCid));
+        var myOffset = myPoint?.Offset ?? Vector3.Zero;
+        float myAngle = myPoint?.Angle ?? 0f;
+
         for (int i = 0; i < formation.Points.Count; i++) {
             var pt = formation.Points[i];
 
-            // Rotate formation offset by player yaw to get world position
+            // Relative offset from the player's assigned position, rotated by player yaw
+            var rel = pt.Offset - myOffset;
+            // CRY(R+π): (FFXIV: R=0=south, R=π=north)
             var worldPos = playerPos + new Vector3(
-                 pt.Offset.X * cosR + pt.Offset.Z * sinR,
-                 pt.Offset.Y,
-                -pt.Offset.X * sinR + pt.Offset.Z * cosR);
+                -rel.X * cosR + rel.Z * sinR,
+                 rel.Y,
+                -rel.X * sinR - rel.Z * cosR);
 
             uint c = i == _selPoint ? 0xFFFFAA00u : 0xFF3388FFu;
 
-            // θ = π − A_rad + R maps our ImPlot convention (angle 0 = north = −Z FFXIV)
-            // onto BardToolbox's Matrix4x4.CreateRotationY which uses tip at (0,0,1)
-            float worldRot = MathF.PI - pt.Angle * Angle.DegToRad + R;
+            float relAngle = myPoint != null ? pt.Angle - myAngle : pt.Angle;
+            // R - relAngle*DegToRad: display degrees (0=north, CW+) → FFXIV game radians
+            float worldRot = R - relAngle * Angle.DegToRad;
 
             if (!DrawWorldArrow(bdl, worldPos, worldRot, c, _markerSizeWorld)) continue;
 
@@ -420,22 +436,22 @@ public class FormationImPlotWindow : Window {
     }
 
     /// <summary>
-    /// Projects a kite-shaped arrow into screen space by rotating each 3D vertex
-    /// independently with WorldToScreen — perspective-accurate, matches BardToolbox approach.
+    /// Projects arrow into screen space by rotating each 3D vertex
+    /// independently with WorldToScreen - perspective-accurate
     /// </summary>
     private static bool DrawWorldArrow(ImDrawListPtr dl, Vector3 worldPos, float worldRot, uint color, float sizeM) {
         if (!DalamudApi.GameGui.WorldToScreen(worldPos, out _)) return false;
 
         var mat = Matrix4x4.CreateRotationY(worldRot);
 
-        // Same kite vertices as BardToolbox (tip = +Z before rotation, scaled by sizeM/2)
+        // arrow
         var local = new Vector3[] {
             new(0, 0, 1), new(1, 0, -1), new(0, 0, -0.5f), new(-1, 0, -1),
         };
         var pts = new Vector2[4];
         for (int i = 0; i < 4; i++) {
             var v = Vector3.Transform(local[i] * (sizeM * 0.5f), mat) + worldPos;
-            if (!DalamudApi.GameGui.WorldToScreen(v, out pts[i])) return false;
+            DalamudApi.GameGui.WorldToScreen(v, out pts[i]);
         }
 
         dl.AddConvexPolyFilled(ref pts[0], 4, color);
@@ -452,8 +468,10 @@ public class FormationImPlotWindow : Window {
         if (formation == null) { ImGui.TextDisabled("No formation selected"); return; }
 
         //  Header: Execute | Delete | Name
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, "##execfmi", "Execute formation"))
-            Plugin.IpcProvider.ExecuteFormation(formation.Name);
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, "##execfmi", "Execute formation")) {
+            // Plugin.IpcProvider.ExecuteFormation(formation.Name);
+        }
+
         ImGui.SameLine();
         if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, "##fidelfm", "Delete formation (Ctrl+Click)") && ImGui.GetIO().KeyCtrl) {
             Plugin.Config.Formations.RemoveAt(_selFormation);
@@ -566,7 +584,7 @@ public class FormationImPlotWindow : Window {
                                  ?? pt2.Cids[i].ToString("X16");
                         ImGui.TableNextRow();
                         ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
-                        ImGui.TableNextColumn(); ImGui.TextUnformatted(cn);
+                        ImGui.TableNextColumn(); ImGui.Text(cn);
                         ImGui.TableNextColumn();
                         if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fidc{i}", "Remove")) delIdx = i;
                     }
@@ -599,7 +617,7 @@ public class FormationImPlotWindow : Window {
                     for (int i = 0; i < pt2.GroupIds.Count; i++) {
                         ImGui.TableNextRow();
                         ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
-                        ImGui.TableNextColumn(); ImGui.TextUnformatted(pt2.GroupIds[i]);
+                        ImGui.TableNextColumn(); ImGui.Text(pt2.GroupIds[i]);
                         ImGui.TableNextColumn();
                         if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fidg{i}", "Remove")) delIdx = i;
                     }

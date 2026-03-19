@@ -573,7 +573,7 @@ public class FormationWindow : Window {
                                  ?? pt2.Cids[i].ToString("X16");
                         ImGui.TableNextRow();
                         ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
-                        ImGui.TableNextColumn(); ImGui.TextUnformatted(cn);
+                        ImGui.TableNextColumn(); ImGui.Text(cn);
                         ImGui.TableNextColumn();
                         if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fwdc{i}", "Remove")) delIdx = i;
                     }
@@ -606,7 +606,7 @@ public class FormationWindow : Window {
                     for (int i = 0; i < pt2.GroupIds.Count; i++) {
                         ImGui.TableNextRow();
                         ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
-                        ImGui.TableNextColumn(); ImGui.TextUnformatted(pt2.GroupIds[i]);
+                        ImGui.TableNextColumn(); ImGui.Text(pt2.GroupIds[i]);
                         ImGui.TableNextColumn();
                         if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fwdg{i}", "Remove")) delIdx = i;
                     }
