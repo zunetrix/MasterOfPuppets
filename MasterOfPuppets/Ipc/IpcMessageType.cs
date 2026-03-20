@@ -63,4 +63,8 @@ public enum IpcMessageType {
     // game exit
     ExecuteLogout,
     ExecuteShutdown,
+
+    //follow
+    StartFollow,
+    StopFollow,
 }

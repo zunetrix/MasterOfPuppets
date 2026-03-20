@@ -182,6 +182,7 @@ public class PluginCommandManager : IDisposable {
                         if (player == null) return;
                         var target = (player.Rotation.Radians() - faceAngle.Degrees()).Normalized();
                         Plugin.MovementManager.FaceDirection(target);
+                        // GameFunctions.SetFacing(target);
                     }
                     break;
                 case "faceabs": {
@@ -192,6 +193,7 @@ public class PluginCommandManager : IDisposable {
                         }
                         var target = (180f - faceAngle).Degrees().Normalized();
                         Plugin.MovementManager.FaceDirection(target);
+                        // GameFunctions.SetFacing(target);
                     }
                     break;
                 case "stopmove":
@@ -202,6 +204,17 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "stackonme":
                     Plugin.IpcProvider.ExecuteStackOnMe();
+                    break;
+                case "follow":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
+                        return;
+                    }
+
+                    if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
+                        Plugin.IpcProvider.StartFollow(DalamudApi.PlayerState.EntityId);
+                    else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
+                        GameFunctions.FollowStop();
                     break;
                 case "movetocharacter": {
                         if (parsedArgs.Count <= 1) {
