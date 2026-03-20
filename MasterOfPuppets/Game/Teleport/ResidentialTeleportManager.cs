@@ -64,6 +64,7 @@ internal static class ResidentialTeleportManager {
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
             stopWhen: () => ok = GameDialogManager.SelectStringAtIndex(IndexResidentialDistrict),
+            // stopWhen: () => GameDialogManager.SelectStringByText(TextGoToWard),
             callback: () => {
                 if (!ok) { DalamudApi.PluginLog.Warning("[TeleportToWard] step2 timeout: SelectString1 not clicked"); return; }
                 Step_WaitForSelectStringMenu2(ward);

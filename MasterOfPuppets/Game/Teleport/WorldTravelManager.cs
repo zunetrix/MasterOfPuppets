@@ -90,8 +90,8 @@ internal static unsafe class WorldTravelManager {
         var ok = false;
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
-            // stopWhen: () => GameDialogManager.SelectStringByText(TextVisitAnotherWorld),
             stopWhen: () => ok = GameDialogManager.SelectStringAtIndex(IndexVisitAnotherWorld),
+            // stopWhen: () => GameDialogManager.SelectStringByText(TextVisitAnotherWorld),
             callback: () => {
                 if (!ok) { DalamudApi.PluginLog.Warning("[TravelToWorld] step2 timeout: 'Visit Another World' not clicked"); return; }
                 Step_WaitForWorldTravelSelect(world);

@@ -81,6 +81,7 @@ public static class EmoteHelper {
                 TextCommand = $"/mopbr /mophotbaremote {e.Id}",
                 Category = "InternalEmote",
             })
+            .Where(e => DalamudApi.PlayerState.IsLoaded)
             .ToList();
     }
 }
