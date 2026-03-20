@@ -16,7 +16,7 @@ public class FollowPath : IDisposable {
     public bool MovementAllowed = true;
     public bool IgnoreDeltaY = false;
 
-    /// <summary>Distance threshold to advance past a waypoint.</summary>
+    /// <summary>Distance threshold to advance past a waypoint and to stop at the final waypoint.</summary>
     public float Tolerance = 0.25f;
 
     /// <summary>
@@ -151,6 +151,16 @@ public class FollowPath : IDisposable {
             if (IgnoreDeltaY) nextPos.Y = player.Position.Y;
             _movement.DesiredPosition = nextPos;
         } else {
+            var delta = target - player.Position;
+            if (IgnoreDeltaY) delta.Y = 0;
+            if (Waypoints.Count == 1 && delta.Length() <= Tolerance) {
+                Waypoints.Clear();
+                if (DesiredFacing.HasValue)
+                    ApplyFacing(player.Position, player.Rotation);
+                else
+                    StopMovementAndCamera();
+                return;
+            }
             if (IgnoreDeltaY) target.Y = player.Position.Y;
             _movement.DesiredPosition = target;
         }

@@ -2,9 +2,9 @@ using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-using Dalamud.Game.ClientState.Objects.Types;
-
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
+
+using MasterOfPuppets.Movement;
 
 using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 
@@ -42,16 +42,21 @@ public static unsafe class GameFunctions {
         }
     }
 
-    /// <summary>Instantly rotates an object to face the given angle in radians.</summary>
-    public static void SetFacing(IGameObject obj, float radians) {
+    /// <summary>Instantly rotates the local player to face the given angle.</summary>
+    public static void SetFacing(Angle angle) {
         if (_setFacing == null) return;
+        var player = DalamudApi.ObjectTable.LocalPlayer;
+        if (player == null) return;
         DalamudApi.Framework.RunOnTick(() =>
-            _setFacing((GameObjectStruct*)obj.Address, radians));
+            _setFacing((GameObjectStruct*)player.Address, angle.Rad));
     }
 
-    /// <summary>Instantly rotates an object to face a world position.</summary>
-    public static void SetFacing(IGameObject obj, Vector3 target) =>
-        SetFacing(obj, MathF.Atan2(target.X - obj.Position.X, target.Z - obj.Position.Z));
+    /// <summary>Instantly rotates the local player to face a world position.</summary>
+    public static void SetFacing(Vector3 target) {
+        var player = DalamudApi.ObjectTable.LocalPlayer;
+        if (player == null) return;
+        SetFacing(MathF.Atan2(target.X - player.Position.X, target.Z - player.Position.Z).Radians());
+    }
 
     /// <summary>Activates the game's native follow mode targeting the given entity ID.</summary>
     public static void FollowStart(uint entityId) {
