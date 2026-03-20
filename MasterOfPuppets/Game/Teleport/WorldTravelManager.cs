@@ -17,8 +17,6 @@ namespace MasterOfPuppets;
 /// </summary>
 internal static unsafe class WorldTravelManager {
 
-    private const string AddonWorldTravelSelect = "WorldTravelSelect";
-
     //// Aetheryte menu list index: "Visit Another World Server."
     private const int IndexVisitAnotherWorld = 2;
 
@@ -27,9 +25,6 @@ internal static unsafe class WorldTravelManager {
         DalamudApi.DataManager.GetExcelSheet<Addon>(DalamudApi.ClientState.ClientLanguage)
             ?.GetRow(102338).Text.ExtractText()
         ?? "Visit Another World Server.";
-
-
-
 
     //flow:
     //Interact with aetheryte > SelectString > "Visit Another World Server." > WorldTravelSelect > Select World > Yes
@@ -53,7 +48,7 @@ internal static unsafe class WorldTravelManager {
     /// Reads list component NodeList[4], items at indices 3-9 - Lifestream
     /// </summary>
     public static string[] GetAvailableWorldDestinations() {
-        var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(AddonWorldTravelSelect);
+        var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(GameDialogManager.AddonName.WorldTravelSelect);
         if (addon == null || !addon->IsVisible || addon->UldManager.NodeListCount < 5) return [];
         var listNode = addon->UldManager.NodeList[4]->GetAsAtkComponentNode();
         if (listNode == null) return [];

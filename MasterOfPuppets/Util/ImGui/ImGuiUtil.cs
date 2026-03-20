@@ -55,6 +55,13 @@ public static class ImGuiUtil {
             return IconButton(icon, id, tooltip);
         }
     }
+    public static bool WarningIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonWarningNormal)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonWarningHovered)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonWarningActive)) {
+            return IconButton(icon, id, tooltip);
+        }
+    }
 
     public static bool PrimaryIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
         using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal)

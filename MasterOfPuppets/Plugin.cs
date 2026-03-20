@@ -3,6 +3,7 @@ using System.Globalization;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
+using MasterOfPuppets.Camera;
 using MasterOfPuppets.Ipc;
 using MasterOfPuppets.Movement;
 using MasterOfPuppets.Resources;
@@ -32,6 +33,7 @@ public class Plugin : IDalamudPlugin {
         Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(DalamudApi.PluginInterface);
         GameFunctions.Initialize();
+        GameCameraManager.Initialize();
 
         Ui = new PluginUi(this);
         IpcProvider = new IpcProvider(this);
@@ -92,7 +94,7 @@ public class Plugin : IDalamudPlugin {
         DalamudApi.ClientState.Login -= OnLogin;
         DalamudApi.PluginInterface.LanguageChanged -= OnLanguageChange;
         DalamudApi.Framework.Update -= OnFrameworkUpdate;
-
+        GameCameraManager.Dispose();
         IpcProvider.Dispose();
         ChatWatcher.Dispose();
         ItemMover.Dispose();

@@ -6,6 +6,8 @@ using System.Runtime.InteropServices;
 namespace MasterOfPuppets.Util;
 
 public static class WindowsApi {
+    public const int WM_CLOSE = 0x10;
+
     public static void ExecuteCmd(string fileName, string args = null) {
         ProcessStartInfo processStartInfo;
         processStartInfo = args is null
@@ -55,6 +57,7 @@ public static class WindowsApi {
         }
     }
 
-    [DllImport("user32.dll")]
-    public static extern int SetWindowText(IntPtr hWnd, string text);
+    [DllImport("user32.dll")] public static extern int SetWindowText(IntPtr hWnd, string text);
+
+    [DllImport("user32.dll")] public static extern int SendMessage(IntPtr hWnd, int wMsg, IntPtr wParam, IntPtr lParam);
 }

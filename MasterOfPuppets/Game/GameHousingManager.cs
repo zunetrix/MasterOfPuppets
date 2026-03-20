@@ -2,8 +2,6 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 
 using Lumina.Excel.Sheets;
 
-using MasterOfPuppets.Util;
-
 using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace MasterOfPuppets;
@@ -20,7 +18,7 @@ public static class GameHousingManager {
 
     public static void InteractWithNearestHouseEntrance() => InteractWithNearestObject(HouseEntranceBaseId);
 
-    public unsafe static void InteractWithNearestHouseExit() {
+    public static unsafe void InteractWithNearestHouseExit() {
         var housingManager = HousingManager.Instance();
         if (!housingManager->IsInside())
             return;
@@ -30,7 +28,7 @@ public static class GameHousingManager {
 
     public static void InteractWithNearestApartmentEntrance() => InteractWithNearestObject(ApartmentEntranceBaseId);
 
-    public unsafe static void MoveToFrontDoor() {
+    public static unsafe void MoveToFrontDoor() {
         var housingManager = HousingManager.Instance();
         if (!housingManager->IsInside()) return;
 

@@ -29,6 +29,7 @@ public enum IpcMessageType {
     ExecuteChangeGearset,
     SetWindowTitle,
     ExecuteFormation,
+
     // peer data request
     RequestEmoteList,
     EmoteList,
@@ -44,7 +45,7 @@ public enum IpcMessageType {
     KeyboardBroadcastToggle,
     KeyboardInput,
 
-    // Party
+    // party
     InviteToParty,
     DisbandParty,
     RequestPartyLeader,
@@ -53,4 +54,13 @@ public enum IpcMessageType {
     // teleport
     TeleportToWard,
     TravelToWorld,
+    TeleportToEstate,
+
+    //camera
+    EnableCamHack,
+    DisableCamHack,
+
+    // game exit
+    ExecuteLogout,
+    ExecuteShutdown,
 }

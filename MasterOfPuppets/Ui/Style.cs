@@ -71,6 +71,14 @@ public class ComponentsPalette {
     public Vector4 ButtonSuccessHovered = new Vector4(0.35f, 0.7f, 0.21f, 1f);       // #59B335
     public Vector4 ButtonSuccessActive = new Vector4(0.342857f, 0.8f, 0.16f, 1f);    // #57CC29
 
+    public Vector4 ButtonWarningNormal = new Vector4(0.85f, 0.65f, 0.13f, 1f); // #D9A621
+    public Vector4 ButtonWarningHovered = new Vector4(0.95f, 0.75f, 0.18f, 1f); // #F2BF2E
+    public Vector4 ButtonWarningActive = new Vector4(1.00f, 0.80f, 0.20f, 1f); // #FFCC33
+
+    // public Vector4 ButtonWarningNormal = new Vector4(0.80f, 0.45f, 0.10f, 1f); // #CC731A
+    // public Vector4 ButtonWarningHovered = new Vector4(0.90f, 0.50f, 0.15f, 1f); // #E68026
+    // public Vector4 ButtonWarningActive = new Vector4(1.00f, 0.55f, 0.20f, 1f); // #FF8C33
+
     public Vector4 ButtonDangerNormal = new Vector4(0.6f, 0.24f, 0.24f, 1f);          // #993D3D
     public Vector4 ButtonDangerHovered = new Vector4(0.7f, 0.21f, 0.21f, 1f);        // #B33535
     public Vector4 ButtonDangerActive = new Vector4(0.8f, 0.16f, 0.16f, 1f);         // #CC2929

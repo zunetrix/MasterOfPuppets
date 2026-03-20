@@ -118,7 +118,7 @@ public class MainWindow : Window {
 
         DrawTeleportMenu();
 
-        DrawPartyMenu();
+        DrawCharactersMenu();
 
         if (ImGui.MenuItem("Help"))
             Plugin.Ui.MacroHelpWindow.Toggle();
@@ -197,16 +197,6 @@ public class MainWindow : Window {
         ImGui.SameLine();
         if (ImGui.Selectable(Language.MacroBackup)) {
             Plugin.MacroManager.BackupMacros();
-        }
-
-        // -----------------------
-
-        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Users, $"##CharactersMenu")) {
-            Ui.CharactersWindow.Toggle();
-        }
-        ImGui.SameLine();
-        if (ImGui.Selectable(Language.ShowCharactersBtn)) {
-            Ui.CharactersWindow.Toggle();
         }
     }
 
@@ -364,7 +354,7 @@ public class MainWindow : Window {
         // -----------------------
 
         ImGui.Separator();
-        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.ToggleOn, $"##ExecuteEmableKB")) {
+        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Keyboard, $"##ExecuteEnableKB")) {
             Plugin.IpcProvider.EnableKeyboardBroadcast();
         }
         ImGui.SameLine();
@@ -375,7 +365,7 @@ public class MainWindow : Window {
 
         // -----------------------
 
-        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.ToggleOff, $"##ExecuteDisableKB")) {
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Keyboard, $"##ExecuteDisableKB")) {
             Plugin.IpcProvider.DisableKeyboardBroadcast();
         }
         ImGui.SameLine();
@@ -383,6 +373,29 @@ public class MainWindow : Window {
             Plugin.IpcProvider.DisableKeyboardBroadcast();
         }
         ImGuiUtil.ToolTip("/mop keybroadcast off");
+
+        // -----------------------
+
+        ImGui.Separator();
+        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Tv, $"##ExecuteEnableCamHack")) {
+            Plugin.IpcProvider.EnableCamHack();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Enable CamHack")) {
+            Plugin.IpcProvider.EnableCamHack();
+        }
+        ImGuiUtil.ToolTip("/mop camhack on");
+
+        // -----------------------
+
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Tv, $"##ExecuteDisableCamHack")) {
+            Plugin.IpcProvider.DisableCamHack();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Disable CamHack")) {
+            Plugin.IpcProvider.DisableCamHack();
+        }
+        ImGuiUtil.ToolTip("/mop camhack off");
     }
 
     private void DrawTeleportMenu() {
@@ -443,7 +456,7 @@ public class MainWindow : Window {
         ImGui.Text("Travel to World");
         ImGuiUtil.ToolTip("/mop world <WorldName>");
         var localPlayer = DalamudApi.PlayerState;
-        if (localPlayer != null) {
+        if (localPlayer.IsLoaded) {
             var dcId = localPlayer.CurrentWorld.Value.DataCenter.RowId;
             var worlds = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.Sheets.World>()
                 .Where(w => w.IsPublic && w.DataCenter.RowId == dcId)
@@ -463,11 +476,10 @@ public class MainWindow : Window {
                 ImGui.EndTable();
             }
         }
-        // -----------------------
     }
 
-    private void DrawPartyMenu() {
-        using var menu = ImRaii.Menu("Party");
+    private void DrawCharactersMenu() {
+        using var menu = ImRaii.Menu("Characters");
         if (!menu) return;
 
         if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.UserPlus, $"##RequestInviteAllToParty")) {
@@ -511,12 +523,68 @@ public class MainWindow : Window {
 
         // -----------------------
 
+        ImGui.Separator();
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Users, $"##CharactersMenu")) {
+            Ui.CharactersWindow.Toggle();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable(Language.ShowCharactersBtn)) {
+            Ui.CharactersWindow.Toggle();
+        }
+
         if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.UsersViewfinder, $"##Peer Monitor")) {
             Plugin.Ui.PeerMonitorWindow.Toggle();
         }
         ImGui.SameLine();
         if (ImGui.MenuItem("Peer Monitor"))
             Plugin.Ui.PeerMonitorWindow.Toggle();
+
+        DrawGameExitSubMenu();
+
+    }
+    private void DrawGameExitSubMenu() {
+        using var submenu = ImRaii.Menu("Exit Actions");
+        if (!submenu) return;
+
+        if (ImGuiUtil.WarningIconButton(FontAwesomeIcon.UsersSlash, $"##ExecuteLogoutAll")) {
+            Plugin.IpcProvider.ExecuteLogout(includeSelf: true);
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Logout All")) {
+            Plugin.IpcProvider.ExecuteLogout(includeSelf: true);
+        }
+        ImGuiUtil.ToolTip("/mop logout");
+
+        if (ImGuiUtil.WarningIconButton(FontAwesomeIcon.UserAltSlash, $"##ExecuteLogoutOthers")) {
+            Plugin.IpcProvider.ExecuteLogout();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Logout Others")) {
+            Plugin.IpcProvider.ExecuteLogout();
+        }
+        ImGuiUtil.ToolTip("/mop logout");
+
+        // -----------------------
+
+        ImGui.Separator();
+
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.UsersSlash, $"##ExecuteShutdownAll")) {
+            Plugin.IpcProvider.ExecuteShutdown(includeSelf: true);
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Shutdown All")) {
+            Plugin.IpcProvider.ExecuteShutdown(includeSelf: true);
+        }
+        ImGuiUtil.ToolTip("/mop shutdown");
+
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.UserAltSlash, $"##ExecuteShutDownOthers")) {
+            Plugin.IpcProvider.ExecuteShutdown();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Shutdown Others")) {
+            Plugin.IpcProvider.ExecuteShutdown();
+        }
+        ImGuiUtil.ToolTip("/mop shutdown");
     }
 
 

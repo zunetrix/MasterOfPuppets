@@ -186,6 +186,7 @@ public class MovementManager : IDisposable {
 
     /// <summary>Rotates the character to face the given angle without moving.</summary>
     public void FaceDirection(Angle angle) {
+        // DalamudApi.Framework.RunOnFrameworkThread(() => GameFunctions.SetFacing(DalamudApi.ObjectTable.LocalPlayer, angle));
         DalamudApi.Framework.RunOnFrameworkThread(() => _follow.FaceDirection(angle));
     }
 

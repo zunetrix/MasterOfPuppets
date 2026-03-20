@@ -1,5 +1,7 @@
 using System;
 
+using MasterOfPuppets.Camera;
+
 namespace MasterOfPuppets.Ipc;
 
 internal partial class IpcProvider {
@@ -36,48 +38,21 @@ internal partial class IpcProvider {
         GameSettingsManager.SetDisplayObjectLimit(displayObjectLimitType);
     }
 
-    public void ExecuteEnterHouse() {
-        BroadCast(IpcMessage.Create(IpcMessageType.EnterHouse).Serialize(), includeSelf: true);
+    public void EnableCamHack() {
+        BroadCast(IpcMessage.Create(IpcMessageType.EnableCamHack).Serialize(), includeSelf: false);
     }
 
-    [IpcHandle(IpcMessageType.EnterHouse)]
-    private void HandleExecuteEnterHouse(IpcMessage message) {
-        GameHousingManager.InteractWithNearestHouseEntrance();
+    [IpcHandle(IpcMessageType.EnableCamHack)]
+    private void HandleEnableCamHack(IpcMessage message) {
+        GameCameraManager.EnableCamHighHeight();
     }
 
-    public void ExecuteExitHouse() {
-        BroadCast(IpcMessage.Create(IpcMessageType.ExitHouse).Serialize(), includeSelf: true);
+    public void DisableCamHack() {
+        BroadCast(IpcMessage.Create(IpcMessageType.DisableCamHack).Serialize(), includeSelf: false);
     }
 
-    [IpcHandle(IpcMessageType.ExitHouse)]
-    private void HandleExecuteExitHouse(IpcMessage message) {
-        GameHousingManager.InteractWithNearestHouseExit();
-    }
-
-    public void ExecuteMoveToFrontDoor() {
-        BroadCast(IpcMessage.Create(IpcMessageType.MoveToFrontDoor).Serialize(), includeSelf: true);
-    }
-
-    [IpcHandle(IpcMessageType.MoveToFrontDoor)]
-    private void HandleExecuteMoveToFrontDoor(IpcMessage message) {
-        GameHousingManager.MoveToFrontDoor();
-    }
-
-    public void ExecuteTeleportToWard(int ward) {
-        BroadCast(IpcMessage.Create(IpcMessageType.TeleportToWard, ward).Serialize(), includeSelf: true);
-    }
-
-    [IpcHandle(IpcMessageType.TeleportToWard)]
-    private void HandleExecuteTeleportToWard(IpcMessage message) {
-        ResidentialTeleportManager.TeleportToWard(message.DataStruct<int>());
-    }
-
-    public void ExecuteTravelToWorld(string world) {
-        BroadCast(IpcMessage.Create(IpcMessageType.TravelToWorld, world).Serialize(), includeSelf: true);
-    }
-
-    [IpcHandle(IpcMessageType.TravelToWorld)]
-    private void HandleExecuteTravelToWorld(IpcMessage message) {
-        WorldTravelManager.TravelToWorld(message.StringData[0]);
+    [IpcHandle(IpcMessageType.DisableCamHack)]
+    private void HandleDisableCamHack(IpcMessage message) {
+        GameCameraManager.Disable();
     }
 }

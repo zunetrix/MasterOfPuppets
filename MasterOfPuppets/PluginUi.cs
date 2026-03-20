@@ -54,10 +54,7 @@ public class PluginUi : IDisposable {
     }
 
     public void Draw() {
-        // if (!DalamudApi.PlayerState.IsLoaded) return;
-        // var player = DalamudApi.ObjectTable.LocalPlayer;
-        // if (player == null) return;
-
+        if (!DalamudApi.PlayerState.IsLoaded) return;
         WindowSystem.Draw();
     }
 }
