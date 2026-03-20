@@ -53,4 +53,8 @@ public enum IpcMessageType {
     // teleport
     TeleportToWard,
     TravelToWorld,
+    TeleportToEstate,
+    //Camera
+    EnableCamHack,
+    DisableCamHack,
 }

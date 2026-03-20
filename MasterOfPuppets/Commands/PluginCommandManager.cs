@@ -7,6 +7,7 @@ using System.Numerics;
 using Dalamud.Game.Command;
 using Dalamud.Interface.ImGuiNotification;
 
+using MasterOfPuppets.Camera;
 using MasterOfPuppets.Movement;
 using MasterOfPuppets.Util;
 
@@ -270,6 +271,12 @@ public class PluginCommandManager : IDisposable {
                 case "exithouse":
                     Plugin.IpcProvider.ExecuteExitHouse();
                     break;
+                case "estate":
+                    var contentIdOrFriendName = "Bazaza Baza";
+                    // var contentIdOrFriendName = $"{DalamudApi.PlayerState.ContentId}";
+                    string teleportOptionIndex = "0";
+                    Plugin.IpcProvider.ExecuteTeleportToEstate(contentIdOrFriendName, teleportOptionIndex);
+                    break;
                 case "movefrontdoor":
                     Plugin.IpcProvider.ExecuteMoveToFrontDoor();
                     break;
@@ -314,6 +321,20 @@ public class PluginCommandManager : IDisposable {
                         }
                         Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
                     }
+                    break;
+                case "camhack on":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
+                        return;
+                    }
+                    GameCameraManager.EnableCamHighHeight();
+                    break;
+                case "camhack off":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
+                        return;
+                    }
+                    GameCameraManager.Disable();
                     break;
                 case "keybroadcast":
                     if (parsedArgs.Count < 2) {

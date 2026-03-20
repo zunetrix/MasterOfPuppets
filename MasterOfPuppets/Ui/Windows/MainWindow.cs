@@ -364,7 +364,7 @@ public class MainWindow : Window {
         // -----------------------
 
         ImGui.Separator();
-        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.ToggleOn, $"##ExecuteEmableKB")) {
+        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Keyboard, $"##ExecuteEnableKB")) {
             Plugin.IpcProvider.EnableKeyboardBroadcast();
         }
         ImGui.SameLine();
@@ -375,7 +375,7 @@ public class MainWindow : Window {
 
         // -----------------------
 
-        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.ToggleOff, $"##ExecuteDisableKB")) {
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Keyboard, $"##ExecuteDisableKB")) {
             Plugin.IpcProvider.DisableKeyboardBroadcast();
         }
         ImGui.SameLine();
@@ -383,6 +383,29 @@ public class MainWindow : Window {
             Plugin.IpcProvider.DisableKeyboardBroadcast();
         }
         ImGuiUtil.ToolTip("/mop keybroadcast off");
+
+        // -----------------------
+
+        ImGui.Separator();
+        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Tv, $"##ExecuteEnableCamHack")) {
+            Plugin.IpcProvider.EnableCamHack();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Enable CamHack")) {
+            Plugin.IpcProvider.EnableCamHack();
+        }
+        ImGuiUtil.ToolTip("/mop camhack on");
+
+        // -----------------------
+
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Tv, $"##ExecuteDisableCamHack")) {
+            Plugin.IpcProvider.DisableCamHack();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Disable CamHack")) {
+            Plugin.IpcProvider.DisableCamHack();
+        }
+        ImGuiUtil.ToolTip("/mop camhack off");
     }
 
     private void DrawTeleportMenu() {

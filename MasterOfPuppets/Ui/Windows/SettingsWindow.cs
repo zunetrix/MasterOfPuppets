@@ -9,6 +9,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
+using MasterOfPuppets.Camera;
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
@@ -203,6 +204,19 @@ public class SettingsWindow : Window {
                 Plugin.IpcProvider.SyncConfiguration();
             }
             ImGuiUtil.HelpMarker("Removes the FFXIV mutex to allow opening more than 2 game instances");
+        }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        using (ImGuiGroupPanel.BeginGroupPanel("Cam Hack")) {
+            bool enabled = GameCameraManager.Enabled;
+            if (ImGui.Checkbox("Cam Hack", ref enabled)) {
+                if (enabled)
+                    GameCameraManager.EnableCamHighHeight();
+                else
+                    GameCameraManager.Disable();
+            }
         }
 
         ImGui.Spacing();

@@ -11,9 +11,6 @@ namespace MasterOfPuppets;
 /// </summary>
 internal static class ResidentialTeleportManager {
 
-    private const string AddonHousingSelectBlock = "HousingSelectBlock";
-    private const string AddonSelectYesno = "SelectYesno";
-
     // Aetheryte menu list index: "Residential District Aethernet."
     private const int IndexResidentialDistrict = 1;
 
@@ -74,7 +71,6 @@ internal static class ResidentialTeleportManager {
             timeoutMs: 3000);
     }
 
-
     //  Step 3
     //  Poll every frame until the "Go to specified ward." entry appears and is clicked.
     //  Text is read from the DataManager (locale-aware).
@@ -98,7 +94,7 @@ internal static class ResidentialTeleportManager {
         var ok = false;
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
-            stopWhen: () => ok = GameDialogManager.IsAddonVisible(AddonHousingSelectBlock),
+            stopWhen: () => ok = GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.HousingSelectBlock),
             callback: () => {
                 if (!ok) { DalamudApi.PluginLog.Warning("[TeleportToWard] step4 timeout: HousingSelectBlock not visible"); return; }
                 GameDialogManager.SelectWardInHousingBlock(ward);
@@ -118,7 +114,7 @@ internal static class ResidentialTeleportManager {
                 if (GameDialogManager.IsHousingBlockConfirmEnabled())
                     GameDialogManager.ClickHousingBlockConfirm();
             },
-            stopWhen: () => ok = GameDialogManager.IsAddonVisible(AddonSelectYesno),
+            stopWhen: () => ok = GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.SelectYesno),
             callback: () => {
                 if (!ok) { DalamudApi.PluginLog.Warning("[TeleportToWard] step5 timeout: SelectYesno did not appear after confirm"); return; }
                 Step_WaitForYesNoAndConfirm();
@@ -133,7 +129,7 @@ internal static class ResidentialTeleportManager {
         var ok = false;
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
-            stopWhen: () => ok = GameDialogManager.IsAddonVisible(AddonSelectYesno),
+            stopWhen: () => ok = GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.SelectYesno),
             callback: () => {
                 if (!ok) { DalamudApi.PluginLog.Warning("[TeleportToWard] step6 timeout: SelectYesno not visible"); return; }
                 GameDialogManager.ClickYes();
