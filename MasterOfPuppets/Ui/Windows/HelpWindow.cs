@@ -15,7 +15,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class MacroHelpWindow : Window {
+public class HelpWindow : Window {
     private Plugin Plugin { get; }
 
     private int SelectedItemIndex = 0;
@@ -23,7 +23,7 @@ public class MacroHelpWindow : Window {
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
 
-    public MacroHelpWindow(Plugin plugin) : base($"{Plugin.Name} Help###MacroHelpWindow") {
+    public HelpWindow(Plugin plugin) : base($"{Plugin.Name} Help###HelpWindow") {
         Plugin = plugin;
 
         Size = ImGuiHelpers.ScaledVector2(550, 450);

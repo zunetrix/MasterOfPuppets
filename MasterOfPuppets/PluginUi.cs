@@ -17,7 +17,7 @@ public class PluginUi : IDisposable {
     public MacroBatchEditorWindow MacroBatchEditorWindow { get; }
     public MacroQueueWindow MacroQueueWindow { get; }
     public CharactersWindow CharactersWindow { get; }
-    public MacroHelpWindow MacroHelpWindow { get; }
+    public HelpWindow HelpWindow { get; }
     public MacroImportExportWindow MacroImportExportWindow { get; }
     public IconPickerDialogWindow IconPickerDialogWindow { get; }
     public DebugWindow DebugWindow { get; }
@@ -35,7 +35,7 @@ public class PluginUi : IDisposable {
         MacroQueueWindow = AddWindow(new MacroQueueWindow(Plugin));
         CharactersWindow = AddWindow(new CharactersWindow(Plugin));
         ActionsBroadcastWindow = AddWindow(new ActionsBroadcastWindow(Plugin));
-        MacroHelpWindow = AddWindow(new MacroHelpWindow(Plugin));
+        HelpWindow = AddWindow(new HelpWindow(Plugin));
         MacroImportExportWindow = AddWindow(new MacroImportExportWindow(Plugin));
         IconPickerDialogWindow = AddWindow(new IconPickerDialogWindow());
         DebugWindow = AddWindow(new DebugWindow(Plugin));

@@ -31,7 +31,7 @@ public partial class MainWindow : Window {
         DrawCharactersMenu();
 
         if (ImGui.MenuItem("Help"))
-            Plugin.Ui.MacroHelpWindow.Toggle();
+            Plugin.Ui.HelpWindow.Toggle();
 
         var versionText = $"v{Version}";
         var textSize = ImGui.CalcTextSize(versionText);

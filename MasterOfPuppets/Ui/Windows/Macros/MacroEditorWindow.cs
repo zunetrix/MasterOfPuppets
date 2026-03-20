@@ -178,6 +178,7 @@ public class MacroEditorWindow : Window {
             else
                 ImGui.TextDisabled("Select a command");
         }
+        ImGuiUtil.ToolTip("Assign characters to perform this command's actions");
 
         if (ImGui.CollapsingHeader("Group Assignments")) {
             if (hasValidCommand)
@@ -185,6 +186,7 @@ public class MacroEditorWindow : Window {
             else
                 ImGui.TextDisabled("Select a command");
         }
+        ImGuiUtil.ToolTip("Assign a group of characters to execute this command's actions. Group assignment is more flexible, adding or removing a character updates all macros bound to that group");
 
         if (ImGui.CollapsingHeader("Appearance")) {
             DrawIconColorPicker();
@@ -361,8 +363,8 @@ public class MacroEditorWindow : Window {
         float totalButtonsWidth = (buttonWidth * buttonCount) + (spacing * (buttonCount - 1)) + marginRight;
 
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsWidth);
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Question, $"##ShowMacroHelpBtn", Language.ShowMacroHelpBtn)) {
-            Plugin.Ui.MacroHelpWindow.Toggle();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Question, $"##ShowHelpWindowBtn", Language.ShowMacroHelpBtn)) {
+            Plugin.Ui.HelpWindow.Toggle();
         }
 
         ImGui.SameLine();

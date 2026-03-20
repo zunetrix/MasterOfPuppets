@@ -128,6 +128,9 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/mop invite \"Character Name@World\"",
             Example = """
             /mop invite "Character Name@World"
+
+            Invites all local charactrers:
+            /mop invite
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
@@ -326,6 +329,193 @@ public static class MopMacroActionsHelper {
             Notes = """
             * This is a plugin command (works only on local clients)
             Enable or disable keyboard broadcast on this client. Use /mopbr to toggle all clients at once.
+            """
+        },
+
+        // PARTY
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop follow on|off",
+            SuggestionCommand = "/mop follow ",
+            Example = """
+            /mop follow on
+            /mop follow off
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Enables or disables native follow mode, targeting the invoking client's entity.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop getleader",
+            SuggestionCommand = "/mop getleader",
+            Example = """
+            /mop getleader
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Promotes the main client to party leader.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop disband",
+            SuggestionCommand = "/mop disband",
+            Example = """
+            /mop disband
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Disbands the current party.
+            """
+        },
+
+        // HOUSING & TRAVEL
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop enterhouse",
+            SuggestionCommand = "/mop enterhouse",
+            Example = """
+            /mop enterhouse
+
+            Broadcast:
+            /mopbr /mop enterhouse
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Interacts with the nearest house entrance and confirms entry.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop exithouse",
+            SuggestionCommand = "/mop exithouse",
+            Example = """
+            /mop exithouse
+
+            Broadcast:
+            /mopbr /mop exithouse
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Interacts with the nearest house exit and confirms.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop movefrontdoor",
+            SuggestionCommand = "/mop movefrontdoor",
+            Example = """
+            /mop movefrontdoor
+
+            Broadcast:
+            /mopbr /mop movefrontdoor
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Teleports to the estate front door via the housing menu (/housing).
+            Must be inside a house.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop ward <1-30>",
+            SuggestionCommand = "/mop ward ",
+            Example = """
+            /mop ward 1
+            /mop ward 15
+
+            Broadcast:
+            /mopbr /mop ward 5
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Teleports all instances to the specified residential ward (1-30) via the aetheryte menu.
+            Requires the player to be near a main-city residential district aetheryte.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop world <WorldName>",
+            SuggestionCommand = "/mop world ",
+            Example = """
+            /mop world Excalibur
+            /mop world Goblin
+
+            Broadcast:
+            /mopbr /mop world Excalibur
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Travels all instances to the specified world via the aetheryte world travel menu.
+            Requires the player to be near a main-city aetheryte. World must be in the same data center.
+            """
+        },
+
+        // SETTINGS & UTILITY
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop objectquantity <0-5>",
+            SuggestionCommand = "/mop objectquantity ",
+            Example = """
+            /mop objectquantity 3
+
+            Broadcast:
+            /mopbr /mop objectquantity 3
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Sets the display object limit on all local clients.
+                0 - Automatic
+                1 - Maximum
+                2 - High
+                3 - Normal
+                4 - Low
+                5 - Minimum
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop camhack on|off",
+            SuggestionCommand = "/mop camhack ",
+            Example = """
+            /mop camhack on
+            /mop camhack off
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Enables or disables high-altitude camera override.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop logout",
+            SuggestionCommand = "/mop logout",
+            Example = """
+            /mop logout
+
+            Broadcast:
+            /mopbr /mop logout
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Logs out the character to the character selection screen.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop shutdown",
+            SuggestionCommand = "/mop shutdown",
+            Example = """
+            /mop shutdown
+
+            Broadcast:
+            /mopbr /mop shutdown
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Closes the game client.
             """
         },
 

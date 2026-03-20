@@ -264,12 +264,12 @@ public class PluginCommandManager : IDisposable {
                     }
                     break;
                 case "invite": {
-                        if (parsedArgs.Count < 2) {
-                            Plugin.IpcProvider.RequestInviteAllToParty();
+                        if (parsedArgs.Count == 2) {
+                            // with characterFullname arg name@world
+                            Party.Invite(parsedArgs[1]);
                             return;
                         }
-                        // with characterFullname arg name@world
-                        Party.Invite(parsedArgs[1]);
+                        Plugin.IpcProvider.RequestInviteAllToParty();
                     }
                     break;
                 case "getleader":
