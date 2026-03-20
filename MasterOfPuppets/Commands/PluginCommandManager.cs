@@ -285,22 +285,23 @@ public class PluginCommandManager : IDisposable {
                     Plugin.IpcProvider.ExecuteExitHouse();
                     break;
                 case "estate":
-                    var contentIdOrFriendName = "Bazaza Baza";
-                    // var contentIdOrFriendName = $"{DalamudApi.PlayerState.ContentId}";
-                    string teleportOptionIndex = "0";
-                    Plugin.IpcProvider.ExecuteTeleportToEstate(contentIdOrFriendName, teleportOptionIndex);
+                    if (parsedArgs.Count < 3) {
+                        DalamudApi.ShowNotification("Usage: estate \"Friend Name\" <fc|pe|ap>", NotificationType.Error, 5000);
+                        return;
+                    }
+                    EstateTeleportManager.TeleportToEstate(parsedArgs[1], parsedArgs[2]);
                     break;
                 case "movefrontdoor":
                     Plugin.IpcProvider.ExecuteMoveToFrontDoor();
                     break;
                 case "ward": {
                         if (parsedArgs.Count < 2 ||
-                            !int.TryParse(parsedArgs[1], out var wardNum) ||
-                            wardNum is < 1 or > 30) {
+                            !int.TryParse(parsedArgs[1], out var wardNumber) ||
+                            wardNumber is < 1 or > 30) {
                             DalamudApi.ShowNotification("Invalid arguments. Expected ward number (1-30)", NotificationType.Error, 5000);
                             return;
                         }
-                        Plugin.IpcProvider.ExecuteTeleportToWard(wardNum);
+                        Plugin.IpcProvider.ExecuteTeleportToWard(wardNumber);
                     }
                     break;
                 case "world": {
@@ -324,17 +325,17 @@ public class PluginCommandManager : IDisposable {
                         Plugin.IpcProvider.SetGameSettingsObjectQuantity(displayObjectLimitType);
                     }
                     break;
-                case "formations":
-                    Plugin.Ui.FormationWindow.Toggle();
-                    break;
-                case "formation": {
-                        if (parsedArgs.Count < 2) {
-                            DalamudApi.ShowNotification("Invalid arguments. Expected formation name", NotificationType.Error, 5000);
-                            return;
-                        }
-                        Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
-                    }
-                    break;
+                // case "formations":
+                //     Plugin.Ui.FormationWindow.Toggle();
+                //     break;
+                // case "formation": {
+                //         if (parsedArgs.Count < 2) {
+                //             DalamudApi.ShowNotification("Invalid arguments. Expected formation name", NotificationType.Error, 5000);
+                //             return;
+                //         }
+                //         Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
+                //     }
+                //     break;
                 case "camhack":
                     if (parsedArgs.Count < 2) {
                         DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);

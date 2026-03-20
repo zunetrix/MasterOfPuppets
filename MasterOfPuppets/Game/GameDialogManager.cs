@@ -75,27 +75,101 @@ internal static unsafe class GameDialogManager {
         return FireCallback(AddonName.HousingSelectBlock, 1, ward - 1); // arg0=type, arg1=0-indexed ward
     }
 
-    //Estate Teleport
-    public static bool ClickEstateTeleportOption2(int optionIndex) {
+    //  TeleportHousingFriend
+    /// <summary>Clicks the teleport option at zero-based <paramref name="optionIndex"/> in the <c>TeleportHousingFriend</c> addon.</summary>
+    public static bool ClickEstateTeleportOption(int optionIndex) {
         var addon = GetAddonByName(AddonName.TeleportHousingFriend);
         if (addon == null) { DalamudApi.PluginLog.Debug("[TeleportHousingFriend] addon null"); return false; }
-        return FireCallback(AddonName.HousingSelectBlock, optionIndex);
+        return FireCallback(AddonName.TeleportHousingFriend, optionIndex);
     }
 
-    public static bool ClickEstateTeleportOption() {
-        var addon = GetAddonByName(AddonName.TeleportHousingFriend);
-        if (addon == null) { DalamudApi.PluginLog.Debug("[TeleportHousingFriend] addon null"); return false; }
-        for (var i = 0; i < addon->UldManager.NodeListCount; i++) {
-            var node = addon->UldManager.NodeList[i];
-            if (node == null || node->NodeId != 8 || (int)node->Type < 1000) continue;
-            // var evt = (AtkEvent*)((AtkComponentNode*)node)->AtkResNode.AtkEventManager.Event;
-            // if (evt == null) { DalamudApi.PluginLog.Debug("[Teleport] evt null"); return false; }
-            // addon->ReceiveEvent(evt->State.EventType, (int)evt->Param, ((AtkComponentNode*)node)->AtkResNode.AtkEventManager.Event);
-            return true;
-        }
-        DalamudApi.PluginLog.Debug("[ClickEstateTeleportOption] event not found");
-        return false;
-    }
+    // estate teleport by text
+    // private static readonly int ListComponentNodeId = 8;   // NodeId of the list component node in TeleportHousingFriend
+    // private static readonly int LabelTextNodeId     = 5;   // NodeId of the label AtkTextNode inside each item renderer (#21001-#21008)
+    // private static readonly int ComponentNodeType   = 1000; // AtkResNode.Type >= 1000 = component node; < 1000 = leaf node
+
+    // // Returns the label text of an item renderer node, or null if the slot is unavailable.
+    // private static string GetItemRendererText(AtkResNode* itemNode) {
+    //     var comp = ((AtkComponentNode*)itemNode)->Component;
+    //     for (var k = 0; k < comp->UldManager.NodeListCount; k++) {
+    //         var inner = comp->UldManager.NodeList[k];
+    //         if (inner != null && inner->NodeId == LabelTextNodeId)
+    //             return ((AtkTextNode*)inner)->NodeText.ToString();
+    //     }
+    //     return null;
+    // }
+
+    // /// <summary>
+    // /// Clicks the first entry in <c>TeleportHousingFriend</c> whose text contains <paramref name="searchText"/> (case-insensitive).
+    // /// Unavailable entries (no text) are skipped. Returns false if no match found.
+    // /// </summary>
+    // public static bool ClickEstateTeleportByText(string searchText) {
+    //     var addon = GetAddonByName(AddonName.TeleportHousingFriend);
+    //     if (addon == null) { DalamudApi.PluginLog.Debug("[TeleportHousingFriend] addon null"); return false; }
+
+    //     for (var i = 0; i < addon->UldManager.NodeListCount; i++) {
+    //         var node = addon->UldManager.NodeList[i];
+    //         if (node == null || node->NodeId != ListComponentNodeId || (int)node->Type < ComponentNodeType) continue;
+
+    //         var listBase = ((AtkComponentNode*)node)->Component;
+    //         if (listBase == null) return false;
+
+    //         // First pass: find the minimum NodeId (= base index 0 for FireCallback)
+    //         var minNodeId = uint.MaxValue;
+    //         for (var j = 0; j < listBase->UldManager.NodeListCount; j++) {
+    //             var n = listBase->UldManager.NodeList[j];
+    //             if (n != null && (int)n->Type >= ComponentNodeType && n->NodeId < minNodeId)
+    //                 minNodeId = n->NodeId;
+    //         }
+
+    //         // Second pass: find matching text and compute callbackIndex = nodeId - minNodeId
+    //         for (var j = 0; j < listBase->UldManager.NodeListCount; j++) {
+    //             var itemNode = listBase->UldManager.NodeList[j];
+    //             if (itemNode == null || (int)itemNode->Type < ComponentNodeType) continue;
+
+    //             var text = GetItemRendererText(itemNode);
+    //             if (text != null && text.Contains(searchText, System.StringComparison.OrdinalIgnoreCase)) {
+    //                 var callbackIndex = (int)(itemNode->NodeId - minNodeId);
+    //                 DalamudApi.PluginLog.Debug($"[TeleportHousingFriend] match '{text}' callbackIndex={callbackIndex}");
+    //                 return FireCallback(AddonName.TeleportHousingFriend, callbackIndex);
+    //             }
+    //         }
+    //         DalamudApi.PluginLog.Debug($"[TeleportHousingFriend] no entry matching '{searchText}'");
+    //         return false;
+    //     }
+    //     return false;
+    // }
+
+    // /// <summary>Logs all entries of the <c>TeleportHousingFriend</c> list to the plugin log.</summary>
+    // public static void LogEstateTeleportEntries() {
+    //     var addon = GetAddonByName(AddonName.TeleportHousingFriend);
+    //     if (addon == null) { DalamudApi.PluginLog.Debug("[TeleportHousingFriend] not visible"); return; }
+
+    //     for (var i = 0; i < addon->UldManager.NodeListCount; i++) {
+    //         var node = addon->UldManager.NodeList[i];
+    //         if (node == null || node->NodeId != ListComponentNodeId || (int)node->Type < ComponentNodeType) continue;
+
+    //         var listBase = ((AtkComponentNode*)node)->Component;
+    //         if (listBase == null) { DalamudApi.PluginLog.Debug("[TeleportHousingFriend] list component null"); return; }
+
+    //         var minNodeId = uint.MaxValue;
+    //         for (var j = 0; j < listBase->UldManager.NodeListCount; j++) {
+    //             var n = listBase->UldManager.NodeList[j];
+    //             if (n != null && (int)n->Type >= ComponentNodeType && n->NodeId < minNodeId)
+    //                 minNodeId = n->NodeId;
+    //         }
+
+    //         for (var j = 0; j < listBase->UldManager.NodeListCount; j++) {
+    //             var itemNode = listBase->UldManager.NodeList[j];
+    //             if (itemNode == null || (int)itemNode->Type < ComponentNodeType) continue;
+    //             var callbackIndex = (int)(itemNode->NodeId - minNodeId);
+    //             var text = GetItemRendererText(itemNode) ?? "(unavailable)";
+    //             DalamudApi.PluginLog.Debug($"[TeleportHousingFriend] [{callbackIndex}] node#{itemNode->NodeId} '{text}'");
+    //         }
+    //         return;
+    //     }
+    // }
+
 
     /// <summary>Returns true when the confirm button (ID 34) in <c>HousingSelectBlock</c> is enabled.</summary>
     public static bool IsHousingBlockConfirmEnabled() {

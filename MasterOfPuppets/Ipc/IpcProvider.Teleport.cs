@@ -53,9 +53,6 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.TeleportToEstate)]
     private void HandleExecuteTeleportToEstate(IpcMessage message) {
-        bool parsed = int.TryParse(message.StringData[1], out int teleportOptionIndex);
-        if (!parsed) return;
-
-        EstateTeleportManager.TeleportToEstate(message.StringData[0], teleportOptionIndex);
+        EstateTeleportManager.TeleportToEstate(message.StringData[0], message.StringData[1]);
     }
 }

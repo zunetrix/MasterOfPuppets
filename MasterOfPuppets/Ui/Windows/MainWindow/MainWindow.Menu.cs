@@ -379,6 +379,8 @@ public partial class MainWindow : Window {
 
         // -----------------------
 
+        DrawTeleportEstateSubMenu();
+
         ImGui.Separator();
         ImGui.Text("Teleport to Ward");
         ImGuiUtil.ToolTip("/mop ward <1-30>");
@@ -418,6 +420,26 @@ public partial class MainWindow : Window {
 
                 ImGui.EndTable();
             }
+        }
+    }
+
+    private void DrawTeleportEstateSubMenu() {
+        using var submenu = ImRaii.Menu("Estate Teleport");
+        if (!submenu) return;
+
+        var friends = EstateTeleportManager.GetEstateFriends();
+        if (friends.Count == 0) {
+            ImGui.MenuItem("(no friends on this world)", false);
+            return;
+        }
+
+        foreach (var name in friends) {
+            using var friendMenu = ImRaii.Menu(name);
+            if (!friendMenu) continue;
+
+            if (ImGui.MenuItem("Apartments")) Plugin.IpcProvider.ExecuteTeleportToEstate(name, "ap");
+            if (ImGui.MenuItem("Private Estate")) Plugin.IpcProvider.ExecuteTeleportToEstate(name, "pe");
+            if (ImGui.MenuItem("Free Company Estate")) Plugin.IpcProvider.ExecuteTeleportToEstate(name, "fc");
         }
     }
 

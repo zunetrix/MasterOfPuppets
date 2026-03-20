@@ -420,6 +420,33 @@ public static class MopMacroActionsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop estate \"<Friend Name>\" <fc|pe|ap>",
+            SuggestionCommand = "/mop estate ",
+            Example = """
+            Teleport to Apartments:
+            /mop estate "Character Name" ap
+
+            Teleport to Free Company:
+            /mop estate "Character Name" fc
+
+            Teleport to Private Estate:
+            /mop estate "Character Name" pe
+
+            Broadcast:
+            /mopbr /mop estate "Character Name" ap
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Teleports to a friend's estate.
+            Friend name supports partial match (case-insensitive).
+            Options:
+                fc - Free Company Estate
+                pe - Private Estate
+                ap - Apartments
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mop ward <1-30>",
             SuggestionCommand = "/mop ward ",
             Example = """
@@ -1305,32 +1332,32 @@ public static class MopMacroActionsHelper {
             Switch gear sets
             """
         },
-        new MopAction {
-            Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop formations",
-            SuggestionCommand = "/mop formations",
-            Example = """
-            /mop formations
-            """,
-            Notes = """
-            * This is a plugin command (works only on local clients)
-            Opens the Formations window to create and manage formations.
-            """
-        },
-        new MopAction {
-            Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop formation \"<Formation Name>\"",
-            SuggestionCommand = "/mop formation ",
-            Example = """
-            /mop formation "My Formation"
-            """,
-            Notes = """
-            * This is a plugin command (works only on local clients)
-            Broadcasts formation execution to all local clients.
-            The issuing character's world position is used as the leader origin.
-            Each client moves to the formation point whose assigned CIDs/groups include it.
-            """
-        }
+        // new MopAction {
+        //     Category = MopActionCategory.PluginCommand,
+        //     TextCommand = "/mop formations",
+        //     SuggestionCommand = "/mop formations",
+        //     Example = """
+        //     /mop formations
+        //     """,
+        //     Notes = """
+        //     * This is a plugin command (works only on local clients)
+        //     Opens the Formations window to create and manage formations.
+        //     """
+        // },
+        // new MopAction {
+        //     Category = MopActionCategory.PluginCommand,
+        //     TextCommand = "/mop formation \"<Formation Name>\"",
+        //     SuggestionCommand = "/mop formation ",
+        //     Example = """
+        //     /mop formation "My Formation"
+        //     """,
+        //     Notes = """
+        //     * This is a plugin command (works only on local clients)
+        //     Broadcasts formation execution to all local clients.
+        //     The issuing character's world position is used as the leader origin.
+        //     Each client moves to the formation point whose assigned CIDs/groups include it.
+        //     """
+        // }
     };
 
     public static List<string> GetSuggestionCommands() {
