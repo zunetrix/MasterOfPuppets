@@ -22,6 +22,8 @@ internal static class EstateTeleportManager {
             return;
         }
         var useContentId = ulong.TryParse(contentIdOrFriendName, out var contentId);
+        // TODO: on load friend list data is empty need find a way to request friend data before call teleport
+        // RequestFriedsData();
 
         var agent = AgentFriendlist.Instance();
 
@@ -46,11 +48,22 @@ internal static class EstateTeleportManager {
         }
     }
 
+    public static unsafe void RequestFriedsData(ulong contentId) {
+        if (!DalamudApi.PlayerState.IsLoaded) return;
+        var agent = AgentFriendlist.Instance();
+        if (agent->InfoProxy == null) return;
+        agent->RequestFriendInfo(contentId);
+    }
+
     public static unsafe List<string> GetEstateFriends() {
         var result = new List<string>();
         if (!DalamudApi.PlayerState.IsLoaded) return result;
-
         var agent = AgentFriendlist.Instance();
+        if (agent->InfoProxy == null) {
+            DalamudApi.PluginLog.Warning("[TeleportToEstate] empty friend list");
+            return result;
+        }
+
         for (var i = 0U; i < agent->InfoProxy->EntryCount; i++) {
             var friend = agent->InfoProxy->GetEntry(i);
             if (friend == null) continue;
@@ -62,7 +75,6 @@ internal static class EstateTeleportManager {
         }
         return result;
     }
-
 
     private static int ResolveEstateTeleportIndex(string target) => target.Trim().ToLowerInvariant() switch {
         "fc" or "freecompany" => 0,

@@ -335,15 +335,26 @@ public static class MopMacroActionsHelper {
         // PARTY
         new MopAction {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop follow on|off",
+            TextCommand = "/mop follow",
             SuggestionCommand = "/mop follow ",
             Example = """
-            /mop follow on
-            /mop follow off
+            /mop follow
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Enables or disables native follow mode, targeting the invoking client's entity.
+            Enables follow mode.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop stopfollow",
+            SuggestionCommand = "/mop stopfollow ",
+            Example = """
+            /mop stopfollow
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Disables follow mode.
             """
         },
         new MopAction {

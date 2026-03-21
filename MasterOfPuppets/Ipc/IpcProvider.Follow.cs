@@ -1,15 +1,17 @@
+using MasterOfPuppets.Movement;
+
 namespace MasterOfPuppets.Ipc;
 
 internal partial class IpcProvider {
 
-    public void StartFollow(uint entityId) {
+    public void Follow(uint entityId) {
         BroadCast(IpcMessage.Create(IpcMessageType.StartFollow, entityId).Serialize(), includeSelf: false);
     }
 
     [IpcHandle(IpcMessageType.StartFollow)]
-    private void HandleStartFollow(IpcMessage message) {
+    private void HandleFollow(IpcMessage message) {
         uint entityId = message.DataStruct<uint>();
-        GameFunctions.FollowStart(entityId);
+        MovementManager.Follow(entityId);
     }
 
     public void StopFollow() {
@@ -18,7 +20,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.StopFollow)]
     private void HandleStopFollow(IpcMessage message) {
-        GameFunctions.FollowStop();
+        MovementManager.StopFollow();
     }
 }
 

@@ -59,7 +59,7 @@ public static unsafe class GameFunctions {
     }
 
     /// <summary>Activates the game's native follow mode targeting the given entity ID.</summary>
-    public static void FollowStart(uint entityId) {
+    public static void Follow(uint entityId) {
         if (_followStructPtr == 0) return;
         var ptr = (uint*)_followStructPtr;
         ptr[0] = entityId;
@@ -67,7 +67,7 @@ public static unsafe class GameFunctions {
     }
 
     /// <summary>Deactivates the game's native follow mode.</summary>
-    public static void FollowStop() {
+    public static void StopFollow() {
         if (_followStructPtr == 0) return;
         var ptr = (uint*)_followStructPtr;
         ptr[0] = 0xE000_0000;

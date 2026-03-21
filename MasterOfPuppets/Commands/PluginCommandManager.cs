@@ -206,15 +206,10 @@ public class PluginCommandManager : IDisposable {
                     Plugin.IpcProvider.ExecuteStackOnMe();
                     break;
                 case "follow":
-                    if (parsedArgs.Count < 2) {
-                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
-                        return;
-                    }
-
-                    if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
-                        Plugin.IpcProvider.StartFollow(DalamudApi.PlayerState.EntityId);
-                    else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
-                        GameFunctions.FollowStop();
+                    MovementManager.Follow(DalamudApi.PlayerState.EntityId);
+                    break;
+                case "stopfollow":
+                    MovementManager.StopFollow();
                     break;
                 case "movetocharacter": {
                         if (parsedArgs.Count <= 1) {

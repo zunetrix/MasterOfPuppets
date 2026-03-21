@@ -179,7 +179,7 @@ public class MovementManager : IDisposable {
     public void StopMove() {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             _stuckRetryCount = 0;
-            GameFunctions.FollowStop();
+            GameFunctions.StopFollow();
             _follow.ForceStop();
         });
     }
@@ -193,10 +193,10 @@ public class MovementManager : IDisposable {
     //  Native follow
 
     /// <summary>Activates the game's native follow mode to follow the given entity.</summary>
-    public void FollowNative(uint entityId) => GameFunctions.FollowStart(entityId);
+    public static void Follow(uint entityId) => GameFunctions.Follow(entityId);
 
     /// <summary>Stops the game's native follow mode.</summary>
-    public void StopFollowNative() => GameFunctions.FollowStop();
+    public static void StopFollow() => GameFunctions.StopFollow();
 
     //  Walking control
 

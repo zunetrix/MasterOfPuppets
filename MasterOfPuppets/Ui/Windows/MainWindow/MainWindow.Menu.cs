@@ -271,11 +271,11 @@ public partial class MainWindow : Window {
         if (!submenu) return;
 
         if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.PeopleArrows, $"##StartFollow")) {
-            Plugin.IpcProvider.StartFollow(DalamudApi.PlayerState.EntityId);
+            Plugin.IpcProvider.Follow(DalamudApi.PlayerState.EntityId);
         }
         ImGui.SameLine();
         if (ImGui.Selectable("Start Follow")) {
-            Plugin.IpcProvider.StartFollow(DalamudApi.PlayerState.EntityId);
+            Plugin.IpcProvider.Follow(DalamudApi.PlayerState.EntityId);
         }
         ImGuiUtil.ToolTip("/mop follow on");
 
@@ -427,21 +427,32 @@ public partial class MainWindow : Window {
         using var submenu = ImRaii.Menu("Estate Teleport");
         if (!submenu) return;
 
-        var friends = EstateTeleportManager.GetEstateFriends();
-        if (friends.Count == 0) {
-            ImGui.MenuItem("(no friends on this world)", false);
-            return;
-        }
-
-        foreach (var name in friends) {
-            using var friendMenu = ImRaii.Menu(name);
-            if (!friendMenu) continue;
-
-            if (ImGui.MenuItem("Apartments")) Plugin.IpcProvider.ExecuteTeleportToEstate(name, "ap");
-            if (ImGui.MenuItem("Private Estate")) Plugin.IpcProvider.ExecuteTeleportToEstate(name, "pe");
-            if (ImGui.MenuItem("Free Company Estate")) Plugin.IpcProvider.ExecuteTeleportToEstate(name, "fc");
-        }
+        EstateTeleportManager.GetEstateFriends();
+        if (ImGui.MenuItem("Free Company Estate")) Plugin.IpcProvider.ExecuteTeleportToEstate(DalamudApi.PlayerState.CharacterName, "fc");
+        if (ImGui.MenuItem("Private Estate")) Plugin.IpcProvider.ExecuteTeleportToEstate(DalamudApi.PlayerState.CharacterName, "pe");
+        if (ImGui.MenuItem("Apartments")) Plugin.IpcProvider.ExecuteTeleportToEstate(DalamudApi.PlayerState.CharacterName, "ap");
     }
+
+    // private void DrawTeleportEstateSubMenu() {
+    //     using var submenu = ImRaii.Menu("Estate Teleport");
+    //     if (!submenu) return;
+
+    //     var friends = EstateTeleportManager.GetEstateFriends();
+    //     if (friends.Count == 0) {
+    //         ImGui.MenuItem("(no friends on this world)", false);
+    //         return;
+    //     }
+
+    //     using var child = ImRaii.Child("##estateScroll", new Vector2(200, 300));
+    //     foreach (var name in friends) {
+    //         using var friendMenu = ImRaii.Menu(name);
+    //         if (!friendMenu) continue;
+
+    //         if (ImGui.MenuItem("Free Company Estate")) Plugin.IpcProvider.ExecuteTeleportToEstate(name, "fc");
+    //         if (ImGui.MenuItem("Private Estate")) Plugin.IpcProvider.ExecuteTeleportToEstate(name, "pe");
+    //         if (ImGui.MenuItem("Apartments")) Plugin.IpcProvider.ExecuteTeleportToEstate(name, "ap");
+    //     }
+    // }
 
     private void DrawCharactersMenu() {
         using var menu = ImRaii.Menu("Characters");
