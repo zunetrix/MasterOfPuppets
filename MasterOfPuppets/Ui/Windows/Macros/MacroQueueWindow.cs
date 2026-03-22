@@ -116,7 +116,7 @@ public class MacroQueueWindow : Window {
         ImGui.TextDisabled($"Queue ({pendingMacros.Count})");
         if (ImGui.BeginListBox($"##PendingList{childId}", new Vector2(-1, -1))) {
             if (pendingMacros.Count == 0) {
-                ImGui.TextDisabled("–");
+                ImGui.TextDisabled("-");
             } else {
                 for (int i = 0; i < pendingMacros.Count; i++)
                     ImGui.Selectable($"{pendingMacros[i]}##{childId}_pm{i}");

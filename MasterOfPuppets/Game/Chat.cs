@@ -161,5 +161,9 @@ public static class Chat {
     public static void PrintError(string message) {
         DalamudApi.ChatGui.PrintError($"[MoP] {message}");
     }
+
+    public static void Print(string message) {
+        DalamudApi.ChatGui.Print($"[MoP] {message}");
+    }
 }
 

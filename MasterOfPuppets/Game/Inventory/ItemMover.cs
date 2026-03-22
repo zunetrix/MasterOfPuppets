@@ -70,6 +70,8 @@ public unsafe class ItemMover : IDisposable {
 
         // check if item was moved
         if (expectedItem.HasValue && !MatchesItemSignature(slot, expectedItem.Value)) {
+            var movedName = ItemHelper.GetItem(expectedItem.Value.ItemId % 1_000_000u)?.Name.ToString() ?? expectedItem.Value.ItemId.ToString();
+            DalamudApi.PluginLog.Debug($"[ItemMover] Confirmed \"{movedName}\" moved. {ItemsToMove.Count - 1} remaining.");
             expectedItem = null;
             ItemsToMove.Dequeue();
             return;
@@ -79,6 +81,9 @@ public unsafe class ItemMover : IDisposable {
             expectedItem = CaptureItemSignature(slot);
 
             var targetSlot = toSlot >= 0 ? toSlot : (InventoryHelper.FindFirstEmptyArmourySlot(toInventory)?.Slot ?? 0);
+
+            var itemName = ItemHelper.GetItem(expectedItem.Value.ItemId % 1_000_000u)?.Name.ToString() ?? expectedItem.Value.ItemId.ToString();
+            DalamudApi.PluginLog.Debug($"[ItemMover] Moving \"{itemName}\" (id:{expectedItem.Value.ItemId}) {fromInventory.Type}[{fromInventory.Slot}] → {toInventory}[{targetSlot}]. {ItemsToMove.Count} queued.");
 
             InventoryManager.Instance()->MoveItemSlot(
                 fromInventory.Type,
@@ -111,6 +116,8 @@ public unsafe class ItemMover : IDisposable {
         DalamudApi.Framework.Update -= Framework_Update;
         isWorking = false;
         expectedItem = null;
+
+        DalamudApi.PluginLog.Debug("[ItemMover] Done - all items moved.");
 
         var handlers = ItemsMoved;
         ItemsMoved = null;

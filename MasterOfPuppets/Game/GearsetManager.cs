@@ -41,8 +41,13 @@ public static class GearsetManager {
                 var armouryContainer = InventoryManager.Instance()->GetInventoryContainer(armouryType);
                 var inArmoury = InventoryHelper.FindGearsetItemInArmoury(item, armouryContainer);
 
-                // Already at the correct slot – nothing to do
-                if (inArmoury?.Slot == targetSlot) continue;
+                // Already at the correct slot - nothing to do
+                if (inArmoury?.Slot == targetSlot) {
+                    var info = ItemHelper.GetItem(item.ItemId % 1_000_000u);
+                    var itemName = info != null ? info.Value.Name.ToString() : item.ItemId.ToString();
+                    DalamudApi.PluginLog.Debug($"[ItemMover] GS{gearsetIndex + 1} \"{itemName}\" already at {armouryType}[{targetSlot}] - skip");
+                    continue;
+                }
 
                 // Find item: prefer inventory, fall back to armoury (wrong slot)
                 var src = item.FindGearsetItemInInventory() ?? inArmoury;

@@ -821,7 +821,7 @@ public static class MopMacroActionsHelper {
             """,
             Notes = """
             When three or more values are given, picks one at random from the list instead of generating a range.
-            Two values always produce a range: {random(1,5)} = any integer 1–5.
+            Two values always produce a range: {random(1,5)} = any integer 1-5.
             Three+ values pick from the exact set: {random(1,3,5)} = 1, 3, or 5 only.
             Supports decimals in lists: {random(0.5,1.0,1.5)} = 0.5, 1.0, or 1.5.
             """

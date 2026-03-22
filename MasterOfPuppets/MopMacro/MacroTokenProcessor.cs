@@ -11,8 +11,8 @@ namespace MasterOfPuppets;
 public static class MacroTokenProcessor {
 
     // Matches {random(a,b)} or {random(a,b,c,...)} with optional decimal values.
-    // Two values   → random range  : {random(1,5)}      → int 1–5
-    //                                {random(1.5,3.5)}   → float 1.50–3.50
+    // Two values   → random range  : {random(1,5)}      → int 1-5
+    //                                {random(1.5,3.5)}   → float 1.50-3.50
     // Three+ values → pick from list: {random(1,3,7)}   → "1", "3", or "7"
     //                                 {random(1.5,2,2.5)} → "1.5", "2", or "2.5"
     private static readonly Regex RandomRegex =
