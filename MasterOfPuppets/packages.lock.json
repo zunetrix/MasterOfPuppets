@@ -63,6 +63,9 @@
         "type": "Transitive",
         "resolved": "3.2.46",
         "contentHash": "kRPJ71Bpj0nK2iRSnH6XTPCA0+Nal5xoVBKwFqgd5n/yVA7Iie/3KwvcmC+aFjTymh+Kibn4q4fnceIOJrKRlA=="
+      },
+      "xivipc": {
+        "type": "Project"
       }
     }
   }

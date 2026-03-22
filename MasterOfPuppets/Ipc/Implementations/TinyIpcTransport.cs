@@ -30,7 +30,7 @@ internal sealed class TinyIpcTransport : IIpcTransport {
         }
     }
 
-    private void OnBusMessageReceived(object sender, TinyMessageReceivedEventArgs e) {
+    private void OnBusMessageReceived(object? sender, TinyMessageReceivedEventArgs e) {
         MessageReceived?.Invoke(e.Message);
     }
 
