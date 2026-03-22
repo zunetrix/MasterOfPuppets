@@ -12,7 +12,7 @@ namespace MasterOfPuppets;
 public unsafe class ItemMover : IDisposable {
     private Plugin Plugin { get; }
 
-    public Queue<(InventoryDescriptor from, InventoryType to)> ItemsToMove = new();
+    public Queue<(InventoryDescriptor from, InventoryType toType, int toSlot)> ItemsToMove = new();
     public event Action? ItemsMoved;
 
     private bool isWorking;
@@ -28,8 +28,15 @@ public unsafe class ItemMover : IDisposable {
         DalamudApi.Framework.Update -= Framework_Update;
     }
 
+    /// <summary>Enqueue a move to the first available empty slot in <paramref name="to"/>.</summary>
     public void Enqueue(InventoryDescriptor from, InventoryType to) {
-        ItemsToMove.Enqueue((from, to));
+        ItemsToMove.Enqueue((from, to, -1));
+        isWorking = true;
+    }
+
+    /// <summary>Enqueue a move to a specific slot in <paramref name="toType"/>.</summary>
+    public void Enqueue(InventoryDescriptor from, InventoryType toType, int toSlot) {
+        ItemsToMove.Enqueue((from, toType, toSlot));
         isWorking = true;
     }
 
@@ -47,7 +54,7 @@ public unsafe class ItemMover : IDisposable {
             return;
         }
 
-        var (fromInventory, toInventory) = ItemsToMove.Peek();
+        var (fromInventory, toInventory, toSlot) = ItemsToMove.Peek();
         var container = InventoryManager.Instance()->GetInventoryContainer(fromInventory.Type);
         if (container == null) {
             ItemsToMove.Dequeue();
@@ -70,7 +77,7 @@ public unsafe class ItemMover : IDisposable {
         if (!expectedItem.HasValue && EzThrottler.Throttle("ItemMover", 500)) {
             expectedItem = CaptureItemSignature(slot);
 
-            var targetSlot = InventoryHelper.FindFirstEmptyArmourySlot(toInventory)?.Slot ?? 0;
+            var targetSlot = toSlot >= 0 ? toSlot : (InventoryHelper.FindFirstEmptyArmourySlot(toInventory)?.Slot ?? 0);
 
             InventoryManager.Instance()->MoveItemSlot(
                 fromInventory.Type,
