@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Text;
+
+using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
 
@@ -12,36 +13,6 @@ namespace MasterOfPuppets;
 /// Peers call <see cref="ForwardKey"/> to replay the event to their FFXIV window.
 /// </summary>
 public sealed class KeyboardBroadcastManager : IDisposable {
-    [DllImport("user32.dll")]
-    private static extern bool GetKeyboardState(byte[] lpKeyState);
-    // [DllImport("user32.dll")]
-    // private static extern short GetAsyncKeyState(int vKey);
-
-    [DllImport("user32.dll")]
-    private static extern uint MapVirtualKey(uint uCode, uint uMapType);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool PostMessage(nint hWnd, uint Msg, nint wParam, nint lParam);
-
-    private delegate bool EnumWindowsProc(nint hwnd, nint lParam);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, nint lParam);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern int GetWindowThreadProcessId(nint hWnd, out int lpdwProcessId);
-
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    private static extern int GetClassName(nint hWnd, StringBuilder lpClassName, int nMaxCount);
-
-    [DllImport("user32.dll")]
-    private static extern nint GetForegroundWindow();
-
-    private const uint MAPVK_VK_TO_VSC = 0;
-    private const uint WM_KEYDOWN = 0x0100;
-    private const uint WM_KEYUP = 0x0101;
 
     // VK codes for keys that carry the "extended key" flag in lParam.
     private static readonly HashSet<int> ExtendedKeys = new() {
@@ -86,7 +57,7 @@ public sealed class KeyboardBroadcastManager : IDisposable {
         if (_gameHwnd == nint.Zero)
             _gameHwnd = FindGameWindow();
 
-        bool hasFocus = _gameHwnd != nint.Zero && GetForegroundWindow() == _gameHwnd;
+        bool hasFocus = _gameHwnd != nint.Zero && WindowsApi.GetForegroundWindow() == _gameHwnd;
 
         if (!hasFocus) {
             if (_hadFocus) {
@@ -94,9 +65,9 @@ public sealed class KeyboardBroadcastManager : IDisposable {
                 for (int vk = 1; vk < 255; vk++) {
                     if ((_prev[vk] & 0x80) == 0) continue;
                     if (_plugin.Config.KeyboardBroadcastIgnoredKeys.Contains(vk)) continue;
-                    uint scan = MapVirtualKey((uint)vk, MAPVK_VK_TO_VSC);
+                    uint scan = WindowsApi.MapVirtualKey((uint)vk, WindowsApi.MAPVK_VK_TO_VSC);
                     uint ext = ExtendedKeys.Contains(vk) ? 1u : 0u;
-                    _plugin.IpcProvider.BroadcastKeyInput(WM_KEYUP, (uint)vk, scan, ext);
+                    _plugin.IpcProvider.BroadcastKeyInput(WindowsApi.WM_KEYUP, (uint)vk, scan, ext);
                 }
                 Array.Clear(_prev, 0, 256);
             }
@@ -105,7 +76,7 @@ public sealed class KeyboardBroadcastManager : IDisposable {
         }
 
         _hadFocus = true;
-        GetKeyboardState(_curr);
+        WindowsApi.GetKeyboardState(_curr);
 
         for (int vk = 1; vk < 255; vk++) {
             bool wasDown = (_prev[vk] & 0x80) != 0;
@@ -113,9 +84,9 @@ public sealed class KeyboardBroadcastManager : IDisposable {
             if (isDown == wasDown) continue;
             if (_plugin.Config.KeyboardBroadcastIgnoredKeys.Contains(vk)) continue;
 
-            uint scan = MapVirtualKey((uint)vk, MAPVK_VK_TO_VSC);
+            uint scan = WindowsApi.MapVirtualKey((uint)vk, WindowsApi.MAPVK_VK_TO_VSC);
             uint ext = ExtendedKeys.Contains(vk) ? 1u : 0u;
-            _plugin.IpcProvider.BroadcastKeyInput(isDown ? WM_KEYDOWN : WM_KEYUP, (uint)vk, scan, ext);
+            _plugin.IpcProvider.BroadcastKeyInput(isDown ? WindowsApi.WM_KEYDOWN : WindowsApi.WM_KEYUP, (uint)vk, scan, ext);
         }
 
         Array.Copy(_curr, _prev, 256);
@@ -133,14 +104,14 @@ public sealed class KeyboardBroadcastManager : IDisposable {
         if (_gameHwnd == nint.Zero) return;
 
         bool isExtended = (flags & 0x01) != 0;
-        bool isKeyUp = msg == WM_KEYUP;
+        bool isKeyUp = msg == WindowsApi.WM_KEYUP;
 
         nint lParam = 1;
         lParam |= (nint)(scanCode << 16);
         if (isExtended) lParam |= (nint)(1 << 24);
         if (isKeyUp) lParam |= unchecked((nint)0xC0000000L); // prev-state + transition bits
 
-        PostMessage(_gameHwnd, msg, (nint)vkCode, lParam);
+        WindowsApi.PostMessage(_gameHwnd, msg, (nint)vkCode, lParam);
     }
 
     /// <summary>
@@ -151,12 +122,12 @@ public sealed class KeyboardBroadcastManager : IDisposable {
         nint found = nint.Zero;
         var className = new StringBuilder(256);
 
-        EnumWindows((hwnd, _) => {
-            GetWindowThreadProcessId(hwnd, out int pid);
+        WindowsApi.EnumWindows((hwnd, _) => {
+            WindowsApi.GetWindowThreadProcessId(hwnd, out int pid);
             if (pid != currentPid) return true;
 
             className.Clear();
-            GetClassName(hwnd, className, className.Capacity);
+            WindowsApi.GetClassName(hwnd, className, className.Capacity);
             if (className.ToString() == "FFXIVGAME") {
                 found = hwnd;
                 return false; // stop enumeration

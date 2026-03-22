@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq;
 
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -70,6 +71,13 @@ public class Plugin : IDalamudPlugin {
         FollowPath.Update(framework);
         MovementManager.Update();
         KeyboardBroadcastManager.Update();
+
+        if (Config.AutoAcceptPartyInvite || Config.AutoAcceptTeleport) {
+            var charConfig = Config.Characters.FirstOrDefault(c => c.Cid == DalamudApi.PlayerState.ContentId);
+            GameDialogManager.AutoAcceptUpdate(
+                Config.AutoAcceptPartyInvite && (charConfig?.AutoAcceptPartyInvite ?? true),
+                Config.AutoAcceptTeleport && (charConfig?.AutoAcceptTeleport ?? true));
+        }
     }
 
     private static void OnLanguageChange(string langCode) {

@@ -251,6 +251,33 @@ public class SettingsWindow : Window {
 
         ImGui.Spacing();
         ImGui.Spacing();
+
+        using (ImGuiGroupPanel.BeginGroupPanel("Auto Accept")) {
+            var acceptParty = Plugin.Config.AutoAcceptPartyInvite;
+            if (ImGui.Checkbox("Auto-accept party invites", ref acceptParty)) {
+                Plugin.Config.AutoAcceptPartyInvite = acceptParty;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("When enabled, SelectYesno dialogs for party invites are automatically confirmed. Per-character toggle available in Characters window.");
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, "##ShowCharactersBtnParty", Language.ShowCharactersBtn))
+                Plugin.Ui.CharactersWindow.Toggle();
+
+            var acceptTeleport = Plugin.Config.AutoAcceptTeleport;
+            if (ImGui.Checkbox("Auto-accept teleport requests", ref acceptTeleport)) {
+                Plugin.Config.AutoAcceptTeleport = acceptTeleport;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.HelpMarker("When enabled, SelectYesno dialogs for teleport requests are automatically confirmed. Per-character toggle available in Characters window.");
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, "##ShowCharactersBtnTP", Language.ShowCharactersBtn))
+                Plugin.Ui.CharactersWindow.Toggle();
+        }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
         ImGui.Spacing();

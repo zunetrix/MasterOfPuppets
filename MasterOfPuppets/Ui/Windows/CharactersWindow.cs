@@ -104,9 +104,10 @@ public class CharactersWindow : Window {
         // }
 
         ImGui.SameLine();
-        ImGuiUtil.HelpMarker("""
-            dded characters are used for assigning macro actions; once they’re in the list, they don’t need to be in the party to be used in macros
-            """);
+        ImGuiUtil.HelpMarker(
+        """
+        Added characters are used for assigning macro actions; once they're in the list, they don't need to be in the party to be used in macros
+        """);
 
         ImGui.Separator();
         ImGuiHelpers.ScaledDummy(0, 5);
@@ -134,7 +135,7 @@ public class CharactersWindow : Window {
         float actionsColWidth = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.X;
         float kbColWidth = ImGui.GetFrameHeight();
 
-        if (!ImGui.BeginTable("##CharactersTable", 4,
+        if (!ImGui.BeginTable("##CharactersTable", 6,
             ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
             ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV))
             return;
@@ -142,6 +143,8 @@ public class CharactersWindow : Window {
         ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 28 * ImGuiHelpers.GlobalScale);
         ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableSetupColumn("KB", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
+        ImGui.TableSetupColumn("Party", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
+        ImGui.TableSetupColumn("TP", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
         ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, actionsColWidth);
         ImGui.TableHeadersRow();
 
@@ -196,7 +199,27 @@ public class CharactersWindow : Window {
             }
             ImGuiUtil.ToolTip("Allow this character to receive keyboard broadcast from the master client");
 
-            // col 3: action buttons (right-aligned by column sizing)
+            // col 3: auto accept party invite toggle
+            ImGui.TableNextColumn();
+            bool partyEnabled = allCharacters[i].AutoAcceptPartyInvite;
+            if (ImGui.Checkbox($"##Party_{allCharacters[i].Cid}", ref partyEnabled)) {
+                allCharacters[i].AutoAcceptPartyInvite = partyEnabled;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.ToolTip("Allow this character to auto-accept party invites (requires global toggle in Settings)");
+
+            // col 4: auto accept teleport toggle
+            ImGui.TableNextColumn();
+            bool tpEnabled = allCharacters[i].AutoAcceptTeleport;
+            if (ImGui.Checkbox($"##TP_{allCharacters[i].Cid}", ref tpEnabled)) {
+                allCharacters[i].AutoAcceptTeleport = tpEnabled;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.ToolTip("Allow this character to auto-accept teleport requests (requires global toggle in Settings)");
+
+            // col 5: action buttons (right-aligned by column sizing)
             ImGui.TableNextColumn();
             bool alreadyCopied = _copiedCids.Contains(allCharacters[i].Cid);
             var copyColor = alreadyCopied ? Style.Colors.Green : Style.Colors.White;

@@ -50,6 +50,8 @@ internal class Configuration : IPluginConfiguration {
     // General
     public bool MultiboxEnabled { get; set; } = false;
     public bool KeyboardBroadcastEnabled { get; set; } = true;
+    public bool AutoAcceptPartyInvite { get; set; } = false;
+    public bool AutoAcceptTeleport { get; set; } = false;
     public HashSet<int> KeyboardBroadcastIgnoredKeys { get; set; } = new();
     public bool ShowCharacterNameInTitle { get; set; } = false;
 

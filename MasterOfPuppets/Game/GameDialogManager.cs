@@ -1,8 +1,11 @@
+using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+
+using Lumina.Excel.Sheets;
 
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
@@ -20,6 +23,16 @@ internal static unsafe class GameDialogManager {
         public const string WorldTravelSelect = "WorldTravelSelect";
         public const string TeleportHousingFriend = "TeleportHousingFriend";
     }
+
+    private static string TextAcceptJoinParty =>
+        DalamudApi.DataManager.GetExcelSheet<Addon>(DalamudApi.ClientState.ClientLanguage)
+            ?.GetRow(120).Text.ExtractText()
+        ?? "Join <string(lstr1)>'s party?";
+    private static string TextAcceptTeleport =>
+            DalamudApi.DataManager.GetExcelSheet<Addon>(DalamudApi.ClientState.ClientLanguage)
+                ?.GetRow(1800).Text.ExtractText()
+            ?? "Accept Teleport to <ennoun(PlaceName,2,<sheet(Aetheryte,lnum1,8)>,2,1)>?";
+
 
     public static bool IsAddonVisible(string name) {
         var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(name);
@@ -66,6 +79,34 @@ internal static unsafe class GameDialogManager {
     public static bool ClickNo() => FireCallback(AddonName.SelectYesno, (uint)1);
     public static bool ClickOk() => ClickAddonButton<AddonSelectOk>(AddonName.SelectOk, a => a->OkButton);
     public static bool ClickRepairAll() => ClickAddonButton<AddonRepair>(AddonName.Repair, a => a->RepairAllButton);
+
+    /// <summary>
+    /// Called every framework tick. Auto-accepts party invites and/or teleport requests
+    /// by matching the SelectYesno prompt text against known Addon row fragments.
+    /// </summary>
+    public static void AutoAcceptUpdate(bool acceptParty, bool acceptTeleport) {
+        if (!acceptParty && !acceptTeleport) return;
+        if (!IsAddonVisible(AddonName.SelectYesno)) return;
+
+        var addon = (AddonSelectYesno*)GetAddonByName(AddonName.SelectYesno);
+        if (addon == null || addon->PromptText == null) return;
+
+        var text = addon->PromptText->NodeText.ToString();
+        if (string.IsNullOrEmpty(text)) return;
+
+        if (acceptParty && ContainsAllFragments(text, TextAcceptJoinParty)) { ClickYes(); return; }
+        if (acceptTeleport && ContainsAllFragments(text, TextAcceptTeleport)) { ClickYes(); return; }
+    }
+
+    // Splits the extracted Addon row text (which has template vars stripped) into words ≥ 3 chars
+    // and checks that the dialog text contains each one. Locale-aware since TextAccept* use ClientLanguage.
+    private static bool ContainsAllFragments(string dialogText, string pattern) {
+        foreach (var part in pattern.Split(' ', StringSplitOptions.RemoveEmptyEntries)) {
+            if (part.Length < 3) continue;
+            if (!dialogText.Contains(part, StringComparison.OrdinalIgnoreCase)) return false;
+        }
+        return true;
+    }
 
     //  HousingSelectBlock
     /// <summary>Selects ward (1-indexed) in the <c>HousingSelectBlock</c> addon.</summary>
@@ -181,7 +222,7 @@ internal static unsafe class GameDialogManager {
 
     /// <summary>
     /// Clicks the confirm button (ID 34) in <c>HousingSelectBlock</c>.
-    /// Walks NodeList directly — <c>OwnerNode</c> is null for this button.
+    /// Walks NodeList directly - <c>OwnerNode</c> is null for this button.
     /// </summary>
     public static bool ClickHousingBlockConfirm() {
         var addon = GetAddonByName(AddonName.HousingSelectBlock);
@@ -259,4 +300,6 @@ internal static unsafe class GameDialogManager {
         addon->ReceiveEvent(evt->State.EventType, (int)evt->Param, btnRes.AtkEventManager.Event);
         return true;
     }
+
+
 }

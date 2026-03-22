@@ -5,25 +5,6 @@ using System.Numerics;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
-public class Character {
-    [JsonPropertyName("cid")]
-    public ulong Cid;
-
-    [JsonPropertyName("name")]
-    public string Name = string.Empty;
-
-    [JsonPropertyName("keyboardBroadcast")]
-    public bool KeyboardBroadcastEnabled = true;
-}
-
-public class CidGroup {
-    [JsonPropertyName("name")]
-    public string Name = string.Empty;
-
-    [JsonPropertyName("cids")]
-    public List<ulong> Cids = new List<ulong>();
-}
-
 public class Command {
     [JsonPropertyName("cids")]
     public List<ulong> Cids = new List<ulong>();
