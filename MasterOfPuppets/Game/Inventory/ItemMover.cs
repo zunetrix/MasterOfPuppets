@@ -20,30 +20,31 @@ public unsafe class ItemMover : IDisposable {
 
     public ItemMover(Plugin plugin) {
         Plugin = plugin;
-        DalamudApi.Framework.Update += Framework_Update;
     }
 
     public void Dispose() {
         Reset();
-        DalamudApi.Framework.Update -= Framework_Update;
     }
 
     /// <summary>Enqueue a move to the first available empty slot in <paramref name="to"/>.</summary>
     public void Enqueue(InventoryDescriptor from, InventoryType to) {
         ItemsToMove.Enqueue((from, to, -1));
-        isWorking = true;
+        StartIfNeeded();
     }
 
     /// <summary>Enqueue a move to a specific slot in <paramref name="toType"/>.</summary>
     public void Enqueue(InventoryDescriptor from, InventoryType toType, int toSlot) {
         ItemsToMove.Enqueue((from, toType, toSlot));
+        StartIfNeeded();
+    }
+
+    private void StartIfNeeded() {
+        if (isWorking) return;
         isWorking = true;
+        DalamudApi.Framework.Update += Framework_Update;
     }
 
     private void Framework_Update(IFramework framework) {
-        if (!isWorking)
-            return;
-
         if (DalamudApi.ObjectTable.LocalPlayer == null) {
             Reset();
             return;
@@ -74,7 +75,7 @@ public unsafe class ItemMover : IDisposable {
             return;
         }
 
-        if (!expectedItem.HasValue && EzThrottler.Throttle("ItemMover", 500)) {
+        if (!expectedItem.HasValue && EzThrottler.Throttle("ItemMover", 250)) {
             expectedItem = CaptureItemSignature(slot);
 
             var targetSlot = toSlot >= 0 ? toSlot : (InventoryHelper.FindFirstEmptyArmourySlot(toInventory)?.Slot ?? 0);
@@ -107,6 +108,7 @@ public unsafe class ItemMover : IDisposable {
     }
 
     private void Finish() {
+        DalamudApi.Framework.Update -= Framework_Update;
         isWorking = false;
         expectedItem = null;
 
@@ -123,6 +125,7 @@ public unsafe class ItemMover : IDisposable {
     }
 
     private void Reset() {
+        DalamudApi.Framework.Update -= Framework_Update;
         ItemsToMove.Clear();
         isWorking = false;
         expectedItem = null;
