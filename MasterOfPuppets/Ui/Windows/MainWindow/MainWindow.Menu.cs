@@ -277,7 +277,7 @@ public partial class MainWindow : Window {
         if (ImGui.Selectable("Start Follow")) {
             Plugin.IpcProvider.Follow(DalamudApi.PlayerState.EntityId);
         }
-        ImGuiUtil.ToolTip("/mop follow on");
+        ImGuiUtil.ToolTip("/mop follow");
 
         // -----------------------
 
@@ -288,7 +288,7 @@ public partial class MainWindow : Window {
         if (ImGui.Selectable("Stop Follow")) {
             Plugin.IpcProvider.StopFollow();
         }
-        ImGuiUtil.ToolTip("/mop follow off");
+        ImGuiUtil.ToolTip("/mop stopfollow");
     }
 
     private void DrawKeyBroadcastSubMenu() {

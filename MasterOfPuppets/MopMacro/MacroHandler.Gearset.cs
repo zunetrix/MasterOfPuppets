@@ -16,8 +16,9 @@ public partial class MacroHandler {
 
         if (indices.Count == 0) return;
 
-        await DalamudApi.Framework.RunOnFrameworkThread(
-            () => GearsetManager.MoveGearsetsToArmoury(Plugin, indices));
+        await DalamudApi.Framework.RunOnFrameworkThread(() => {
+            GearsetManager.MoveGearsetsToArmoury(Plugin, indices);
+        });
 
         await Plugin.ItemMover.WhenComplete().WaitAsync(token);
     }

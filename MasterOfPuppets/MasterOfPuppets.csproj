@@ -1,6 +1,6 @@
 <Project Sdk="Dalamud.NET.Sdk/14.0.2">
   <PropertyGroup>
-    <Version>1.0.0.137</Version>
+    <Version>1.0.0.139</Version>
   </PropertyGroup>
   <PropertyGroup>
     <Author>Zune</Author>
@@ -29,7 +29,7 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
     <!-- <UseWpf>true</UseWpf> -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
-    <Version>1.0.0.137</Version>
+    <Version>1.0.0.139</Version>
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
   <!-- Linux build -->

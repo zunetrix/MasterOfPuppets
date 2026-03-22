@@ -53,16 +53,48 @@ public class Command {
             .Select(line => Regex.Replace(line, @"\s+", " "))
             .ToList();
 
+        // remove /mop run
         lines = lines
-       .Where(line => !line.StartsWith("/mop run", StringComparison.OrdinalIgnoreCase))
-       .ToList();
+            .Where(line => !line.StartsWith("/mop run", StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
-        // keep only the last loop action
-        int lastLoopIndex = lines.FindLastIndex(l => l.StartsWith("/moploop", StringComparison.OrdinalIgnoreCase));
-        if (lastLoopIndex != -1) {
+        // -----------------------------
+        // LOOP LOGIC
+        // -----------------------------
+        int startIndex = lines.FindLastIndex(l =>
+            l.StartsWith("/moploopstart", StringComparison.OrdinalIgnoreCase));
+
+        int endIndex = lines.FindLastIndex(l =>
+            l.StartsWith("/moploopend", StringComparison.OrdinalIgnoreCase));
+
+        if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+            // keep last valid block
             lines = lines
-                .Where((line, idx) => !line.StartsWith("/moploop", StringComparison.OrdinalIgnoreCase) || idx == lastLoopIndex)
+                .Where((line, idx) =>
+                    (!line.StartsWith("/moploopstart", StringComparison.OrdinalIgnoreCase) &&
+                     !line.StartsWith("/moploopend", StringComparison.OrdinalIgnoreCase))
+                    ||
+                    (idx >= startIndex && idx <= endIndex))
                 .ToList();
+
+            // remove standalone /moploop if block exists
+            lines = lines
+                .Where(line => !line.StartsWith("/moploop", StringComparison.OrdinalIgnoreCase)
+                               || line.StartsWith("/moploopstart", StringComparison.OrdinalIgnoreCase)
+                               || line.StartsWith("/moploopend", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        } else {
+            // fallback - keep only last /moploop
+            int lastLoopIndex = lines.FindLastIndex(l =>
+                l.StartsWith("/moploop", StringComparison.OrdinalIgnoreCase));
+
+            if (lastLoopIndex != -1) {
+                lines = lines
+                    .Where((line, idx) =>
+                        !line.StartsWith("/moploop", StringComparison.OrdinalIgnoreCase)
+                        || idx == lastLoopIndex)
+                    .ToList();
+            }
         }
 
         this.Actions = string.Join("\n", lines);
