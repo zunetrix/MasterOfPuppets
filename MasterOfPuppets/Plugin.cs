@@ -3,6 +3,7 @@ using System.Linq;
 
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
 
 using MasterOfPuppets.Camera;
 using MasterOfPuppets.Ipc;
@@ -37,7 +38,8 @@ public class Plugin : IDalamudPlugin {
         GameCameraManager.Initialize();
 
         Ui = new PluginUi(this);
-        IpcProvider = new IpcProvider(this);
+        // Dalamud.Utility.Util.GetHostPlatform();
+        IpcProvider = new IpcProvider(this, Dalamud.Utility.Util.IsWine() ? new LinuxIpcTransport() : new TinyIpcTransport());
         ChatWatcher = new ChatWatcher(this);
         ItemMover = new ItemMover(this);
         MacroManager = new MacroManager(this);

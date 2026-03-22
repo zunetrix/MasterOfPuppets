@@ -13,7 +13,7 @@ namespace MasterOfPuppets;
 public partial class FormationWindow {
 
     // =========================================================================
-    // Middle panel — shape toolbar + ImPlot canvas
+    // Middle panel - shape toolbar + ImPlot canvas
     // =========================================================================
 
     private void DrawMiddlePanel() {
@@ -90,7 +90,7 @@ public partial class FormationWindow {
             double x = pt.Offset.X;
             double y = -pt.Offset.Z;
 
-            // Arrow drawn in plot-space — scales naturally with zoom
+            // Arrow drawn in plot-space - scales naturally with zoom
             DrawArrow(dl, (float)x, (float)y, pt.Angle, color, _arrowSize);
 
             // Label centered on point in screen space
@@ -162,7 +162,7 @@ public partial class FormationWindow {
         ImPlot.EndPlot();
     }
 
-    /// <summary>Arrow drawn in plot-space coordinates — scales naturally with zoom.
+    /// <summary>Arrow drawn in plot-space coordinates - scales naturally with zoom.
     /// Vertices are rotated in plot-space then converted to pixels via ImPlot.PlotToPixels.
     /// At angleDeg=0 the tip points north (+Y_plot). Clockwise = east at 90°.</summary>
     private static void DrawArrow(ImDrawListPtr dl, float px, float py, float angleDeg, uint color, float size = 0.5f) {

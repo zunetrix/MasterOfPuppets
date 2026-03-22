@@ -12,7 +12,7 @@ namespace MasterOfPuppets;
 public partial class FormationWindow {
 
     // =========================================================================
-    // World overlay — projects formation into 3D game world
+    // World overlay - projects formation into 3D game world
     // =========================================================================
 
     private void DrawWorldOverlay(Formation formation) {
@@ -54,7 +54,7 @@ public partial class FormationWindow {
 
     /// <summary>
     /// Projects arrow into screen space by rotating each 3D vertex independently
-    /// with WorldToScreen — perspective-accurate.
+    /// with WorldToScreen - perspective-accurate.
     /// <paramref name="worldRot"/> uses CreateRotationY convention: tip starts at +Z (south),
     /// π rotates the tip to -Z (north).
     /// </summary>

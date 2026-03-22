@@ -13,7 +13,7 @@ namespace MasterOfPuppets;
 public partial class FormationWindow {
 
     // =========================================================================
-    // Left panel — formation list
+    // Left panel - formation list
     // =========================================================================
 
     private void DrawLeftPanel() {

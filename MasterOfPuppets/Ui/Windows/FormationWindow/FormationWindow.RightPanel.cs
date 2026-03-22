@@ -14,7 +14,7 @@ namespace MasterOfPuppets;
 public partial class FormationWindow {
 
     // =========================================================================
-    // Right panel — execute, point editor, character/group assignment
+    // Right panel - execute, point editor, character/group assignment
     // =========================================================================
 
     private void DrawRightPanel() {
