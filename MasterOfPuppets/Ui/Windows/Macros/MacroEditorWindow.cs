@@ -415,26 +415,25 @@ public class MacroEditorWindow : Window {
                 ImGui.EndDragDropSource();
             }
 
-            ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
-            if (ImGui.BeginDragDropTarget()) {
-                ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_COMMAND_LIST");
-                bool isDropping = false;
-                isDropping = !dragDropPayload.IsNull;
+            using (ImRaii.PushColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget)) {
+                if (ImGui.BeginDragDropTarget()) {
+                    ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_COMMAND_LIST");
+                    bool isDropping = false;
+                    isDropping = !dragDropPayload.IsNull;
 
-                if (isDropping && dragDropPayload.IsDelivery()) {
-                    int originalIndex = *(int*)dragDropPayload.Data;
+                    if (isDropping && dragDropPayload.IsDelivery()) {
+                        int originalIndex = *(int*)dragDropPayload.Data;
 
-                    int offset = commandIndex - originalIndex;
-                    if (offset != 0 && originalIndex + offset >= 0) {
-                        int targetIndex = originalIndex + offset;
-                        // DalamudApi.PluginLog.Warning($"Drag end [{commandIndex}]: [{originalIndex}, {targetIndex}] {offset}");
-                        MacroItem.Commands.MoveItemToIndex(originalIndex, targetIndex);
+                        int offset = commandIndex - originalIndex;
+                        if (offset != 0 && originalIndex + offset >= 0) {
+                            int targetIndex = originalIndex + offset;
+                            // DalamudApi.PluginLog.Warning($"Drag end [{commandIndex}]: [{originalIndex}, {targetIndex}] {offset}");
+                            MacroItem.Commands.MoveItemToIndex(originalIndex, targetIndex);
+                        }
                     }
+                    ImGui.EndDragDropTarget();
                 }
-                ImGui.EndDragDropTarget();
             }
-            ImGui.PopStyleColor();
-
         }
         ImGui.EndChild();
 

@@ -22,7 +22,6 @@ public class PluginUi : IDisposable {
     public IconPickerDialogWindow IconPickerDialogWindow { get; }
     public DebugWindow DebugWindow { get; }
     public FormationWindow FormationWindow { get; }
-    public FormationImPlotWindow FormationImPlotWindow { get; }
     public PeerMonitorWindow PeerMonitorWindow { get; }
 
     public PluginUi(Plugin plugin) {
@@ -40,7 +39,6 @@ public class PluginUi : IDisposable {
         IconPickerDialogWindow = AddWindow(new IconPickerDialogWindow());
         DebugWindow = AddWindow(new DebugWindow(Plugin));
         FormationWindow = AddWindow(new FormationWindow(Plugin));
-        FormationImPlotWindow = AddWindow(new FormationImPlotWindow(Plugin));
         PeerMonitorWindow = AddWindow(new PeerMonitorWindow(Plugin));
     }
 

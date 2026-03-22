@@ -320,17 +320,14 @@ public class PluginCommandManager : IDisposable {
                         Plugin.IpcProvider.SetGameSettingsObjectQuantity(displayObjectLimitType);
                     }
                     break;
-                // case "formations":
-                //     Plugin.Ui.FormationWindow.Toggle();
-                //     break;
-                // case "formation": {
-                //         if (parsedArgs.Count < 2) {
-                //             DalamudApi.ShowNotification("Invalid arguments. Expected formation name", NotificationType.Error, 5000);
-                //             return;
-                //         }
-                //         Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
-                //     }
-                //     break;
+                case "formation": {
+                        if (parsedArgs.Count < 2) {
+                            Plugin.Ui.FormationWindow.Toggle();
+                            return;
+                        }
+                        Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
+                    }
+                    break;
                 case "camhack":
                     if (parsedArgs.Count < 2) {
                         DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);

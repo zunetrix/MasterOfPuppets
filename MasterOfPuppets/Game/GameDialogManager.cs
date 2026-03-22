@@ -300,6 +300,4 @@ internal static unsafe class GameDialogManager {
         addon->ReceiveEvent(evt->State.EventType, (int)evt->Param, btnRes.AtkEventManager.Event);
         return true;
     }
-
-
 }

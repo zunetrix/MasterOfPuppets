@@ -208,9 +208,9 @@ public partial class MainWindow : Window {
         }
 
         ImGui.TableNextColumn();
-        ImGui.PushStyleColor(ImGuiCol.Text, macro.Color);
-        ImGui.Selectable($"{macro.Name}");
-        ImGui.PopStyleColor();
+        using (ImRaii.PushColor(ImGuiCol.Text, macro.Color)) {
+            ImGui.Selectable($"{macro.Name}");
+        }
 
         // context menu
         ImGui.OpenPopupOnItemClick("ContextMenuMacro", ImGuiPopupFlags.MouseButtonRight);
@@ -257,33 +257,33 @@ public partial class MainWindow : Window {
             ImGui.EndDragDropSource();
         }
 
-        ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
-        if (ImGui.BeginDragDropTarget()) {
-            ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_MACROS_TABLE");
+        using (ImRaii.PushColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget)) {
+            if (ImGui.BeginDragDropTarget()) {
+                ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_MACROS_TABLE");
 
-            bool isDropping = false;
-            unsafe {
-                isDropping = !dragDropPayload.IsNull;
-            }
-
-            if (isDropping && dragDropPayload.IsDelivery()) {
+                bool isDropping = false;
                 unsafe {
-                    int originalIndex = *(int*)dragDropPayload.Data;
+                    isDropping = !dragDropPayload.IsNull;
+                }
 
-                    int offset = macroIdx - originalIndex;
-                    if (offset != 0 && originalIndex + offset >= 0) {
-                        int targetIndex = originalIndex + offset;
-                        // PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
-                        Plugin.MacroManager.MoveMacroToIndex(originalIndex, targetIndex);
-                        Plugin.MacroManager.SelectedMacrosIndexes.Clear();
-                        Plugin.IpcProvider.SyncConfiguration();
+                if (isDropping && dragDropPayload.IsDelivery()) {
+                    unsafe {
+                        int originalIndex = *(int*)dragDropPayload.Data;
+
+                        int offset = macroIdx - originalIndex;
+                        if (offset != 0 && originalIndex + offset >= 0) {
+                            int targetIndex = originalIndex + offset;
+                            // PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
+                            Plugin.MacroManager.MoveMacroToIndex(originalIndex, targetIndex);
+                            Plugin.MacroManager.SelectedMacrosIndexes.Clear();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
                     }
                 }
-            }
 
-            ImGui.EndDragDropTarget();
+                ImGui.EndDragDropTarget();
+            }
         }
-        ImGui.PopStyleColor();
 
         ImGui.TableNextColumn();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteMacro_{macroIdx}", Language.DeleteInstructionTooltip)) {
@@ -600,7 +600,6 @@ public partial class MainWindow : Window {
         using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered)
             .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
             .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered)) {
-
             int noTagCount = Plugin.Config.Macros.Count(m => m.Tags == null || m.Tags.Count == 0);
 
             bool isNoTagSelected = _filterNoTags;

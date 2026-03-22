@@ -170,24 +170,24 @@ public class CharactersWindow : Window {
                 ImGui.EndDragDropSource();
             }
 
-            ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
-            if (ImGui.BeginDragDropTarget()) {
-                var dragDropPayload = ImGui.AcceptDragDropPayload("DND_CHARACTER_LIST");
-                bool isDropping = false;
-                unsafe { isDropping = !dragDropPayload.IsNull; }
-                if (isDropping && dragDropPayload.IsDelivery()) {
-                    unsafe {
-                        int originalIndex = *(int*)dragDropPayload.Data;
-                        int offset = i - originalIndex;
-                        if (offset != 0 && originalIndex + offset >= 0) {
-                            Plugin.Config.MoveCharacterToIndex(originalIndex, originalIndex + offset);
-                            Plugin.IpcProvider.SyncConfiguration();
+            using (ImRaii.PushColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget)) {
+                if (ImGui.BeginDragDropTarget()) {
+                    var dragDropPayload = ImGui.AcceptDragDropPayload("DND_CHARACTER_LIST");
+                    bool isDropping = false;
+                    unsafe { isDropping = !dragDropPayload.IsNull; }
+                    if (isDropping && dragDropPayload.IsDelivery()) {
+                        unsafe {
+                            int originalIndex = *(int*)dragDropPayload.Data;
+                            int offset = i - originalIndex;
+                            if (offset != 0 && originalIndex + offset >= 0) {
+                                Plugin.Config.MoveCharacterToIndex(originalIndex, originalIndex + offset);
+                                Plugin.IpcProvider.SyncConfiguration();
+                            }
                         }
                     }
+                    ImGui.EndDragDropTarget();
                 }
-                ImGui.EndDragDropTarget();
             }
-            ImGui.PopStyleColor();
 
             // col 2: keyboard broadcast toggle
             ImGui.TableNextColumn();
@@ -449,26 +449,26 @@ public class CharactersWindow : Window {
                 ImGui.EndDragDropSource();
             }
 
-            ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
-            if (ImGui.BeginDragDropTarget()) {
-                var payload = ImGui.AcceptDragDropPayload("DND_CIDGROUP_CHARS");
-                bool isDropping = false;
-                unsafe { isDropping = !payload.IsNull; }
-                if (isDropping && payload.IsDelivery()) {
-                    unsafe {
-                        int from = *(int*)payload.Data;
-                        if (from != i) {
-                            var cid = cidGroup.Cids[from];
-                            cidGroup.Cids.RemoveAt(from);
-                            cidGroup.Cids.Insert(i, cid);
-                            Plugin.Config.Save();
-                            Plugin.IpcProvider.SyncConfiguration();
+            using (ImRaii.PushColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget)) {
+                if (ImGui.BeginDragDropTarget()) {
+                    var payload = ImGui.AcceptDragDropPayload("DND_CIDGROUP_CHARS");
+                    bool isDropping = false;
+                    unsafe { isDropping = !payload.IsNull; }
+                    if (isDropping && payload.IsDelivery()) {
+                        unsafe {
+                            int from = *(int*)payload.Data;
+                            if (from != i) {
+                                var cid = cidGroup.Cids[from];
+                                cidGroup.Cids.RemoveAt(from);
+                                cidGroup.Cids.Insert(i, cid);
+                                Plugin.Config.Save();
+                                Plugin.IpcProvider.SyncConfiguration();
+                            }
                         }
                     }
+                    ImGui.EndDragDropTarget();
                 }
-                ImGui.EndDragDropTarget();
             }
-            ImGui.PopStyleColor();
 
             // col 2: delete button
             ImGui.TableNextColumn();

@@ -10,28 +10,35 @@ namespace MasterOfPuppets.Ipc;
 internal partial class IpcProvider {
 
     /// <summary>
-    /// Broadcasts a formation execution to all local clients.
-    /// The leader's current world position is included so each client can resolve its assigned point.
+    /// Broadcasts a formation execution to all local clients (excluding the leader).
+    /// The leader's world position, facing, and content ID are included so each
+    /// client can rotate its assigned offset into world space.
     /// </summary>
     public void ExecuteFormation(string name) {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
         var pos = player.Position;
+        var rot = player.Rotation;
+        var cid = DalamudApi.PlayerState.ContentId;
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteFormation,
             name,
             pos.X.ToString("G", CultureInfo.InvariantCulture),
             pos.Y.ToString("G", CultureInfo.InvariantCulture),
-            pos.Z.ToString("G", CultureInfo.InvariantCulture)).Serialize(), includeSelf: true);
+            pos.Z.ToString("G", CultureInfo.InvariantCulture),
+            rot.ToString("G", CultureInfo.InvariantCulture),
+            cid.ToString(CultureInfo.InvariantCulture)).Serialize(), includeSelf: false);
     }
 
     [IpcHandle(IpcMessageType.ExecuteFormation)]
     private void HandleExecuteFormation(IpcMessage message) {
-        if (message.StringData == null || message.StringData.Length < 4) return;
+        if (message.StringData == null || message.StringData.Length < 6) return;
 
         var name = message.StringData[0];
         if (!float.TryParse(message.StringData[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float lx)) return;
         if (!float.TryParse(message.StringData[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float ly)) return;
         if (!float.TryParse(message.StringData[3], NumberStyles.Float, CultureInfo.InvariantCulture, out float lz)) return;
+        if (!float.TryParse(message.StringData[4], NumberStyles.Float, CultureInfo.InvariantCulture, out float leaderRot)) return;
+        if (!ulong.TryParse(message.StringData[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong leaderCid)) return;
 
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
@@ -41,11 +48,18 @@ internal partial class IpcProvider {
         }
 
         var playerCid = DalamudApi.PlayerState.ContentId;
+        if (playerCid == leaderCid) return;
+
         var point = formation.Points.FirstOrDefault(p =>
             p.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(playerCid));
         if (point == null) return;
 
-        var leaderPos = new Vector3(lx, ly, lz);
-        Plugin.MovementManager.MoveTo(leaderPos + point.Offset, point.Angle.Degrees());
+        // ToAbsolute: rotate canonical-north offset into world space
+        var mat = Matrix4x4.CreateRotationY(leaderRot + MathF.PI);
+        var worldPos = new Vector3(lx, ly, lz) + Vector3.Transform(point.Offset, mat);
+
+        // Convert canonical angle (0°=north, CW+) to FFXIV facing (0=south, CW, radians).
+        float facingRad = leaderRot - point.Angle * Angle.DegToRad;
+        Plugin.MovementManager.MoveTo(worldPos, facingRad.Radians());
     }
 }

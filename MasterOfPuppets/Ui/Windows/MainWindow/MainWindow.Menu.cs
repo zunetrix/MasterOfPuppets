@@ -491,11 +491,14 @@ public partial class MainWindow : Window {
 
         // -----------------------
 
-        // if (ImGui.MenuItem("Formations"))
-        //     Plugin.Ui.FormationWindow.Toggle();
-
-        // if (ImGui.MenuItem("Formations2"))
-        //     Plugin.Ui.FormationImPlotWindow.Toggle();
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.ArrowsDownToPeople, $"##FormationWindowBtn")) {
+            Plugin.Ui.FormationWindow.Toggle();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Formation")) {
+            Plugin.Ui.FormationWindow.Toggle();
+        }
+        ImGuiUtil.ToolTip("/mop formation");
 
         // -----------------------
 

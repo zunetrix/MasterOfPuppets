@@ -143,33 +143,33 @@ public sealed class DragAndDropDebugWidget : Widget {
             // ======================
             // TARGET
             // ======================
-            ImGui.PushStyleColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget);
-            if (ImGui.BeginDragDropTarget()) {
-                ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_IMGUI_CONTEXT_PAYLOAD");
+            using (ImRaii.PushColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget)) {
+                if (ImGui.BeginDragDropTarget()) {
+                    ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_IMGUI_CONTEXT_PAYLOAD");
 
-                bool isDropping = false;
-                unsafe {
-                    isDropping = !dragDropPayload.IsNull;
-                }
-
-                if (isDropping && dragDropPayload.IsDelivery()) {
+                    bool isDropping = false;
                     unsafe {
-                        int sourceIndex = *(int*)dragDropPayload.Data;
+                        isDropping = !dragDropPayload.IsNull;
+                    }
 
-                        int offset = i - sourceIndex;
-                        if (offset != 0 && sourceIndex + offset >= 0) {
-                            int targetIndex = sourceIndex + offset;
-                            DalamudApi.PluginLog.Warning($"Drag end [{i}]: original: {sourceIndex} target: {targetIndex}] offset: {offset}");
+                    if (isDropping && dragDropPayload.IsDelivery()) {
+                        unsafe {
+                            int sourceIndex = *(int*)dragDropPayload.Data;
 
-                            var item = _items[sourceIndex];
-                            _items.RemoveAt(sourceIndex);
-                            _items.Insert(targetIndex, item);
+                            int offset = i - sourceIndex;
+                            if (offset != 0 && sourceIndex + offset >= 0) {
+                                int targetIndex = sourceIndex + offset;
+                                DalamudApi.PluginLog.Warning($"Drag end [{i}]: original: {sourceIndex} target: {targetIndex}] offset: {offset}");
+
+                                var item = _items[sourceIndex];
+                                _items.RemoveAt(sourceIndex);
+                                _items.Insert(targetIndex, item);
+                            }
                         }
                     }
+                    ImGui.EndDragDropTarget();
                 }
-                ImGui.EndDragDropTarget();
             }
-            ImGui.PopStyleColor();
         }
     }
 }
