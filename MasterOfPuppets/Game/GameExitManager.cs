@@ -9,7 +9,7 @@ using MasterOfPuppets.Util;
 namespace MasterOfPuppets;
 
 // https://github.com/Caraxi/SimpleTweaksPlugin/blob/main/Tweaks/ExitGame.cs
-public static unsafe class GameExitManager {
+public static class GameExitManager {
     internal static void Logout() {
         var ok = false;
         Chat.SendMessage("/logout");
@@ -53,6 +53,5 @@ public static unsafe class GameExitManager {
     private static void ForceCloseGame() {
         // if (UIInputData.Instance()->IsKeyDown(SeVirtualKey.MENU) && UIInputData.Instance()->IsKeyPressed(SeVirtualKey.F4))
         WindowsApi.SendMessage(Process.GetCurrentProcess().MainWindowHandle, WindowsApi.WM_CLOSE, 0, 0);
-
     }
 }

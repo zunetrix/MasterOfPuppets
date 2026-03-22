@@ -14,6 +14,8 @@ namespace MasterOfPuppets;
 public sealed class KeyboardBroadcastManager : IDisposable {
     [DllImport("user32.dll")]
     private static extern bool GetKeyboardState(byte[] lpKeyState);
+    // [DllImport("user32.dll")]
+    // private static extern short GetAsyncKeyState(int vKey);
 
     [DllImport("user32.dll")]
     private static extern uint MapVirtualKey(uint uCode, uint uMapType);
@@ -34,9 +36,12 @@ public sealed class KeyboardBroadcastManager : IDisposable {
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern int GetClassName(nint hWnd, StringBuilder lpClassName, int nMaxCount);
 
+    [DllImport("user32.dll")]
+    private static extern nint GetForegroundWindow();
+
     private const uint MAPVK_VK_TO_VSC = 0;
     private const uint WM_KEYDOWN = 0x0100;
-    private const uint WM_KEYUP   = 0x0101;
+    private const uint WM_KEYUP = 0x0101;
 
     // VK codes for keys that carry the "extended key" flag in lParam.
     private static readonly HashSet<int> ExtendedKeys = new() {
@@ -53,6 +58,7 @@ public sealed class KeyboardBroadcastManager : IDisposable {
     private readonly byte[] _prev = new byte[256];
     private readonly byte[] _curr = new byte[256];
     private nint _gameHwnd;
+    private bool _hadFocus;
 
     /// <summary>True when this client is capturing keys and broadcasting them to peers.</summary>
     public bool IsCapturing { get; private set; }
@@ -66,7 +72,7 @@ public sealed class KeyboardBroadcastManager : IDisposable {
     }
 
     public void StartCapture() => IsCapturing = true;
-    public void StopCapture()  => IsCapturing = false;
+    public void StopCapture() => IsCapturing = false;
 
     /// <summary>
     /// Called every framework-update tick. Polls keyboard state and broadcasts transitions.
@@ -76,16 +82,39 @@ public sealed class KeyboardBroadcastManager : IDisposable {
     public void Update() {
         if (!IsCapturing) return;
 
+        // prevent send keys while windows lost focus
+        if (_gameHwnd == nint.Zero)
+            _gameHwnd = FindGameWindow();
+
+        bool hasFocus = _gameHwnd != nint.Zero && GetForegroundWindow() == _gameHwnd;
+
+        if (!hasFocus) {
+            if (_hadFocus) {
+                // Just lost focus - release all held keys on puppets to prevent stuck keys.
+                for (int vk = 1; vk < 255; vk++) {
+                    if ((_prev[vk] & 0x80) == 0) continue;
+                    if (_plugin.Config.KeyboardBroadcastIgnoredKeys.Contains(vk)) continue;
+                    uint scan = MapVirtualKey((uint)vk, MAPVK_VK_TO_VSC);
+                    uint ext = ExtendedKeys.Contains(vk) ? 1u : 0u;
+                    _plugin.IpcProvider.BroadcastKeyInput(WM_KEYUP, (uint)vk, scan, ext);
+                }
+                Array.Clear(_prev, 0, 256);
+            }
+            _hadFocus = false;
+            return;
+        }
+
+        _hadFocus = true;
         GetKeyboardState(_curr);
 
         for (int vk = 1; vk < 255; vk++) {
             bool wasDown = (_prev[vk] & 0x80) != 0;
-            bool isDown  = (_curr[vk] & 0x80) != 0;
+            bool isDown = (_curr[vk] & 0x80) != 0;
             if (isDown == wasDown) continue;
             if (_plugin.Config.KeyboardBroadcastIgnoredKeys.Contains(vk)) continue;
 
             uint scan = MapVirtualKey((uint)vk, MAPVK_VK_TO_VSC);
-            uint ext  = ExtendedKeys.Contains(vk) ? 1u : 0u;
+            uint ext = ExtendedKeys.Contains(vk) ? 1u : 0u;
             _plugin.IpcProvider.BroadcastKeyInput(isDown ? WM_KEYDOWN : WM_KEYUP, (uint)vk, scan, ext);
         }
 
@@ -104,12 +133,12 @@ public sealed class KeyboardBroadcastManager : IDisposable {
         if (_gameHwnd == nint.Zero) return;
 
         bool isExtended = (flags & 0x01) != 0;
-        bool isKeyUp    = msg == WM_KEYUP;
+        bool isKeyUp = msg == WM_KEYUP;
 
         nint lParam = 1;
         lParam |= (nint)(scanCode << 16);
         if (isExtended) lParam |= (nint)(1 << 24);
-        if (isKeyUp)    lParam |= unchecked((nint)0xC0000000L); // prev-state + transition bits
+        if (isKeyUp) lParam |= unchecked((nint)0xC0000000L); // prev-state + transition bits
 
         PostMessage(_gameHwnd, msg, (nint)vkCode, lParam);
     }
@@ -119,8 +148,8 @@ public sealed class KeyboardBroadcastManager : IDisposable {
     /// </summary>
     private static nint FindGameWindow() {
         int currentPid = Process.GetCurrentProcess().Id;
-        nint found     = nint.Zero;
-        var  className = new StringBuilder(256);
+        nint found = nint.Zero;
+        var className = new StringBuilder(256);
 
         EnumWindows((hwnd, _) => {
             GetWindowThreadProcessId(hwnd, out int pid);

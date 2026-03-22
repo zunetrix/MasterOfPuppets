@@ -336,7 +336,7 @@ public static class MopMacroActionsHelper {
         new MopAction {
             Category = MopActionCategory.PluginCommand,
             TextCommand = "/mop follow",
-            SuggestionCommand = "/mop follow ",
+            SuggestionCommand = "/mop follow",
             Example = """
             /mop follow
             """,
@@ -348,7 +348,7 @@ public static class MopMacroActionsHelper {
         new MopAction {
             Category = MopActionCategory.PluginCommand,
             TextCommand = "/mop stopfollow",
-            SuggestionCommand = "/mop stopfollow ",
+            SuggestionCommand = "/mop stopfollow",
             Example = """
             /mop stopfollow
             """,
