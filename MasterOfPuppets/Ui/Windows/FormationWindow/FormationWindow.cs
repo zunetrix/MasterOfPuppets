@@ -48,7 +48,7 @@ public partial class FormationWindow : Window {
         _selFormation >= 0 && _selFormation < Plugin.Config.Formations.Count
             ? Plugin.Config.Formations[_selFormation] : null;
 
-    public FormationWindow(Plugin plugin) : base("Formations [ImPlot]###FormationsImPlotWindow") {
+    public FormationWindow(Plugin plugin) : base("Formations (WIP)###FormationsWindow") {
         Plugin = plugin;
         Size = new Vector2(960, 620);
         SizeCondition = ImGuiCond.FirstUseEver;

@@ -58,7 +58,7 @@ internal partial class IpcProvider {
         var mat = Matrix4x4.CreateRotationY(leaderRot + MathF.PI);
         var worldPos = new Vector3(lx, ly, lz) + Vector3.Transform(point.Offset, mat);
 
-        // Convert canonical angle (0°=north, CW+) to FFXIV facing (0=south, CW, radians).
+        // Add the configured angle offset (in CCW degrees) to leader's facing.
         float facingRad = leaderRot - point.Angle * Angle.DegToRad;
         Plugin.MovementManager.MoveTo(worldPos, facingRad.Radians());
     }

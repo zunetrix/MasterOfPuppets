@@ -20,6 +20,8 @@ public class MovementManager : IDisposable {
     private bool _pendingFly;
     private float _pendingDestRange;
 
+    private Angle? _pendingFacing;
+
     private int _stuckRetryCount;
     private const int MaxStuckRetries = 3;
 
@@ -36,7 +38,7 @@ public class MovementManager : IDisposable {
             }
             _stuckRetryCount++;
             DalamudApi.PluginLog.Warning($"[MovementManager] Stuck, retrying ({_stuckRetryCount}/{MaxStuckRetries})...");
-            EnqueueMove(dest, fly, range);
+            EnqueueMove(dest, fly, range, _follow.DesiredFacing);
         };
     }
 
@@ -55,12 +57,13 @@ public class MovementManager : IDisposable {
     public void Update() {
         if (_pendingTask != null && _pendingTask.IsCompleted) {
             try {
-                _follow.Move(_pendingTask.Result, !_pendingFly, _pendingDestRange);
+                _follow.Move(_pendingTask.Result, !_pendingFly, _pendingDestRange, _pendingFacing);
             } catch (Exception ex) {
                 DalamudApi.PluginLog.Error(ex, "MovementManager.Update");
             }
             _pendingTask.Dispose();
             _pendingTask = null;
+            _pendingFacing = null;
         }
     }
 
@@ -78,11 +81,12 @@ public class MovementManager : IDisposable {
 
     //  Internal movement entry points
 
-    private bool EnqueueMove(Vector3 dest, bool fly = false, float range = 0) {
+    private bool EnqueueMove(Vector3 dest, bool fly = false, float range = 0, Angle? facing = null) {
         if (_pendingTask != null) return false;
         _pendingTask = QueryPath(default, dest, fly, range);
         _pendingFly = fly;
         _pendingDestRange = range;
+        _pendingFacing = facing;
         return true;
     }
 
@@ -108,18 +112,16 @@ public class MovementManager : IDisposable {
     /// <summary>Moves to an absolute world coordinate.</summary>
     public void MoveTo(Vector3 destination, Angle? facing = null) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
-            _follow.DesiredFacing = facing;
             _stuckRetryCount = 0;
-            EnqueueMove(destination);
+            EnqueueMove(destination, facing: facing);
         });
     }
 
     /// <summary>Moves to <paramref name="origin"/> + <paramref name="offset"/>.</summary>
     public void MoveTo(Vector3 offset, Vector3 origin, Angle? facing = null) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
-            _follow.DesiredFacing = facing;
             _stuckRetryCount = 0;
-            EnqueueMove(origin + offset);
+            EnqueueMove(origin + offset, facing: facing);
         });
     }
 
@@ -131,9 +133,8 @@ public class MovementManager : IDisposable {
                 DalamudApi.PluginLog.Debug($"MoveTo: object not found \"{objectName}\"");
                 return;
             }
-            _follow.DesiredFacing = facing;
             _stuckRetryCount = 0;
-            EnqueueMove(origin.Value + offset);
+            EnqueueMove(origin.Value + offset, facing: facing);
         });
     }
 

@@ -1,6 +1,6 @@
 <Project Sdk="Dalamud.NET.Sdk/14.0.2">
   <PropertyGroup>
-    <Version>1.0.0.134</Version>
+    <Version>1.0.0.137</Version>
   </PropertyGroup>
   <PropertyGroup>
     <Author>Zune</Author>
@@ -17,7 +17,6 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
     <Tags>utility;macro</Tags>
     <AcceptsFeedback>false</AcceptsFeedback>
   </PropertyGroup>
-
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -27,11 +26,10 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-    <NoWarn>CA1416</NoWarn>
     <!-- <UseWpf>true</UseWpf> -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
-    <Version>1.0.0.134</Version>
+    <Version>1.0.0.137</Version>
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
   <!-- Linux build -->
@@ -54,10 +52,11 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
     <!-- Discriminated unions -->
     <!-- <PackageReference Include="OneOf" Version="3.0.263" /> -->
     <!-- <PackageReference Include="LiteDB" Version="5.0.21" /> -->
-    <!-- linux ipc -->
+  </ItemGroup>
+  <!-- linux ipc -->
+  <ItemGroup>
     <ProjectReference Include="..\XivIpc\XivIpc.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Update="Resources\Language.resx">
       <Generator>ResXFileCodeGenerator</Generator>
