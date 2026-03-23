@@ -46,7 +46,7 @@ public sealed class GameUiDebugWidget : Widget {
         }
     }
 
-    private void DrawScreenCricle(Vector3 position, uint color) {
+    public static void DrawScreenCricle(Vector3 position, uint color = 0xFF33FF33) {
         bool visible = DalamudApi.GameGui.WorldToScreen(position, out Vector2 screenPos);
         if (!visible)
             return;
@@ -55,7 +55,4 @@ public sealed class GameUiDebugWidget : Widget {
         ImGui.GetWindowDrawList().AddText(screenPos + new Vector2(10, -8), color,
             $"{position.ToString("G", CultureInfo.InvariantCulture)} [{(position - DalamudApi.ObjectTable[0].Position).Length():N2}]");
     }
-
-
-
 }

@@ -1,6 +1,7 @@
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface.ImGuiNotification;
 
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -13,6 +14,7 @@ public sealed class GeneralDebugWidget : Widget {
     public override string Title => "General";
 
     private static int _macroIdx = 0;
+    private bool _active = false;
 
     public GeneralDebugWidget(WidgetContext ctx) : base(ctx) {
     }
@@ -93,6 +95,20 @@ public sealed class GeneralDebugWidget : Widget {
 
             Context.Plugin.Config.Save();
             Context.Plugin.IpcProvider.SyncConfiguration();
+        }
+
+        ImGui.Checkbox("Check Active", ref _active);
+        if (_active) {
+            DalamudApi.PluginLog.Warning("Start");
+            foreach (var actor in DalamudApi.ObjectTable) {
+                if (actor == null) continue;
+                if (actor.ObjectKind == ObjectKind.CardStand) {
+                    var position = actor.Position;
+                    DalamudApi.PluginLog.Debug($"{actor.ObjectKind} Vector3({position.X}, {position.Y}, {position.Z})");
+                }
+            }
+            DalamudApi.PluginLog.Warning("End");
+            _active = false;
         }
     }
 

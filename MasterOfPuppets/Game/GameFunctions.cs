@@ -18,6 +18,8 @@ public static unsafe class GameFunctions {
         Marshal.GetDelegateForFunctionPointer<AbandonDutyDelegate>(
             EventFramework.Addresses.LeaveCurrentContent.Value);
 
+    // EventFramework.LeaveCurrentContent(false);
+
     public static void AbandonDuty() => _abandonDuty(false);
 
     private delegate void SetFacingDelegate(GameObjectStruct* obj, float radians);

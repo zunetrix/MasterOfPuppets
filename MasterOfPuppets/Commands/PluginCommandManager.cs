@@ -34,6 +34,10 @@ public class PluginCommandManager : IDisposable {
 
     // key → all currently registered command names (main + aliases)
     private readonly Dictionary<string, List<string>> _registered = new();
+    private readonly Dictionary<string, SeasonalEventRunner> _events = new(StringComparer.OrdinalIgnoreCase) {
+        ["easter"]   = new EasterHatchingTide(),
+        ["fallguys"] = new FallGuys(),
+    };
 
     public PluginCommandManager(Plugin plugin) {
         Plugin = plugin;
@@ -98,6 +102,7 @@ public class PluginCommandManager : IDisposable {
     };
 
     public void Dispose() {
+        foreach (var runner in _events.Values) runner.Dispose();
         UnregisterAll();
     }
 
@@ -350,6 +355,7 @@ public class PluginCommandManager : IDisposable {
                         DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
                         return;
                     }
+
                     if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
                         Plugin.IpcProvider.EnableKeyboardBroadcast();
                     else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
@@ -360,6 +366,32 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "shutdown":
                     GameExitManager.Shutdown();
+                    break;
+                case "test":
+                    GameDialogManager.ClickEasterMowingLeave();
+                    break;
+                case "event":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ChatGui.PrintError("Usage: event <name> | event stop");
+                        return;
+                    }
+                    if (parsedArgs[1].Equals("stop", StringComparison.OrdinalIgnoreCase)) {
+                        foreach (var r in _events.Values) r.Stop();
+                    } else {
+                        if (!_events.TryGetValue(parsedArgs[1], out var runner)) {
+                            DalamudApi.ChatGui.PrintError($"Unknown event: '{parsedArgs[1]}'");
+                            return;
+                        }
+                        var active = _events.FirstOrDefault(e => e.Value.IsRunning);
+                        if (active.Value != null) {
+                            DalamudApi.ChatGui.PrintError(
+                                active.Key.Equals(parsedArgs[1], StringComparison.OrdinalIgnoreCase)
+                                    ? $"Event '{active.Key}' is already running."
+                                    : $"Cannot start '{parsedArgs[1]}': stop '{active.Key}' first.");
+                            return;
+                        }
+                        runner.Start(Plugin);
+                    }
                     break;
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");
