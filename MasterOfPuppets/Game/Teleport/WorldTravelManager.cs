@@ -68,12 +68,11 @@ internal static unsafe class WorldTravelManager {
 
     //  Step 1
     //  Wait until the nearest aetheryte is targeted, then interact.
-
     private static void Step_WaitForAetheryteTarget(string world) {
         var ok = false;
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
-            stopWhen: () => ok = DalamudApi.TargetManager.Target?.ObjectKind == ObjectKind.Aetheryte,
+            stopWhen: () => ok = DalamudApi.TargetManager.Target?.ObjectKind == ObjectKind.Aetheryte && !DalamudApi.PartyList.IsInParty(),
             callback: () => {
                 if (!ok) { DalamudApi.PluginLog.Warning("[TravelToWorld] step1 timeout: no aetheryte targeted"); return; }
                 GameTargetManager.InteractWithTarget();
@@ -85,7 +84,6 @@ internal static unsafe class WorldTravelManager {
     //  Step 2
     //  Poll every frame until "Visit Another World Server." is clicked in SelectString.
     //  Text from DataManager row 102338 (locale-aware, icon stripped).
-
     private static void Step_WaitForVisitAnotherWorldOption(string world) {
         var ok = false;
         Coroutine.StartRunOnFramework(
@@ -103,7 +101,6 @@ internal static unsafe class WorldTravelManager {
     //  Wait for WorldTravelSelect addon AND its world list to be populated, then fire selection.
     //  Addon becomes visible before worlds load - poll until list has entries.
     //  Ls: Callback.Fire(addon, true, index + 2)
-
     private static void Step_WaitForWorldTravelSelect(string world) {
         var ok = false;
         string[] worlds = [];
@@ -125,7 +122,6 @@ internal static unsafe class WorldTravelManager {
 
     //  Step 4
     //  Wait for SelectYesno confirmation and click Yes.
-
     private static void Step_WaitForYesNoAndConfirm() {
         var ok = false;
         Coroutine.StartRunOnFramework(

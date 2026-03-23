@@ -3,7 +3,6 @@ using System.Linq;
 
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using Dalamud.Utility;
 
 using MasterOfPuppets.Camera;
 using MasterOfPuppets.Ipc;

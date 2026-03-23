@@ -128,15 +128,19 @@ public class PluginCommandManager : IDisposable {
                     Plugin.MacroHandler.StopMacroQueueExecution();
                     break;
                 case "targetmytarget":
+                case "tmt":
                     Plugin.IpcProvider.ExecuteTargetMyTarget();
                     break;
                 case "interactwithmytarget":
+                case "iwmt":
                     Plugin.IpcProvider.ExecuteInteractWithMyTarget();
                     break;
                 case "interactwithtarget":
+                case "iwt":
                     Plugin.IpcProvider.ExecuteInteractWithTarget();
                     break;
                 case "targetclear":
+                case "tc":
                     Plugin.IpcProvider.ExecuteTargetClear();
                     break;
                 case "queue":
@@ -160,7 +164,7 @@ public class PluginCommandManager : IDisposable {
                         if (!float.TryParse(argParts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
                         || !float.TryParse(argParts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
                         || !float.TryParse(argParts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
-                            DalamudApi.PluginLog.Warning($"[mopmove] invalid argument float parse: \"{parsedArgs[1]}\"");
+                            DalamudApi.PluginLog.Warning($"[mop move] invalid argument float parse: \"{parsedArgs[1]}\"");
                             return;
                         }
 
@@ -199,17 +203,19 @@ public class PluginCommandManager : IDisposable {
                 case "stopmove":
                     Plugin.IpcProvider.StopMovement();
                     break;
-                case "movetotarget":
-                    Plugin.MovementManager.MoveToTarget();
-                    break;
-                case "stackonme":
-                    Plugin.IpcProvider.ExecuteStackOnMe();
-                    break;
                 case "follow":
                     MovementManager.Follow(DalamudApi.PlayerState.EntityId);
                     break;
                 case "stopfollow":
                     MovementManager.StopFollow();
+                    break;
+                case "movetotarget":
+                case "mtt":
+                    Plugin.MovementManager.MoveToTarget();
+                    break;
+                case "stackonme":
+                case "som":
+                    Plugin.IpcProvider.ExecuteStackOnMe();
                     break;
                 case "movetocharacter": {
                         if (parsedArgs.Count <= 1) {
@@ -220,6 +226,7 @@ public class PluginCommandManager : IDisposable {
                     }
                     break;
                 case "movetomytarget":
+                case "mtmt":
                     Plugin.IpcProvider.ExecuteMoveToMyTarget();
                     break;
                 case "enablewalk":

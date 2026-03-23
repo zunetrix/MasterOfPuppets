@@ -52,7 +52,7 @@ public partial class FormationWindow {
             ? formation.Points[_selPoint] : null;
 
         //  Points list
-        ImGui.SetNextItemOpen(true, ImGuiCond.Always);
+        ImGui.SetNextItemOpen(true, ImGuiCond.Appearing);
         if (ImGui.CollapsingHeader($"Points ({formation.Points.Count})##fipts")) {
             if (formation.Points.Count == 0) {
                 ImGui.TextDisabled("Shift+Click plot to add");
