@@ -65,6 +65,7 @@ loop code
  - https://github.com/UnknownX7/Cammy
  - https://github.com/UnknownX7/Hypostasis/
  - https://github.com/Infiziert90/ChatTwo
+ - https://github.com/Haselnussbomber/HaselDebug
 
 # Game Sheet Preview
  - https://exd.camora.dev

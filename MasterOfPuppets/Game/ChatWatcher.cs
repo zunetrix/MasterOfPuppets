@@ -172,4 +172,3 @@ internal class ChatWatcher : IDisposable {
         return i > 0 ? raw[i..] : raw;
     }
 }
-

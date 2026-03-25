@@ -27,7 +27,7 @@ internal sealed class LinuxIpcTransport : IIpcTransport {
     /// <param name="channelName">Name of the IPC channel. Must match across all plugin instances.</param>
     public LinuxIpcTransport(string channelName = "MasterOfPuppets.IPC") {
         try {
-            // Note: 1 << 24 (16MB) is the default payload size used in MOP
+            // Note: 1 << 24 (16MB) is the default payload size
             _bus = new UnixSidecarTinyMessageBus(channelName, 1 << 24);
             _bus.MessageReceived += OnBusMessageReceived;
             IsAvailable = true;
