@@ -19,7 +19,7 @@ namespace MasterOfPuppets.Ipc;
 /// </para>
 /// </summary>
 internal sealed class LinuxIpcTransport : IIpcTransport {
-    private readonly IXivMessageBus? _bus;
+    private readonly UnixSidecarTinyMessageBus? _bus;
 
     public event Action<byte[]>? MessageReceived;
     public bool IsAvailable { get; }
@@ -28,7 +28,7 @@ internal sealed class LinuxIpcTransport : IIpcTransport {
     public LinuxIpcTransport(string channelName = "MasterOfPuppets.IPC") {
         try {
             // Note: 1 << 24 (16MB) is the default payload size used in MOP
-            _bus = new UnixSharedMemoryTinyMessageBus(channelName, 1 << 24);
+            _bus = new UnixSidecarTinyMessageBus(channelName, 1 << 24);
             _bus.MessageReceived += OnBusMessageReceived;
             IsAvailable = true;
         } catch (Exception ex) {

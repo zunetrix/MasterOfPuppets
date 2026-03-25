@@ -59,13 +59,16 @@
           "protobuf-net": "3.1.4"
         }
       },
+      "XivIpc": {
+        "type": "Direct",
+        "requested": "[0.0.4, )",
+        "resolved": "0.0.4",
+        "contentHash": "lum8xsYk5GkvYylsiw0ikn+HNmUehmcW1RV7z8OdVMu8DM1e5l09MBpuKfzQfm6JDO2vhIlUEiO1/B2z9v8aWQ=="
+      },
       "protobuf-net.Core": {
         "type": "Transitive",
         "resolved": "3.2.46",
         "contentHash": "kRPJ71Bpj0nK2iRSnH6XTPCA0+Nal5xoVBKwFqgd5n/yVA7Iie/3KwvcmC+aFjTymh+Kibn4q4fnceIOJrKRlA=="
-      },
-      "xivipc": {
-        "type": "Project"
       }
     }
   }
