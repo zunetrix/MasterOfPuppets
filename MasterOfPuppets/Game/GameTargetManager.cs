@@ -82,9 +82,7 @@ public static class GameTargetManager {
 
                 var lookupName = actor.Name.TextValue;
                 if (actor.ObjectKind == ObjectKind.Player) {
-                    var world = (actor as IPlayerCharacter)?.HomeWorld.ValueNullable?.Name;
-                    if (world != null)
-                        lookupName = $"{lookupName}@{world}";
+                    lookupName = actor.GetPlayerNameWorld();
                 }
 
                 if (!lookupName.Contains(assistName, StringComparison.InvariantCultureIgnoreCase)) continue;

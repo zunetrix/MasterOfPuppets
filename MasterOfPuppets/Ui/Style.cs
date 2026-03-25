@@ -125,7 +125,7 @@ public class ColorPalette {
     // public Vector4 Orange = new Vector4(1f, 0.5f, 0.9f, 1f);
 
     public Vector4 Orange = new Vector4(1f, 0.6f, 0.2f, 1f);
-    public Vector4 Yellow = new Vector4(0.7843138f, 0.7843138f, 0f, 1f);
+    public Vector4 Yellow = new Vector4(1f, 1f, 0f, 0.9f);
     public Vector4 Lavender = new Vector4(0.65882355f, 0.65882355f, 1f, 1f);
     // public Vector4 Yellow = new Vector4(1f, 1f, 0.4f, 1f);
     public Vector4 Cyan = new Vector4(0.0f, 0.9804f, 1.0f, 1.0f);
