@@ -447,6 +447,11 @@ public class SettingsWindow : Window {
             Plugin.IpcProvider.SetGameSettingsObjectQuantity(_objectQuantityType);
         }
         ImGuiUtil.ToolTip("Change object quantity limit");
+
+        // var MoveMode = DalamudApi.GameConfig.UiControl.GetUInt("MoveMode");
+        // var PadMode = DalamudApi.GameConfig.UiConfig.GetUInt("PadMode");
+        // DalamudApi.GameConfig.UiControl.Set("MoveMode", 0);
+        // DalamudApi.GameConfig.UiConfig.Set("PadMode", 0);
     }
 
     private void DrawCommandsTab() {

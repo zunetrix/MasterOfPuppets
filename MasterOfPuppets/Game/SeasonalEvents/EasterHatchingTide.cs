@@ -46,10 +46,10 @@ internal class EasterHatchingTide : SeasonalEventRunner {
     }
 
     protected override void AddJoinSteps() {
-        AddStepWaitNotBetweenAreas();           // ensure fully loaded
+        AddStepWaitNotBetweenAreas();
         AddStepInteractWithNpc(1056067);        // interact with Hatching-tide registrator (polls until targetable)
         AddStepSelectString(0);                 // select first option to enter the event area
-        AddStepWaitInValidTerritory();          // wait until territory 1336 is loaded
+        AddStepWaitInValidTerritory();          // wait until territory is loaded
     }
 
     protected override void AddLeaveSteps() {

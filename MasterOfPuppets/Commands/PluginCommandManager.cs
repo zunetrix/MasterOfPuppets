@@ -35,7 +35,7 @@ public class PluginCommandManager : IDisposable {
     // key → all currently registered command names (main + aliases)
     private readonly Dictionary<string, List<string>> _registered = new();
     private readonly Dictionary<string, SeasonalEventRunner> _events = new(StringComparer.OrdinalIgnoreCase) {
-        ["easter"]   = new EasterHatchingTide(),
+        ["easter"] = new EasterHatchingTide(),
         ["fallguys"] = new FallGuys(),
     };
 
@@ -178,7 +178,7 @@ public class PluginCommandManager : IDisposable {
                             float.TryParse(parsedArgs[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float angleDeg))
                             facing = angleDeg.Degrees();
 
-                        Plugin.MovementManager.MoveTo(new Vector3(x, y, z), facing);
+                        Plugin.MovementManager.MoveTo(new Vector3(x, y, z), DalamudApi.ObjectTable.LocalPlayer.Position, facing);
                     }
                     break;
                 case "face": {
