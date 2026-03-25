@@ -21,33 +21,6 @@ public partial class FormationWindow {
         var formation = SelectedFormation;
         if (formation == null) { ImGui.TextDisabled("No formation selected"); return; }
 
-        //  Header: Execute | Delete | Name
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, "##execfmi", "Execute formation")) {
-            Plugin.IpcProvider.ExecuteFormation(formation.Name);
-        }
-
-        ImGui.SameLine();
-        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Save, "##fisavefm", "Save formation")) {
-            Plugin.IpcProvider.SyncConfiguration();
-        }
-
-        ImGui.SameLine();
-        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, "##fidelfm", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl) {
-            Plugin.Config.Formations.RemoveAt(_selFormation);
-            _selFormation = Plugin.Config.Formations.Count > 0
-                ? Math.Clamp(_selFormation, 0, Plugin.Config.Formations.Count - 1) : -1;
-            _selPoint = -1;
-            Plugin.Config.Save();
-            return;
-        }
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(-1);
-        var name = formation.Name;
-        if (ImGui.InputText("##finame", ref name, 64)) formation.Name = name;
-        if (ImGui.IsItemDeactivatedAfterEdit()) Plugin.Config.Save();
-
-        ImGui.Spacing();
-
         var pt2 = _selPoint >= 0 && _selPoint < formation.Points.Count
             ? formation.Points[_selPoint] : null;
 
@@ -112,6 +85,7 @@ public partial class FormationWindow {
                                             formation.Points.Insert(i, pt);
                                             if (_selPoint == from) _selPoint = i;
                                             Plugin.Config.Save();
+                                            Plugin.IpcProvider.SyncConfiguration();
                                         }
                                     }
                                 }
@@ -127,21 +101,30 @@ public partial class FormationWindow {
                         ImGui.SetNextItemWidth(-1);
                         ImGui.DragFloat("##x", ref p.Offset.X, 0.001f, -500f, 500f, "%.3f");
                         if (ImGui.IsItemActivated()) _selPoint = i;
-                        if (ImGui.IsItemDeactivatedAfterEdit()) Plugin.Config.Save();
+                        if (ImGui.IsItemDeactivatedAfterEdit()) {
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
 
                         // Column 2: Z
                         ImGui.TableNextColumn();
                         ImGui.SetNextItemWidth(-1);
                         ImGui.DragFloat("##z", ref p.Offset.Z, 0.001f, -500f, 500f, "%.3f");
                         if (ImGui.IsItemActivated()) _selPoint = i;
-                        if (ImGui.IsItemDeactivatedAfterEdit()) Plugin.Config.Save();
+                        if (ImGui.IsItemDeactivatedAfterEdit()) {
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
 
                         // Column 3: A°
                         ImGui.TableNextColumn();
                         ImGui.SetNextItemWidth(-1);
                         ImGui.DragFloat("##a", ref p.Angle, 1f, -360f, 360f, "%.0f\u00b0");
                         if (ImGui.IsItemActivated()) _selPoint = i;
-                        if (ImGui.IsItemDeactivatedAfterEdit()) Plugin.Config.Save();
+                        if (ImGui.IsItemDeactivatedAfterEdit()) {
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
 
                         // Column 4: select
                         ImGui.TableNextColumn();
@@ -161,14 +144,16 @@ public partial class FormationWindow {
                         _selPoint = formation.Points.Count > 0
                             ? Math.Clamp(_selPoint, 0, formation.Points.Count - 1) : -1;
                         Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
                     }
                 }
             }
             ImGui.Spacing();
-            if (ImGui.Button("Clear All##ficlear", new Vector2(-1, 0)) && ImGui.GetIO().KeyCtrl) {
+            if (ImGuiUtil.DangerButton("Clear All##ficlear", new Vector2(-1, 0)) && ImGui.GetIO().KeyCtrl) {
                 formation.Points.Clear();
                 _selPoint = -1;
                 Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
             }
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("Ctrl+Click to clear all points");
         }
@@ -185,7 +170,11 @@ public partial class FormationWindow {
                 ImGui.SetNextItemWidth(-1);
                 if (_charCombo.Draw("##ficharcombo", availChars, ref _charSelected)) {
                     var found = Plugin.Config.Characters.FirstOrDefault(c => c.Name == _charSelected);
-                    if (found != null) { pt2.Cids.Add(found.Cid); Plugin.Config.Save(); }
+                    if (found != null) {
+                        pt2.Cids.Add(found.Cid);
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
                     _charSelected = string.Empty;
                 }
                 if (ImGui.BeginTable("##fichartbl", 3,
@@ -207,7 +196,11 @@ public partial class FormationWindow {
                     }
                     ImGui.EndTable();
                 }
-                if (delIdx >= 0) { pt2.Cids.RemoveAt(delIdx); Plugin.Config.Save(); }
+                if (delIdx >= 0) {
+                    pt2.Cids.RemoveAt(delIdx);
+                    Plugin.Config.Save();
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
             }
         }
 
@@ -222,7 +215,11 @@ public partial class FormationWindow {
                     .Where(g => !pt2.GroupIds.Contains(g.Name)).Select(g => g.Name).ToList();
                 ImGui.SetNextItemWidth(-1);
                 if (_groupCombo.Draw("##figrpcombo", availGroups, ref _groupSelected)) {
-                    if (!string.IsNullOrEmpty(_groupSelected)) { pt2.GroupIds.Add(_groupSelected); Plugin.Config.Save(); }
+                    if (!string.IsNullOrEmpty(_groupSelected)) {
+                        pt2.GroupIds.Add(_groupSelected);
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
                     _groupSelected = string.Empty;
                 }
                 if (ImGui.BeginTable("##figrptbl", 3,
@@ -242,7 +239,11 @@ public partial class FormationWindow {
                     }
                     ImGui.EndTable();
                 }
-                if (delIdx >= 0) { pt2.GroupIds.RemoveAt(delIdx); Plugin.Config.Save(); }
+                if (delIdx >= 0) {
+                    pt2.GroupIds.RemoveAt(delIdx);
+                    Plugin.Config.Save();
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
             }
         }
     }

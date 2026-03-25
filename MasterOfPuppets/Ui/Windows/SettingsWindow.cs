@@ -21,6 +21,7 @@ namespace MasterOfPuppets;
 public class SettingsWindow : Window {
     private Plugin Plugin { get; }
     private string _characterName = string.Empty;
+    private float _cameraYOffset = GameCameraManager.MaxYOffset;
     private SettingsDisplayObjectLimitType _objectQuantityType;
     // commandKey → { defaultAlias → current input text }
     private readonly Dictionary<string, Dictionary<string, string>> _aliasInputs = new();
@@ -216,6 +217,17 @@ public class SettingsWindow : Window {
                     GameCameraManager.EnableCamHighHeight();
                 else
                     GameCameraManager.Disable();
+            }
+
+            ImGui.Text($"Camera Height Offset: {GameCameraManager.YOffset}");
+            ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
+            if (ImGui.DragFloat("##CameraYOffset", ref _cameraYOffset, 1f, 0f, GameCameraManager.MaxYOffset, "%.0f")) {
+                float YOffset = Math.Clamp(_cameraYOffset, 0f, GameCameraManager.MaxYOffset);
+                GameCameraManager.SetHeight(YOffset, true);
+            }
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetCameraOffsetBtn", "Reset")) {
+                GameCameraManager.SetHeight(GameCameraManager.MaxYOffset, true);
             }
         }
 

@@ -3,9 +3,12 @@ using System.Globalization;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 
 using MasterOfPuppets.Camera;
 using MasterOfPuppets.Movement;
+using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Debug;
 
@@ -31,10 +34,15 @@ public sealed class GameUiDebugWidget : Widget {
             DrawScreenCricle(position, ImGui.ColorConvertFloat4ToU32(Style.Colors.Green));
         }
 
-        ImGui.Text($"CurrentY: {GameCameraManager.CurrentY}");
-        if (ImGui.InputFloat("Camera Y Offset (100000000)##CameraYOffset", ref _cameraYOffset, step: 1000, stepFast: 1000)) {
-            float YOffset = Math.Clamp(_cameraYOffset, 0f, 100000000f);
+        ImGui.Text($"Camera Height Offset: {GameCameraManager.CurrentY}");
+        ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
+        if (ImGui.DragFloat("##CameraYOffset", ref _cameraYOffset, 1f, 0f, GameCameraManager.MaxYOffset, "%.0f")) {
+            float YOffset = Math.Clamp(_cameraYOffset, 0f, GameCameraManager.MaxYOffset);
             GameCameraManager.SetHeight(YOffset, true);
+        }
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetCameraOffsetBtn", "Reset")) {
+            GameCameraManager.SetHeight(GameCameraManager.MaxYOffset, true);
         }
 
         if (ImGui.Checkbox("Toggle Cam Hack##ToggleCamHack", ref _enableCamHack)) {

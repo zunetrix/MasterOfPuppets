@@ -7,12 +7,13 @@ namespace MasterOfPuppets.Camera;
 
 internal static unsafe class GameCameraManager {
     private static Hook<GetCameraPositionDelegate>? hook;
-
     private static bool _enabled;
-    private static float _YOffset;
+    private static float _yOffset;
     private static float _currentY;
     public static bool Enabled => _enabled;
     public static float CurrentY => _currentY;
+    public static float YOffset => _yOffset;
+    public static float MaxYOffset = 100000000f;
 
     private delegate void GetCameraPositionDelegate(
         GameCamera* camera,
@@ -37,7 +38,7 @@ internal static unsafe class GameCameraManager {
     }
 
     public static void Enable(float offset) {
-        _YOffset = offset;
+        _yOffset = offset;
         _enabled = true;
     }
 
@@ -46,11 +47,11 @@ internal static unsafe class GameCameraManager {
     }
 
     public static void EnableCamHighHeight() {
-        Enable(99999999);
+        Enable(MaxYOffset);
     }
 
     public static void SetHeight(float offset, bool autoEnable = false) {
-        _YOffset = offset;
+        _yOffset = offset;
 
         if (autoEnable)
             _enabled = true;
@@ -71,7 +72,7 @@ internal static unsafe class GameCameraManager {
         if (!_enabled)
             return;
 
-        position->Y += _YOffset;
+        position->Y += _yOffset;
     }
 
     public static void Dispose() {
@@ -84,6 +85,6 @@ internal static unsafe class GameCameraManager {
         hook = null;
 
         _enabled = false;
-        _YOffset = 0f;
+        _yOffset = 0f;
     }
 }

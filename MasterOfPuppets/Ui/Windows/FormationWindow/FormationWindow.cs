@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
@@ -17,6 +18,9 @@ public partial class FormationWindow : Window {
     private string _searchFilter = string.Empty;
     private int _selFormation = -1;
     private string _newFmName = string.Empty;
+    private int _renamingIdx = -1;
+    private string _renameBuffer = string.Empty;
+    private bool _renamingFocusPending;
 
     //  Plot
     private int _selPoint = -1;
@@ -38,6 +42,7 @@ public partial class FormationWindow : Window {
     private float _markerSizeWorld = 1.5f;
 
     //  Right panel
+    private float _leftPanelWidth;
     private float _rightPanelWidth = 300f;
     private readonly ImGuiComboSearch _charCombo = new();
     private readonly ImGuiComboSearch _groupCombo = new();
@@ -55,33 +60,49 @@ public partial class FormationWindow : Window {
     }
 
     public override void Draw() {
-        float leftW = 250f * ImGuiHelpers.GlobalScale;
         float splitterW = 6f * ImGuiHelpers.GlobalScale;
+        float minLeftW = 150f * ImGuiHelpers.GlobalScale;
         float minRightW = 300f * ImGuiHelpers.GlobalScale;
+        float minMidW = 100f * ImGuiHelpers.GlobalScale;
 
-        if (_rightPanelWidth <= 0f)
-            _rightPanelWidth = minRightW;
+        if (_leftPanelWidth <= 0f) _leftPanelWidth = 250f * ImGuiHelpers.GlobalScale;
+        if (_rightPanelWidth <= 0f) _rightPanelWidth = minRightW;
 
         var avail = ImGui.GetContentRegionAvail();
         float spacing = ImGui.GetStyle().ItemSpacing.X;
-        float minMidW = 100f * ImGuiHelpers.GlobalScale;
-        float maxRightW = avail.X - leftW - splitterW - minMidW - spacing * 3;
+
+        float maxLeftW = avail.X - splitterW * 2 - minMidW - minRightW - spacing * 4;
+        float maxRightW = avail.X - _leftPanelWidth - splitterW * 2 - minMidW - spacing * 4;
+        _leftPanelWidth = Math.Clamp(_leftPanelWidth, minLeftW, maxLeftW);
         _rightPanelWidth = Math.Clamp(_rightPanelWidth, minRightW, maxRightW);
-        float midW = MathF.Max(avail.X - leftW - splitterW - _rightPanelWidth - spacing * 3, minMidW);
+
+        float midW = MathF.Max(avail.X - _leftPanelWidth - splitterW * 2 - _rightPanelWidth - spacing * 4, minMidW);
         float h = avail.Y;
 
-        ImGui.BeginChild("##fwil", new Vector2(leftW, h), true);
+        // Left panel
+        ImGui.BeginChild("##fwil", new Vector2(_leftPanelWidth, h), true);
         DrawLeftPanel();
         ImGui.EndChild();
-
         ImGui.SameLine();
 
+        // Left splitter
+        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
+        ImGui.InvisibleButton("##fwisplitl", new Vector2(splitterW, h));
+        if (ImGui.IsItemHovered()) ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
+        if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+            _leftPanelWidth += ImGui.GetIO().MouseDelta.X;
+            _leftPanelWidth = Math.Clamp(_leftPanelWidth, minLeftW, maxLeftW);
+        }
+        ImGui.PopStyleVar();
+        ImGui.SameLine();
+
+        // Middle panel
         ImGui.BeginChild("##fwim", new Vector2(midW, h), true);
         DrawMiddlePanel();
         ImGui.EndChild();
-
         ImGui.SameLine();
 
+        // Right splitter
         ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
         ImGui.InvisibleButton("##fwisplit", new Vector2(splitterW, h));
         if (ImGui.IsItemHovered()) ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
@@ -90,9 +111,9 @@ public partial class FormationWindow : Window {
             _rightPanelWidth = Math.Clamp(_rightPanelWidth, minRightW, maxRightW);
         }
         ImGui.PopStyleVar();
-
         ImGui.SameLine();
 
+        // Right panel
         ImGui.BeginChild("##fwir", new Vector2(_rightPanelWidth, h), true);
         DrawRightPanel();
         ImGui.EndChild();
@@ -100,11 +121,15 @@ public partial class FormationWindow : Window {
 
     private void AddFormation() {
         if (string.IsNullOrWhiteSpace(_newFmName)) return;
-        Plugin.Config.Formations.Add(new Formation { Name = _newFmName });
+        var trimmed = _newFmName.Trim();
+        if (Plugin.Config.Formations.Any(f => f.Name.Equals(trimmed, StringComparison.OrdinalIgnoreCase))) return;
+        Plugin.Config.Formations.Add(new Formation { Name = trimmed });
         _selFormation = Plugin.Config.Formations.Count - 1;
         _selPoint = -1;
         _needsAxisReset = true;
         _newFmName = string.Empty;
+
         Plugin.Config.Save();
+        Plugin.IpcProvider.SyncConfiguration();
     }
 }

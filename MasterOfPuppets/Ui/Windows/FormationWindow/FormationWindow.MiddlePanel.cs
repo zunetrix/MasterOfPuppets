@@ -121,8 +121,10 @@ public partial class FormationWindow {
                     x = origX;
                     y = origY;
                     pt.Angle += ImGui.GetIO().MouseDelta.X;
-                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Left)) {
                         Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
                 } else if (ImGui.GetMouseDragDelta(ImGuiMouseButton.Left).LengthSquared() > 4f) {
                     if (keyCtrl) {
                         // Ctrl: snap to 1-unit grid
@@ -135,8 +137,10 @@ public partial class FormationWindow {
                     }
                     pt.Offset.X = (float)x;
                     pt.Offset.Z = -(float)y;
-                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Left)) {
                         Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
                 }
             }
         }
@@ -150,6 +154,7 @@ public partial class FormationWindow {
             });
             _selPoint = formation.Points.Count - 1;
             Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
         }
 
         // Click on empty area → deselect
@@ -246,6 +251,7 @@ public partial class FormationWindow {
         }
         _selPoint = -1;
         Plugin.Config.Save();
+        Plugin.IpcProvider.SyncConfiguration();
     }
 
     private void SnapshotParty(Formation formation) {
@@ -261,5 +267,6 @@ public partial class FormationWindow {
         }
         _selPoint = -1;
         Plugin.Config.Save();
+        Plugin.IpcProvider.SyncConfiguration();
     }
 }

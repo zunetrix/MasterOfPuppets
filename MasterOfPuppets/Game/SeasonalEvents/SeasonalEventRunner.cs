@@ -75,7 +75,7 @@ internal abstract class SeasonalEventRunner : IDisposable {
 
     private void RunNextStep() {
         if (_steps.Count == 0) {
-            _running = false; // all steps completed — runner is idle
+            _running = false; // all steps completed - runner is idle
             return;
         }
         if (_cts?.IsCancellationRequested == true) return;
