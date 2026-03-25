@@ -78,10 +78,10 @@ internal static unsafe partial class GameDialogManager {
         return count > index && FireCallback(addonName, index);
     }
 
-    // public static bool ClickYes() => FireCallback(AddonName.SelectYesno, 0);
-    public static bool ClickYes() => ClickAddonButton<AddonSelectYesno>(AddonName.SelectYesno, a => a->YesButton);
-    // public static bool ClickNo() => FireCallback(AddonName.SelectYesno, (uint)1);
-    public static bool ClickNo() => ClickAddonButton<AddonSelectYesno>(AddonName.SelectYesno, a => a->NoButton);
+    public static bool ClickYes() => FireCallback(AddonName.SelectYesno, 0);
+    // public static bool ClickYes() => ClickAddonButton<AddonSelectYesno>(AddonName.SelectYesno, a => a->YesButton);
+    public static bool ClickNo() => FireCallback(AddonName.SelectYesno, 1);
+    // public static bool ClickNo() => ClickAddonButton<AddonSelectYesno>(AddonName.SelectYesno, a => a->NoButton);
     public static bool ClickOk() => ClickAddonButton<AddonSelectOk>(AddonName.SelectOk, a => a->OkButton);
     public static bool ClickRepairAll() => ClickAddonButton<AddonRepair>(AddonName.Repair, a => a->RepairAllButton);
     public static bool ClickContentsFinderConfirm() => ClickAddonButton<AddonContentsFinderConfirm>(AddonName.ContentsFinderConfirm, a => a->CommenceButton);
