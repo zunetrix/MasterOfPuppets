@@ -5,6 +5,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Bindings.ImPlot;
 
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Formations;
 using MasterOfPuppets.Movement;
 
@@ -191,80 +192,169 @@ public partial class FormationWindow {
     }
 
     private void DrawShapeToolbar(Formation? formation) {
-        ImGui.SetNextItemWidth(75);
-        ImGui.Combo("##shtypei", ref _shapeType, ShapeNames, ShapeNames.Length);
-        ImGui.SameLine();
-
-        if (_shapeType == 0) {
-            ImGui.Text("N:");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(38);
-            ImGui.DragInt("##shni", ref _shapeN, 0.1f, 2, 32);
-            ImGui.SameLine();
+        ImGui.SetNextItemWidth(110);
+        int shapeTypeInt = (int)_shapeType;
+        if (ImGui.Combo("##shtypei", ref shapeTypeInt, ShapeNames, ShapeNames.Length)) {
+            _shapeType = (ShapeType)shapeTypeInt;
+            // Reset some defaults when changing types to avoid weirdness
+            if (_shapeN < 1) _shapeN = 8;
+            if (_shapeRadius < 0.1f) _shapeRadius = 5f;
         }
 
-        ImGui.Text("R:");
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(46);
-        ImGui.DragFloat("##shri", ref _shapeRadius, 0.1f, 0.5f, 50f, "%.1f");
+        ImGui.Text("N:");
         ImGui.SameLine();
+        ImGui.SetNextItemWidth(38);
+        ImGui.DragInt("##shni", ref _shapeN, 0.2f, 1, 64);
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Total number of points");
 
+        ImGui.SameLine();
+        // Context-sensitive parameters
+        switch (_shapeType) {
+            case ShapeType.Circle:
+            case ShapeType.FigureEight:
+            case ShapeType.Heart:
+            case ShapeType.Arc:
+            case ShapeType.Lissajous:
+                ShowParam("R:", ref _shapeRadius, "Radius / Scale");
+                break;
+            case ShapeType.Rectangle:
+                ShowParam("W:", ref _shapeWidth, "Width");
+                ImGui.SameLine();
+                ShowParam("D:", ref _shapeDepth, "Depth");
+                break;
+            case ShapeType.Line:
+            case ShapeType.Chevron:
+            case ShapeType.Cross:
+                ShowParam("Sp:", ref _shapeSpacing, "Spacing");
+                if (_shapeType == ShapeType.Cross) { ImGui.SameLine(); ShowParam("Len:", ref _shapeWidth, "Arm Length"); }
+                break;
+            case ShapeType.StaggeredLine:
+            case ShapeType.Zigzag:
+                ShowParam("Sp:", ref _shapeSpacing, "Step Spacing");
+                ImGui.SameLine();
+                ShowParam("Amp:", ref _shapeRadius, "Amplitude / Depth Offset");
+                break;
+            case ShapeType.Spiral:
+            case ShapeType.LogarithmicSpiral:
+                ShowParam("St:", ref _shapeRadius, _shapeType == ShapeType.Spiral ? "Radial Step" : "a-parameter");
+                ImGui.SameLine();
+                ShowParam("Rot:", ref _shapeRadius2, "Rotations (b-param for Log)");
+                break;
+            case ShapeType.Polygon:
+            case ShapeType.Rose:
+            case ShapeType.StarPolygon:
+                ShowParam("R:", ref _shapeRadius, "Radius");
+                ImGui.SameLine();
+                ImGui.Text(_shapeType == ShapeType.Rose ? "Pet:" : "Sides:");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(30);
+                ImGui.DragInt("##shpint", ref _shapeParamInt, 0.1f, 1, 32);
+                break;
+            case ShapeType.Star:
+            case ShapeType.SpokedWheel:
+                ShowParam("R1:", ref _shapeRadius, "Outer Radius");
+                ImGui.SameLine();
+                ShowParam("R2:", ref _shapeRadius2, "Inner Radius");
+                ImGui.SameLine();
+                ImGui.Text(_shapeType == ShapeType.Star ? "Pts:" : "Spoke:");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(30);
+                ImGui.DragInt("##shpint", ref _shapeParamInt, 0.1f, 1, 32);
+                break;
+            case ShapeType.Ellipse:
+                ShowParam("RX:", ref _shapeRadius, "Radius X");
+                ImGui.SameLine();
+                ShowParam("RZ:", ref _shapeRadius2, "Radius Z");
+                break;
+            case ShapeType.SineWave:
+                ShowParam("Amp:", ref _shapeRadius, "Amplitude");
+                ImGui.SameLine();
+                ShowParam("Wave:", ref _shapeRadius2, "Wavelength");
+                ImGui.SameLine();
+                ShowParam("Len:", ref _shapeWidth, "Total Length");
+                break;
+            case ShapeType.Grid:
+                ShowParam("SpX:", ref _shapeSpacing, "X Spacing");
+                ImGui.SameLine();
+                ShowParam("SpZ:", ref _shapeWidth, "Z Spacing");
+                ImGui.SameLine();
+                ImGui.Text("Col:");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(30);
+                ImGui.DragInt("##shpint", ref _shapeParamInt, 0.1f, 1, 32);
+                break;
+            case ShapeType.Hypotrochoid:
+                ShowParam("R:", ref _shapeRadius); ImGui.SameLine();
+                ShowParam("r:", ref _shapeRadius2); ImGui.SameLine();
+                ShowParam("d:", ref _shapeWidth); ImGui.SameLine();
+                ShowParam("Rot:", ref _shapeDepth);
+                break;
+            case ShapeType.RingWithCenter:
+                ShowParam("R:", ref _shapeRadius);
+                ImGui.SameLine();
+                ImGui.Text("Ctr:");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(30);
+                ImGui.DragInt("##shpint", ref _shapeParamInt, 0.1f, 1, 16);
+                break;
+        }
+
+        ImGui.SameLine();
         ImGui.Text("A\u00b0:");
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(46);
+        ImGui.SetNextItemWidth(40);
         ImGui.DragFloat("##shai", ref _shapeAngleOff, 1f, -180f, 180f, "%.0f");
-        ImGui.SameLine();
 
-        ImGui.SetNextItemWidth(68);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(70);
         ImGui.Combo("##shfacei", ref _faceMode, FaceNames, FaceNames.Length);
-        ImGui.SameLine();
 
+        ImGui.SameLine();
         ImGui.Checkbox("Ap##shappi", ref _appendMode);
         if (ImGui.IsItemHovered()) ImGui.SetTooltip("Append to existing points");
-        ImGui.SameLine();
 
+        ImGui.SameLine();
         if (ImGui.Button("Gen##i") && formation != null)
             GenerateShape(formation);
     }
 
-    private void GenerateShape(Formation formation) {
-        int n = _shapeType == 1 ? 4 : _shapeN;
-        float baseR = _shapeAngleOff * Angle.DegToRad;
-        float step = 2 * MathF.PI / n;
-
-        if (!_appendMode) formation.Points.Clear();
-        for (int i = 0; i < n; i++) {
-            float a = baseR + i * step;
-            // a = bearing CW from south (+Z). Our preview convention: 0=north, CW+.
-            // Outward: arrow faces away from center = same direction as point position.
-            //   Direction of (sin(a), cos(a)) in game XZ = bearing (180° - a*RadToDeg) in our convention.
-            // Inward: opposite of outward = outward + 180° = 360° - a*RadToDeg.
-            float ang = _faceMode switch {
-                1 => 360f - a * Angle.RadToDeg,    // Inward: toward center
-                2 => 0f,                             // North: all face north
-                _ => 180f - a * Angle.RadToDeg,     // Outward: away from center
-            };
-            formation.Points.Add(new FormationPoint {
-                Offset = new Vector3(_shapeRadius * MathF.Sin(a), 0, _shapeRadius * MathF.Cos(a)),
-                Angle = ang,
-            });
-        }
-        _selPoint = -1;
-        Plugin.Config.Save();
-        Plugin.IpcProvider.SyncConfiguration();
+    private static void ShowParam(string label, ref float val, string? tooltip = null) {
+        ImGui.Text(label);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(40);
+        ImGui.DragFloat($"##shp_{label}", ref val, 0.1f, 0f, 100f, "%.1f");
+        if (tooltip != null && ImGui.IsItemHovered()) ImGui.SetTooltip(tooltip);
     }
 
     private void SnapshotParty(Formation formation) {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
+
+        // Try to find the party leader to use as origin (0,0)
+        var leader = DalamudApi.PartyList.FirstOrDefault(m => m.IsPartyLeader());
+        var originPos = player.Position;
+
+        if (leader != null) {
+            var leaderObj = DalamudApi.ObjectTable.FirstOrDefault(o => o.EntityId == leader.EntityId);
+            if (leaderObj != null) originPos = leaderObj.Position;
+        }
+
+        if (!_appendMode) formation.Points.Clear();
+
         foreach (var member in DalamudApi.PartyList) {
-            var obj = DalamudApi.ObjectTable.FirstOrDefault(o => o.EntityId == (uint)member.EntityId);
+            var obj = DalamudApi.ObjectTable.FirstOrDefault(o => o.EntityId == member.EntityId);
             if (obj == null) continue;
-            var offset = obj.Position - player.Position;
-            var pt = new FormationPoint { Offset = new Vector3(offset.X, 0, offset.Z) };
+
+            var offset = obj.Position - originPos;
+            var pt = new FormationPoint {
+                Offset = new Vector3(offset.X, 0, offset.Z),
+                Angle = obj.Rotation * Angle.RadToDeg, // Capture current facing
+            };
             if (member.ContentId != 0) pt.Cids.Add((ulong)member.ContentId);
             formation.Points.Add(pt);
         }
+
         _selPoint = -1;
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();

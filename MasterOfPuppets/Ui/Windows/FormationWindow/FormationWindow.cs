@@ -27,12 +27,29 @@ public partial class FormationWindow : Window {
     private bool _needsAxisReset = true;
 
     //  Shape generator
-    private static readonly string[] ShapeNames = ["Polygon", "Square"];
-    private static readonly string[] FaceNames = ["Outward", "Inward", "North"];
-    private int _shapeType;
+    private enum ShapeType {
+        Circle, Rectangle, Line, StaggeredLine, FigureEight, Spiral,
+        Polygon, Star, Rose, Heart, Ellipse, Arc, SineWave,
+        Zigzag, Grid, SpokedWheel, Hypotrochoid, Lissajous,
+        StarPolygon, LogarithmicSpiral, Chevron, RingWithCenter, Cross
+    }
+
+    private static readonly string[] ShapeNames = [
+        "Circle", "Rectangle", "Line", "Staggered Line", "Figure 8", "Spiral",
+        "Polygon", "Star", "Rose", "Heart", "Ellipse", "Arc", "Sine Wave",
+        "Zigzag", "Grid", "Spoked Wheel", "Hypotrochoid", "Lissajous",
+        "Star Poly", "Log Spiral", "Chevron", "Ring Center", "Cross"
+    ];
+    private static readonly string[] FaceNames = ["Outward", "Inward", "North", "Tangent"];
+    private ShapeType _shapeType = ShapeType.Circle;
     private int _shapeN = 8;
     private float _shapeRadius = 5f;
+    private float _shapeRadius2 = 3f; // Inner radius or Radius Y
+    private float _shapeWidth = 8f;
+    private float _shapeDepth = 4f;
+    private float _shapeSpacing = 1.5f;
     private float _shapeAngleOff;
+    private int _shapeParamInt = 4; // Cols, Petals, sides, etc.
     private int _faceMode;
     private bool _appendMode;
 

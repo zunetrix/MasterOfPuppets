@@ -99,13 +99,18 @@ public partial class FormationWindow {
                 if (ImGui.IsItemDeactivated() && _renamingIdx == i)
                     CommitRename(i);
             } else {
-                bool clicked = ImGui.Selectable(
-                    f.Name.Length > 0 ? f.Name : "(unnamed)",
-                    i == _selFormation);
-                if (clicked && _selFormation != i) {
-                    _selFormation = i;
-                    _selPoint = -1;
-                    _needsAxisReset = true;
+
+                using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, i == _selFormation)
+                            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, i == _selFormation)
+                            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, i == _selFormation)) {
+                    bool clicked = ImGui.Selectable(
+                        f.Name.Length > 0 ? f.Name : "(unnamed)",
+                        i == _selFormation);
+                    if (clicked && _selFormation != i) {
+                        _selFormation = i;
+                        _selPoint = -1;
+                        _needsAxisReset = true;
+                    }
                 }
 
                 // Drag source
