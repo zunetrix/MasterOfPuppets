@@ -36,7 +36,7 @@ public class PluginCommandManager : IDisposable {
     private readonly Dictionary<string, List<string>> _registered = new();
     private readonly Dictionary<string, SeasonalEventRunner> _events = new(StringComparer.OrdinalIgnoreCase) {
         ["easter"] = new EasterHatchingTide(),
-        ["fallguys"] = new FallGuys(),
+        ["afkguys"] = new FallGuys(),
     };
 
     public PluginCommandManager(Plugin plugin) {
@@ -366,9 +366,6 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "shutdown":
                     GameExitManager.Shutdown();
-                    break;
-                case "test":
-                    GameDialogManager.ClickEasterMowingLeave();
                     break;
                 case "event":
                     if (parsedArgs.Count < 2) {

@@ -37,4 +37,13 @@ public static class FashionAccessoriesHelper {
         uint undefinedIcon = 60042;
         return GetOrnament(item)?.Icon ?? undefinedIcon;
     }
+
+    public static uint[] GetUnlockedItemsIds() {
+        var ids = DalamudApi.DataManager.GetExcelSheet<Ornament>()
+                .Where(e => e.IsUnlocked())
+                .Select(e => e.RowId)
+                .ToArray();
+
+        return ids;
+    }
 }

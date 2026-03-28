@@ -38,7 +38,7 @@ internal static unsafe partial class GameDialogManager {
 
     public static bool IsAddonReady(string name) {
         var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(name);
-        return addon != null && addon->IsVisible; //&& addon->IsReady && addon->IsFullyLoaded(); //&& addon->UldManager.LoadedState != AtkLoadState.Loaded;
+        return addon != null && addon->IsVisible && addon->IsReady && addon->IsFullyLoaded(); //&& addon->UldManager.LoadedState != AtkLoadState.Loaded;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

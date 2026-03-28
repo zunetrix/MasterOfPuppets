@@ -33,6 +33,8 @@ public enum IpcMessageType {
     // peer data request
     RequestEmoteList,
     EmoteList,
+    RequestUnlockedState,
+    UnlockedState,
     RequestCharacterData,
     CharacterData,
 

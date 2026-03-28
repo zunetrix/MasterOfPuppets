@@ -25,7 +25,7 @@ public sealed class EmotesWidget : Widget {
     private bool _showGeneralEmotes = true;
     private bool _showExpressionsEmotes = true;
     private bool _showInternalEmotes = true;
-    private bool _filterEmotesToCommon = false;
+    private bool _filterCommonItems = false;
 
     public EmotesWidget(WidgetContext ctx) : base(ctx) {
     }
@@ -78,11 +78,11 @@ public sealed class EmotesWidget : Widget {
                     if (!categoryAllowed)
                         return false;
 
-                    // Filter to emotes all peers have in common.
+                    // Filter to emotes all peers have in common (using new global unlocked state).
                     // Internal emotes are hardcoded and always available on every client - skip them.
-                    if (_filterEmotesToCommon && !isInternalEmote) {
-                        var peers = Context.Plugin.IpcProvider.PeerEmoteLists;
-                        if (peers.Count > 0 && !peers.Values.All(set => set.Contains(x.item.ActionId)))
+                    if (_filterCommonItems && !isInternalEmote) {
+                        var common = Context.Plugin.IpcProvider.CommonEmotes;
+                        if (common.Count > 0 && !common.Contains(x.item.ActionId))
                             return false;
                     }
 
@@ -109,15 +109,15 @@ public sealed class EmotesWidget : Widget {
         }
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.UserFriends, "##EmotesSyncPeersBtn", "Request emote list from all peers")) {
-            Context.Plugin.IpcProvider.RequestEmoteList();
+            Context.Plugin.IpcProvider.RequestUnlockedState();
         }
         ImGui.SameLine();
-        var filterCommon = _filterEmotesToCommon;
+        var filterCommon = _filterCommonItems;
         using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, filterCommon)
         .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, filterCommon)
         .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, filterCommon)) {
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##FilterCommonEmotesBtn", "Show only emotes all peers have in common")) {
-                _filterEmotesToCommon = !filterCommon;
+                _filterCommonItems = !filterCommon;
                 Search();
             }
         }
@@ -210,4 +210,3 @@ public sealed class EmotesWidget : Widget {
         }, columns, lineHeight);
     }
 }
-

@@ -37,4 +37,13 @@ public static class MountHelper {
         return GetMount(item)?.Icon ?? undefinedIcon;
 
     }
+
+    public static uint[] GetUnlockedItemsIds() {
+        var ids = DalamudApi.DataManager.GetExcelSheet<Mount>()
+                .Where(e => e.IsUnlocked())
+                .Select(e => e.RowId)
+                .ToArray();
+
+        return ids;
+    }
 }

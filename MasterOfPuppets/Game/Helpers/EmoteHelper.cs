@@ -44,6 +44,15 @@ public static class EmoteHelper {
         return GetEmote(item)?.Icon ?? undefinedIcon;
     }
 
+    public static uint[] GetUnlockedItemsIds() {
+        var ids = DalamudApi.DataManager.GetExcelSheet<Emote>()
+                .Where(e => e.IsUnlocked())
+                .Select(e => e.RowId)
+                .ToArray();
+
+        return ids;
+    }
+
     private static readonly (string Name, uint Id, uint IconId)[] InternalEmoteList =
     {
         ("Sleep / wake", 88, 246213),

@@ -36,4 +36,13 @@ public static class MinionHelper {
         uint undefinedIcon = 60042;
         return GetMinion(item)?.Icon ?? undefinedIcon;
     }
+
+    public static uint[] GetUnlockedItemsIds() {
+        var ids = DalamudApi.DataManager.GetExcelSheet<Companion>()
+                .Where(e => e.IsUnlocked())
+                .Select(e => e.RowId)
+                .ToArray();
+
+        return ids;
+    }
 }

@@ -22,6 +22,7 @@ public class FashionAccessoriesWidget : Widget {
     private readonly List<ExecutableAction> UnlockedActions = new();
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
+    private bool _filterCommonItems = false;
 
     public FashionAccessoriesWidget(WidgetContext ctx) : base(ctx) {
     }
@@ -57,9 +58,21 @@ public class FashionAccessoriesWidget : Widget {
         ListSearchedIndexes.AddRange(
             UnlockedActions
             .Select((item, index) => new { item, index })
-            .Where(x => x.item.ActionName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            .Where(x => {
+                if (!string.IsNullOrEmpty(_searchString) &&
+                    !x.item.ActionName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                if (_filterCommonItems) {
+                    var common = Context.Plugin.IpcProvider.CommonFashionAccessories;
+
+                    if (common.Count > 0 && !common.Contains(x.item.ActionId))
+                        return false;
+                }
+
+                return true;
+            })
             .Select(x => x.index)
-            .ToList()
         );
     }
 
@@ -74,6 +87,20 @@ public class FashionAccessoriesWidget : Widget {
         ImGui.Spacing();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##FashionAccessoriesReloadDataBtn", "Reload")) {
             ReloadData();
+        }
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserFriends, "##FashionAccessoriesSyncPeersBtn", "Request unlocked fashion accessories from all peers")) {
+            Context.Plugin.IpcProvider.RequestUnlockedState();
+        }
+        ImGui.SameLine();
+        var filterCommon = _filterCommonItems;
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, filterCommon)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, filterCommon)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, filterCommon)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##FilterCommonFashionBtn", "Show only fashion accessories all peers have in common")) {
+                _filterCommonItems = !filterCommon;
+                Search();
+            }
         }
         ImGui.SameLine();
         if (ImGui.InputTextWithHint("##FashionAccessoriesSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
@@ -143,15 +170,13 @@ public class FashionAccessoriesWidget : Widget {
     private void DrawIconGrid(float iconSize, int columns) {
         var lineHeight = iconSize + ImGui.GetStyle().ItemSpacing.Y;
 
-        List<ExecutableAction> itemsToDraw;
-        if (string.IsNullOrEmpty(_searchString)) {
-            itemsToDraw = UnlockedActions;
-        } else {
-            itemsToDraw = ListSearchedIndexes
-                .Where(i => i >= 0 && i < UnlockedActions.Count)
-                .Select(i => UnlockedActions[i])
-                .ToList();
-        }
+        if (ListSearchedIndexes.Count == 0 && UnlockedActions.Count > 0)
+            Search();
+
+        var itemsToDraw = ListSearchedIndexes
+            .Where(i => i >= 0 && i < UnlockedActions.Count)
+            .Select(i => UnlockedActions[i])
+            .ToList();
 
         ImGuiClip.ClippedDraw(itemsToDraw, (ExecutableAction fashionAccessorie) => {
             DalamudApi.TextureProvider.DrawIcon(fashionAccessorie.IconId, new Vector2(iconSize));

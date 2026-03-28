@@ -36,7 +36,7 @@ public static class ItemHelper {
           (
             (
                 allowedCategories.Contains(i.ItemUICategory.Value.RowId)
-                && (i.Cooldowns > 0 || i.Name.ToString().StartsWith("Ballroom"))
+                && (i.Cooldowns > 0 || i.Name.ToString().StartsWith("Ballroom") || i.Name.ToString().Contains("Eyeglasses", StringComparison.InvariantCultureIgnoreCase))
             )
             ||
             allowedItems.Contains(i.RowId)
@@ -44,6 +44,33 @@ public static class ItemHelper {
         )
         .Select(GetExecutableAction)
         .ToList();
+    }
+
+    public static uint[] GetUnlockedItemsIds() {
+        List<uint> allowedCategories = [
+            (uint)ItemUICategoryEnum.Miscellany,
+            (uint)ItemUICategoryEnum.SeasonalMiscellany
+        ];
+
+        List<uint> allowedItems = [
+            4868, // Gysahl Greens
+        ];
+
+        var ids = DalamudApi.DataManager.GetExcelSheet<Item>()
+        .Where(i => i.IsUnlocked() &&
+          (
+            (
+                allowedCategories.Contains(i.ItemUICategory.Value.RowId)
+                && (i.Cooldowns > 0 || i.Name.ToString().StartsWith("Ballroom") || i.Name.ToString().Contains("Eyeglasses", StringComparison.InvariantCultureIgnoreCase))
+            )
+            ||
+            allowedItems.Contains(i.RowId)
+          )
+        )
+        .Select(e => e.RowId)
+        .ToArray();
+
+        return ids;
     }
 
     public static Item? GetItem(string itemName) {
