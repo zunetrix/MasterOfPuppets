@@ -222,7 +222,8 @@ public class PluginCommandManager : IDisposable {
                 case "som":
                     Plugin.IpcProvider.ExecuteStackOnMe();
                     break;
-                case "movetocharacter": {
+                case "movetocharacter":
+                case "mtc": {
                         if (parsedArgs.Count <= 1) {
                             DalamudApi.ShowNotification($"Invalid arguments expected character name", NotificationType.Error, 5000);
                             return;

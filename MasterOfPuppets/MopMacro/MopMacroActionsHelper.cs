@@ -71,6 +71,9 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/mop targetmytarget",
             Example = """
             /mop targetmytarget
+
+            Alias:
+            /mop tmt
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
@@ -85,6 +88,9 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/mop interactwithmytarget",
             Example = """
             /mop interactwithmytarget
+
+            Alias:
+            /mop iwmt
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
@@ -99,6 +105,9 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/mop interactwithtarget",
             Example = """
             /mop interactwithtarget
+
+            Alias:
+            /mop iwt
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
@@ -114,6 +123,9 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/mop targetclear",
             Example = """
             /mop targetclear
+
+            Alias:
+            /mop tc
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
@@ -178,6 +190,9 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/mop movetotarget",
             Example = """
             /mop movetotarget
+
+            Alias:
+            /mop mtt
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
@@ -192,6 +207,9 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/mop stackonme",
             Example = """
             /mop stackonme
+
+            Alias:
+            /mop som
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
@@ -206,6 +224,9 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/mop movetocharacter \"\"",
             Example = """
             /mop movetocharacter "Character Name"
+
+            Alias:
+            /mop mtc "Character Name"
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
@@ -221,6 +242,9 @@ public static class MopMacroActionsHelper {
             SuggestionCommand = "/mop movetomytarget",
             Example = """
             /mop movetomytarget
+
+            Alias:
+            /mop mtmt
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
