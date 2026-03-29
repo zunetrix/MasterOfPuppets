@@ -12,11 +12,6 @@ using MasterOfPuppets.Util.ImGuiExt;
 namespace MasterOfPuppets;
 
 public partial class FormationWindow {
-
-    // =========================================================================
-    // Right panel - execute, point editor, character/group assignment
-    // =========================================================================
-
     private void DrawRightPanel() {
         var formation = SelectedFormation;
         if (formation == null) { ImGui.TextDisabled("No formation selected"); return; }
@@ -96,22 +91,39 @@ public partial class FormationWindow {
                         ImGui.SameLine(0, 4);
                         ImGui.Text($"{i + 1:00}");
 
-                        // Column 1: X
+                        // Column 1: X (displayed in plot-space so it matches the visual preview)
                         ImGui.TableNextColumn();
                         ImGui.SetNextItemWidth(-1);
-                        ImGui.DragFloat("##x", ref p.Offset.X, 0.001f, -500f, 500f, "%.3f");
-                        if (ImGui.IsItemActivated()) _selPoint = i;
+                        var plotX = -p.Offset.X; // OffsetToPlot: plotX = -worldX
+                        if (ImGui.DragFloat("##x", ref plotX, 0.001f, -500f, 500f, "%.3f")) {
+                            p.Offset.X = -plotX; // PlotToOffset: worldX = -plotX
+                        }
+                        if (ImGui.IsItemActivated()) {
+                            _selPoint = i;
+                        }
                         if (ImGui.IsItemDeactivatedAfterEdit()) {
                             Plugin.Config.Save();
                             Plugin.IpcProvider.SyncConfiguration();
                         }
+                        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+                            plotX = 0;
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
 
-                        // Column 2: Z
+                        // Column 2: Z (plot Y = worldZ, no negation needed)
                         ImGui.TableNextColumn();
                         ImGui.SetNextItemWidth(-1);
                         ImGui.DragFloat("##z", ref p.Offset.Z, 0.001f, -500f, 500f, "%.3f");
-                        if (ImGui.IsItemActivated()) _selPoint = i;
+                        if (ImGui.IsItemActivated()) {
+                            _selPoint = i;
+                        }
                         if (ImGui.IsItemDeactivatedAfterEdit()) {
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+                        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+                            p.Offset.Z = 0;
                             Plugin.Config.Save();
                             Plugin.IpcProvider.SyncConfiguration();
                         }
@@ -119,9 +131,16 @@ public partial class FormationWindow {
                         // Column 3: A°
                         ImGui.TableNextColumn();
                         ImGui.SetNextItemWidth(-1);
-                        ImGui.DragFloat("##a", ref p.Angle, 1f, -360f, 360f, "%.0f\u00b0");
-                        if (ImGui.IsItemActivated()) _selPoint = i;
+                        ImGui.DragFloat("##a", ref p.Angle, 1f, -180f, 180f, "%.0f\u00b0");
+                        if (ImGui.IsItemActivated()) {
+                            _selPoint = i;
+                        }
                         if (ImGui.IsItemDeactivatedAfterEdit()) {
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+                        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+                            p.Angle = 0;
                             Plugin.Config.Save();
                             Plugin.IpcProvider.SyncConfiguration();
                         }
@@ -165,8 +184,15 @@ public partial class FormationWindow {
             } else {
                 int delIdx = -1;
                 float delW = ImGui.GetFrameHeight();
+
+                // Exclude characters already assigned to ANY point in the formation
+                var assignedCids = formation.Points.SelectMany(p => p.Cids).ToHashSet();
                 var availChars = Plugin.Config.Characters
-                    .Where(c => !pt2.Cids.Contains(c.Cid)).Select(c => c.Name).ToList();
+                    .Where(c => !assignedCids.Contains(c.Cid))
+                    .Select(c => c.Name)
+                    .ToList();
+
+                ImGui.BeginDisabled(availChars.Count == 0);
                 ImGui.SetNextItemWidth(-1);
                 if (_charCombo.Draw("##ficharcombo", availChars, ref _charSelected)) {
                     var found = Plugin.Config.Characters.FirstOrDefault(c => c.Name == _charSelected);
@@ -177,6 +203,8 @@ public partial class FormationWindow {
                     }
                     _charSelected = string.Empty;
                 }
+                ImGui.EndDisabled();
+
                 if (ImGui.BeginTable("##fichartbl", 3,
                         ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,
                         new Vector2(-1, 80f))) {
@@ -190,9 +218,8 @@ public partial class FormationWindow {
                         ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
                         ImGui.TableNextColumn(); ImGui.Text(cn);
                         ImGui.TableNextColumn();
-                        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fidc{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl) {
+                        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fidc{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
-                        }
                     }
                     ImGui.EndTable();
                 }
@@ -211,8 +238,15 @@ public partial class FormationWindow {
             } else {
                 int delIdx = -1;
                 float delW = ImGui.GetFrameHeight();
+
+                // Exclude groups already assigned to ANY point in the formation
+                var assignedGroups = formation.Points.SelectMany(p => p.GroupIds).ToHashSet();
                 var availGroups = Plugin.Config.CidsGroups
-                    .Where(g => !pt2.GroupIds.Contains(g.Name)).Select(g => g.Name).ToList();
+                    .Where(g => !assignedGroups.Contains(g.Name))
+                    .Select(g => g.Name)
+                    .ToList();
+
+                ImGui.BeginDisabled(availGroups.Count == 0);
                 ImGui.SetNextItemWidth(-1);
                 if (_groupCombo.Draw("##figrpcombo", availGroups, ref _groupSelected)) {
                     if (!string.IsNullOrEmpty(_groupSelected)) {
@@ -222,6 +256,8 @@ public partial class FormationWindow {
                     }
                     _groupSelected = string.Empty;
                 }
+                ImGui.EndDisabled();
+
                 if (ImGui.BeginTable("##figrptbl", 3,
                         ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,
                         new Vector2(-1, 80f))) {
@@ -229,13 +265,14 @@ public partial class FormationWindow {
                     ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, delW);
                     for (int i = 0; i < pt2.GroupIds.Count; i++) {
+                        var gn = Plugin.Config.CidsGroups.FirstOrDefault(g => g.Name == pt2.GroupIds[i])?.Name
+                                 ?? $"Unknown ({pt2.GroupIds[i]})";
                         ImGui.TableNextRow();
                         ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
-                        ImGui.TableNextColumn(); ImGui.Text(pt2.GroupIds[i]);
+                        ImGui.TableNextColumn(); ImGui.Text(gn);
                         ImGui.TableNextColumn();
-                        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fidg{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl) {
+                        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fidg{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
-                        }
                     }
                     ImGui.EndTable();
                 }

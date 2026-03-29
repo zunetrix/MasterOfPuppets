@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 using MasterOfPuppets.Formations;
@@ -38,54 +39,60 @@ public partial class FormationWindow {
             _ => new List<FormationPoint>()
         };
 
-        float baseR = _shapeAngleOff * Angle.DegToRad;
-        foreach (var p in newPoints) {
-            // Apply global rotation offset
-            if (baseR != 0) {
-                float cos = MathF.Cos(baseR);
-                float sin = MathF.Sin(baseR);
-                float nx = p.Offset.X * cos - p.Offset.Z * sin;
-                float nz = p.Offset.X * sin + p.Offset.Z * cos;
+        // Step 1: Apply global rotation offset in world XZ plane (CW, FFXIV convention)
+        float angleOffRad = _shapeAngleOff * Angle.DegToRad;
+        if (angleOffRad != 0) {
+            float cos = MathF.Cos(angleOffRad);
+            float sin = MathF.Sin(angleOffRad);
+            foreach (var p in newPoints) {
+                float nx = p.Offset.X * cos + p.Offset.Z * sin;
+                float nz = -p.Offset.X * sin + p.Offset.Z * cos;
                 p.Offset = new Vector3(nx, 0, nz);
-                p.Angle += _shapeAngleOff;
-            }
-
-            // Apply facing mode if not Tangent (which is 3)
-            if (_faceMode != 3) {
-                float a = MathF.Atan2(p.Offset.X, p.Offset.Z);
-                p.Angle = _faceMode switch {
-                    1 => (360f - a * Angle.RadToDeg) % 360f, // Inward
-                    2 => 0f,                                  // North
-                    _ => (180f - a * Angle.RadToDeg) % 360f, // Outward
-                };
             }
         }
 
-        // Apply tangent facing if requested
+        // Step 2: Shift so the northernmost point (min Z) sits at origin (leader position)
+        if (newPoints.Count > 0) {
+            float minZ = newPoints.Min(p => p.Offset.Z);
+            foreach (var p in newPoints)
+                p.Offset.Z -= minZ;
+        }
+
+        // Step 3: Apply facing mode (uses final positions after shift)
+        float centerX = newPoints.Average(p => p.Offset.X);
+        float centerZ = newPoints.Average(p => p.Offset.Z);
+
+        if (_faceMode != 3) {
+            foreach (var p in newPoints) {
+                float dx = p.Offset.X - centerX;
+                float dz = p.Offset.Z - centerZ;
+                // CW bearing from north: Atan2(dx, -dz)
+                float bearing = MathF.Atan2(dx, -dz) * Angle.RadToDeg;
+                p.Angle = _faceMode switch {
+                    0 => bearing,           // Outward: face away from center
+                    1 => -bearing,          // Inward: face toward center (exact opposite)
+                    2 => 0f,                // North
+                    _ => 0f
+                };
+                if (_faceMode != 2)
+                    p.Angle += _shapeAngleOff;
+            }
+        }
+
+        // Step 4: Tangent facing (unchanged)
         if (_faceMode == 3 && newPoints.Count > 1) {
             for (int i = 0; i < newPoints.Count; i++) {
-                Vector3 a, b;
-                if (i < newPoints.Count - 1) {
-                    a = newPoints[i].Offset;
-                    b = newPoints[i + 1].Offset;
-                } else {
-                    a = newPoints[i - 1].Offset;
-                    b = newPoints[i].Offset;
-                }
+                Vector3 a = i < newPoints.Count - 1 ? newPoints[i].Offset : newPoints[i - 1].Offset;
+                Vector3 b = i < newPoints.Count - 1 ? newPoints[i + 1].Offset : newPoints[i].Offset;
                 float dx = b.X - a.X;
                 float dz = b.Z - a.Z;
-                if (MathF.Abs(dx) > 0.001f || MathF.Abs(dz) > 0.001f) {
-                    // Bearing CW from south (+Z). Atan2(x, z) gives radians CW from south.
-                    // Converting to our convention (0=north, CW+)
-                    float bearing = MathF.Atan2(dx, dz) * Angle.RadToDeg;
-                    newPoints[i].Angle = (180f - bearing) % 360f;
-                }
+                if (MathF.Abs(dx) > 0.001f || MathF.Abs(dz) > 0.001f)
+                    newPoints[i].Angle = MathF.Atan2(dx, -dz) * Angle.RadToDeg + _shapeAngleOff;
             }
         }
 
-        foreach (var p in newPoints) {
+        foreach (var p in newPoints)
             formation.Points.Add(p);
-        }
 
         _selPoint = -1;
         Plugin.Config.Save();
@@ -97,6 +104,8 @@ public partial class FormationWindow {
         for (int i = 0; i < count; i++) {
             float a = (2 * MathF.PI * i) / count - MathF.PI / 2;
             pts.Add(new FormationPoint {
+                // Offset Z by +radius so the north tip sits at origin (0,0)
+                // Offset = new Vector3(radius * MathF.Cos(a), 0, radius * MathF.Sin(a) + radius)
                 Offset = new Vector3(radius * MathF.Cos(a), 0, radius * MathF.Sin(a))
             });
         }

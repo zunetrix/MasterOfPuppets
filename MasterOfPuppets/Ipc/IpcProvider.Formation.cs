@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Numerics;
 
+using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Movement;
 
 namespace MasterOfPuppets.Ipc;
@@ -32,7 +33,6 @@ internal partial class IpcProvider {
     [IpcHandle(IpcMessageType.ExecuteFormation)]
     private void HandleExecuteFormation(IpcMessage message) {
         if (message.StringData == null || message.StringData.Length < 6) return;
-
         var name = message.StringData[0];
         if (!float.TryParse(message.StringData[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float lx)) return;
         if (!float.TryParse(message.StringData[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float ly)) return;
@@ -54,12 +54,16 @@ internal partial class IpcProvider {
             p.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(playerCid));
         if (point == null) return;
 
-        // ToAbsolute: rotate canonical-north offset into world space
-        var mat = Matrix4x4.CreateRotationY(leaderRot + MathF.PI);
-        var worldPos = new Vector3(lx, ly, lz) + Vector3.Transform(point.Offset, mat);
+        var leaderPos = new Vector3(lx, ly, lz);
+        var worldPos = point.Offset.ApplyLeaderRotation(leaderRot, leaderPos);
 
-        // Add the configured angle offset (in CCW degrees) to leader's facing.
-        float facingRad = leaderRot - point.Angle * Angle.DegToRad;
+        // Match DrawWorldOverlay: leaderRot + point.Angle * DegToRad
+        float facingRad = leaderRot + point.Angle * Angle.DegToRad;
         Plugin.MovementManager.MoveTo(worldPos, facingRad.Radians());
+
+        // Member faces the same direction as the leader (north offset = 0)
+        // Plugin.MovementManager.MoveTo(worldPos, leaderRot.Radians());
     }
+
+
 }

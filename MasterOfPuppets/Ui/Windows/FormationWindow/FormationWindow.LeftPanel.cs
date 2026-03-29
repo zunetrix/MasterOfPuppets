@@ -13,11 +13,6 @@ using MasterOfPuppets.Util.ImGuiExt;
 namespace MasterOfPuppets;
 
 public partial class FormationWindow {
-
-    // =========================================================================
-    // Left panel - formation list
-    // =========================================================================
-
     private void DrawLeftPanel() {
         using (ImRaii.Group()) {
             if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Plus, "##fiadd_s", "New formation"))
@@ -109,7 +104,6 @@ public partial class FormationWindow {
                     if (clicked && _selFormation != i) {
                         _selFormation = i;
                         _selPoint = -1;
-                        _needsAxisReset = true;
                     }
                 }
 

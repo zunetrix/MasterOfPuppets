@@ -24,7 +24,6 @@ public partial class FormationWindow : Window {
 
     //  Plot
     private int _selPoint = -1;
-    private bool _needsAxisReset = true;
 
     //  Shape generator
     private enum ShapeType {
@@ -56,7 +55,7 @@ public partial class FormationWindow : Window {
     //  World overlay
     private bool _worldOverlay;
     private float _arrowSize = 0.5f;
-    private float _markerSizeWorld = 1.5f;
+    private float _markerSizeWorld = 1.0f;
 
     //  Right panel
     private float _leftPanelWidth;
@@ -65,6 +64,16 @@ public partial class FormationWindow : Window {
     private readonly ImGuiComboSearch _groupCombo = new();
     private string _charSelected = string.Empty;
     private string _groupSelected = string.Empty;
+
+    /// <summary>
+    /// Canonical arrow vertices - tip at (0, 1) in local space.
+    /// Angle = 0 points north in both plot-space and world-space.
+    /// </summary>
+    public static readonly Vector2[] ArrowVertices2D = [new(0, 1), new(1, -1), new(0, -0.5f), new(-1, -1)];
+
+    /// <summary>World-space equivalent - tip at (0, 0, 1) = south at rot=0,
+    /// but CreateRotationY(worldRot) in FFXIV space rotates it to face north at rot=0.</summary>
+    public static readonly Vector3[] ArrowVertices3D = [new(0, 0, 1), new(1, 0, -1), new(0, 0, -0.5f), new(-1, 0, -1)];
 
     private Formation? SelectedFormation =>
         _selFormation >= 0 && _selFormation < Plugin.Config.Formations.Count
@@ -143,7 +152,6 @@ public partial class FormationWindow : Window {
         Plugin.Config.Formations.Add(new Formation { Name = trimmed });
         _selFormation = Plugin.Config.Formations.Count - 1;
         _selPoint = -1;
-        _needsAxisReset = true;
         _newFmName = string.Empty;
 
         Plugin.Config.Save();
