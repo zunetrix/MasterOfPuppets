@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Numerics;
 
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 

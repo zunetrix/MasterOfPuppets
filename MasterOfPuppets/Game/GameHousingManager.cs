@@ -2,6 +2,8 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 
 using Lumina.Excel.Sheets;
 
+using MasterOfPuppets.Util;
+
 using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace MasterOfPuppets;
@@ -36,11 +38,21 @@ public static class GameHousingManager {
     }
 
     private static void InteractWithNearestObject(uint baseId) =>
-        GameTargetManager.TargetThenInteract(
-            setTarget: () => GameTargetManager.TargetNearestObjectInternal(actor =>
-                actor.BaseId == baseId
-                && actor.ObjectKind == ObjectKind.EventObj
-                && actor.IsTargetable
-                && actor.IsValid()),
-            afterInteract: () => GameDialogManager.ClickYes());
+    GameTargetManager.TargetThenInteract(
+        setTarget: () => GameTargetManager.TargetNearestObjectInternal(actor =>
+            actor.BaseId == baseId
+            && actor.ObjectKind == ObjectKind.EventObj
+            && actor.IsTargetable
+            && actor.IsValid()),
+        afterInteract: () => {
+            var ok = false;
+            Coroutine.StartRunOnFramework(
+                runFunction: () => { },
+                stopWhen: () => ok = GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.SelectYesno),
+                callback: () => {
+                    if (!ok) { DalamudApi.PluginLog.Warning("[InteractWithNearestObject] timeout: SelectYesno not visible"); return; }
+                    GameDialogManager.ClickYes();
+                },
+                timeoutMs: 3000);
+        });
 }
