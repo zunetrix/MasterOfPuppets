@@ -420,6 +420,14 @@ public class SettingsWindow : Window {
             ImGuiHelpers.ScaledDummy(0, 20);
             ImGui.SameLine();
 
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##AddSenderNameFromTarget", "Add From Target")) {
+                _characterName = GameTargetManager.GetTargetName();
+            }
+
+            ImGui.SameLine();
+            ImGuiHelpers.ScaledDummy(0, 20);
+            ImGui.SameLine();
+
             if (ImGui.Button($"Add##AddCommandSenderBtn")) {
                 if (string.IsNullOrEmpty(_characterName.Trim())) return;
 
