@@ -39,7 +39,7 @@ public class IconPickerDialogWindow : Window {
         // SizeCondition = ImGuiCond.Always;
 
         Flags = ImGuiWindowFlags.NoScrollbar;
-        // SizeConstraints = new WindowSizeConstraints()
+        // SizeConstraints = new WindowSizeConstraints
         // {
         //     MinimumSize = ImGuiHelpers.ScaledVector2(375, 330),
         //     MaximumSize = ImGuiHelpers.ScaledVector2(float.MaxValue, float.MaxValue)

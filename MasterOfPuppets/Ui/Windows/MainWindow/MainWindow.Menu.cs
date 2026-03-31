@@ -491,6 +491,17 @@ public partial class MainWindow : Window {
 
         // -----------------------
 
+        ImGui.Separator();
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Users, $"##CharactersMenu")) {
+            Ui.CharactersWindow.Toggle();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable(Language.ShowCharactersBtn)) {
+            Ui.CharactersWindow.Toggle();
+        }
+
+        // -----------------------
+
         if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.ArrowsDownToPeople, $"##FormationWindowBtn")) {
             Plugin.Ui.FormationWindow.Toggle();
         }
@@ -502,15 +513,6 @@ public partial class MainWindow : Window {
 
         // -----------------------
 
-        ImGui.Separator();
-        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Users, $"##CharactersMenu")) {
-            Ui.CharactersWindow.Toggle();
-        }
-        ImGui.SameLine();
-        if (ImGui.Selectable(Language.ShowCharactersBtn)) {
-            Ui.CharactersWindow.Toggle();
-        }
-
         if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.UsersViewfinder, $"##Peer Monitor")) {
             Plugin.Ui.PeerMonitorWindow.Toggle();
         }
@@ -518,8 +520,20 @@ public partial class MainWindow : Window {
         if (ImGui.MenuItem("Peer Monitor"))
             Plugin.Ui.PeerMonitorWindow.Toggle();
 
-        DrawGameExitSubMenu();
+        // -----------------------
 
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Display, $"##WindowLayoutWindowBtn")) {
+            Plugin.Ui.WindowLayoutWindow.Toggle();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Window Layouts")) {
+            Plugin.Ui.WindowLayoutWindow.Toggle();
+        }
+        ImGuiUtil.ToolTip("Manage window size and position layouts for all clients.");
+
+        // -----------------------
+
+        DrawGameExitSubMenu();
     }
 
     private void DrawGameExitSubMenu() {

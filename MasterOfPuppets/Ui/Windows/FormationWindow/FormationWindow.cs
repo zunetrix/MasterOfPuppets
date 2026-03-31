@@ -81,7 +81,7 @@ public partial class FormationWindow : Window {
 
     public FormationWindow(Plugin plugin) : base("Formations (WIP)###FormationsWindow") {
         Plugin = plugin;
-        Size = new Vector2(960, 620);
+        Size = ImGuiHelpers.ScaledVector2(960, 620);
         SizeCondition = ImGuiCond.FirstUseEver;
     }
 
@@ -97,8 +97,11 @@ public partial class FormationWindow : Window {
         var avail = ImGui.GetContentRegionAvail();
         float spacing = ImGui.GetStyle().ItemSpacing.X;
 
-        float maxLeftW = avail.X - splitterW * 2 - minMidW - minRightW - spacing * 4;
-        float maxRightW = avail.X - _leftPanelWidth - splitterW * 2 - minMidW - spacing * 4;
+        float totalFixed = splitterW * 2 + minMidW + spacing * 4;
+
+        float maxLeftW = MathF.Max(avail.X - totalFixed - minRightW, minLeftW);
+        float maxRightW = MathF.Max(avail.X - totalFixed - _leftPanelWidth, minRightW);
+
         _leftPanelWidth = Math.Clamp(_leftPanelWidth, minLeftW, maxLeftW);
         _rightPanelWidth = Math.Clamp(_rightPanelWidth, minRightW, maxRightW);
 

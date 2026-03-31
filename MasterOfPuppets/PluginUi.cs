@@ -23,6 +23,7 @@ public class PluginUi : IDisposable {
     public DebugWindow DebugWindow { get; }
     public FormationWindow FormationWindow { get; }
     public PeerMonitorWindow PeerMonitorWindow { get; }
+    public WindowLayoutWindow WindowLayoutWindow { get; }
 
     public PluginUi(Plugin plugin) {
         Plugin = plugin;
@@ -40,6 +41,7 @@ public class PluginUi : IDisposable {
         DebugWindow = AddWindow(new DebugWindow(Plugin));
         FormationWindow = AddWindow(new FormationWindow(Plugin));
         PeerMonitorWindow = AddWindow(new PeerMonitorWindow(Plugin));
+        WindowLayoutWindow = AddWindow(new WindowLayoutWindow(Plugin));
     }
 
     private T AddWindow<T>(T window) where T : Window {

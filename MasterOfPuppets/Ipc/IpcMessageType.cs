@@ -69,4 +69,9 @@ public enum IpcMessageType {
     //follow
     StartFollow,
     StopFollow,
+
+    // window layouts
+    ApplyWindowLayout,
+    RequestWindowInfo,
+    WindowInfo,
 }

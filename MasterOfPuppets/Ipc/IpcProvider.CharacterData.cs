@@ -27,7 +27,7 @@ internal partial class IpcProvider {
     /// Broadcasts a request asking all peers to send their character info.
     /// </summary>
     public void RequestCharacterData() {
-        BroadCast(IpcMessage.Create(IpcMessageType.RequestCharacterData).Serialize(), includeSelf: false);
+        BroadCast(IpcMessage.Create(IpcMessageType.RequestCharacterData).Serialize(), includeSelf: true);
     }
 
     [IpcHandle(IpcMessageType.RequestCharacterData)]
@@ -53,7 +53,7 @@ internal partial class IpcProvider {
             DalamudApi.PlayerState.CharacterName,
             DalamudApi.PlayerState.HomeWorld.ValueNullable?.Name.ToString() ?? "",
             DalamudApi.PlayerState.CurrentWorld.ValueNullable?.Name.ToString() ?? ""
-        ).Serialize(), includeSelf: false);
+        ).Serialize(), includeSelf: true);
     }
 
     internal static PeerCharacterInfo ParseCharacterInfo(IpcMessage message) {
