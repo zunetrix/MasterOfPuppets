@@ -27,6 +27,7 @@ public class Plugin : IDalamudPlugin {
     internal MovementManager MovementManager { get; }
     internal FollowPath FollowPath { get; }
     internal MultiboxManager MultiboxManager { get; }
+    internal GameWindowManager GameWindowManager { get; }
     internal KeyboardBroadcastManager KeyboardBroadcastManager { get; }
 
     public Plugin(IDalamudPluginInterface pluginInterface) {
@@ -49,6 +50,7 @@ public class Plugin : IDalamudPlugin {
         FollowPath = new FollowPath(this);
         MovementManager = new MovementManager(FollowPath);
         MultiboxManager = new MultiboxManager(this);
+        GameWindowManager = new GameWindowManager(this);
         KeyboardBroadcastManager = new KeyboardBroadcastManager(this);
 
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
@@ -111,7 +113,6 @@ public class Plugin : IDalamudPlugin {
         PluginCommandManager.Dispose();
         MovementManager.Dispose();
         FollowPath.Dispose();
-        MultiboxManager.Dispose();
         KeyboardBroadcastManager.Dispose();
         Ui.Dispose();
     }

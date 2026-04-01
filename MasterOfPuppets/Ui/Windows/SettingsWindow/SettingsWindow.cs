@@ -163,14 +163,6 @@ public class SettingsWindow : Window {
                 Plugin.Ui.MainWindow.UpdateWindowConfig();
             }
 
-            var showCharacterNameInTitle = Plugin.Config.ShowCharacterNameInTitle;
-            if (ImGui.Checkbox("Show character name in title bar", ref showCharacterNameInTitle)) {
-                Plugin.Config.ShowCharacterNameInTitle = showCharacterNameInTitle;
-                Plugin.Config.Save();
-                Plugin.IpcProvider.SyncConfiguration();
-                Plugin.IpcProvider.SetWindowTitle(showCharacterNameInTitle);
-            }
-
             // var showSettingsButton = Plugin.Config.ShowSettingsButton;
             // if (ImGui.Checkbox(Language.SettingsWindowShowConfigButton, ref showSettingsButton))
             // {
@@ -201,7 +193,6 @@ public class SettingsWindow : Window {
             var multiboxEnabled = Plugin.Config.MultiboxEnabled;
             if (ImGui.Checkbox("Enable Multibox (Remove client mutex on startup)", ref multiboxEnabled)) {
                 Plugin.Config.MultiboxEnabled = multiboxEnabled;
-                Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
             ImGuiUtil.HelpMarker("Removes the FFXIV mutex to allow opening more than 2 game instances");
@@ -228,6 +219,25 @@ public class SettingsWindow : Window {
             ImGui.SameLine();
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetCameraOffsetBtn", "Reset")) {
                 GameCameraManager.SetHeight(GameCameraManager.MaxYOffset, true);
+            }
+        }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        using (ImGuiGroupPanel.BeginGroupPanel("Game Window")) {
+            var showCharacterNameInTitle = Plugin.Config.ShowCharacterNameInWindowTitle;
+            if (ImGui.Checkbox("Show Character Name In Title Bar", ref showCharacterNameInTitle)) {
+                Plugin.Config.ShowCharacterNameInWindowTitle = showCharacterNameInTitle;
+                Plugin.IpcProvider.SyncConfiguration();
+                Plugin.IpcProvider.SetWindowTitle(showCharacterNameInTitle);
+            }
+
+            bool enabled = Plugin.Config.AllowFreeGameWindowResize;
+            if (ImGui.Checkbox("Allow Free Window Resize", ref enabled)) {
+                Plugin.Config.AllowFreeGameWindowResize = !Plugin.Config.AllowFreeGameWindowResize;
+                Plugin.IpcProvider.SyncConfiguration();
+                Plugin.IpcProvider.SetWindowResize(enabled);
             }
         }
 

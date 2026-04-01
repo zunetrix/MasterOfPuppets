@@ -55,7 +55,8 @@ internal class Configuration : IPluginConfiguration {
     public bool AutoAcceptPartyInvite { get; set; } = false;
     public bool AutoAcceptTeleport { get; set; } = false;
     public HashSet<int> KeyboardBroadcastIgnoredKeys { get; set; } = new();
-    public bool ShowCharacterNameInTitle { get; set; } = false;
+    public bool ShowCharacterNameInWindowTitle { get; set; } = true;
+    public bool AllowFreeGameWindowResize { get; set; } = true;
 
     // Interface
     public bool OpenOnStartup { get; set; } = false;

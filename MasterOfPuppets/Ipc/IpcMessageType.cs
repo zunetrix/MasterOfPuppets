@@ -28,6 +28,7 @@ public enum IpcMessageType {
     SetGameSettingsObjectQuantity,
     ExecuteChangeGearset,
     SetWindowTitle,
+    SetWindowResize,
     ExecuteFormation,
 
     // peer data request

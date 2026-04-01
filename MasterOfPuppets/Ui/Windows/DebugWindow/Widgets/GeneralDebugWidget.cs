@@ -4,6 +4,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface.ImGuiNotification;
 
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
 using MasterOfPuppets.Extensions;
@@ -75,6 +76,13 @@ public sealed class GeneralDebugWidget : Widget {
         // {
         //     ImGui.Text($"{ActionManager.Instance()->QueuedActionId}");
         // }
+
+        unsafe {
+            var gameWindow = Framework.Instance()->GameWindow;
+            if (gameWindow == null) return;
+            gameWindow->MinHeight = 0;
+            gameWindow->MinWidth = 0;
+        }
 
         if (ImGui.Button("Use Invalid Item name")) {
             var item = ItemHelper.GetExecutableAction("Lominsan Sparkler Flare");
