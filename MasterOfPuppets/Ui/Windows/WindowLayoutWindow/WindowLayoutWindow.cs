@@ -25,7 +25,6 @@ public partial class WindowLayoutWindow : Window {
 
     // Middle panel state
     private int _selSlot = -1;
-    private int _tiledColumns = 2;
     private int _dragStartX;
     private int _dragStartY;
     private int _dragStartW;

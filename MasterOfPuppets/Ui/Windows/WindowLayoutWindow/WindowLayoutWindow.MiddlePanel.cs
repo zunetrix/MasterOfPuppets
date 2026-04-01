@@ -45,13 +45,13 @@ public partial class WindowLayoutWindow {
 
         ImGui.SameLine();
 
-        if (ImGui.Button("Tiled...##wltiled")) {
-            ImGui.OpenPopup("Tiled Layout##wltiledpop");
+        if (ImGui.Button("Generate...##wlgenerate")) {
+            ImGui.OpenPopup("Generate Layout##wlgenpop");
         }
-        ImGuiUtil.ToolTip("Divide the screen evenly among all connected clients.");
+        ImGuiUtil.ToolTip("Generate a layout pattern like Tile, Stack, or Titlebar.");
 
         ImGui.EndDisabled();
-        DrawTiledPopup();
+        DrawGeneratePopup();
 
         ImGui.Separator();
 
@@ -209,31 +209,97 @@ public partial class WindowLayoutWindow {
         // }
     }
 
-    private void DrawTiledPopup() {
+    private int _layoutGenMode = 0; // 0 = Tile, 1 = Stack, 2 = Titlebar
+    
+    // Tile settings
+    private int _genTileMode = 0; // 0 = Auto, 1 = Fixed
+    private int _genTileColumns = 2;
+    private int _genTileAspect = 0; // 0 = Stretch, 1 = Keep Proportion (16:9)
+    
+    // Stack settings
+    private int _genStackWidth = 1280;
+    private int _genStackHeight = 720;
+    private int _genStackOffsetX = 30;
+    private int _genStackOffsetY = 30;
+
+    // Titlebar settings
+    private int _genTitlebarMainWidth = 1280; 
+    private int _genTitlebarMainHeight = 720;
+    private int _genTitlebarWidth = 640;
+    private int _genTitlebarHeight = 8;
+
+    private void DrawGeneratePopup() {
         using var color = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
-        using var popUp = ImRaii.Popup("Tiled Layout##wltiledpop", ImGuiWindowFlags.NoResize);
+        using var popUp = ImRaii.Popup("Generate Layout##wlgenpop", ImGuiWindowFlags.NoResize);
         if (!popUp) return;
 
-        ImGui.Text("Divide screen evenly among all connected clients.");
+        ImGui.Text("Generate slots automatically based on a pattern.");
         ImGui.Spacing();
 
-        ImGui.SetNextItemWidth(120);
-        ImGui.InputInt("Columns##wltiledcols", ref _tiledColumns);
-        _tiledColumns = Math.Clamp(_tiledColumns, 1, 8);
-        ImGuiUtil.ToolTip("Number of windows per row.");
+        ImGui.SetNextItemWidth(150);
+        ImGui.Combo("Pattern##wlgenmode", ref _layoutGenMode, "Grid (Tile)\0Cascade (Stack)\0Titlebar (Minimal)\0");
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
-        if (ImGui.Button("Apply Tiled##wltiledapply", new Vector2(-1, 0))) {
-            ApplyTiled();
+        if (_layoutGenMode == 0) {
+            // Tile
+            ImGui.SetNextItemWidth(120);
+            ImGui.Combo("Division##wlgentilediv", ref _genTileMode, "Auto-Factorize\0Fixed Columns\0");
+            
+            if (_genTileMode == 1) {
+                ImGui.SetNextItemWidth(120);
+                ImGui.InputInt("Columns##wltiledcols", ref _genTileColumns);
+                _genTileColumns = Math.Clamp(_genTileColumns, 1, 16);
+            }
+
+            ImGui.SetNextItemWidth(120);
+            ImGui.Combo("Proportions##wlgentileasp", ref _genTileAspect, "Stretch to fit\0Keep Aspect (16:9)\0");
+        } else if (_layoutGenMode == 1) {
+            // Stack
+            ImGui.TextDisabled("Base Window Size");
+            ImGui.SetNextItemWidth(80);
+            ImGui.InputInt("Width##wlgenstackw", ref _genStackWidth);
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(80);
+            ImGui.InputInt("Height##wlgenstackh", ref _genStackHeight);
+
+            ImGui.TextDisabled("Cascade Offset");
+            ImGui.SetNextItemWidth(80);
+            ImGui.InputInt("Offset X##wlgenstackx", ref _genStackOffsetX);
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(80);
+            ImGui.InputInt("Offset Y##wlgenstacky", ref _genStackOffsetY);
+        } else if (_layoutGenMode == 2) {
+            // Titlebar
+            ImGui.TextDisabled("Main Slot Size");
+            ImGui.SetNextItemWidth(80);
+            ImGui.InputInt("Width##wlgentmainw", ref _genTitlebarMainWidth);
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(80);
+            ImGui.InputInt("Height##wlgentmainh", ref _genTitlebarMainHeight);
+
+            ImGui.TextDisabled("Alt Titlebar Size");
+            ImGui.SetNextItemWidth(80);
+            ImGui.InputInt("Width##wlgentaltw", ref _genTitlebarWidth);
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(80);
+            ImGui.InputInt("Height##wlgentalth", ref _genTitlebarHeight);
+        }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        if (ImGui.Button("Generate Slots##wlgenapply", new Vector2(-1, 0))) {
+            ApplyGenerate();
             ImGui.CloseCurrentPopup();
         }
     }
 
-    private void ApplyTiled() {
+    private void ApplyGenerate() {
         GetSystemMetrics_TryGetScreenSize(out int screenW, out int screenH);
         if (screenW <= 0) screenW = 1920;
         if (screenH <= 0) screenH = 1080;
@@ -242,41 +308,129 @@ public partial class WindowLayoutWindow {
         int count = peers.Count;
         if (count == 0) return;
 
-        int cols = Math.Clamp(_tiledColumns, 1, count);
-        int rows = (int)Math.Ceiling((double)count / cols);
-
-        int cellW = screenW / cols;
-        int cellH = screenH / rows;
-
         var layout = SelectedLayout;
         if (layout == null) {
-            // create a new layout named "Tiled"
-            var name = MakeUniqueName("Tiled");
+            var modeName = _layoutGenMode switch {
+                0 => "Tiled",
+                1 => "Stacked",
+                2 => "Titlebar",
+                _ => "Generated"
+            };
+            var name = MakeUniqueName(modeName);
             Plugin.Config.WindowLayouts.Add(new WindowLayout { Name = name });
             _selLayout = Plugin.Config.WindowLayouts.Count - 1;
             layout = SelectedLayout!;
         }
 
         layout.Slots.Clear();
-        for (int i = 0; i < count; i++) {
-            int col = i % cols;
-            int row = i / cols;
-            var slot = new WindowLayoutSlot {
-                X = col * cellW,
-                Y = row * cellH,
-                Width = cellW,
-                Height = cellH,
-            };
-            var peer = peers[i];
-            slot.Cids.Add(peer.ContentId);
-            layout.Slots.Add(slot);
+
+        if (_layoutGenMode == 0) {
+            // Tile logic
+            int cols = _genTileMode == 1 ? Math.Clamp(_genTileColumns, 1, count) : 1;
+            int rows = 1;
+
+            if (_genTileMode == 0) {
+                // Auto factorize (roughly square or wider than taller)
+                int bestF1 = 1, bestF2 = count;
+                for (int start = (int)Math.Sqrt(count); start > 0; start--) {
+                    if (count % start == 0) {
+                        bestF1 = start;
+                        bestF2 = count / start;
+                        break;
+                    }
+                }
+                // Generally we want wider screens, so columns >= rows
+                cols = Math.Max(bestF1, bestF2);
+                rows = Math.Min(bestF1, bestF2);
+                
+                // If the factor is 2 and we only have 2, let's just make it 2 cols, 1 row
+                if (count == 2) {
+                    cols = 2;
+                    rows = 1;
+                }
+            } else {
+                rows = (int)Math.Ceiling((double)count / cols);
+            }
+
+            int cellW = screenW / cols;
+            int cellH = screenH / rows;
+
+            for (int i = 0; i < count; i++) {
+                int col = i % cols;
+                int row = i / cols;
+                
+                int slotX = col * cellW;
+                int slotY = row * cellH;
+                int slotW = cellW;
+                int slotH = cellH;
+
+                if (_genTileAspect == 1) { // Keep Aspect (16:9)
+                    int targetH = (int)(cellW * (9f / 16f));
+                    if (targetH > cellH) {
+                        // constrained by height
+                        targetH = cellH;
+                        slotW = (int)(targetH * (16f / 9f));
+                    } else {
+                        slotH = targetH;
+                    }
+                    
+                    // Center the slot in its cell
+                    slotX += (cellW - slotW) / 2;
+                    slotY += (cellH - slotH) / 2;
+                }
+
+                var slot = new WindowLayoutSlot {
+                    X = slotX,
+                    Y = slotY,
+                    Width = slotW,
+                    Height = slotH,
+                };
+                slot.Cids.Add(peers[i].ContentId);
+                layout.Slots.Add(slot);
+            }
+        } 
+        else if (_layoutGenMode == 1) {
+            // Stack logic
+            for (int i = 0; i < count; i++) {
+                var slot = new WindowLayoutSlot {
+                    X = i * _genStackOffsetX,
+                    Y = i * _genStackOffsetY,
+                    Width = Math.Max(100, _genStackWidth),
+                    Height = Math.Max(60, _genStackHeight),
+                };
+                slot.Cids.Add(peers[i].ContentId);
+                layout.Slots.Add(slot);
+            }
+        }
+        else if (_layoutGenMode == 2) {
+            // Titlebar logic
+            for (int i = 0; i < count; i++) {
+                WindowLayoutSlot slot;
+                if (i == 0) {
+                    // Main
+                    slot = new WindowLayoutSlot {
+                        X = 0,
+                        Y = 0,
+                        Width = Math.Max(100, _genTitlebarMainWidth),
+                        Height = Math.Max(60, _genTitlebarMainHeight),
+                    };
+                } else {
+                    // Alts (stacked below main)
+                    slot = new WindowLayoutSlot {
+                        X = 0,
+                        Y = _genTitlebarMainHeight + ((i - 1) * _genTitlebarHeight),
+                        Width = Math.Max(100, _genTitlebarWidth),
+                        Height = Math.Max(8, _genTitlebarHeight),
+                    };
+                }
+                slot.Cids.Add(peers[i].ContentId);
+                layout.Slots.Add(slot);
+            }
         }
 
         _selSlot = -1;
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();
-
-        Plugin.IpcProvider.ApplyWindowLayout(layout.Name);
     }
 
     private static void GetSystemMetrics_TryGetScreenSize(out int w, out int h) {
