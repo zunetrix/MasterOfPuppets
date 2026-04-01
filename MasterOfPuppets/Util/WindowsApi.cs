@@ -112,4 +112,11 @@ public static class WindowsApi {
 
     [DllImport("user32.dll")]
     public static extern int GetSystemMetrics(int nIndex);
+
+//  Desktop Window Manager Window Attribute
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out RECT pvAttribute, int cbAttribute);
+
+    // windows 10 - calculate windows size without drop-shadow effects
+    public const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
 }

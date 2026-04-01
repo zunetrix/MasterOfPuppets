@@ -41,11 +41,8 @@ internal partial class IpcProvider {
         var slot = layout.Slots.FirstOrDefault(s => s.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(myCid));
         if (slot == null) return;
 
-        DalamudApi.Framework.RunOnTick(() => {
-            var hwnd = Process.GetCurrentProcess().MainWindowHandle;
-            WindowsApi.MoveWindow(hwnd, slot.X, slot.Y, slot.Width, slot.Height, true);
-            DalamudApi.PluginLog.Debug($"[WindowLayout] Applied slot X={slot.X} Y={slot.Y} W={slot.Width} H={slot.Height}");
-        });
+        Plugin.GameWindowManager.MoveAndResizeWindow(slot.X, slot.Y, slot.Width, slot.Height);
+        DalamudApi.PluginLog.Debug($"[WindowLayout] Applied slot visually X={slot.X} Y={slot.Y} W={slot.Width} H={slot.Height}");
     }
 
     //  Request Window Info (Capture From Screen)
@@ -62,22 +59,22 @@ internal partial class IpcProvider {
     [IpcHandle(IpcMessageType.RequestWindowInfo)]
     private void HandleRequestWindowInfo(IpcMessage _) {
         DalamudApi.PluginLog.Debug("[WindowLayout] Received RequestWindowInfo, querying HWND...");
-            var hwnd = Process.GetCurrentProcess().MainWindowHandle;
-            if (!WindowsApi.GetWindowRect(hwnd, out var rect)) {
-                DalamudApi.PluginLog.Error("[WindowLayout] GetWindowRect failed.");
-                return;
-            }
+        
+        if (!Plugin.GameWindowManager.GetWindowVisualBounds(out var rect)) {
+            DalamudApi.PluginLog.Error("[WindowLayout] GetWindowRect failed.");
+            return;
+        }
 
-            var cid = DalamudApi.PlayerState.ContentId;
-            var payload = new WindowInfoPayload {
-                Cid = cid,
-                X = rect.Left,
-                Y = rect.Top,
-                Width = rect.Width,
-                Height = rect.Height,
-            };
-            DalamudApi.PluginLog.Debug($"[WindowLayout] Sending WindowInfo for {cid}: X={payload.X} Y={payload.Y} W={payload.Width} H={payload.Height}");
-            BroadCast(IpcMessage.Create(IpcMessageType.WindowInfo, payload).Serialize(), includeSelf: true);
+        var cid = DalamudApi.PlayerState.ContentId;
+        var payload = new WindowInfoPayload {
+            Cid = cid,
+            X = rect.Left,
+            Y = rect.Top,
+            Width = rect.Width,
+            Height = rect.Height,
+        };
+        DalamudApi.PluginLog.Debug($"[WindowLayout] Sending WindowInfo for {cid}: X={payload.X} Y={payload.Y} W={payload.Width} H={payload.Height}");
+        BroadCast(IpcMessage.Create(IpcMessageType.WindowInfo, payload).Serialize(), includeSelf: true);
     }
 
     // Pending captures waiting to be collected by the UI

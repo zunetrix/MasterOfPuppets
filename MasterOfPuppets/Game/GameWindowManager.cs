@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 
@@ -56,5 +57,46 @@ internal unsafe class GameWindowManager {
                 : "FINAL FANTASY XIV";
             WindowsApi.SetWindowText(Process.GetCurrentProcess().MainWindowHandle, title);
         });
+    }
+
+    /// <summary>
+    /// Moves and resizes the main game window, adjusting for DWM invisible drop-shadow borders.
+    /// This ensures the visual placement matches the requested coordinates perfectly.
+    /// </summary>
+    internal void MoveAndResizeWindow(int x, int y, int width, int height) {
+        var hwnd = Process.GetCurrentProcess().MainWindowHandle;
+
+        if (WindowsApi.GetWindowRect(hwnd, out var windowRect) &&
+            WindowsApi.DwmGetWindowAttribute(hwnd, WindowsApi.DWMWA_EXTENDED_FRAME_BOUNDS, out var frameRect, Marshal.SizeOf<WindowsApi.RECT>()) == 0) {
+            
+            var leftMargin = windowRect.Left - frameRect.Left;
+            var topMargin = windowRect.Top - frameRect.Top;
+            var rightMargin = windowRect.Right - frameRect.Right;
+            var bottomMargin = windowRect.Bottom - frameRect.Bottom;
+
+            x += leftMargin;
+            y += topMargin;
+            width += (rightMargin - leftMargin);
+            height += (bottomMargin - topMargin);
+        }
+
+        WindowsApi.MoveWindow(hwnd, x, y, width, height, true);
+    }
+
+    /// <summary>
+    /// Gets the visual bounds of the main game window, excluding DWM invisible drop-shadow borders.
+    /// </summary>
+    internal bool GetWindowVisualBounds(out WindowsApi.RECT rect) {
+        var hwnd = Process.GetCurrentProcess().MainWindowHandle;
+        
+        if (!WindowsApi.GetWindowRect(hwnd, out rect)) {
+            return false;
+        }
+
+        if (WindowsApi.DwmGetWindowAttribute(hwnd, WindowsApi.DWMWA_EXTENDED_FRAME_BOUNDS, out var frameRect, Marshal.SizeOf<WindowsApi.RECT>()) == 0) {
+            rect = frameRect;
+        }
+
+        return true;
     }
 }
