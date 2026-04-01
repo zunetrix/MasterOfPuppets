@@ -18,17 +18,17 @@ public partial class WindowLayoutWindow {
 
         var slot = SelectedSlot;
 
-        //  Slots list 
+        //  Slots list
         ImGui.SetNextItemOpen(true, ImGuiCond.Appearing);
         if (ImGui.CollapsingHeader($"Slots ({layout.Slots.Count})##wlslots")) {
             if (layout.Slots.Count == 0) {
                 ImGui.TextDisabled("Click [+] in the preview to add a slot");
             } else {
-                float btnW  = ImGui.GetFrameHeight();
-                float rowH  = ImGui.GetFrameHeightWithSpacing();
-                float hdrH  = ImGui.GetFrameHeightWithSpacing();
-                float maxH  = 6 * rowH + hdrH;
-                float tblH  = Math.Min(layout.Slots.Count * rowH + hdrH, maxH);
+                float btnW = ImGui.GetFrameHeight();
+                float rowH = ImGui.GetFrameHeightWithSpacing();
+                float hdrH = ImGui.GetFrameHeightWithSpacing();
+                float maxH = 6 * rowH + hdrH;
+                float tblH = Math.Min(layout.Slots.Count * rowH + hdrH, maxH);
 
                 if (ImGui.BeginTable("##wlslttbl", 6,
                     ImGuiTableFlags.RowBg | ImGuiTableFlags.NoSavedSettings |
@@ -36,12 +36,12 @@ public partial class WindowLayoutWindow {
                     new Vector2(-1, tblH))) {
 
                     ImGui.TableSetupScrollFreeze(0, 1);
-                    ImGui.TableSetupColumn("##sel",  ImGuiTableColumnFlags.WidthFixed,   25f);
-                    ImGui.TableSetupColumn("X",      ImGuiTableColumnFlags.WidthStretch);
-                    ImGui.TableSetupColumn("Y",      ImGuiTableColumnFlags.WidthStretch);
-                    ImGui.TableSetupColumn("W",      ImGuiTableColumnFlags.WidthStretch);
-                    ImGui.TableSetupColumn("H",      ImGuiTableColumnFlags.WidthStretch);
-                    ImGui.TableSetupColumn("##del",  ImGuiTableColumnFlags.WidthFixed,   btnW);
+                    ImGui.TableSetupColumn("##sel", ImGuiTableColumnFlags.WidthFixed, 25f);
+                    ImGui.TableSetupColumn("X", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Y", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("W", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("H", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("##del", ImGuiTableColumnFlags.WidthFixed, btnW);
                     ImGui.TableHeadersRow();
 
                     int delIdx = -1;
@@ -52,20 +52,47 @@ public partial class WindowLayoutWindow {
 
                         // Col 0: row selector
                         ImGui.TableNextColumn();
-                        using (ImRaii.PushColor(ImGuiCol.Header,       Style.Components.ButtonBlueHovered)
+                        using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered)
                                      .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
-                                     .Push(ImGuiCol.HeaderActive,  Style.Components.ButtonBlueHovered)) {
-                            if (ImGui.Selectable($"##wlsrow{i}", i == _selSlot))
+                                     .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered)) {
+                            if (ImGui.Selectable($"{i + 1:00}##wlsrow{i}", i == _selSlot))
                                 _selSlot = i;
                         }
-                        ImGui.SameLine(0, 4);
-                        ImGui.Text($"{i + 1:00}");
+                        ImGuiUtil.ToolTip("Drag to reorder");
 
+                        if (ImGui.BeginDragDropSource()) {
+                            unsafe {
+                                ImGui.SetDragDropPayload("DND_LAYOUT_WINDOW", new ReadOnlySpan<byte>(&i, sizeof(int)), ImGuiCond.None);
+                                ImGui.Text($"#{i + 1}");
+                            }
+                            ImGui.EndDragDropSource();
+                        }
+
+                        using (ImRaii.PushColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget)) {
+                            if (ImGui.BeginDragDropTarget()) {
+                                var payload = ImGui.AcceptDragDropPayload("DND_LAYOUT_WINDOW");
+                                bool isDropping = false;
+                                unsafe { isDropping = !payload.IsNull; }
+                                if (isDropping && payload.IsDelivery()) {
+                                    unsafe {
+                                        int from = *(int*)payload.Data;
+                                        if (from != i) {
+                                            var layoutSlot = layout.Slots[from];
+                                            layout.Slots.RemoveAt(from);
+                                            layout.Slots.Insert(i, layoutSlot);
+                                            if (_selSlot == from) _selSlot = i;
+                                            Plugin.IpcProvider.SyncConfiguration();
+                                        }
+                                    }
+                                }
+                                ImGui.EndDragDropTarget();
+                            }
+                        }
                         // Col 1: X
                         ImGui.TableNextColumn();
                         ImGui.SetNextItemWidth(-1);
-                        var x =s.X;
-                        if (ImGui.DragInt($"##sx{i}", ref x, 1, -9999, 9999)) { 
+                        var x = s.X;
+                        if (ImGui.DragInt($"##sx{i}", ref x, 1, -9999, 9999)) {
                             s.X = x;
                         }
                         if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
@@ -151,7 +178,7 @@ public partial class WindowLayoutWindow {
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("Ctrl+Click to clear all slots");
         }
 
-        //  Selected slot detail 
+        //  Selected slot detail
         if (slot == null) {
             ImGui.Spacing();
             ImGui.TextDisabled("Select a slot to edit associations");
@@ -188,9 +215,9 @@ public partial class WindowLayoutWindow {
             if (ImGui.BeginTable("##wlchartbl", 3,
                     ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,
                     new Vector2(-1, 80f))) {
-                ImGui.TableSetupColumn("#",    ImGuiTableColumnFlags.WidthFixed,   22f);
+                ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 22f);
                 ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
-                ImGui.TableSetupColumn("",     ImGuiTableColumnFlags.WidthFixed,   delW);
+                ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, delW);
                 for (int i = 0; i < slot.Cids.Count; i++) {
                     var cn = Plugin.Config.Characters.FirstOrDefault(c => c.Cid == slot.Cids[i])?.Name
                              ?? slot.Cids[i].ToString("X16");
@@ -238,9 +265,9 @@ public partial class WindowLayoutWindow {
             if (ImGui.BeginTable("##wlgrptbl", 3,
                     ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,
                     new Vector2(-1, 80f))) {
-                ImGui.TableSetupColumn("#",    ImGuiTableColumnFlags.WidthFixed,   22f);
+                ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 22f);
                 ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
-                ImGui.TableSetupColumn("",     ImGuiTableColumnFlags.WidthFixed,   delW);
+                ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, delW);
                 for (int i = 0; i < slot.GroupIds.Count; i++) {
                     var gn = slot.GroupIds[i];
                     ImGui.TableNextRow();
@@ -260,7 +287,7 @@ public partial class WindowLayoutWindow {
             }
         }
 
-        //  Quick apply selected slot 
+        //  Quick apply selected slot
         // ImGui.Spacing();
         // ImGui.Separator();
         // ImGui.Spacing();

@@ -53,7 +53,7 @@ public partial class FormationWindow {
                         using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered)
                             .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
                             .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered)) {
-                            if (ImGui.Selectable($"##firow", i == _selPoint))
+                            if (ImGui.Selectable($"{i + 1:00}##firow", i == _selPoint))
                                 _selPoint = i;
                         }
                         ImGuiUtil.ToolTip("Drag to reorder");
@@ -87,9 +87,6 @@ public partial class FormationWindow {
                                 ImGui.EndDragDropTarget();
                             }
                         }
-
-                        ImGui.SameLine(0, 4);
-                        ImGui.Text($"{i + 1:00}");
 
                         // Column 1: X (displayed in plot-space so it matches the visual preview)
                         ImGui.TableNextColumn();
