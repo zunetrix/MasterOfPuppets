@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace MasterOfPuppets;
 
-public class MultiboxManager : IDisposable {
+// ST - LA
+public class MultiboxManager {
     private readonly Plugin _plugin;
 
     private static readonly HashSet<string> FfxivMutexNames = new() {
@@ -16,22 +17,12 @@ public class MultiboxManager : IDisposable {
 
     public MultiboxManager(Plugin plugin) {
         _plugin = plugin;
-        _plugin.Config.OnConfigurationChanged += OnConfigChanged;
 
         if (_plugin.Config.MultiboxEnabled)
             RemoveMutexes();
     }
 
-    private void OnConfigChanged() {
-        if (_plugin.Config.MultiboxEnabled)
-            RemoveMutexes();
-    }
-
-    public void Dispose() {
-        _plugin.Config.OnConfigurationChanged -= OnConfigChanged;
-    }
-
-    private static void RemoveMutexes() {
+    public static void RemoveMutexes() {
         Task.Run(() => {
             var pid = Process.GetCurrentProcess().Id;
             foreach (var hi in HandleUtil.GetHandles(pid)) {
