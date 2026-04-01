@@ -6,7 +6,7 @@ using MasterOfPuppets.Extensions;
 namespace MasterOfPuppets;
 
 // https://github.com/Infiziert90/ChatTwo/blob/main/ChatTwo/GameFunctions/Party.cs
-internal static unsafe class Party {
+internal static unsafe class PartyManager {
 
     // full character name: name@world
     public static void Invite(string characterFullName) {

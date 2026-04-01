@@ -35,7 +35,7 @@ internal partial class IpcProvider {
         if (string.IsNullOrEmpty(info.CharacterName)) return;
 
         PeerCharacterData[message.BroadcasterId] = info with { LastSeen = DateTime.UtcNow };
-        DalamudApi.Framework.RunOnTick(() => Party.Invite(info.CharacterName, (ushort)info.HomeWorldId));
+        DalamudApi.Framework.RunOnTick(() => PartyManager.Invite(info.CharacterName, (ushort)info.HomeWorldId));
     }
 
     //  Party management
@@ -69,7 +69,7 @@ internal partial class IpcProvider {
         var partyMember = DalamudApi.PartyList.GetPartyMemberFromCid(requesterCid);
         if (partyMember == null) return;
 
-        Party.Promote(partyMember.Name.ToString(), (ulong)requesterCid);
+        PartyManager.Promote(partyMember.Name.ToString(), (ulong)requesterCid);
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
             timeoutMs: 500,

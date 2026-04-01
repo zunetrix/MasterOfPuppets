@@ -274,7 +274,7 @@ public class PluginCommandManager : IDisposable {
                 case "invite": {
                         if (parsedArgs.Count == 2) {
                             // with characterFullname arg name@world
-                            Party.Invite(parsedArgs[1]);
+                            PartyManager.Invite(parsedArgs[1]);
                             return;
                         }
                         Plugin.IpcProvider.RequestInviteAllToParty();

@@ -194,6 +194,7 @@ public class SettingsWindow : Window {
             if (ImGui.Checkbox("Enable Multibox (Remove client mutex on startup)", ref multiboxEnabled)) {
                 Plugin.Config.MultiboxEnabled = multiboxEnabled;
                 Plugin.IpcProvider.SyncConfiguration();
+                MultiboxManager.RemoveMutexes();
             }
             ImGuiUtil.HelpMarker("Removes the FFXIV mutex to allow opening more than 2 game instances");
         }
