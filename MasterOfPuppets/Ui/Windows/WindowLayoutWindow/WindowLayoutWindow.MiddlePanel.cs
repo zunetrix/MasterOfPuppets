@@ -350,19 +350,10 @@ public partial class WindowLayoutWindow {
             int rows = 1;
 
             if (_genTileMode == 0) {
-                // Auto factorize (roughly square or wider than taller)
-                int bestF1 = 1, bestF2 = count;
-                for (int start = (int)Math.Sqrt(count); start > 0; start--) {
-                    if (count % start == 0) {
-                        bestF1 = start;
-                        bestF2 = count / start;
-                        break;
-                    }
-                }
-                // Generally we want wider screens, so columns >= rows
-                cols = Math.Max(bestF1, bestF2);
-                rows = Math.Min(bestF1, bestF2);
-
+                // Auto factorize
+                cols = (int)Math.Ceiling(Math.Sqrt(count));
+                rows = (int)Math.Ceiling((double)count / cols);
+                
                 // If the factor is 2 and we only have 2, let's just make it 2 cols, 1 row
                 if (count == 2) {
                     cols = 2;
@@ -375,35 +366,34 @@ public partial class WindowLayoutWindow {
             int cellW = screenW / cols;
             int cellH = screenH / rows;
 
+            int globalSlotW = cellW;
+            int globalSlotH = cellH;
+
+            if (_genTileAspect == 1) { // Keep Aspect (16:9)
+                int targetH = (int)(globalSlotW * (9f / 16f));
+                if (targetH > cellH) {
+                    targetH = cellH;
+                    globalSlotW = (int)(targetH * (16f / 9f));
+                } else {
+                    globalSlotH = targetH;
+                }
+            }
+
+            int offsetX = workLeft;
+            int offsetY = workTop;
+
             for (int i = 0; i < count; i++) {
                 int col = i % cols;
                 int row = i / cols;
 
-                int slotX = workLeft + col * cellW;
-                int slotY = workTop + row * cellH;
-                int slotW = cellW;
-                int slotH = cellH;
-
-                if (_genTileAspect == 1) { // Keep Aspect (16:9)
-                    int targetH = (int)(cellW * (9f / 16f));
-                    if (targetH > cellH) {
-                        // constrained by height
-                        targetH = cellH;
-                        slotW = (int)(targetH * (16f / 9f));
-                    } else {
-                        slotH = targetH;
-                    }
-
-                    // Center the slot in its cell
-                    slotX += (cellW - slotW) / 2;
-                    slotY += (cellH - slotH) / 2;
-                }
+                int slotX = offsetX + col * globalSlotW;
+                int slotY = offsetY + row * globalSlotH;
 
                 var slot = new WindowLayoutSlot {
                     X = slotX,
                     Y = slotY,
-                    Width = slotW,
-                    Height = slotH,
+                    Width = globalSlotW,
+                    Height = globalSlotH,
                 };
                 slot.Cids.Add(peers[i].ContentId);
                 layout.Slots.Add(slot);

@@ -100,16 +100,8 @@ internal unsafe class GameWindowManager {
         if (screenW <= 0) screenW = 1920;
         if (screenH <= 0) screenH = 1080;
 
-        int bestF1 = 1, bestF2 = count;
-        for (int start = (int)Math.Sqrt(count); start > 0; start--) {
-            if (count % start == 0) {
-                bestF1 = start;
-                bestF2 = count / start;
-                break;
-            }
-        }
-        int cols = Math.Max(bestF1, bestF2);
-        int rows = Math.Min(bestF1, bestF2);
+        int cols = (int)Math.Ceiling(Math.Sqrt(count));
+        int rows = (int)Math.Ceiling((double)count / cols);
         if (count == 2) {
             cols = 2;
             rows = 1;
@@ -121,8 +113,6 @@ internal unsafe class GameWindowManager {
         int col = myIndex % cols;
         int row = myIndex / cols;
 
-        int slotX = workLeft + col * cellW;
-        int slotY = workTop + row * cellH;
         int slotW = cellW;
         int slotH = cellH;
 
@@ -134,9 +124,13 @@ internal unsafe class GameWindowManager {
             } else {
                 slotH = targetH;
             }
-            slotX += (cellW - slotW) / 2;
-            slotY += (cellH - slotH) / 2;
         }
+
+        int offsetX = workLeft;
+        int offsetY = workTop;
+
+        int slotX = offsetX + col * slotW;
+        int slotY = offsetY + row * slotH;
 
         MoveAndResizeWindow(slotX, slotY, slotW, slotH);
         DalamudApi.PluginLog.Debug($"[WindowLayout] Applied Auto Tiled visually X={slotX} Y={slotY} W={slotW} H={slotH}");
