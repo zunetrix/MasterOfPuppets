@@ -4,10 +4,10 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface.ImGuiNotification;
 
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
 using MasterOfPuppets.Extensions;
+using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Debug;
 
@@ -77,19 +77,27 @@ public sealed class GeneralDebugWidget : Widget {
         //     ImGui.Text($"{ActionManager.Instance()->QueuedActionId}");
         // }
 
-        unsafe {
-            var gameWindow = Framework.Instance()->GameWindow;
-            if (gameWindow == null) return;
-            gameWindow->MinHeight = 0;
-            gameWindow->MinWidth = 0;
-        }
-
         if (ImGui.Button("Use Invalid Item name")) {
             var item = ItemHelper.GetExecutableAction("Lominsan Sparkler Flare");
             DalamudApi.PluginLog.Warning($"item: {item?.ActionName}");
 
             GameActionManager.UseItem("Lominsan Sparkler Flare");
             DalamudApi.ShowNotification($"UseItem", NotificationType.Info, 5000);
+        }
+
+        if (ImGuiUtil.SuccessButton("Enable Game Settings Debug")) {
+            GameSettingsManager.EnableDebug();
+        }
+
+        if (ImGuiUtil.DangerButton("Disable Game Settings Debug")) {
+            GameSettingsManager.DisableDebug();
+        }
+
+        if (ImGuiUtil.SuccessButton("Enable Keep game pad enabled when client is inactive")) {
+            GameSettingsManager.SetAlwaysInput(1);
+        }
+        if (ImGuiUtil.DangerButton("Disable Keep game pad enabled when client is inactive")) {
+            GameSettingsManager.SetAlwaysInput(0);
         }
 
         if (ImGui.Button("Print Hotbar")) {
@@ -105,7 +113,7 @@ public sealed class GeneralDebugWidget : Widget {
             Context.Plugin.IpcProvider.SyncConfiguration();
         }
 
-        ImGui.Checkbox("Check Active", ref _active);
+        ImGui.Checkbox("Log ObjectKind.CardStand", ref _active);
         if (_active) {
             DalamudApi.PluginLog.Warning("Start");
             foreach (var actor in DalamudApi.ObjectTable) {

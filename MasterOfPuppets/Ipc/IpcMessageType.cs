@@ -25,7 +25,6 @@ public enum IpcMessageType {
     ExecuteAbandonDuty,
     EnqueueMacroActions,
     EnqueueCharacterMacroActions,
-    SetGameSettingsObjectQuantity,
     ExecuteChangeGearset,
     SetWindowTitle,
     SetWindowResize,
@@ -76,4 +75,7 @@ public enum IpcMessageType {
     RequestWindowInfo,
     WindowInfo,
     ApplyAutoTiledLayout,
+    // game settings
+    SetGameSettingsObjectQuantity,
+    SetGameSettingsAlwaysInput,
 }

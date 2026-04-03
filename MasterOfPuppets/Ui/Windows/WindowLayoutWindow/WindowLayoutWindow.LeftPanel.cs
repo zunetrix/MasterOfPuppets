@@ -15,7 +15,7 @@ namespace MasterOfPuppets;
 
 public partial class WindowLayoutWindow {
     private void DrawLeftPanel() {
-        //  Header row: [+] button + search 
+        //  Header row: [+] button + search
         using (ImRaii.Group()) {
             if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Plus, "##wladd", "New layout"))
                 ImGui.OpenPopup("##wlnew");
@@ -26,8 +26,8 @@ public partial class WindowLayoutWindow {
                         ImGui.Text("Name:");
                         ImGui.SameLine();
                         ImGui.SetNextItemWidth(180);
-                        bool enter    = ImGui.InputText("##wlnewname", ref _newLayoutName, 64, ImGuiInputTextFlags.EnterReturnsTrue);
-                        bool dupName  = !string.IsNullOrWhiteSpace(_newLayoutName) &&
+                        bool enter = ImGui.InputText("##wlnewname", ref _newLayoutName, 64, ImGuiInputTextFlags.EnterReturnsTrue);
+                        bool dupName = !string.IsNullOrWhiteSpace(_newLayoutName) &&
                             Plugin.Config.WindowLayouts.Any(l =>
                                 l.Name.Equals(_newLayoutName.Trim(), StringComparison.OrdinalIgnoreCase));
                         if (dupName) {
@@ -49,12 +49,12 @@ public partial class WindowLayoutWindow {
             ImGui.Separator();
         }
 
-        //  Layout list 
+        //  Layout list
         var layouts = Plugin.Config.WindowLayouts;
-        float btnW   = ImGui.GetFrameHeight();
-        float spc    = ImGui.GetStyle().ItemSpacing.X + 3 * ImGuiHelpers.GlobalScale;
+        float btnW = ImGui.GetFrameHeight();
+        float spc = ImGui.GetStyle().ItemSpacing.X + 3 * ImGuiHelpers.GlobalScale;
         float actColW = btnW * 3 + spc * 2;
-        float listH  = ImGui.GetContentRegionAvail().Y;
+        float listH = ImGui.GetContentRegionAvail().Y;
 
         if (!ImGui.BeginTable("##wlltbl", 3,
             ImGuiTableFlags.RowBg | ImGuiTableFlags.NoSavedSettings |
@@ -63,9 +63,9 @@ public partial class WindowLayoutWindow {
             return;
 
         ImGui.TableSetupScrollFreeze(0, 1);
-        ImGui.TableSetupColumn("#",        ImGuiTableColumnFlags.WidthFixed,   28f);
-        ImGui.TableSetupColumn("Layout",   ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn("##wlacts", ImGuiTableColumnFlags.WidthFixed,   actColW);
+        ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 28f);
+        ImGui.TableSetupColumn("Layout", ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn("##wlacts", ImGuiTableColumnFlags.WidthFixed, actColW);
         ImGui.TableHeadersRow();
 
         int moveFrom = -1, moveTo = -1;
@@ -97,15 +97,15 @@ public partial class WindowLayoutWindow {
                 if (ImGui.IsItemDeactivated() && _renamingIdx == i)
                     CommitRename(i);
             } else {
-                using (ImRaii.PushColor(ImGuiCol.Header,        Style.Components.ButtonBlueHovered, i == _selLayout)
-                            .Push(ImGuiCol.HeaderHovered,  Style.Components.ButtonBlueHovered, i == _selLayout)
-                            .Push(ImGuiCol.HeaderActive,   Style.Components.ButtonBlueHovered, i == _selLayout)) {
+                using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, i == _selLayout)
+                            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, i == _selLayout)
+                            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, i == _selLayout)) {
                     bool clicked = ImGui.Selectable(
                         layout.Name.Length > 0 ? layout.Name : "(unnamed)",
                         i == _selLayout);
                     if (clicked && _selLayout != i) {
                         _selLayout = i;
-                        _selSlot   = -1;
+                        _selSlot = -1;
                     }
                 }
 
@@ -149,7 +149,7 @@ public partial class WindowLayoutWindow {
                 }
             }
 
-            // Col 2: actions — Delete | Rename | Apply
+            // Col 2: actions - Delete | Rename | Apply
             ImGui.TableNextColumn();
             if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##wldel{i}", Language.DeleteInstructionTooltip)
                 && ImGui.GetIO().KeyCtrl) {

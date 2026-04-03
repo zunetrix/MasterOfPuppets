@@ -472,17 +472,26 @@ public class SettingsWindow : Window {
         using var tabItem = ImRaii.TabItem($"{Language.SettingsGameSettingsTab}###GameSettingsTab");
         if (!tabItem) return;
 
-        ImGui.Text("Object Quantity Limit");
+        ImGui.Text("Game Settings Broadcast");
         ImGuiUtil.HelpMarker("Change for all clients");
+        ImGui.Separator();
+        ImGui.Spacing();
+
+        ImGui.Text("Object Quantity Limit");
         if (ImGuiUtil.EnumCombo("##SettingsObjectQuantity", ref _objectQuantityType)) {
             Plugin.IpcProvider.SetGameSettingsObjectQuantity(_objectQuantityType);
         }
-        ImGuiUtil.ToolTip("Change object quantity limit");
 
-        // var MoveMode = DalamudApi.GameConfig.UiControl.GetUInt("MoveMode");
-        // var PadMode = DalamudApi.GameConfig.UiConfig.GetUInt("PadMode");
-        // DalamudApi.GameConfig.UiControl.Set("MoveMode", 0);
-        // DalamudApi.GameConfig.UiConfig.Set("PadMode", 0);
+        ImGui.Spacing();
+
+        ImGui.Text("Keep game pad enabled when client is inactive");
+        if (ImGuiUtil.SuccessButton("Enable")) {
+            Plugin.IpcProvider.SetGameSettingsAlwaysInput(1);
+        }
+        ImGui.SameLine();
+        if (ImGuiUtil.DangerButton("Disable")) {
+            Plugin.IpcProvider.SetGameSettingsAlwaysInput(0);
+        }
     }
 
     private void DrawCommandsTab() {
