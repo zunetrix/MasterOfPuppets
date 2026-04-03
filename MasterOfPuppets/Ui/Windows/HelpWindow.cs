@@ -49,8 +49,8 @@ public class HelpWindow : Window {
         // var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
 
         var helpData = isFiltered
-            ? ListSearchedIndexes.Select(i => MopMacroActionsHelper.Actions[i])
-            : MopMacroActionsHelper.Actions;
+            ? ListSearchedIndexes.Select(i => MopCommandsHelper.Actions[i])
+            : MopCommandsHelper.Actions;
 
         var macroActionGroups = helpData
         .GroupBy(a => a.Category);
@@ -61,7 +61,7 @@ public class HelpWindow : Window {
         foreach (var macroActionGroup in macroActionGroups) {
             if (ImGui.CollapsingHeader($"{macroActionGroup.Key}##MacroHelpCategory{macroActionGroup.Key}")) {
                 foreach (var action in macroActionGroup) {
-                    int realIndex = MopMacroActionsHelper.Actions.IndexOf(action);
+                    int realIndex = MopCommandsHelper.Actions.IndexOf(action);
                     bool isSelected = SelectedItemIndex == realIndex;
 
                     using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
@@ -81,7 +81,7 @@ public class HelpWindow : Window {
     }
 
     private void DrawMacroHelpContent(int itemIndex) {
-        var MacroHelpData = MopMacroActionsHelper.Actions[itemIndex];
+        var MacroHelpData = MopCommandsHelper.Actions[itemIndex];
 
         ImGui.BeginGroup();
         ImGui.BeginChild("##MacroHelpContent", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()));
@@ -136,7 +136,7 @@ public class HelpWindow : Window {
         ListSearchedIndexes.Clear();
 
         ListSearchedIndexes.AddRange(
-            MopMacroActionsHelper.Actions
+            MopCommandsHelper.Actions
             .Select((item, index) => new { item, index })
             .Where(x => x.item.TextCommand.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             .Select(x => x.index)

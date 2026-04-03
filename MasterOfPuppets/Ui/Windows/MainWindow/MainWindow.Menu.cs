@@ -529,7 +529,7 @@ public partial class MainWindow : Window {
         if (ImGui.Selectable("Window Layouts")) {
             Plugin.Ui.WindowLayoutWindow.Toggle();
         }
-        ImGuiUtil.ToolTip("Manage window size and position layouts for all clients.");
+        ImGuiUtil.ToolTip("/mop layout");
 
         // -----------------------
 

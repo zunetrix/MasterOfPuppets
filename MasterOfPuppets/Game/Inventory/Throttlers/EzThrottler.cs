@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace MasterOfPuppets;
 
+// from: https://github.com/NightmareXIV/ECommons
 public static class EzThrottler {
     internal static EzThrottler<string> Throttler = new();
 

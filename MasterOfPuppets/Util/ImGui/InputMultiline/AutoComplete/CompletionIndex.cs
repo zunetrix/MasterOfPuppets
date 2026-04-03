@@ -122,7 +122,7 @@ public class CompletionIndex {
                     );
                 return completion;
             }))
-             .Concat(MopMacroActionsHelper.Actions.Select((x, idx) => {
+             .Concat(MopCommandsHelper.Actions.Select((x, idx) => {
                  var completion = new CompletionInfo(
                          Group: 2,
                          GroupTitle: x.Category.ToString(),

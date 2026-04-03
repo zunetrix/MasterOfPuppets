@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace MasterOfPuppets;
 
+// from: https://github.com/NightmareXIV/ECommons
 public class EzThrottler<T> {
     private readonly Dictionary<T, long> Throttlers = [];
     public IReadOnlyCollection<T> ThrottleNames => Throttlers.Keys;
