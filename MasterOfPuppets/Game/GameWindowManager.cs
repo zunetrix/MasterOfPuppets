@@ -9,7 +9,7 @@ using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
 
-internal unsafe class GameWindowManager {
+internal unsafe class GameWindowManager : IDisposable {
     private readonly Plugin _plugin;
     private readonly int _originalMinWidth; // 0x400
     private readonly int _originalMinHeight; // 0x2D0
@@ -26,8 +26,36 @@ internal unsafe class GameWindowManager {
         if (_plugin.Config.AllowFreeGameWindowResize)
             RemoveSizeRestrictions();
 
+        DalamudApi.ClientState.Login += OnLogin;
+        DalamudApi.ClientState.Logout += OnLogout;
+    }
+    public void Dispose() {
+        DalamudApi.ClientState.Login -= OnLogin;
+        DalamudApi.ClientState.Logout -= OnLogout;
+    }
+
+    private void OnLogin() {
         if (_plugin.Config.ShowCharacterNameInWindowTitle)
             SetCharacterNameWindowsTitle(true);
+    }
+
+    private void OnLogout(int type, int code) {
+        SetCharacterNameWindowsTitle(false);
+    }
+
+    public void SetCharacterNameWindowsTitle(bool enabled) {
+        if (!DalamudApi.PlayerState.IsLoaded) return;
+
+        var playerName = DalamudApi.PlayerState.CharacterName.ToString();
+        var homeWorld = DalamudApi.PlayerState.HomeWorld.Value.Name.ToString();
+
+        var title = (enabled && !string.IsNullOrWhiteSpace(playerName))
+            ? $"{playerName}@{homeWorld}"
+            : "FINAL FANTASY XIV";
+
+        DalamudApi.Framework.RunOnTick(() => {
+            WindowsApi.SetWindowText(Process.GetCurrentProcess().MainWindowHandle, title);
+        });
     }
 
     /// <summary>
@@ -50,15 +78,6 @@ internal unsafe class GameWindowManager {
 
         gameWindow->MinWidth = _originalMinWidth;
         gameWindow->MinHeight = _originalMinHeight;
-    }
-
-    public void SetCharacterNameWindowsTitle(bool enabled) {
-        DalamudApi.Framework.RunOnTick(() => {
-            var title = enabled
-                ? $"{DalamudApi.PlayerState.CharacterName}@{DalamudApi.PlayerState.HomeWorld.Value.Name}"
-                : "FINAL FANTASY XIV";
-            WindowsApi.SetWindowText(Process.GetCurrentProcess().MainWindowHandle, title);
-        });
     }
 
     public void ApplyWindowLayout(string layoutName) {
@@ -145,7 +164,7 @@ internal unsafe class GameWindowManager {
 
         if (WindowsApi.GetWindowRect(hwnd, out var windowRect) &&
             WindowsApi.DwmGetWindowAttribute(hwnd, WindowsApi.DWMWA_EXTENDED_FRAME_BOUNDS, out var frameRect, Marshal.SizeOf<WindowsApi.RECT>()) == 0) {
-            
+
             var leftMargin = windowRect.Left - frameRect.Left;
             var topMargin = windowRect.Top - frameRect.Top;
             var rightMargin = windowRect.Right - frameRect.Right;
@@ -165,7 +184,7 @@ internal unsafe class GameWindowManager {
     /// </summary>
     internal bool GetWindowVisualBounds(out WindowsApi.RECT rect) {
         var hwnd = Process.GetCurrentProcess().MainWindowHandle;
-        
+
         if (!WindowsApi.GetWindowRect(hwnd, out rect)) {
             return false;
         }

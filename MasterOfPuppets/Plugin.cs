@@ -114,6 +114,7 @@ public class Plugin : IDalamudPlugin {
         MovementManager.Dispose();
         FollowPath.Dispose();
         KeyboardBroadcastManager.Dispose();
+        GameWindowManager.Dispose();
         Ui.Dispose();
     }
 }
