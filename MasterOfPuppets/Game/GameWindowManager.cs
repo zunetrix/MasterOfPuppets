@@ -1,4 +1,6 @@
+using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
@@ -57,6 +59,22 @@ internal unsafe class GameWindowManager {
                 : "FINAL FANTASY XIV";
             WindowsApi.SetWindowText(Process.GetCurrentProcess().MainWindowHandle, title);
         });
+    }
+
+    public void ApplyWindowLayout(string layoutName) {
+        var layout = _plugin.Config.WindowLayouts
+            .FirstOrDefault(l => string.Equals(l.Name, layoutName, StringComparison.OrdinalIgnoreCase));
+        if (layout == null) {
+            DalamudApi.PluginLog.Warning($"[WindowLayout] Layout '{layoutName}' not found.");
+            return;
+        }
+
+        var myCid = DalamudApi.PlayerState.ContentId;
+        var slot = layout.Slots.FirstOrDefault(s => s.GetEffectiveCids(_plugin.Config.CidsGroups).Contains(myCid));
+        if (slot == null) return;
+
+        MoveAndResizeWindow(slot.X, slot.Y, slot.Width, slot.Height);
+        DalamudApi.PluginLog.Debug($"[WindowLayout] Applied slot visually X={slot.X} Y={slot.Y} W={slot.Width} H={slot.Height}");
     }
 
     /// <summary>

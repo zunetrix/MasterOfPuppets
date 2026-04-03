@@ -30,19 +30,7 @@ internal partial class IpcProvider {
         if (message.StringData == null || message.StringData.Length < 1) return;
         var layoutName = message.StringData[0];
 
-        var layout = Plugin.Config.WindowLayouts
-            .FirstOrDefault(l => string.Equals(l.Name, layoutName, StringComparison.OrdinalIgnoreCase));
-        if (layout == null) {
-            DalamudApi.PluginLog.Warning($"[WindowLayout] Layout '{layoutName}' not found.");
-            return;
-        }
-
-        var myCid = DalamudApi.PlayerState.ContentId;
-        var slot = layout.Slots.FirstOrDefault(s => s.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(myCid));
-        if (slot == null) return;
-
-        Plugin.GameWindowManager.MoveAndResizeWindow(slot.X, slot.Y, slot.Width, slot.Height);
-        DalamudApi.PluginLog.Debug($"[WindowLayout] Applied slot visually X={slot.X} Y={slot.Y} W={slot.Width} H={slot.Height}");
+        Plugin.GameWindowManager.ApplyWindowLayout(layoutName);
     }
 
     //  Request Window Info (Capture From Screen)

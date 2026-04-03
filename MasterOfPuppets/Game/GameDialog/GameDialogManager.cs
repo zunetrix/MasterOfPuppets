@@ -6,6 +6,7 @@ using Lumina.Text.ReadOnly;
 
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
@@ -91,6 +92,12 @@ internal static unsafe partial class GameDialogManager {
     private static AtkUnitBase* GetAddonByName(string name) {
         var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(name);
         return addon != null && addon->IsVisible ? addon : null;
+    }
+
+    public static void ShowMoogleCollection() {
+        var agent = AgentModule.Instance()->GetAgentByInternalId(AgentId.MoogleCollection);
+        if (agent == null) return;
+        agent->Show();
     }
 
     /// <summary>

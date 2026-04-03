@@ -341,6 +341,14 @@ public class PluginCommandManager : IDisposable {
                         Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
                     }
                     break;
+                case "layout": {
+                        if (parsedArgs.Count < 2) {
+                            Plugin.Ui.WindowLayoutWindow.Toggle();
+                            return;
+                        }
+                        Plugin.GameWindowManager.ApplyWindowLayout(layoutName: parsedArgs[1]);
+                    }
+                    break;
                 case "camhack":
                     if (parsedArgs.Count < 2) {
                         DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
@@ -367,6 +375,9 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "shutdown":
                     GameExitManager.Shutdown();
+                    break;
+                case "addon":
+                    GameDialogManager.ShowMoogleCollection();
                     break;
                 case "event":
                     if (parsedArgs.Count < 2) {
