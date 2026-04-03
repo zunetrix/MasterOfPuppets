@@ -33,6 +33,22 @@ internal partial class IpcProvider {
         Plugin.GameWindowManager.ApplyWindowLayout(layoutName);
     }
 
+    /// <summary>
+    /// Broadcasts an apply-autotiled request to all connected clients (including self).
+    /// </summary>
+    public void ApplyAutoTiledLayout(bool keepAspect) {
+        BroadCast(IpcMessage.Create(IpcMessageType.ApplyAutoTiledLayout, keepAspect).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.ApplyAutoTiledLayout)]
+    private void HandleApplyAutoTiledLayout(IpcMessage message) {
+        if (message.Data == null || message.Data.Length == 0) return;
+        bool keepAspect = BitConverter.ToBoolean(message.Data, 0);
+
+        Plugin.GameWindowManager.ApplyAutoTiledLayoutInternal(keepAspect);
+    }
+
+
     //  Request Window Info (Capture From Screen)
 
     /// <summary>

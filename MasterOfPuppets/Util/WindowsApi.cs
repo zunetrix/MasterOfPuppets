@@ -13,7 +13,10 @@ public static class WindowsApi {
     public const uint WM_KEYUP = 0x0101;
     public const int SM_CXSCREEN = 0;
     public const int SM_CYSCREEN = 1;
+    // compute task bar
+    public const uint SPI_GETWORKAREA = 0x0030;
 
+    
     public static void ExecuteCmd(string fileName, string args = null) {
         ProcessStartInfo processStartInfo;
         processStartInfo = args is null
@@ -119,4 +122,8 @@ public static class WindowsApi {
 
     // windows 10 - calculate windows size without drop-shadow effects
     public const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, out RECT pvParam, uint fWinIni);
 }

@@ -50,6 +50,18 @@ public partial class WindowLayoutWindow {
         }
         ImGuiUtil.ToolTip("Generate a layout pattern like Tile, Stack, or Titlebar.");
 
+        ImGui.SameLine();
+        if (ImGui.Button("Apply Auto-Tiled##wlautoall")) {
+            Plugin.IpcProvider.ApplyAutoTiledLayout(false);
+        }
+        ImGuiUtil.ToolTip("Automatically apply tiled layout to all connected clients without saving.");
+
+        ImGui.SameLine();
+        if (ImGui.Button("Apply Auto-Tiled 16:9##wlautoall169")) {
+            Plugin.IpcProvider.ApplyAutoTiledLayout(true);
+        }
+        ImGuiUtil.ToolTip("Automatically apply tiled layout (maintaining 16:9 aspect ratio) to all connected clients without saving.");
+
         ImGui.EndDisabled();
         DrawGeneratePopup();
 
@@ -66,7 +78,11 @@ public partial class WindowLayoutWindow {
             masterRect = new WindowsApi.RECT { Left = 0, Top = 0, Right = 1920, Bottom = 1080 };
 
         // Try to get the primary screen working area via user32
-        GetSystemMetrics_TryGetScreenSize(out int screenW, out int screenH);
+        GetSystemMetrics_TryGetScreenWorkArea(out var workArea);
+        int screenW = workArea.Width;
+        int screenH = workArea.Height;
+        int workLeft = workArea.Left;
+        int workTop = workArea.Top;
 
         var avail = ImGui.GetContentRegionAvail();
         float aspect = screenW > 0 && screenH > 0 ? (float)screenW / screenH : 16f / 9f;
@@ -110,8 +126,8 @@ public partial class WindowLayoutWindow {
             var color = slotColors[i % slotColors.Length];
             bool selected = i == _selSlot;
 
-            float sx = canvasPos.X + slot.X * scaleX;
-            float sy = canvasPos.Y + slot.Y * scaleY;
+            float sx = canvasPos.X + (slot.X - workLeft) * scaleX;
+            float sy = canvasPos.Y + (slot.Y - workTop) * scaleY;
             float sw = slot.Width * scaleX;
             float sh = slot.Height * scaleY;
 
@@ -160,8 +176,8 @@ public partial class WindowLayoutWindow {
                 var delta = ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0f);
                 int newX = _dragStartX + (int)(delta.X / scaleX);
                 int newY = _dragStartY + (int)(delta.Y / scaleY);
-                slot.X = (int)Math.Clamp(newX, 0, screenW - slot.Width);
-                slot.Y = (int)Math.Clamp(newY, 0, screenH - slot.Height);
+                slot.X = (int)Math.Clamp(newX, workLeft, workLeft + screenW - slot.Width);
+                slot.Y = (int)Math.Clamp(newY, workTop, workTop + screenH - slot.Height);
             }
 
             if (ImGui.IsItemDeactivatedAfterEdit() || (ImGui.IsItemDeactivated() && ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0f).LengthSquared() > 0)) {
@@ -188,8 +204,8 @@ public partial class WindowLayoutWindow {
                 var delta = ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0f);
                 int newW = _dragStartW + (int)(delta.X / scaleX);
                 int newH = _dragStartH + (int)(delta.Y / scaleY);
-                slot.Width = (int)Math.Clamp(newW, 100, screenW - slot.X);
-                slot.Height = (int)Math.Clamp(newH, 60, screenH - slot.Y);
+                slot.Width = (int)Math.Clamp(newW, 100, workLeft + screenW - slot.X);
+                slot.Height = (int)Math.Clamp(newH, 60, workTop + screenH - slot.Y);
             }
 
             if (ImGui.IsItemDeactivatedAfterEdit() || (ImGui.IsItemDeactivated() && ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0f).LengthSquared() > 0)) {
@@ -210,12 +226,12 @@ public partial class WindowLayoutWindow {
     }
 
     private int _layoutGenMode = 0; // 0 = Tile, 1 = Stack, 2 = Titlebar
-    
+
     // Tile settings
     private int _genTileMode = 0; // 0 = Auto, 1 = Fixed
     private int _genTileColumns = 2;
     private int _genTileAspect = 0; // 0 = Stretch, 1 = Keep Proportion (16:9)
-    
+
     // Stack settings
     private int _genStackWidth = 1280;
     private int _genStackHeight = 720;
@@ -223,7 +239,7 @@ public partial class WindowLayoutWindow {
     private int _genStackOffsetY = 30;
 
     // Titlebar settings
-    private int _genTitlebarMainWidth = 1280; 
+    private int _genTitlebarMainWidth = 1280;
     private int _genTitlebarMainHeight = 720;
     private int _genTitlebarWidth = 640;
     private int _genTitlebarHeight = 8;
@@ -248,7 +264,7 @@ public partial class WindowLayoutWindow {
             // Tile
             ImGui.SetNextItemWidth(120);
             ImGui.Combo("Division##wlgentilediv", ref _genTileMode, "Auto-Factorize\0Fixed Columns\0");
-            
+
             if (_genTileMode == 1) {
                 ImGui.SetNextItemWidth(120);
                 ImGui.InputInt("Columns##wltiledcols", ref _genTileColumns);
@@ -300,7 +316,11 @@ public partial class WindowLayoutWindow {
     }
 
     private void ApplyGenerate() {
-        GetSystemMetrics_TryGetScreenSize(out int screenW, out int screenH);
+        GetSystemMetrics_TryGetScreenWorkArea(out var workArea);
+        int workLeft = workArea.Left;
+        int workTop = workArea.Top;
+        int screenW = workArea.Width;
+        int screenH = workArea.Height;
         if (screenW <= 0) screenW = 1920;
         if (screenH <= 0) screenH = 1080;
 
@@ -342,7 +362,7 @@ public partial class WindowLayoutWindow {
                 // Generally we want wider screens, so columns >= rows
                 cols = Math.Max(bestF1, bestF2);
                 rows = Math.Min(bestF1, bestF2);
-                
+
                 // If the factor is 2 and we only have 2, let's just make it 2 cols, 1 row
                 if (count == 2) {
                     cols = 2;
@@ -358,9 +378,9 @@ public partial class WindowLayoutWindow {
             for (int i = 0; i < count; i++) {
                 int col = i % cols;
                 int row = i / cols;
-                
-                int slotX = col * cellW;
-                int slotY = row * cellH;
+
+                int slotX = workLeft + col * cellW;
+                int slotY = workTop + row * cellH;
                 int slotW = cellW;
                 int slotH = cellH;
 
@@ -373,7 +393,7 @@ public partial class WindowLayoutWindow {
                     } else {
                         slotH = targetH;
                     }
-                    
+
                     // Center the slot in its cell
                     slotX += (cellW - slotW) / 2;
                     slotY += (cellH - slotH) / 2;
@@ -388,37 +408,35 @@ public partial class WindowLayoutWindow {
                 slot.Cids.Add(peers[i].ContentId);
                 layout.Slots.Add(slot);
             }
-        } 
-        else if (_layoutGenMode == 1) {
+        } else if (_layoutGenMode == 1) {
             // Stack logic
             for (int i = 0; i < count; i++) {
                 var slot = new WindowLayoutSlot {
-                    X = i * _genStackOffsetX,
-                    Y = i * _genStackOffsetY,
+                    X = workLeft + i * _genStackOffsetX,
+                    Y = workTop + i * _genStackOffsetY,
                     Width = Math.Max(100, _genStackWidth),
                     Height = Math.Max(60, _genStackHeight),
                 };
                 slot.Cids.Add(peers[i].ContentId);
                 layout.Slots.Add(slot);
             }
-        }
-        else if (_layoutGenMode == 2) {
+        } else if (_layoutGenMode == 2) {
             // Titlebar logic
             for (int i = 0; i < count; i++) {
                 WindowLayoutSlot slot;
                 if (i == 0) {
                     // Main
                     slot = new WindowLayoutSlot {
-                        X = 0,
-                        Y = 0,
+                        X = workLeft + 0,
+                        Y = workTop + 0,
                         Width = Math.Max(100, _genTitlebarMainWidth),
                         Height = Math.Max(60, _genTitlebarMainHeight),
                     };
                 } else {
                     // Alts (stacked below main)
                     slot = new WindowLayoutSlot {
-                        X = 0,
-                        Y = _genTitlebarMainHeight + ((i - 1) * _genTitlebarHeight),
+                        X = workLeft + 0,
+                        Y = workTop + _genTitlebarMainHeight + ((i - 1) * _genTitlebarHeight),
                         Width = Math.Max(100, _genTitlebarWidth),
                         Height = Math.Max(8, _genTitlebarHeight),
                     };
@@ -433,8 +451,12 @@ public partial class WindowLayoutWindow {
         Plugin.IpcProvider.SyncConfiguration();
     }
 
-    private static void GetSystemMetrics_TryGetScreenSize(out int w, out int h) {
-        w = WindowsApi.GetSystemMetrics(WindowsApi.SM_CXSCREEN);
-        h = WindowsApi.GetSystemMetrics(WindowsApi.SM_CYSCREEN);
+    private static void GetSystemMetrics_TryGetScreenWorkArea(out WindowsApi.RECT workArea) {
+        if (!WindowsApi.SystemParametersInfo(WindowsApi.SPI_GETWORKAREA, 0, out workArea, 0)) {
+            workArea.Left = 0;
+            workArea.Top = 0;
+            workArea.Right = WindowsApi.GetSystemMetrics(WindowsApi.SM_CXSCREEN);
+            workArea.Bottom = WindowsApi.GetSystemMetrics(WindowsApi.SM_CYSCREEN);
+        }
     }
 }

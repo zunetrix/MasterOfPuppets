@@ -75,4 +75,5 @@ public enum IpcMessageType {
     ApplyWindowLayout,
     RequestWindowInfo,
     WindowInfo,
+    ApplyAutoTiledLayout,
 }

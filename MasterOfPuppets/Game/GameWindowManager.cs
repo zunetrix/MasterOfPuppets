@@ -77,6 +77,71 @@ internal unsafe class GameWindowManager {
         DalamudApi.PluginLog.Debug($"[WindowLayout] Applied slot visually X={slot.X} Y={slot.Y} W={slot.Width} H={slot.Height}");
     }
 
+    public void ApplyAutoTiledLayoutInternal(bool keepAspectRatio) {
+        var peers = _plugin.IpcProvider.GetConnectedPeers().ToList();
+        int count = peers.Count;
+        if (count == 0) return;
+
+        var myCid = DalamudApi.PlayerState.ContentId;
+        int myIndex = peers.FindIndex(p => p.ContentId == myCid);
+        if (myIndex == -1) return;
+
+        if (!WindowsApi.SystemParametersInfo(WindowsApi.SPI_GETWORKAREA, 0, out var workArea, 0)) {
+            workArea.Left = 0;
+            workArea.Top = 0;
+            workArea.Right = WindowsApi.GetSystemMetrics(WindowsApi.SM_CXSCREEN);
+            workArea.Bottom = WindowsApi.GetSystemMetrics(WindowsApi.SM_CYSCREEN);
+        }
+
+        int workLeft = workArea.Left;
+        int workTop = workArea.Top;
+        int screenW = workArea.Width;
+        int screenH = workArea.Height;
+        if (screenW <= 0) screenW = 1920;
+        if (screenH <= 0) screenH = 1080;
+
+        int bestF1 = 1, bestF2 = count;
+        for (int start = (int)Math.Sqrt(count); start > 0; start--) {
+            if (count % start == 0) {
+                bestF1 = start;
+                bestF2 = count / start;
+                break;
+            }
+        }
+        int cols = Math.Max(bestF1, bestF2);
+        int rows = Math.Min(bestF1, bestF2);
+        if (count == 2) {
+            cols = 2;
+            rows = 1;
+        }
+
+        int cellW = screenW / cols;
+        int cellH = screenH / rows;
+
+        int col = myIndex % cols;
+        int row = myIndex / cols;
+
+        int slotX = workLeft + col * cellW;
+        int slotY = workTop + row * cellH;
+        int slotW = cellW;
+        int slotH = cellH;
+
+        if (keepAspectRatio) {
+            int targetH = (int)(cellW * (9f / 16f));
+            if (targetH > cellH) {
+                targetH = cellH;
+                slotW = (int)(targetH * (16f / 9f));
+            } else {
+                slotH = targetH;
+            }
+            slotX += (cellW - slotW) / 2;
+            slotY += (cellH - slotH) / 2;
+        }
+
+        MoveAndResizeWindow(slotX, slotY, slotW, slotH);
+        DalamudApi.PluginLog.Debug($"[WindowLayout] Applied Auto Tiled visually X={slotX} Y={slotY} W={slotW} H={slotH}");
+    }
+
     /// <summary>
     /// Moves and resizes the main game window, adjusting for DWM invisible drop-shadow borders.
     /// This ensures the visual placement matches the requested coordinates perfectly.
