@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -5,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MasterOfPuppets;
 
-// ST - LA
+// ffxiv_bossmod
 public unsafe class MultiboxManager {
     private readonly Plugin _plugin;
 
@@ -21,7 +22,7 @@ public unsafe class MultiboxManager {
             foreach (var handle in EnumHandles()) {
                 if (ObjectNameOrTypeName(handle, true) == "Mutant") {
                     var name = ObjectNameOrTypeName(handle, false);
-                    if (name.Contains("6AA83AB5-BAC4-4a36-9F66-A309770760CB_ffxiv_game0")) {
+                    if (name.Contains("6AA83AB5-BAC4-4a36-9F66-A309770760CB_ffxiv_game0", StringComparison.Ordinal)) {
                         DalamudApi.PluginLog.Debug($"[Multibox] Close Mutex: {handle:X} '{name}'");
                         NativeMethods.CloseHandle(handle);
                     }
