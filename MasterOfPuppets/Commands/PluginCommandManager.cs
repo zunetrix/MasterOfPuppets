@@ -379,6 +379,9 @@ public class PluginCommandManager : IDisposable {
                 case "addon":
                     GameDialogManager.ShowMoogleCollection();
                     break;
+                case "settings":
+                    Plugin.Ui.SettingsWindow.Toggle();
+                    break;
                 case "event":
                     if (parsedArgs.Count < 2) {
                         DalamudApi.ChatGui.PrintError("Usage: event <name> | event stop");
