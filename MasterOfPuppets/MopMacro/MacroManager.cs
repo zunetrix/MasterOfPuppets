@@ -270,6 +270,16 @@ public class MacroManager {
         return Plugin.Config.Macros[macroIndex];
     }
 
+    public void RenameMacrosGroupIds(string oldName, string newName) {
+        foreach (var macro in Plugin.Config.Macros) {
+            foreach (var command in macro.Commands) {
+                for (int i = 0; i < command.GroupIds.Count; i++)
+                    if (command.GroupIds[i].Equals(oldName, StringComparison.OrdinalIgnoreCase))
+                        command.GroupIds[i] = newName;
+            }
+        }
+    }
+
     public int FindMacroIndex(string macroNameOrNumber) {
         int macroIndexByName = Plugin.Config.Macros.FindIndex(macro => string.Equals(macro.Name, macroNameOrNumber, StringComparison.OrdinalIgnoreCase));
 
@@ -437,7 +447,6 @@ public class MacroManager {
                     break;
             }
 
-            Plugin.Config.Save();
             Plugin.IpcProvider.SyncConfiguration();
             DalamudApi.ShowNotification("Macros imported!", NotificationType.Success, 5000);
         } catch (Exception e) {

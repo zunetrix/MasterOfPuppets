@@ -245,7 +245,7 @@ public class CharactersWindow : Window {
     }
 
     private void DrawCidsGroupsTab() {
-        using var tabItem = ImRaii.TabItem($"Characters Groups###CidsGroupsTab");
+        using var tabItem = ImRaii.TabItem($"Groups###CidsGroupsTab");
         if (!tabItem) return;
         DrawCidsGroupsHeader();
         DrawCidsGroupsSplitView();
@@ -320,7 +320,7 @@ public class CharactersWindow : Window {
         ImGui.InputText("##GroupRenameInput", ref _editGroupName, 255);
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Check, "##RenameGroupBtn", "Rename group")) {
+        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Check, "##RenameGroupBtn", "Rename group")) {
             ApplyGroupRename(cidGroup, _editGroupName);
         }
 
@@ -398,14 +398,32 @@ public class CharactersWindow : Window {
         group.Name = newName;
         _editGroupName = newName;
 
-        foreach (var macro in Plugin.Config.Macros)
-            foreach (var command in macro.Commands)
-                for (int i = 0; i < command.GroupIds.Count; i++)
-                    if (command.GroupIds[i] == oldName)
-                        command.GroupIds[i] = newName;
+        Plugin.MacroManager.RenameMacrosGroupIds(oldName, newName);
+        RenameFromationsGroupIds(oldName, newName);
+        RenameWindowsLayoutGroupIds(oldName, newName);
 
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();
+    }
+
+    public void RenameFromationsGroupIds(string oldName, string newName) {
+        foreach (var formation in Plugin.Config.Formations) {
+            foreach (var formationPoint in formation.Points) {
+                for (int i = 0; i < formationPoint.GroupIds.Count; i++)
+                    if (formationPoint.GroupIds[i].Equals(oldName, StringComparison.OrdinalIgnoreCase))
+                        formationPoint.GroupIds[i] = newName;
+            }
+        }
+    }
+
+    public void RenameWindowsLayoutGroupIds(string oldName, string newName) {
+        foreach (var windowLayout in Plugin.Config.WindowLayouts) {
+            foreach (var windowLayoutSlotslot in windowLayout.Slots) {
+                for (int i = 0; i < windowLayoutSlotslot.GroupIds.Count; i++)
+                    if (windowLayoutSlotslot.GroupIds[i].Equals(oldName, StringComparison.OrdinalIgnoreCase))
+                        windowLayoutSlotslot.GroupIds[i] = newName;
+            }
+        }
     }
 
     private void DrawCidGroupCharactersTable(CidGroup cidGroup) {
