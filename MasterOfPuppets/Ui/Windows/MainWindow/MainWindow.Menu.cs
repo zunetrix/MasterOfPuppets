@@ -227,7 +227,7 @@ public partial class MainWindow : Window {
         if (ImGui.Selectable("Move To My Target")) {
             Plugin.IpcProvider.ExecuteMoveToMyTarget();
         }
-        ImGuiUtil.ToolTip("/mop movetotarget");
+        ImGuiUtil.ToolTip("/mop movetomytarget");
 
         // -----------------------
 
