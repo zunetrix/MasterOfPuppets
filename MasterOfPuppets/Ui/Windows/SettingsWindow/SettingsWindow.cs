@@ -205,9 +205,10 @@ public class SettingsWindow : Window {
         using (ImGuiGroupPanel.BeginGroupPanel("Cam Hack")) {
             bool enabled = GameCameraManager.Enabled;
             if (ImGui.Checkbox("Cam Hack", ref enabled)) {
-                if (enabled)
+                if (enabled) {
+                    _cameraYOffset = GameCameraManager.MaxYOffset;
                     GameCameraManager.EnableCamHighHeight();
-                else
+                } else
                     GameCameraManager.Disable();
             }
 
@@ -217,8 +218,13 @@ public class SettingsWindow : Window {
                 float YOffset = Math.Clamp(_cameraYOffset, 0f, GameCameraManager.MaxYOffset);
                 GameCameraManager.SetHeight(YOffset, true);
             }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+                _cameraYOffset = 0;
+                GameCameraManager.SetHeight(0, false);
+            }
             ImGui.SameLine();
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetCameraOffsetBtn", "Reset")) {
+                _cameraYOffset = GameCameraManager.MaxYOffset;
                 GameCameraManager.SetHeight(GameCameraManager.MaxYOffset, true);
             }
         }
