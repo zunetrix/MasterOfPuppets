@@ -162,6 +162,11 @@ internal unsafe class GameWindowManager : IDisposable {
     internal void MoveAndResizeWindow(int x, int y, int width, int height) {
         var hwnd = Process.GetCurrentProcess().MainWindowHandle;
 
+        // restore windows from maximize status before move resize / operations
+        if (WindowsApi.IsZoomed(hwnd)) {
+            WindowsApi.ShowWindow(hwnd, WindowsApi.SW_RESTORE);
+        }
+
         if (WindowsApi.GetWindowRect(hwnd, out var windowRect) &&
             WindowsApi.DwmGetWindowAttribute(hwnd, WindowsApi.DWMWA_EXTENDED_FRAME_BOUNDS, out var frameRect, Marshal.SizeOf<WindowsApi.RECT>()) == 0) {
 
@@ -172,8 +177,8 @@ internal unsafe class GameWindowManager : IDisposable {
 
             x += leftMargin;
             y += topMargin;
-            width += (rightMargin - leftMargin);
-            height += (bottomMargin - topMargin);
+            width += rightMargin - leftMargin;
+            height += bottomMargin - topMargin;
         }
 
         WindowsApi.MoveWindow(hwnd, x, y, width, height, true);

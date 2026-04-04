@@ -9,7 +9,6 @@ using Dalamud.Interface.Utility.Raii;
 
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
-using MasterOfPuppets.WindowLayouts;
 
 namespace MasterOfPuppets;
 
@@ -17,6 +16,20 @@ public partial class WindowLayoutWindow {
     private void DrawLeftPanel() {
         //  Header row: [+] button + search
         using (ImRaii.Group()) {
+
+            ImGui.SameLine();
+            if (ImGui.Button("Auto-Tiled##wlautoall")) {
+                Plugin.IpcProvider.ApplyAutoTiledLayout(false);
+            }
+            ImGuiUtil.ToolTip("Automatically apply tiled layout to all connected clients without saving.");
+
+            ImGui.SameLine();
+            if (ImGui.Button("Auto-Tiled 16:9##wlautoall169")) {
+                Plugin.IpcProvider.ApplyAutoTiledLayout(true);
+            }
+            ImGuiUtil.ToolTip("Automatically apply tiled layout (maintaining 16:9 aspect ratio) to all connected clients without saving.");
+            ImGui.Separator();
+
             if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Plus, "##wladd", "New layout"))
                 ImGui.OpenPopup("##wlnew");
 

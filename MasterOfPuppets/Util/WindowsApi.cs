@@ -16,7 +16,7 @@ public static class WindowsApi {
     // compute task bar
     public const uint SPI_GETWORKAREA = 0x0030;
 
-    
+
     public static void ExecuteCmd(string fileName, string args = null) {
         ProcessStartInfo processStartInfo;
         processStartInfo = args is null
@@ -116,7 +116,7 @@ public static class WindowsApi {
     [DllImport("user32.dll")]
     public static extern int GetSystemMetrics(int nIndex);
 
-//  Desktop Window Manager Window Attribute
+    //  Desktop Window Manager Window Attribute
     [DllImport("dwmapi.dll")]
     public static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out RECT pvAttribute, int cbAttribute);
 
@@ -126,4 +126,14 @@ public static class WindowsApi {
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, out RECT pvParam, uint fWinIni);
+
+    // restore windows from maximize status before move resize / operations
+    public const int SW_RESTORE = 9;
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsZoomed(IntPtr hWnd);
 }

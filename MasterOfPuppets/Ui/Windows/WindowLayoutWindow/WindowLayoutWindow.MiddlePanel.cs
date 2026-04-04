@@ -50,18 +50,6 @@ public partial class WindowLayoutWindow {
         }
         ImGuiUtil.ToolTip("Generate a layout pattern like Tile, Stack, or Titlebar.");
 
-        ImGui.SameLine();
-        if (ImGui.Button("Apply Auto-Tiled##wlautoall")) {
-            Plugin.IpcProvider.ApplyAutoTiledLayout(false);
-        }
-        ImGuiUtil.ToolTip("Automatically apply tiled layout to all connected clients without saving.");
-
-        ImGui.SameLine();
-        if (ImGui.Button("Apply Auto-Tiled 16:9##wlautoall169")) {
-            Plugin.IpcProvider.ApplyAutoTiledLayout(true);
-        }
-        ImGuiUtil.ToolTip("Automatically apply tiled layout (maintaining 16:9 aspect ratio) to all connected clients without saving.");
-
         ImGui.EndDisabled();
         DrawGeneratePopup();
 
@@ -353,7 +341,7 @@ public partial class WindowLayoutWindow {
                 // Auto factorize
                 cols = (int)Math.Ceiling(Math.Sqrt(count));
                 rows = (int)Math.Ceiling((double)count / cols);
-                
+
                 // If the factor is 2 and we only have 2, let's just make it 2 cols, 1 row
                 if (count == 2) {
                     cols = 2;
