@@ -2,6 +2,7 @@ using System.Collections.Generic;
 
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 using MasterOfPuppets.Extensions.Dalamud;
 
@@ -9,6 +10,7 @@ namespace MasterOfPuppets;
 
 public static class GearsetManager {
 
+    // try move gearset items to armoury before equip
     public static void ChangeGearset(Plugin plugin, int gearsetIndex) {
         if (!EnqueueGearsetItemsToArmoury(plugin, gearsetIndex)) {
             EquipGearset(gearsetIndex);
@@ -61,6 +63,45 @@ public static class GearsetManager {
         }
     }
 
+    // swap gearset items between inventory -> amoury
+    public static unsafe void SwapGearsets(Plugin plugin, int inventoryGearsetIndex, int armouryGearsetIndex) {
+        var rapture = RaptureGearsetModule.Instance();
+        if (!rapture->IsValidGearset(inventoryGearsetIndex) ||
+            !rapture->IsValidGearset(armouryGearsetIndex))
+            return;
+
+        var invGearset = rapture->GetGearset(inventoryGearsetIndex);
+        var armGearset = rapture->GetGearset(armouryGearsetIndex);
+        var invManager = InventoryManager.Instance();
+
+        for (int i = 0; i < invGearset->Items.Length; i++) {
+            var invItem = invGearset->Items[i];
+            var armItem = armGearset->Items[i];
+
+            if (invItem.ItemId == 0) continue;
+
+            var armouryType = invItem.GetInventoryType();
+            if (armouryType == default) continue;
+
+            var armouryContainer = invManager->GetInventoryContainer(armouryType);
+
+            // skip it already in armoury
+            if (InventoryHelper.FindGearsetItemInArmoury(invItem, armouryContainer) != null) continue;
+
+            var invSrc = invItem.FindGearsetItemInInventory();
+            if (invSrc == null) continue;
+
+            // try move to 2nd gearset of empty slot
+            var armItemInArmoury = armItem.ItemId != 0
+                ? InventoryHelper.FindGearsetItemInArmoury(armItem, armouryContainer)
+                : null;
+            var targetSlot = armItemInArmoury?.Slot ?? InventoryHelper.FindFirstEmptyArmourySlot(armouryType)?.Slot;
+            if (targetSlot == null) continue;
+
+            plugin.ItemMover.Enqueue(invSrc.Value, armouryType, targetSlot.Value);
+        }
+    }
+
     private static unsafe bool EnqueueGearsetItemsToArmoury(Plugin plugin, int gearsetIndex) {
         var rapture = RaptureGearsetModule.Instance();
         if (!rapture->IsValidGearset(gearsetIndex))
@@ -84,19 +125,53 @@ public static class GearsetManager {
         return any;
     }
 
-    private static void EquipGearset(int gearsetIndex) {
+    public static void EquipGearset(int gearsetIndex) {
         Chat.SendMessage($"/gs change {gearsetIndex + 1}");
     }
 
-    private static unsafe void ChangeGearsetGlamour(int gearsetIndex, int glamoutIndex) {
-        if (glamoutIndex <= 0 || glamoutIndex > 20) return;
+    public static unsafe void RenameGearset(int gearsetIndex, string gearsetName) {
+        if (gearsetIndex < 0 || gearsetIndex > 99) return;
+        if (string.IsNullOrEmpty(gearsetName) || gearsetName.Length > 15) return;
 
         var rapture = RaptureGearsetModule.Instance();
         if (!rapture->IsValidGearset(gearsetIndex))
             return;
 
+        var agentGearSet = AgentGearSet.Instance();
+        if (agentGearSet == null) return;
+
         DalamudApi.Framework.RunOnFrameworkThread(() => {
-            rapture->EquipGearset(gearsetIndex, (byte)glamoutIndex);
+            agentGearSet->RenameGearset(gearsetIndex, gearsetName);
         });
     }
+
+    public static unsafe void ReorderGearset(int gearsetIndex, int newGearsetIndex) {
+        if (newGearsetIndex < 0 || newGearsetIndex > 99) return;
+        if (gearsetIndex < 0 || gearsetIndex > 99) return;
+
+        var rapture = RaptureGearsetModule.Instance();
+        if (!rapture->IsValidGearset(gearsetIndex))
+            return;
+
+        var agentGearSet = AgentGearSet.Instance();
+        if (agentGearSet == null) return;
+
+        DalamudApi.Framework.RunOnFrameworkThread(() => {
+            agentGearSet->ReassignGearsetId(gearsetIndex, newGearsetIndex);
+            // agentGearSet->ReassignGearSetNumber(newGearsetIndex);
+            // rapture->ReassignGearsetId(newGearsetIndex, gearsetIndex);
+        });
+    }
+
+    // private static unsafe void ChangeGearsetGlamour(int gearsetIndex, int glamoutIndex) {
+    //     if (glamoutIndex <= 0 || glamoutIndex > 20) return;
+
+    //     var rapture = RaptureGearsetModule.Instance();
+    //     if (!rapture->IsValidGearset(gearsetIndex))
+    //         return;
+
+    //     DalamudApi.Framework.RunOnFrameworkThread(() => {
+    //         rapture->EquipGearset(gearsetIndex, (byte)glamoutIndex);
+    //     });
+    // }
 }

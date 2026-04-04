@@ -5,16 +5,6 @@ using MasterOfPuppets.Camera;
 namespace MasterOfPuppets.Ipc;
 
 internal partial class IpcProvider {
-
-    public void ExecuteChangeGearset(int gearsetIndex) {
-        BroadCast(IpcMessage.Create(IpcMessageType.ExecuteChangeGearset, gearsetIndex).Serialize(), includeSelf: true);
-    }
-
-    [IpcHandle(IpcMessageType.ExecuteChangeGearset)]
-    private void HandleExecuteChangeGearset(IpcMessage message) {
-        GearsetManager.ChangeGearset(Plugin, message.DataStruct<int>());
-    }
-
     public void ExecuteAbandonDuty() {
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteAbandonDuty).Serialize(), includeSelf: true);
     }

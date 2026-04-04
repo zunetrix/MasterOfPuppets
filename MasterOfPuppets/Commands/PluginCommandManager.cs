@@ -271,6 +271,37 @@ public class PluginCommandManager : IDisposable {
                         GearsetManager.MoveGearsetsToArmoury(Plugin, indices);
                     }
                     break;
+                case "swapgearsets": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ShowNotification(
+                                "Invalid arguments. Expected gearset numbers (e.g. 1,2)",
+                                NotificationType.Error, 5000);
+                            return;
+                        }
+
+                        var parts = parsedArgs[1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+                        if (parts.Length != 2) {
+                            DalamudApi.ShowNotification(
+                                "You must provide exactly 2 gearset numbers (e.g. 1,2)",
+                                NotificationType.Error, 5000);
+                            return;
+                        }
+
+                        if (!int.TryParse(parts[0], out var gearset1) ||
+                            !int.TryParse(parts[1], out var gearset2) ||
+                            gearset1 is < 1 or > 100 ||
+                            gearset2 is < 1 or > 100) {
+                            DalamudApi.ShowNotification(
+                                "Invalid gearset numbers. Use values between 1 and 100",
+                                NotificationType.Error, 5000);
+                            return;
+                        }
+
+                        // zero-based
+                        GearsetManager.SwapGearsets(Plugin, gearset1 - 1, gearset2 - 1);
+                    }
+                    break;
                 case "invite": {
                         if (parsedArgs.Count == 2) {
                             // with characterFullname arg name@world

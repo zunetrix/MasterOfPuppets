@@ -25,9 +25,13 @@ public enum IpcMessageType {
     ExecuteAbandonDuty,
     EnqueueMacroActions,
     EnqueueCharacterMacroActions,
-    ExecuteChangeGearset,
-    SetWindowTitle,
-    SetWindowResize,
+
+    // gearset
+    ChangeGearset,
+    RenameGearset,
+    ReorderGearset,
+
+    // formation
     ExecuteFormation,
 
     // peer data request
@@ -75,6 +79,9 @@ public enum IpcMessageType {
     RequestWindowInfo,
     WindowInfo,
     ApplyAutoTiledLayout,
+    SetWindowTitle,
+    SetWindowResize,
+
     // game settings
     SetGameSettingsObjectQuantity,
     SetGameSettingsAlwaysInput,
