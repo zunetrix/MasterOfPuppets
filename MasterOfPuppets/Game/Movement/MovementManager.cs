@@ -200,9 +200,8 @@ public class MovementManager : IDisposable {
     public static void StopFollow() => GameFunctions.StopFollow();
 
     //  Walking control
-
     /// <summary>Enables or disables walk mode.</summary>
-    public unsafe void SetWalking(bool isWalking) {
+    public static unsafe void SetWalking(bool isWalking) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var control = Control.Instance();
             if (control == null) return;
@@ -211,7 +210,7 @@ public class MovementManager : IDisposable {
     }
 
     /// <summary>Toggles walk/run mode.</summary>
-    public unsafe void ToggleWalking() {
+    public static unsafe void ToggleWalking() {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var control = Control.Instance();
             if (control == null) return;
@@ -220,7 +219,7 @@ public class MovementManager : IDisposable {
     }
 
     /// <summary>Forces walk mode during auto-run as well as manual movement.</summary>
-    public unsafe void SetWalkingAutoRun(bool isWalking) {
+    public static unsafe void SetWalkingAutoRun(bool isWalking) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var control = Control.Instance();
             if (control == null) return;
@@ -231,7 +230,6 @@ public class MovementManager : IDisposable {
     }
 
     //  Object lookup
-
     public static unsafe Vector3? GetObjectPosition(string objectName) {
         if (string.IsNullOrWhiteSpace(objectName)) return null;
 

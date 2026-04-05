@@ -173,17 +173,17 @@ public sealed class MovementDebugWidget : Widget {
         //     //               -Y (fly down)
 
         if (ImGui.Button("Enable Walk")) {
-            Context.Plugin.MovementManager.SetWalking(true);
+            MovementManager.SetWalking(true);
         }
 
         ImGui.SameLine();
         if (ImGui.Button("Disable Walk")) {
-            Context.Plugin.MovementManager.SetWalking(false);
+            MovementManager.SetWalking(false);
         }
 
         ImGui.SameLine();
         if (ImGui.Button("Toggle Walk")) {
-            Context.Plugin.MovementManager.ToggleWalking();
+            MovementManager.ToggleWalking();
         }
 
         ImGui.Text("Rotate Character");

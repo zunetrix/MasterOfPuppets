@@ -1,3 +1,5 @@
+using MasterOfPuppets.Movement;
+
 namespace MasterOfPuppets.Ipc;
 
 internal partial class IpcProvider {
@@ -31,7 +33,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.ExecuteToggleWalking)]
     private void HandleExecuteToggleWalking(IpcMessage message) {
-        Plugin.MovementManager.ToggleWalking();
+        MovementManager.ToggleWalking();
     }
 
     public void StopMovement() {

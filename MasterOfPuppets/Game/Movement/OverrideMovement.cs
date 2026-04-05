@@ -11,11 +11,6 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 namespace MasterOfPuppets.Movement;
 
 public unsafe class OverrideMovement : IDisposable {
-
-    // -------------------------------------------------------------------------
-    // Public API
-    // -------------------------------------------------------------------------
-
     public bool Enabled {
         get => _rmiWalkHook.IsEnabled;
         set {

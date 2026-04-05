@@ -130,21 +130,21 @@ public partial class MacroHandler {
 
     /// <summary>/mopenablewalk - enables walk mode.</summary>
     private Task HandleMopEnableWalk(string macroId, string args, CancellationToken token) {
-        Plugin.MovementManager.SetWalking(true);
+        MovementManager.SetWalking(true);
         DalamudApi.PluginLog.Debug("[mopenablewalk]");
         return Task.CompletedTask;
     }
 
     /// <summary>/mopdisablewalk - disables walk mode (back to running).</summary>
     private Task HandleMopDisableWalk(string macroId, string args, CancellationToken token) {
-        Plugin.MovementManager.SetWalking(false);
+        MovementManager.SetWalking(false);
         DalamudApi.PluginLog.Debug("[mopdisablewalk]");
         return Task.CompletedTask;
     }
 
     /// <summary>/moptogglewalk - toggles between walk and run.</summary>
     private Task HandleMopToggleWalk(string macroId, string args, CancellationToken token) {
-        Plugin.MovementManager.ToggleWalking();
+        MovementManager.ToggleWalking();
         DalamudApi.PluginLog.Debug("[moptogglewalk]");
         return Task.CompletedTask;
     }

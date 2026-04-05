@@ -37,4 +37,7 @@ internal static class FormationConventions {
             offset.X * sin + offset.Z * cos
         );
     }
+
+    public static float Distance2D(this Vector3 a, Vector3 b) =>
+    new Vector2(a.X - b.X, a.Z - b.Z).Length();
 }

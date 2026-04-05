@@ -6,7 +6,7 @@ namespace MasterOfPuppets;
 
 // from: bossmod
 // Offsets confirmed from BossMod for patch 7.3+.
-// The PlayerMove offset was 0x1E0 in 7.25 — if the game updates, check here first.
+// The PlayerMove offset was 0x1E0 in 7.25 - if the game updates, check here first.
 
 [StructLayout(LayoutKind.Explicit, Size = 0x22E0)]
 internal partial struct PlayerMove {
@@ -37,7 +37,7 @@ internal partial struct MoveContainer {
 
 [StructLayout(LayoutKind.Explicit, Size = 0x76F0)]
 internal unsafe partial struct ControlEx {
-    // Base movement speed scalar.  Modify with care — the game reads this
+    // Base movement speed scalar.  Modify with care - the game reads this
     // every frame to scale all movement input.
     [FieldOffset(0x7118)] public float BaseMoveSpeed;
 
