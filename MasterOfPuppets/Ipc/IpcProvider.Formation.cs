@@ -59,11 +59,10 @@ internal partial class IpcProvider {
 
         // Match DrawWorldOverlay: leaderRot + point.Angle * DegToRad
         float facingRad = leaderRot + point.Angle * Angle.DegToRad;
-        Plugin.MovementManager.MoveTo(worldPos, facingRad.Radians());
+        // Plugin.MovementManager.MoveTo(worldPos, facingRad.Radians());
+        Plugin.SimpleInputMovement.MoveTo(worldPos, faceDirection: facingRad);
 
         // Member faces the same direction as the leader (north offset = 0)
         // Plugin.MovementManager.MoveTo(worldPos, leaderRot.Radians());
     }
-
-
 }

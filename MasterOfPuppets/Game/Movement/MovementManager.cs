@@ -67,20 +67,13 @@ public class MovementManager : IDisposable {
         }
     }
 
-    //  Pathfinding (stub)
-
-    /// <summary>
-    /// Placeholder for future pathfinding (e.g. VNavMesh).
-    /// Currently returns a straight-line single-waypoint path.
-    /// </summary>
     public async Task<List<Vector3>> QueryPath(Vector3 from, Vector3 to, bool flying, float range = 0) =>
-        await Task.Run(() => new List<Vector3> { to });
+          await Task.Run(() => new List<Vector3> { to });
 
     public async Task<List<Vector3>> QueryPath(List<Vector3> pathPoints) =>
         await Task.Run(() => pathPoints.ToList());
 
     //  Internal movement entry points
-
     private bool EnqueueMove(Vector3 dest, bool fly = false, float range = 0, Angle? facing = null) {
         if (_pendingTask != null) return false;
         _pendingTask = QueryPath(default, dest, fly, range);
@@ -190,8 +183,6 @@ public class MovementManager : IDisposable {
         // DalamudApi.Framework.RunOnFrameworkThread(() => GameFunctions.SetFacing(DalamudApi.ObjectTable.LocalPlayer, angle));
         DalamudApi.Framework.RunOnFrameworkThread(() => _follow.FaceDirection(angle));
     }
-
-    //  Native follow
 
     /// <summary>Activates the game's native follow mode to follow the given entity.</summary>
     public static void Follow(uint entityId) => GameFunctions.Follow(entityId);

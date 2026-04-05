@@ -26,6 +26,7 @@ public class Plugin : IDalamudPlugin {
     internal CompletionIndex CompletionIndex { get; }
     internal MovementManager MovementManager { get; }
     internal FollowPath FollowPath { get; }
+    internal SimpleInputMovement SimpleInputMovement { get; }
     internal MultiboxManager MultiboxManager { get; }
     internal GameWindowManager GameWindowManager { get; }
     internal KeyboardBroadcastManager KeyboardBroadcastManager { get; }
@@ -48,6 +49,7 @@ public class Plugin : IDalamudPlugin {
 
         FollowPath = new FollowPath(this);
         MovementManager = new MovementManager(FollowPath);
+        SimpleInputMovement = new SimpleInputMovement();
         MultiboxManager = new MultiboxManager(this);
         GameWindowManager = new GameWindowManager(this);
         KeyboardBroadcastManager = new KeyboardBroadcastManager(this);
@@ -112,6 +114,7 @@ public class Plugin : IDalamudPlugin {
         PluginCommandManager.Dispose();
         MovementManager.Dispose();
         FollowPath.Dispose();
+        SimpleInputMovement.Dispose();
         KeyboardBroadcastManager.Dispose();
         GameWindowManager.Dispose();
         Ui.Dispose();

@@ -42,6 +42,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.StopMovement)]
     private void HandleStopMovement(IpcMessage message) {
+        Plugin.SimpleInputMovement.StopMove();
         Plugin.MovementManager.StopMove();
     }
 }

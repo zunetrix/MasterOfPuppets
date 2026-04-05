@@ -12,12 +12,12 @@ namespace MasterOfPuppets.Movement;
 public class FollowPath : IDisposable {
     private Plugin Plugin { get; }
 
-    // --- Movement config ---
+    //  Movement config
     public bool MovementAllowed = true;
     public bool IgnoreDeltaY = false;
 
     /// <summary>Distance threshold to advance past a waypoint and to stop at the final waypoint.</summary>
-    public float Tolerance = 0.25f;
+    public float Tolerance = 0.3f;
 
     /// <summary>
     /// When > 0, clears all remaining waypoints once the player is within this distance of the final destination.
@@ -25,7 +25,7 @@ public class FollowPath : IDisposable {
     /// </summary>
     public float DestinationTolerance = 0;
 
-    // --- Precision mode ---
+    //  Precision mode
     /// <summary>
     /// When enabled, the last waypoint is approached in small steps for accurate stopping.
     /// Activated via <see cref="Move"/> with <c>precisionMode: true</c>.
@@ -33,12 +33,12 @@ public class FollowPath : IDisposable {
     public bool PrecisionMode = false;
 
     /// <summary>Stop distance for the final waypoint when <see cref="PrecisionMode"/> is on.</summary>
-    public float FinalTolerance = 0.02f;
+    public float FinalTolerance = 0.5f;
 
     /// <summary>Maximum movement step per frame when approaching the final waypoint in precision mode.</summary>
-    public float FinalStepSize = 0.05f;
+    public float FinalStepSize = 0.1f;
 
-    // --- Facing after arrival ---
+    //  Facing after arrival
     /// <summary>
     /// When set, the character rotates to face this direction (radians) after reaching the destination.
     /// Cleared automatically once the player's rotation is within <see cref="FacingTolerance"/>.
@@ -58,6 +58,7 @@ public class FollowPath : IDisposable {
     private Vector3? _posPreviousFrame;
     private int _msWithNoSignificantMovement = 0;
     private Vector3? _facingTarget;
+    private bool? _lastWalkingState;
 
     public FollowPath(Plugin plugin) {
         Plugin = plugin;
@@ -72,7 +73,7 @@ public class FollowPath : IDisposable {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
 
-        // --- Advance past waypoints already traversed ---
+        //  Advance past waypoints already traversed
         // Requires a previous frame position to have a valid movement vector.
         // Stops at Count == 1 so the final waypoint is handled by precision/facing logic below.
         while (Waypoints.Count > 1 && _posPreviousFrame.HasValue) {
@@ -93,7 +94,7 @@ public class FollowPath : IDisposable {
             Waypoints.RemoveAt(0);
         }
 
-        // --- Waypoints exhausted: rotate to face direction or stop fully ---
+        //  Waypoints exhausted: rotate to face direction or stop fully
         if (Waypoints.Count == 0) {
             _posPreviousFrame = player.Position;
             if (DesiredFacing.HasValue)
@@ -103,7 +104,7 @@ public class FollowPath : IDisposable {
             return;
         }
 
-        // --- Stuck detection ---
+        //  Stuck detection
         if (Plugin.Config.StopOnStuck && _posPreviousFrame.HasValue) {
             float dt = Math.Max(fwk.UpdateDelta.Milliseconds / 1000f, 0.0001f);
             float speed = Vector3.Distance(player.Position, _posPreviousFrame.Value) / dt;
@@ -123,22 +124,25 @@ public class FollowPath : IDisposable {
 
         _posPreviousFrame = player.Position;
 
-        // --- Cancel movement if player pressed a key ---
+        //  Cancel movement if player pressed a key
         if (Plugin.Config.CancelMoveOnUserInput && _movement.UserInput) {
             Stop();
             return;
         }
 
-        // --- Compute next desired position ---
+        //  Compute next desired position
         var target = Waypoints[0];
 
         if (PrecisionMode && Waypoints.Count == 1) {
             // Final waypoint in precision mode: step toward it gradually
             var delta = target - player.Position;
             if (IgnoreDeltaY) delta.Y = 0;
-            var dist = delta.Length();
+            var distance = delta.Length();
 
-            if (dist <= FinalTolerance) {
+            bool shouldWalk = PrecisionMode && distance <= FinalTolerance;
+            SetWalkingIfChanged(shouldWalk);
+
+            if (distance <= FinalTolerance) {
                 Waypoints.Clear();
                 if (DesiredFacing.HasValue)
                     ApplyFacing(player.Position, player.Rotation);
@@ -147,12 +151,13 @@ public class FollowPath : IDisposable {
                 return;
             }
 
-            var nextPos = player.Position + Vector3.Normalize(delta) * MathF.Min(dist, FinalStepSize);
+            var nextPos = player.Position + Vector3.Normalize(delta) * MathF.Min(distance, FinalStepSize);
             if (IgnoreDeltaY) nextPos.Y = player.Position.Y;
             _movement.DesiredPosition = nextPos;
         } else {
             var delta = target - player.Position;
             if (IgnoreDeltaY) delta.Y = 0;
+
             if (Waypoints.Count == 1 && delta.Length() <= Tolerance) {
                 Waypoints.Clear();
                 if (DesiredFacing.HasValue)
@@ -165,22 +170,22 @@ public class FollowPath : IDisposable {
             _movement.DesiredPosition = target;
         }
 
-        // --- Flying: spam jump to take off from mount if needed ---
-        if (_movement.DesiredPosition.Y > player.Position.Y
-            && !DalamudApi.Condition[ConditionFlag.InFlight]
-            && !DalamudApi.Condition[ConditionFlag.Diving]
-            && !IgnoreDeltaY) {
-            if (DalamudApi.Condition[ConditionFlag.Mounted])
-                ExecuteJump();
-            else {
-                _movement.Enabled = false;
-                return;
-            }
-        }
+        //  Flying: spam jump to take off from mount if needed
+        // if (_movement.DesiredPosition.Y > player.Position.Y
+        //     && !DalamudApi.Condition[ConditionFlag.InFlight]
+        //     && !DalamudApi.Condition[ConditionFlag.Diving]
+        //     && !IgnoreDeltaY) {
+        //     if (DalamudApi.Condition[ConditionFlag.Mounted])
+        //         ExecuteJump();
+        //     else {
+        //         _movement.Enabled = false;
+        //         return;
+        //     }
+        // }
 
         _movement.Enabled = MovementAllowed;
 
-        // --- Align camera toward movement direction ---
+        //  Align camera toward movement direction
         _camera.Enabled = Plugin.Config.AlignCameraToMovement;
         _camera.SpeedH = _camera.SpeedV = 360.Degrees();
         _camera.DesiredAzimuth = Angle.FromDirectionXZ(_movement.DesiredPosition - player.Position) + 180.Degrees();
@@ -220,6 +225,18 @@ public class FollowPath : IDisposable {
         _movement.Enabled = _camera.Enabled = false;
         _camera.SpeedH = _camera.SpeedV = default;
         _movement.DesiredPosition = DalamudApi.ObjectTable.LocalPlayer?.Position ?? Vector3.Zero;
+
+        if (PrecisionMode) {
+            SetWalkingIfChanged(false);
+        }
+    }
+
+    private void SetWalkingIfChanged(bool value) {
+        if (_lastWalkingState == value)
+            return;
+
+        _lastWalkingState = value;
+        MovementManager.SetWalking(value);
     }
 
     /// <summary>
@@ -266,6 +283,7 @@ public class FollowPath : IDisposable {
         if (playerPos == null) return;
         _movement.DesiredPosition = playerPos.Value;
         _movement.Enabled = true;
+        _lastWalkingState = null;
     }
 
     private unsafe void ExecuteJump() {

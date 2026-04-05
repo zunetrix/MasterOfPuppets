@@ -1,97 +1,229 @@
 using System;
 using System.Numerics;
+using System.Threading;
 
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+
+using MasterOfPuppets.Extensions;
+using MasterOfPuppets.Util;
+
 namespace MasterOfPuppets.Movement;
 
-public class SimpleInputMovement : IDisposable {
+public unsafe class SimpleInputMovement : IDisposable {
+    [Signature("E8 ?? ?? ?? ?? 4C 63 4B 04", ScanType = ScanType.Text)]
+    private nint _movementHookAddress;
 
-    /// <summary>Current injected direction. Set to None to stop.</summary>
+    [Signature("74 0C 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ??", ScanType = ScanType.StaticAddress)]
+    private nint _moveControllerSubMemberForMineInstance;
+
+    [Signature("40 53 48 83 EC ?? 48 8B 41 20 48 8B D9 80 B8 02 02 00 00 ??", ScanType = ScanType.Text)]
+    private readonly delegate* unmanaged<nint, long> _moveStop;
+
+    /// <summary>Current injected direction. Set to None to stop injection.</summary>
     public MovementDirection Direction {
         get => _direction;
         set {
             _direction = value;
+            // Only keep the hook enabled while we are actually injecting
+            // When idle the hook is disabled so it has zero runtime cost
             if (value == MovementDirection.None)
-                _hook?.Disable();
+                _playerMoveHook?.Disable();
             else
-                _hook?.Enable();
+                _playerMoveHook?.Enable();
+        }
+    }
+
+    public bool IsWalking {
+        get {
+            var control = Control.Instance();
+            if (control == null) return false;
+            return control->IsWalking;
+        }
+        set {
+            var control = Control.Instance();
+            if (control == null) return;
+
+            if (control->IsWalking == value)
+                return;
+
+            control->IsWalking = value;
         }
     }
 
     // -------------------------------------------------------------------------
     // Hook
-    // The hook intercepts every movement input poll.  When our direction is
-    // active, we return 1 (key held) for that direction regardless of actual
-    // keyboard state - identical to what the game sees when you hold a key.
+    //
+    // Intercepts every movement input poll.  When our direction is active we
+    // return 1 (key held) for that direction code, regardless of keyboard state.
+    // This is identical to what the game sees when you physically hold a key.
+    // The hook starts disabled and is enabled only while Direction != None.
     // -------------------------------------------------------------------------
     private delegate byte PlayerMoveDelegate(nint a1, int direction);
+    private Hook<PlayerMoveDelegate>? _playerMoveHook;
+    private byte PlayerMoveDetour(nint a1, int dir) {
+        var original = _playerMoveHook.Original(a1, dir);
 
-    [Signature("E8 ?? ?? ?? ?? 4C 63 4B 04")]
-    private readonly nint _hookAddress;
+        if (_direction != MovementDirection.None && dir == (int)_direction)
+            return 1;
 
-    private Hook<PlayerMoveDelegate>? _hook;
+        return original;
+    }
+
     private MovementDirection _direction;
+
+    // Active cancellation source for the current MoveTo coroutine
+    private CancellationTokenSource? _cts;
 
     public SimpleInputMovement() {
         DalamudApi.GameInteropProvider.InitializeFromAttributes(this);
 
-        _hook = DalamudApi.GameInteropProvider.HookFromAddress<PlayerMoveDelegate>(
-            _hookAddress,
-            (a1, dir) => {
-                var original = _hook.Original(a1, dir);
-                // If this poll is asking about our injected direction, return 1
-                // (pressed) regardless of what the keyboard actually says.
-                if (_direction != MovementDirection.None && dir == (int)_direction)
-                    return 1;
-                return original;
-            });
+        if (_movementHookAddress == 0)
+            throw new Exception("Failed to find MovementHook");
 
+        _playerMoveHook = DalamudApi.GameInteropProvider.HookFromAddress<PlayerMoveDelegate>(_movementHookAddress, PlayerMoveDetour);
         // Hook starts disabled; enabled automatically when Direction is set.
+
+        DalamudApi.PluginLog.Debug($"[SimpleInputMovement] MoveControllerInstance: {_moveControllerSubMemberForMineInstance:X}");
     }
 
     public void Dispose() {
-        Direction = MovementDirection.None;
-        _hook?.Dispose();
-        _hook = null;
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+
+        _direction = MovementDirection.None;
+
+        _playerMoveHook?.Disable();
+        _playerMoveHook?.Dispose();
+        _playerMoveHook = null;
     }
 
-    // -------------------------------------------------------------------------
-    // helpers
-    // -------------------------------------------------------------------------
-
-    /// <summary>
-    /// Picks the best discrete direction to move toward <paramref name="destination"/>
-    /// and sets it.  Call every frame while moving; call Stop() on arrival.
-    /// </summary>
-    public void MoveToward(Vector3 destination, bool legacyMode = false) {
-        var player = DalamudApi.ObjectTable.LocalPlayer;
-        if (player == null) return;
-
-        var delta = destination - player.Position;
-        if (new Vector2(delta.X, delta.Z).LengthSquared() < 0.01f) {
-            Stop();
+    private void MoveStopNative() {
+        if (_moveStop == null || _moveControllerSubMemberForMineInstance == 0)
             return;
+        try {
+            _moveStop(_moveControllerSubMemberForMineInstance);
+        } catch {
+            // ignored
         }
-
-        // Compute angle from player rotation to destination (XZ plane only).
-        var targetAngle = Angle.FromDirectionXZ(delta);
-        var refAngle = player.Rotation.Radians();
-        var relative = (targetAngle - refAngle).Normalized();
-
-        // Map the relative angle to the nearest discrete direction.
-        // ±45° = Forward, ±135° = Backward, sides = strafe.
-        Direction = relative.Deg switch {
-            > -45 and <= 45 => MovementDirection.Forward,
-            > 45 and <= 135 => MovementDirection.StrafeRight,
-            > -135 and <= -45 => MovementDirection.StrafeLeft,
-            _ => MovementDirection.Backward,
-        };
     }
 
-    /// <summary>Stops all injected movement.</summary>
-    public void Stop() => Direction = MovementDirection.None;
+    public void StopMove() {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+
+        _direction = MovementDirection.None;
+        _playerMoveHook?.Disable();
+
+        // DalamudApi.Framework.RunOnFrameworkThread(() => {
+        //     if (_playerMoveHook == null) return;
+        //     if (DalamudApi.ObjectTable.LocalPlayer == null || !DalamudApi.ClientState.IsLoggedIn)
+        //         return;
+        //     try {
+        //         MoveStopNative();
+        //     } catch {
+        //         // ignored
+        //     }
+        // });
+    }
+
+    // -------------------------------------------------------------------------
+    // MoveTo
+    // Returns the CancellationTokenSource so the caller can cancel externally,
+    // or null if movement was refused because Performing is already active.
+    // -------------------------------------------------------------------------
+    public CancellationTokenSource? MoveTo(Vector3 destination, float precision = 0.6f, float? faceDirection = null) {
+        // Refuse to start while the player is performing - movement is blocked
+        // by the game anyway, so there is nothing useful we could do.
+        if (DalamudApi.Condition[ConditionFlag.Performing])
+            return null;
+
+        // Cancel any previous move before starting a new one.
+        StopMove();
+
+        var cts = new CancellationTokenSource();
+        _cts = cts;
+
+        // Snapshot current control settings so we can restore them on exit,
+        // regardless of whether we finish, are cancelled, or Performing fires.
+        uint savedMoveMode = DalamudApi.GameConfig.UiControl.GetUInt("MoveMode");
+        uint savedPadMode = DalamudApi.GameConfig.UiConfig.GetUInt("PadMode");
+
+        Coroutine.StartRunOnFramework(
+            runFunction: () => {
+                var player = DalamudApi.ObjectTable.LocalPlayer;
+                if (player == null) return;
+
+                // If the player entered performance mode mid-move, cancel
+                // everything immediately - Stop() will clean up direction and
+                // native movement; the coroutine's callback restores settings.
+                if (DalamudApi.Condition[ConditionFlag.Performing]) {
+                    StopMove();
+                    return;
+                }
+
+                // Force standard movement mode so discrete injection works.
+                DalamudApi.GameConfig.UiControl.Set("MoveMode", 0u);
+                DalamudApi.GameConfig.UiConfig.Set("PadMode", 0u);
+
+                // Re-face target every frame in case the player drifts.
+                GameFunctions.FaceDirection(destination);
+
+                Direction = MovementDirection.Forward;
+
+                // Slow to walk when close for a cleaner arrival.
+                IsWalking = player.Position.Distance2D(destination) < precision;
+            },
+            callback: () => {
+                // Restore control settings regardless of how the loop ended.
+                DalamudApi.GameConfig.UiControl.Set("MoveMode", savedMoveMode);
+                DalamudApi.GameConfig.UiConfig.Set("PadMode", savedPadMode);
+
+                Direction = MovementDirection.None;
+                try {
+                    MoveStopNative();
+                } catch {
+                    // ignored
+                }
+                IsWalking = false;
+
+                // Apply endpoint rotation only on clean arrival (not on cancel
+                // or Performing - the player may be mid-performance already).
+                if (faceDirection is float rot
+                    && !cts.IsCancellationRequested
+                    && !DalamudApi.Condition[ConditionFlag.Performing]) {
+                    GameFunctions.FaceDirectionDeferred(rot.Radians());
+                }
+
+                _cts = null;
+            },
+            stopWhen: () => {
+                // var player = DalamudApi.ObjectTable.LocalPlayer;
+                // if (player == null) { DalamudApi.PluginLog.Warning("stopWhen: player null"); return true; }
+                // if (!DalamudApi.ClientState.IsLoggedIn) { DalamudApi.PluginLog.Warning("stopWhen: not logged in"); return true; }
+                // if (cts.IsCancellationRequested) { DalamudApi.PluginLog.Warning("stopWhen: cancelled"); return true; }
+                // if (DalamudApi.Condition[ConditionFlag.Performing]) { DalamudApi.PluginLog.Warning("stopWhen: performing"); return true; }
+                // var dist = player.Position.Distance2D(destination);
+                // DalamudApi.PluginLog.Warning($"stopWhen: dist={dist} precision={precision}");
+                // return dist < precision;
+
+                var player = DalamudApi.ObjectTable.LocalPlayer;
+                // Stop when: arrived, logged out, cancelled, or Performing active.
+                return player == null
+                    || !DalamudApi.ClientState.IsLoggedIn
+                    || cts.IsCancellationRequested
+                    || DalamudApi.Condition[ConditionFlag.Performing]
+                    || player.Position.Distance2D(destination) < precision;
+            },
+            cancellationToken: cts.Token);
+
+        return cts;
+    }
 }
 
 public enum MovementDirection : int {

@@ -154,6 +154,32 @@ public class PluginCommandManager : IDisposable {
                 case "actions":
                     Plugin.Ui.ActionsBroadcastWindow.Toggle();
                     break;
+                case "moveinput": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ShowNotification($"Invalid arguments to move", NotificationType.Error, 5000);
+                            return;
+                        }
+
+                        var argParts = parsedArgs[1].Split(" ");
+                        if (argParts.Length != 3) {
+                            DalamudApi.PluginLog.Debug($"Invalid coord amount expected x y z {parsedArgs[1]}");
+                            return;
+                        }
+
+                        if (!float.TryParse(argParts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
+                        || !float.TryParse(argParts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
+                        || !float.TryParse(argParts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
+                            DalamudApi.PluginLog.Warning($"[mop move] invalid argument float parse: \"{parsedArgs[1]}\"");
+                            return;
+                        }
+
+                        var destination = DalamudApi.ObjectTable.LocalPlayer.Position + new Vector3(x, y, z);
+                        Plugin.SimpleInputMovement.MoveTo(destination);
+                    }
+                    break;
+                case "stopmoveinput":
+                    Plugin.SimpleInputMovement.StopMove();
+                    break;
                 case "move": {
                         if (parsedArgs.Count < 2) {
                             DalamudApi.ShowNotification($"Invalid arguments to move", NotificationType.Error, 5000);
@@ -189,9 +215,9 @@ public class PluginCommandManager : IDisposable {
                         }
                         var player = DalamudApi.ObjectTable.LocalPlayer;
                         if (player == null) return;
-                        var target = (player.Rotation.Radians() - faceAngle.Degrees()).Normalized();
-                        Plugin.MovementManager.FaceDirection(target);
-                        // GameFunctions.SetFacing(target);
+                        // var target = (player.Rotation.Radians() - faceAngle.Degrees()).Normalized();
+                        // Plugin.MovementManager.FaceDirection(target);
+                        GameFunctions.FaceDirectionDeferred(faceAngle.Radians());
                     }
                     break;
                 case "faceabs": {
@@ -200,19 +226,19 @@ public class PluginCommandManager : IDisposable {
                             DalamudApi.ShowNotification("Invalid arguments. Expected angle in degrees", NotificationType.Error, 5000);
                             return;
                         }
-                        var target = (180f - faceAngle).Degrees().Normalized();
-                        Plugin.MovementManager.FaceDirection(target);
-                        // GameFunctions.SetFacing(target);
+                        // var target = (180f - faceAngle).Degrees().Normalized();
+                        // Plugin.MovementManager.FaceDirection(target);
+                        GameFunctions.FaceDirectionDeferred(faceAngle.Radians());
                     }
                     break;
                 case "stopmove":
                     Plugin.IpcProvider.StopMovement();
                     break;
                 case "follow":
-                    MovementManager.Follow(DalamudApi.PlayerState.EntityId);
+                    Plugin.IpcProvider.Follow(DalamudApi.PlayerState.EntityId);
                     break;
                 case "stopfollow":
-                    MovementManager.StopFollow();
+                    Plugin.IpcProvider.StopFollow();
                     break;
                 case "movetotarget":
                 case "mtt":
@@ -236,13 +262,13 @@ public class PluginCommandManager : IDisposable {
                     Plugin.IpcProvider.ExecuteMoveToMyTarget();
                     break;
                 case "enablewalk":
-                    Plugin.MovementManager.SetWalking(true);
+                    MovementManager.SetWalking(true);
                     break;
                 case "disablewalk":
-                    Plugin.MovementManager.SetWalking(false);
+                    MovementManager.SetWalking(false);
                     break;
                 case "togglewalk":
-                    Plugin.MovementManager.ToggleWalking();
+                    MovementManager.ToggleWalking();
                     break;
                 case "gs": {
                         if (parsedArgs.Count < 2 ||
