@@ -44,10 +44,10 @@ internal unsafe class GameWindowManager : IDisposable {
     }
 
     public void SetCharacterNameWindowsTitle(bool enabled) {
-        if (!DalamudApi.PlayerState.IsLoaded) return;
+        if (!DalamudApi.ClientState.IsLoggedIn || !DalamudApi.PlayerState.IsLoaded) return;
 
-        var playerName = DalamudApi.PlayerState.CharacterName.ToString();
-        var homeWorld = DalamudApi.PlayerState.HomeWorld.Value.Name.ToString();
+        var playerName = DalamudApi.PlayerState?.CharacterName.ToString();
+        var homeWorld = DalamudApi.PlayerState?.HomeWorld.Value.Name.ToString();
 
         var title = (enabled && !string.IsNullOrWhiteSpace(playerName))
             ? $"{playerName}@{homeWorld}"
