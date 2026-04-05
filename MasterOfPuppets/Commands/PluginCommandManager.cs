@@ -208,6 +208,7 @@ public class PluginCommandManager : IDisposable {
                     }
                     break;
                 case "face": {
+                        // relative sum to current rotation
                         if (parsedArgs.Count < 2 ||
                             !float.TryParse(parsedArgs[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float faceAngle)) {
                             DalamudApi.ShowNotification("Invalid arguments. Expected angle in degrees", NotificationType.Error, 5000);
@@ -215,20 +216,25 @@ public class PluginCommandManager : IDisposable {
                         }
                         var player = DalamudApi.ObjectTable.LocalPlayer;
                         if (player == null) return;
-                        // var target = (player.Rotation.Radians() - faceAngle.Degrees()).Normalized();
+                        // Subtract because the Angle struct increases CCW while user-facing degrees are CW
+                        var target = (player.Rotation.Radians() - faceAngle.Degrees()).Normalized();
                         // Plugin.MovementManager.FaceDirection(target);
-                        GameFunctions.FaceDirectionDeferred(faceAngle.Radians());
+                        GameFunctions.FaceDirectionDeferred(target);
                     }
                     break;
+
                 case "faceabs": {
+                        // absolute
                         if (parsedArgs.Count < 2 ||
                             !float.TryParse(parsedArgs[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float faceAngle)) {
                             DalamudApi.ShowNotification("Invalid arguments. Expected angle in degrees", NotificationType.Error, 5000);
                             return;
                         }
-                        // var target = (180f - faceAngle).Degrees().Normalized();
+                        // (180f - angle)  (north=0, cw)
+                        // game convention (north=0, ccw)
+                        var target = (180f - faceAngle).Degrees().Normalized();
                         // Plugin.MovementManager.FaceDirection(target);
-                        GameFunctions.FaceDirectionDeferred(faceAngle.Radians());
+                        GameFunctions.FaceDirectionDeferred(target);
                     }
                     break;
                 case "stopmove":

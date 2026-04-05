@@ -2,11 +2,8 @@ using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-using Dalamud.Utility.Signatures;
-
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
-// using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 
 using MasterOfPuppets.Movement;
 
@@ -14,14 +11,14 @@ namespace MasterOfPuppets;
 
 // from: https://github.com/PunishXIV/Questionable/blob/new-main/Questionable/Functions/GameFunctions.cs
 public static unsafe class GameFunctions {
-    private sealed class Sigs {
-        [Signature("48 8D 15 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 47 3E", ScanType = ScanType.StaticAddress)]
-        public readonly nint FollowStruct;
+    private static readonly nint _followStruct;
 
-        public Sigs() => DalamudApi.GameInteropProvider.InitializeFromAttributes(this);
+    static GameFunctions() {
+        if (!DalamudApi.SigScanner.TryGetStaticAddressFromSig(
+            "48 8D 15 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 47 3E",
+            out _followStruct))
+            DalamudApi.PluginLog.Warning("[GameFunctions] FollowStruct not found");
     }
-
-    private static readonly Sigs _sigs = new();
 
     private delegate void AbandonDutyDelegate(bool a1);
     private static readonly AbandonDutyDelegate _abandonDuty =
@@ -66,16 +63,16 @@ public static unsafe class GameFunctions {
 
     /// <summary>Activates the game's native follow mode targeting the given entity.</summary>
     public static void Follow(uint entityId) {
-        if (_sigs.FollowStruct == 0) return;
-        var ptr = (uint*)_sigs.FollowStruct;
+        if (_followStruct == 0) return;
+        var ptr = (uint*)_followStruct;
         ptr[0] = entityId;
         ptr[2] = 4;
     }
 
     /// <summary>Deactivates the game's native follow mode.</summary>
     public static void StopFollow() {
-        if (_sigs.FollowStruct == 0) return;
-        var ptr = (uint*)_sigs.FollowStruct;
+        if (_followStruct == 0) return;
+        var ptr = (uint*)_followStruct;
         ptr[0] = 0xE000_0000;
         ptr[2] = 1;
     }

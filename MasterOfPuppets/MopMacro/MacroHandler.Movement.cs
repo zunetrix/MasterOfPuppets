@@ -96,7 +96,7 @@ public partial class MacroHandler {
     /// Examples: 90 turns right 90°, -90 turns left 90°, 180 turns around.
     /// </summary>
     private async Task HandleMopFace(string macroId, string args, CancellationToken token) {
-        if (!float.TryParse(args.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out float angleDeg)) {
+        if (!float.TryParse(args.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out float faceAngle)) {
             DalamudApi.PluginLog.Warning($"[mopface] invalid angle: \"{args}\"");
             return;
         }
@@ -105,9 +105,10 @@ public partial class MacroHandler {
             var player = DalamudApi.ObjectTable.LocalPlayer;
             if (player == null) return;
             // Subtract because the Angle struct increases CCW while user-facing degrees are CW.
-            var target = (player.Rotation.Radians() - angleDeg.Degrees()).Normalized();
-            Plugin.MovementManager.FaceDirection(target);
-            DalamudApi.PluginLog.Debug($"[mopface] +{angleDeg}° from {player.Rotation.Radians().Deg:F1}° → {target.Deg:F1}°");
+            var target = (player.Rotation.Radians() - faceAngle.Degrees()).Normalized();
+            // Plugin.MovementManager.FaceDirection(target);
+            GameFunctions.FaceDirectionDeferred(target);
+            DalamudApi.PluginLog.Debug($"[mopface] +{faceAngle}° from {player.Rotation.Radians().Deg:F1}° → {faceAngle:F1}°");
         });
     }
 
@@ -123,7 +124,8 @@ public partial class MacroHandler {
 
         // Convert compass CW (0=north) to Angle struct convention (0=south, increases CCW).
         var target = (180f - angleDeg).Degrees().Normalized();
-        Plugin.MovementManager.FaceDirection(target);
+        // Plugin.MovementManager.FaceDirection(target);
+        GameFunctions.FaceDirectionDeferred(target);
         DalamudApi.PluginLog.Debug($"[mopfaceabs] {angleDeg}° → {target.Deg:F1}°");
         return Task.CompletedTask;
     }

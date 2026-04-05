@@ -137,7 +137,7 @@ public unsafe class SimpleInputMovement : IDisposable {
     // Returns the CancellationTokenSource so the caller can cancel externally,
     // or null if movement was refused because Performing is already active.
     // -------------------------------------------------------------------------
-    public CancellationTokenSource? MoveTo(Vector3 destination, float precision = 0.6f, float? faceDirection = null) {
+    public CancellationTokenSource? MoveTo(Vector3 destination, float precision = 0.3f, float? faceDirection = null) {
         // Refuse to start while the player is performing - movement is blocked
         // by the game anyway, so there is nothing useful we could do.
         if (DalamudApi.Condition[ConditionFlag.Performing])
