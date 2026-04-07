@@ -154,6 +154,9 @@ public unsafe class SimpleInputMovement : IDisposable {
         uint savedMoveMode = DalamudApi.GameConfig.UiControl.GetUInt("MoveMode");
         uint savedPadMode = DalamudApi.GameConfig.UiConfig.GetUInt("PadMode");
 
+        DalamudApi.GameConfig.UiControl.Set("MoveMode", 0u);
+        DalamudApi.GameConfig.UiConfig.Set("PadMode", 0u);
+
         Coroutine.StartRunOnFramework(
             runFunction: () => {
                 var player = DalamudApi.ObjectTable.LocalPlayer;
@@ -166,10 +169,6 @@ public unsafe class SimpleInputMovement : IDisposable {
                     StopMove();
                     return;
                 }
-
-                // Force standard movement mode so discrete injection works.
-                DalamudApi.GameConfig.UiControl.Set("MoveMode", 0u);
-                DalamudApi.GameConfig.UiConfig.Set("PadMode", 0u);
 
                 // Re-face target every frame in case the player drifts.
                 GameFunctions.FaceDirection(destination);
