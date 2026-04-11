@@ -445,6 +445,9 @@ public class PluginCommandManager : IDisposable {
                 case "settings":
                     Plugin.Ui.SettingsWindow.Toggle();
                     break;
+                case "ad":
+                    GameFunctions.AbandonDuty();
+                    break;
                 case "event":
                     if (parsedArgs.Count < 2) {
                         DalamudApi.ChatGui.PrintError("Usage: event <name> | event stop");

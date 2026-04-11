@@ -91,9 +91,9 @@ public partial class FormationWindow {
                         // Column 1: X (displayed in plot-space so it matches the visual preview)
                         ImGui.TableNextColumn();
                         ImGui.SetNextItemWidth(-1);
-                        var plotX = -p.Offset.X; // OffsetToPlot: plotX = -worldX
+                        var plotX = p.Offset.X; // OffsetToPlot: plotX = -worldX
                         if (ImGui.DragFloat("##x", ref plotX, 0.001f, -500f, 500f, "%.3f")) {
-                            p.Offset.X = -plotX; // PlotToOffset: worldX = -plotX
+                            p.Offset.X = plotX; // PlotToOffset: worldX = -plotX
                         }
                         if (ImGui.IsItemActivated()) {
                             _selPoint = i;
@@ -103,7 +103,7 @@ public partial class FormationWindow {
                             Plugin.IpcProvider.SyncConfiguration();
                         }
                         if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
-                            plotX = 0;
+                            p.Offset.X = 0;
                             Plugin.Config.Save();
                             Plugin.IpcProvider.SyncConfiguration();
                         }
@@ -202,6 +202,10 @@ public partial class FormationWindow {
                 }
                 ImGui.EndDisabled();
 
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
                 if (ImGui.BeginTable("##fichartbl", 3,
                         ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,
                         new Vector2(-1, 80f))) {
@@ -244,7 +248,10 @@ public partial class FormationWindow {
                     .ToList();
 
                 ImGui.BeginDisabled(availGroups.Count == 0);
-                ImGui.SetNextItemWidth(-1);
+                float buttonWidth = ImGui.GetFrameHeight();
+                float spacing = ImGui.GetStyle().ItemSpacing.X;
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - buttonWidth - spacing);
+
                 if (_groupCombo.Draw("##figrpcombo", availGroups, ref _groupSelected)) {
                     if (!string.IsNullOrEmpty(_groupSelected)) {
                         pt2.GroupIds.Add(_groupSelected);
@@ -254,6 +261,15 @@ public partial class FormationWindow {
                     _groupSelected = string.Empty;
                 }
                 ImGui.EndDisabled();
+
+                ImGui.SameLine();
+                if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Users, $"##CharactersMenu", "Characters/Groups")) {
+                    Plugin.Ui.CharactersWindow.Toggle();
+                }
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
 
                 if (ImGui.BeginTable("##figrptbl", 3,
                         ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,

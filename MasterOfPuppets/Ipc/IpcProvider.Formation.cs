@@ -50,8 +50,7 @@ internal partial class IpcProvider {
         var playerCid = DalamudApi.PlayerState.ContentId;
         if (playerCid == leaderCid) return;
 
-        var point = formation.Points.FirstOrDefault(p =>
-            p.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(playerCid));
+        var point = formation.Points.FirstOrDefault(p => p.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(playerCid));
         if (point == null) return;
 
         var leaderPos = new Vector3(lx, ly, lz);
@@ -59,6 +58,8 @@ internal partial class IpcProvider {
 
         // Match DrawWorldOverlay: leaderRot + point.Angle * DegToRad
         float facingRad = leaderRot + point.Angle * Angle.DegToRad;
+        // DalamudApi.PluginLog.Warning($"[ExecuteFormation] leaderPos: {leaderPos} worldPos: {worldPos} faceDirection: {facingRad}");
+
         // Plugin.MovementManager.MoveTo(worldPos, facingRad.Radians());
         Plugin.SimpleInputMovement.MoveTo(worldPos, faceDirection: facingRad);
 

@@ -329,7 +329,7 @@ public partial class FormationWindow {
 
             var point = new FormationPoint {
                 Offset = new Vector3(offset.X, 0, offset.Z),
-                Angle = 0f, // Facing north by convention; rotate at load time
+                Angle = obj.Rotation,
             };
 
             if (member.ContentId != 0)
