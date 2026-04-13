@@ -23,6 +23,7 @@ public class MacroEditorWindow : Window {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
     private Macro MacroItem = new();
+    private bool _cancelRequested = false;
     private int MacroIndex;
     private int SelectedCommandIndex = 0;
     private bool EditingExistingMacro = false;
@@ -63,9 +64,8 @@ public class MacroEditorWindow : Window {
     }
 
     public override void OnClose() {
-        if (Plugin.Config.AutoSaveMacro && EditingExistingMacro) {
+        if (!_cancelRequested && Plugin.Config.AutoSaveMacro && EditingExistingMacro) {
             bool isMacroSaved = SaveMacro();
-
             if (!isMacroSaved) {
                 IsOpen = true;
                 return;
@@ -79,6 +79,7 @@ public class MacroEditorWindow : Window {
     private void RessetState() {
         MacroItem = new();
         EditingExistingMacro = false;
+        _cancelRequested = false;
         MacroIndex = Plugin.MacroManager.GetMacrosCount();
         SelectedCommandIndex = 0;
         TagName = string.Empty;
@@ -332,7 +333,12 @@ public class MacroEditorWindow : Window {
         }
 
         ImGui.SameLine();
+        if (ImGuiUtil.DangerButton("Cancel##CancelSaveBtn")) {
+            _cancelRequested = true;
+            this.IsOpen = false;
+        }
 
+        ImGui.SameLine();
         var autoSaveMacro = Plugin.Config.AutoSaveMacro;
         if (ImGui.Checkbox(Language.SettingsWindowAutoSaveMacro, ref autoSaveMacro)) {
             Plugin.Config.AutoSaveMacro = autoSaveMacro;
