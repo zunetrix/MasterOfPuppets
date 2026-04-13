@@ -8,6 +8,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Extensions.Dalamud;
+using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiIconPicker;
 
 namespace MasterOfPuppets;
@@ -177,7 +178,8 @@ public class IconPickerDialogWindow : Window {
                     DalamudApi.TextureProvider.DrawIcon(namedIcon.IconId, new Vector2(300 * ImGuiHelpers.GlobalScale));
                 } else {
                     // Icon Details
-                    ImGui.Text($"{namedIcon.IconId}");
+                    ImGui.Text($"Icon Id: {namedIcon.IconId}");
+                    ImGui.Text($"Middle-Click to open in browser");
 
                     if (showIconNames) {
                         var columns = 3;
@@ -201,6 +203,10 @@ public class IconPickerDialogWindow : Window {
                 this.Callback = null;
                 this.IsOpen = false;
             }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Middle)) {
+                WindowsApi.OpenUrl(TextureExporter.GetXivApiIconAssetUrl(namedIcon.IconId));
+            }
+
         }, columns, lineHeight);
     }
 }
