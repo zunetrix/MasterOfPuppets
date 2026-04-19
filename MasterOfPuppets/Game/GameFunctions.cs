@@ -40,7 +40,12 @@ public static unsafe class GameFunctions {
 
         var am = ActionManager.Instance();
         if (am == null) return;
+
+        //need auto face target on action execution setting enabled
+        uint savedAutoFaceTargetOnAction = DalamudApi.GameConfig.UiControl.GetUInt("AutoFaceTargetOnAction");
+        DalamudApi.GameConfig.UiControl.Set("AutoFaceTargetOnAction", 1u);
         am->AutoFaceTargetPosition(&targetPos);
+        DalamudApi.GameConfig.UiControl.Set("AutoFaceTargetOnAction", savedAutoFaceTargetOnAction);
 
         // Reset DesiredRotation so the interpolator does not undo our
         // facing on the very next frame.
@@ -49,7 +54,11 @@ public static unsafe class GameFunctions {
     }
 
     public static void FaceDirectionDeferred(Angle angle) {
-        DalamudApi.Framework.RunOnTick(() => FaceDirection(angle));
+        DalamudApi.Framework.RunOnTick(() => {
+            if (DalamudApi.ObjectTable.LocalPlayer == null) return;
+            if (!DalamudApi.ClientState.IsLoggedIn) return;
+            FaceDirection(angle);
+        });
     }
 
     /// <summary>Rotates the local player to face a world-space position.</summary>

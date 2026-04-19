@@ -31,8 +31,8 @@ internal static unsafe class GameCameraManager {
 
         var vtbl = camManager->worldCamera->vtbl;
 
-        hook = DalamudApi.GameInteropProvider
-            .HookFromAddress<GetCameraPositionDelegate>(vtbl[15], Detour);
+        // set position
+        hook = DalamudApi.GameInteropProvider.HookFromAddress<GetCameraPositionDelegate>(vtbl[15], Detour);
 
         hook.Enable();
     }

@@ -105,46 +105,6 @@ internal class Configuration : IPluginConfiguration {
         ListenedChatTypes = new();
     }
 
-    // public void UpdateFromJson(string cofigurationJson) {
-    //     if (string.IsNullOrWhiteSpace(cofigurationJson)) return;
-
-    //     var newPluginConfig = cofigurationJson.JsonDeserialize<Configuration>();
-    //     if (newPluginConfig == null) return;
-
-    //     // macro
-    //     Macros = newPluginConfig.Macros;
-    //     Characters = newPluginConfig.Characters;
-    //     CidsGroups = newPluginConfig.CidsGroups;
-    //     AutoSaveMacro = newPluginConfig.AutoSaveMacro;
-
-    //     // import export
-    //     MacroExportPath = newPluginConfig.MacroExportPath;
-    //     MacroImportMode = newPluginConfig.MacroImportMode;
-    //     IncludeCidOnExport = newPluginConfig.IncludeCidOnExport;
-    //     IncludeCidOnImport = newPluginConfig.IncludeCidOnImport;
-    //     BackupBeforeImport = newPluginConfig.BackupBeforeImport;
-
-    //     SyncClients = newPluginConfig.SyncClients;
-
-    //     UseChatSync = newPluginConfig.UseChatSync;
-    //     ListenedChatTypes = newPluginConfig.ListenedChatTypes;
-    //     UseChatCommandSenderWhitelist = newPluginConfig.UseChatCommandSenderWhitelist;
-    //     ChatCommandSenderWhitelist = newPluginConfig.ChatCommandSenderWhitelist;
-    //     DefaultChatSyncPrefix = newPluginConfig.DefaultChatSyncPrefix;
-
-    //     DelayBetweenActions = newPluginConfig.DelayBetweenActions;
-    //     SaveConfigAfterSync = newPluginConfig.SaveConfigAfterSync;
-
-    //     // UI
-    //     ShowPanelActionsBroadcast = newPluginConfig.ShowPanelActionsBroadcast;
-    //     ShowPanelMacroTags = newPluginConfig.ShowPanelMacroTags;
-    //     ActionIconSize = newPluginConfig.ActionIconSize;
-
-    //     OpenOnStartup = newPluginConfig.OpenOnStartup;
-    //     OpenOnLogin = newPluginConfig.OpenOnLogin;
-    //     AllowCloseWithEscape = newPluginConfig.AllowCloseWithEscape;
-    // }
-
     private void UpdateFrom(Configuration other) {
         var type = typeof(Configuration);
 

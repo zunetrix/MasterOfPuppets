@@ -157,6 +157,7 @@ public unsafe class SimpleInputMovement : IDisposable {
         DalamudApi.GameConfig.UiControl.Set("MoveMode", 0u);
         DalamudApi.GameConfig.UiConfig.Set("PadMode", 0u);
 
+
         Coroutine.StartRunOnFramework(
             runFunction: () => {
                 var player = DalamudApi.ObjectTable.LocalPlayer;
