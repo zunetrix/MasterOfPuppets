@@ -34,8 +34,24 @@ public static class GameSettingsManager {
         DalamudApi.GameConfig.Set(SystemConfigOption.DisplayObjectLimitType2, (uint)displayObjectLimitType);
     }
 
+    public static void SetAutoFaceTarget(uint value) {
+        if (value is 0u or 1u) {
+            DalamudApi.GameConfig.Set(UiControlOption.AutoFaceTargetOnAction, value);
+        }
+    }
+
     public static void SetAlwaysInput(uint value) {
         DalamudApi.GameConfig.Set(SystemConfigOption.AlwaysInput, value);
+    }
+
+    public static void SetSoundMaster(uint value) {
+        // 0 = enabled
+        // 1 = muted
+        if (value is 0u or 1u) {
+            DalamudApi.GameConfig.Set(SystemConfigOption.IsSndMaster, value);
+            // DalamudApi.GameConfig.System.Set("IsSndMaster", value);
+            // DalamudApi.GameConfig.System.GetUInt("IsSndMaster");
+        }
     }
 
     // public static void GetDisplayObjectLimitType()

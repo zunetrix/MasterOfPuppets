@@ -393,7 +393,19 @@ public class PluginCommandManager : IDisposable {
                             DalamudApi.PluginLog.Warning($"Invalid object quantity value (0-5): {displayObjectLimitType}");
                             return;
                         }
-                        Plugin.IpcProvider.SetGameSettingsObjectQuantity(displayObjectLimitType);
+                        GameSettingsManager.SetDisplayObjectLimit(displayObjectLimitType);
+                    }
+                    break;
+                case "sound": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
+                            return;
+                        }
+
+                        if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
+                            GameSettingsManager.SetSoundMaster(0);
+                        else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
+                            GameSettingsManager.SetSoundMaster(1);
                     }
                     break;
                 case "formation": {
