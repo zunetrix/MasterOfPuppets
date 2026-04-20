@@ -57,7 +57,8 @@ internal class Configuration : IPluginConfiguration {
     public HashSet<int> KeyboardBroadcastIgnoredKeys { get; set; } = new();
     public bool ShowCharacterNameInWindowTitle { get; set; } = true;
     public bool AllowFreeGameWindowResize { get; set; } = true;
-
+    public bool RunLoginMacro { get; set; } = false;
+    public string LoginMacro { get; set; } = string.Empty;
     // Interface
     public bool OpenOnStartup { get; set; } = false;
 

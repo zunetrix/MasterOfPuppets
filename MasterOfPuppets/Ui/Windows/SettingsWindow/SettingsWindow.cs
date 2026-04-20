@@ -305,6 +305,43 @@ public class SettingsWindow : Window {
                 Plugin.Ui.CharactersWindow.Toggle();
         }
 
+        using (ImGuiGroupPanel.BeginGroupPanel("Login Macro")) {
+            var runLoginMacro = Plugin.Config.RunLoginMacro;
+            if (ImGui.Checkbox("Run macro on login", ref runLoginMacro)) {
+                Plugin.Config.RunLoginMacro = runLoginMacro;
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.ToolTip("Use this option to run a macro on login and configure things like sound, window layout, and camhack");
+
+            if (runLoginMacro) {
+                using (ImRaii.PushIndent()) {
+                    ImGui.Text("Macro:");
+                    ImGui.SameLine();
+                    ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
+                    string currentMacro = string.IsNullOrEmpty(Plugin.Config.LoginMacro) ? "Select..." : Plugin.Config.LoginMacro;
+
+                    using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor, true))
+                    using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1, true))
+                    using (ImRaii.PushFont(UiBuilder.DefaultFont)) {
+                        if (ImGui.BeginCombo("##OnLoginMacroCombo", currentMacro)) {
+                            foreach (var macro in Plugin.Config.Macros) {
+                                bool isSelected = Plugin.Config.LoginMacro == macro.Name;
+                                if (ImGui.Selectable(macro.Name, isSelected)) {
+                                    Plugin.Config.LoginMacro = macro.Name;
+                                    Plugin.Config.Save();
+                                    Plugin.IpcProvider.SyncConfiguration();
+                                }
+                                if (isSelected) {
+                                    ImGui.SetItemDefaultFocus();
+                                }
+                            }
+                            ImGui.EndCombo();
+                        }
+                    }
+                }
+            }
+        }
+
         ImGui.Spacing();
         ImGui.Spacing();
         ImGui.Separator();

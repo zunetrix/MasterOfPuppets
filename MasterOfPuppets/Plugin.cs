@@ -92,6 +92,13 @@ public class Plugin : IDalamudPlugin {
         if (Config.OpenOnLogin) {
             Ui.MainWindow.IsOpen = true;
         }
+
+        if (Config.RunLoginMacro) {
+            int macroIndex = MacroManager.FindMacroIndex(Config.LoginMacro);
+            if (macroIndex >= 0) {
+                MacroHandler.ExecuteMacro(macroIndex);
+            }
+        }
     }
 
     private void OnLogout(int type, int code) {

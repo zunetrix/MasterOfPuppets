@@ -193,16 +193,14 @@ public static class ImGuiUtil {
 
     public static void ToolTip(string desc, int wrap = 400, bool showBorder = true) {
         if (ImGui.IsItemHovered()) {
-            using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor, showBorder)) {
-                using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1, showBorder)) {
-                    using (ImRaii.PushFont(UiBuilder.DefaultFont)) {
-                        ImGui.BeginTooltip();
-                        ImGui.PushTextWrapPos(ImGuiHelpers.GlobalScale * wrap);
-                        ImGui.Text(desc);
-                        ImGui.PopTextWrapPos();
-                        ImGui.EndTooltip();
-                    }
-                }
+            using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor, showBorder))
+            using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1, showBorder))
+            using (ImRaii.PushFont(UiBuilder.DefaultFont)) {
+                ImGui.BeginTooltip();
+                ImGui.PushTextWrapPos(ImGuiHelpers.GlobalScale * wrap);
+                ImGui.Text(desc);
+                ImGui.PopTextWrapPos();
+                ImGui.EndTooltip();
             }
         }
     }
