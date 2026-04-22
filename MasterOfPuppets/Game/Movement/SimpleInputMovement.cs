@@ -14,8 +14,6 @@ using MasterOfPuppets.Util;
 namespace MasterOfPuppets.Movement;
 
 public unsafe class SimpleInputMovement : IDisposable {
-    [Signature("E8 ?? ?? ?? ?? 4C 63 4B 04", ScanType = ScanType.Text)]
-    private nint _movementHookAddress;
 
     [Signature("74 0C 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ??", ScanType = ScanType.StaticAddress)]
     private nint _moveControllerSubMemberForMineInstance;
@@ -80,12 +78,11 @@ public unsafe class SimpleInputMovement : IDisposable {
 
     public SimpleInputMovement() {
         DalamudApi.GameInteropProvider.InitializeFromAttributes(this);
-
-        if (_movementHookAddress == 0)
-            throw new Exception("Failed to find MovementHook");
-
-        _playerMoveHook = DalamudApi.GameInteropProvider.HookFromAddress<PlayerMoveDelegate>(_movementHookAddress, PlayerMoveDetour);
-        // Hook starts disabled; enabled automatically when Direction is set.
+        // Hook starts disabled, enabled automatically when Direction is set.
+        _playerMoveHook = DalamudApi.GameInteropProvider.HookFromSignature<PlayerMoveDelegate>(
+            "E8 ?? ?? ?? ?? 4C 63 4B 04",
+            PlayerMoveDetour
+        );
 
         DalamudApi.PluginLog.Debug($"[SimpleInputMovement] MoveControllerInstance: {_moveControllerSubMemberForMineInstance:X}");
     }
@@ -156,7 +153,6 @@ public unsafe class SimpleInputMovement : IDisposable {
 
         DalamudApi.GameConfig.UiControl.Set("MoveMode", 0u);
         DalamudApi.GameConfig.UiConfig.Set("PadMode", 0u);
-
 
         Coroutine.StartRunOnFramework(
             runFunction: () => {

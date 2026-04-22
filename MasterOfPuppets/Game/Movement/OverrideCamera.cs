@@ -32,7 +32,9 @@ public unsafe class OverrideCamera : IDisposable {
     }
 
     public bool IgnoreUserInput; // if true - override even if user tries to change camera orientation, otherwise override only if user does nothing
+    // facing north = 0, facing west = pi/4, facing south = +-pi/2, facing east = -pi/4
     public Angle DesiredAzimuth;
+    // facing horizontally = 0, facing down = pi/4, facing up = -pi/4
     public Angle DesiredAltitude;
     public Angle SpeedH = 360.Degrees(); // per second
     public Angle SpeedV = 360.Degrees(); // per second

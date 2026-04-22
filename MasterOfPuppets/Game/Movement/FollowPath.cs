@@ -188,7 +188,9 @@ public class FollowPath : IDisposable {
         //  Align camera toward movement direction
         _camera.Enabled = Plugin.Config.AlignCameraToMovement;
         _camera.SpeedH = _camera.SpeedV = 360.Degrees();
+        // facing north = 0, facing west = pi/4, facing south = +-pi/2, facing east = -pi/4
         _camera.DesiredAzimuth = Angle.FromDirectionXZ(_movement.DesiredPosition - player.Position) + 180.Degrees();
+        // facing horizontally = 0, facing down = pi/4, facing up = -pi/4
         _camera.DesiredAltitude = Plugin.Config.AlignCameraHeight.Degrees();
     }
 
