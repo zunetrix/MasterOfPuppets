@@ -421,7 +421,7 @@ public class PluginCommandManager : IDisposable {
                             Plugin.Ui.WindowLayoutWindow.Toggle();
                             return;
                         }
-                        Plugin.IpcProvider.ApplyWindowLayout(parsedArgs[1]);
+                        Plugin.GameWindowManager.ApplyWindowLayout(parsedArgs[1]);
                     }
                     break;
                 case "camhack":
