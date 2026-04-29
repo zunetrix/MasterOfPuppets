@@ -552,6 +552,19 @@ public static class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop renderhack on|off",
+            SuggestionCommand = "/mop renderhack ",
+            Example = """
+            /mop renderhack on
+            /mop renderhack off
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Enables or disables game render to save computer resources.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mop logout",
             SuggestionCommand = "/mop logout",
             Example = """

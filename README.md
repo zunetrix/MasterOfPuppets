@@ -54,7 +54,7 @@ loop code
  - https://github.com/Caraxi/SimpleTweaksPlugin
  - https://github.com/PunishXIV/Questionable
  - https://github.com/grittyfrog/MacroMate
- - https://github.com/awgil/ffxiv_navmesh/
+ - https://github.com/awgil/ffxiv_navmesh
  - https://github.com/Ennea/VeryImportantItem
  - https://github.com/una-xiv/umbra
  - https://github.com/Infiziert90/DeathRoll
@@ -63,9 +63,11 @@ loop code
  - https://github.com/MidoriKami/VanillaPlus
  - https://github.com/Critical-Impact/DalaMock/tree/main/DalaMock.PluginTemplate
  - https://github.com/UnknownX7/Cammy
- - https://github.com/UnknownX7/Hypostasis/
+ - https://github.com/UnknownX7/Hypostasis
  - https://github.com/Infiziert90/ChatTwo
  - https://github.com/Haselnussbomber/HaselDebug
+ - https://github.com/Haselnussbomber/HaselCommon
+ - https://github.com/rail2025/AetherBlackbox
 
 # Game Sheet Preview
  - https://exd.camora.dev

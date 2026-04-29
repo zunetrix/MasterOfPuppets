@@ -66,6 +66,10 @@ public enum IpcMessageType {
     EnableCamHack,
     DisableCamHack,
 
+    // render
+    EnableRenderHack,
+    DisableRenderHack,
+
     // game exit
     ExecuteLogout,
     ExecuteShutdown,

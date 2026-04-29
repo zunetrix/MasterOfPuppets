@@ -263,6 +263,7 @@ public partial class MainWindow : Window {
 
         DrawFollowSubMenu();
         DrawKeyBroadcastSubMenu();
+        DrawRenderSubMenu();
         DrawCameraSubMenu();
     }
 
@@ -314,6 +315,31 @@ public partial class MainWindow : Window {
             Plugin.IpcProvider.DisableKeyboardBroadcast();
         }
         ImGuiUtil.ToolTip("/mop keybroadcast off");
+    }
+
+    private void DrawRenderSubMenu() {
+        using var submenu = ImRaii.Menu("Render");
+        if (!submenu) return;
+
+        if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Desktop, $"##ExecuteEnableRenderHack")) {
+            Plugin.IpcProvider.EnableRenderHack();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Enable RenderHack")) {
+            Plugin.IpcProvider.EnableRenderHack();
+        }
+        ImGuiUtil.ToolTip("/mop renderhack on");
+
+        // -----------------------
+
+        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Desktop, $"##ExecuteDisableRenderHack")) {
+            Plugin.IpcProvider.DisableRenderHack();
+        }
+        ImGui.SameLine();
+        if (ImGui.Selectable("Disable RenderHack")) {
+            Plugin.IpcProvider.DisableRenderHack();
+        }
+        ImGuiUtil.ToolTip("/mop renderhack off");
     }
 
     private void DrawCameraSubMenu() {

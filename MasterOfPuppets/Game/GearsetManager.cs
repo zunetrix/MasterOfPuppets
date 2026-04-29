@@ -9,7 +9,6 @@ using MasterOfPuppets.Extensions.Dalamud;
 namespace MasterOfPuppets;
 
 public static class GearsetManager {
-
     // try move gearset items to armoury before equip
     public static void ChangeGearset(Plugin plugin, int gearsetIndex) {
         if (!EnqueueGearsetItemsToArmoury(plugin, gearsetIndex)) {

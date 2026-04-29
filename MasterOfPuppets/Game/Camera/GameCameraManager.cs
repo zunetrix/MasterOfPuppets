@@ -40,10 +40,12 @@ internal static unsafe class GameCameraManager {
     public static void Enable(float offset) {
         _yOffset = offset;
         _enabled = true;
+        DalamudApi.ChatGui.Print("", "MOP: Camhack ON", Style.Colors.SeGreen);
     }
 
     public static void Disable() {
         _enabled = false;
+        DalamudApi.ChatGui.Print("", "MOP: Camhack OFF", Style.Colors.SeRed);
     }
 
     public static void EnableCamHighHeight() {

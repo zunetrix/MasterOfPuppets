@@ -88,6 +88,17 @@ internal class Configuration : IPluginConfiguration {
     [Newtonsoft.Json.JsonIgnore]
     public bool CancelMoveOnUserInput { get; set; } = false;
 
+    // Render
+    // public bool DisableModels { get; set; } = false;
+    // public bool DisableVfxObject { get; set; } = false;
+    // public bool DisableCharaAnimations { get; set; } = false;
+    // public bool DisableTerrain { get; set; } = false;
+    // public bool DisableWater { get; set; } = false;
+    // public bool DisableLights { get; set; } = false;
+    // public bool DisableCameraMatrices { get; set; } = false;
+    // public bool DisableGeometryRenderer { get; set; } = false;
+    public bool DisableRendering { get; set; } = false;
+
     public void Initialize(IDalamudPluginInterface pluginInterface) {
         PluginInterface = pluginInterface;
     }

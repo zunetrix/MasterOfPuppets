@@ -31,4 +31,22 @@ internal partial class IpcProvider {
     private void HandleDisableCamHack(IpcMessage message) {
         GameCameraManager.Disable();
     }
+
+    public void EnableRenderHack() {
+        BroadCast(IpcMessage.Create(IpcMessageType.EnableRenderHack).Serialize(), includeSelf: false);
+    }
+
+    [IpcHandle(IpcMessageType.EnableRenderHack)]
+    private void HandleEnableRenderHack(IpcMessage message) {
+        Plugin.GameRenderManager.DisableRendering(true);
+    }
+
+    public void DisableRenderHack() {
+        BroadCast(IpcMessage.Create(IpcMessageType.DisableRenderHack).Serialize(), includeSelf: false);
+    }
+
+    [IpcHandle(IpcMessageType.DisableRenderHack)]
+    private void HandleDisableRenderHack(IpcMessage message) {
+        Plugin.GameRenderManager.DisableRendering(false);
+    }
 }
