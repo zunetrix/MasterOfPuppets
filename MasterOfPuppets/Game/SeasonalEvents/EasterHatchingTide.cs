@@ -32,7 +32,7 @@ internal class EasterHatchingTide : SeasonalEventRunner {
     private const int TimeLimitCheckMs = 160_000; // start checking EasterMowingResult after 2:40
     private const float ExitDistance = 43f;
 
-    protected override HashSet<ushort> ValidTerritories { get; } = [1336];
+    protected override HashSet<uint> ValidTerritories { get; } = [1336];
 
     private Vector3 _spawnPosition;
     private float _spawnRotation;

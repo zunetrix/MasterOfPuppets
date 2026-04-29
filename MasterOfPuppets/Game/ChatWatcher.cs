@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using Dalamud.Game.Text;
-using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Chat;
 
 using MasterOfPuppets.Util;
 
@@ -75,20 +75,21 @@ internal class ChatWatcher : IDisposable {
     //     }
     // }
 
-    private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
+    private void OnChatMessage(IHandleableChatMessage message) {
         if (!Plugin.Config.UseChatSync) return;
-        if (isHandled) return;
+        if (message.IsHandled)
+            return;
 
-        var senderName = SanitizeSenderName(sender.ToString());
+        var senderName = SanitizeSenderName(message.Sender.ToString());
 
-        if (!AllowedChatTypes.Contains(type)
-            || !Plugin.Config.ListenedChatTypes.Contains(type)
+        if (!AllowedChatTypes.Contains(message.LogKind)
+            || !Plugin.Config.ListenedChatTypes.Contains(message.LogKind)
             || (Plugin.Config.UseChatCommandSenderWhitelist && !Plugin.Config.ChatCommandSenderWhitelist.Contains(senderName))
         ) {
             return;
         }
 
-        var parsedArgs = ArgumentParser.ParseChatArgs(message.ToString());
+        var parsedArgs = ArgumentParser.ParseChatArgs(message.Message.ToString());
         if (!parsedArgs.Any()) return;
 
 #if DEBUG

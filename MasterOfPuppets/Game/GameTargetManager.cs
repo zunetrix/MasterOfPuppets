@@ -80,7 +80,7 @@ public static class GameTargetManager {
                 if (actor == null) continue;
 
                 var lookupName = actor.Name.TextValue;
-                if (actor.ObjectKind == ObjectKind.Player) {
+                if (actor.ObjectKind == ObjectKind.Pc) {
                     lookupName = actor.GetPlayerNameWorld();
                 }
 

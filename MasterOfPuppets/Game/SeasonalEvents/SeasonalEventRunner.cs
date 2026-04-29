@@ -21,7 +21,7 @@ internal abstract class SeasonalEventRunner : IDisposable {
 
     protected Plugin Plugin { get; private set; } = null!;
 
-    protected abstract HashSet<ushort> ValidTerritories { get; }
+    protected abstract HashSet<uint> ValidTerritories { get; }
 
     /// <summary>Adds steps executed once before the activity loop (travel, interaction, etc.).</summary>
     protected abstract void AddJoinSteps();

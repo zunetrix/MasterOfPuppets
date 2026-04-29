@@ -91,11 +91,11 @@ public class GameRenderManager : IDisposable {
     [Signature("41 83 BD ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 48 89 AC 24")] // 7.5
     private nint? _renderSkipMemoryAddress;
 
-    [Signature("41 83 BD ?? ?? ?? ?? ?? 75 ?? 48 8B 0D")] // 7.5
-    private nint? _renderSkipPostEffectMemoryAddress;
+    // [Signature("41 83 BD ?? ?? ?? ?? ?? 75 ?? 48 8B 0D")] // 7.5
+    // private nint? _renderSkipPostEffectMemoryAddress;
 
     private MemoryReplacement? _memoryPatch;
-    private MemoryReplacement? _memoryPatch2;
+    // private MemoryReplacement? _memoryPatch2;
 
     private static Hook<T>? Sig<T>(string sig, T detour) where T : Delegate
         => DalamudApi.GameInteropProvider.HookFromSignature<T>(sig, detour);
@@ -218,17 +218,17 @@ public class GameRenderManager : IDisposable {
                 DalamudApi.ChatGui.Print("", "MOP: RenderHack ON", Style.Colors.SeGreen);
             }
 
-            if (_renderSkipPostEffectMemoryAddress is { } addr2 && addr2 != nint.Zero) {
-                _memoryPatch2 = new MemoryReplacement(addr2 + 0x6, [0x1]);
-                _memoryPatch2.Enable();
-            }
+            // if (_renderSkipPostEffectMemoryAddress is { } addr2 && addr2 != nint.Zero) {
+            //     _memoryPatch2 = new MemoryReplacement(addr2 + 0x6, [0x1]);
+            //     _memoryPatch2.Enable();
+            // }
         } else {
-            if (_memoryPatch == null || _memoryPatch2 == null) return;
+            if (_memoryPatch == null) return;
             _memoryPatch.Disable();
             _memoryPatch = null;
 
-            _memoryPatch2.Disable();
-            _memoryPatch2 = null;
+            // _memoryPatch2.Disable();
+            // _memoryPatch2 = null;
             DalamudApi.ChatGui.Print("", "MOP: RenderHack OFF", Style.Colors.SeRed);
         }
     }

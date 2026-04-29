@@ -65,7 +65,7 @@ internal partial class IpcProvider {
     private void HandleRequestPartyLeader(IpcMessage message) {
         if (!DalamudApi.PartyList.IsPartyLeader()) return;
 
-        var requesterCid = message.DataStruct<long>();
+        var requesterCid = message.DataStruct<ulong>();
         var partyMember = DalamudApi.PartyList.GetPartyMemberFromCid(requesterCid);
         if (partyMember == null) return;
 

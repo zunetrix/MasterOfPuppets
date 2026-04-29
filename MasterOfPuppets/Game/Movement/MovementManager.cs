@@ -230,7 +230,7 @@ public class MovementManager : IDisposable {
             var name = actor.Name.TextValue;
             if (name.Length == 0) continue;
 
-            if (actor.ObjectKind == ObjectKind.Player &&
+            if (actor.ObjectKind == ObjectKind.Pc &&
                 actor is IPlayerCharacter player &&
                 player.HomeWorld.ValueNullable is { } world)
                 name = $"{name}@{world.Name}";

@@ -8,8 +8,6 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
-using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
-
 namespace MasterOfPuppets;
 
 internal static unsafe partial class GameDialogManager {
@@ -142,10 +140,10 @@ internal static unsafe partial class GameDialogManager {
         try {
             for (var i = 0; i < args.Length; i++) {
                 atkValues[i] = args[i] switch {
-                    int v => new AtkValue { Type = ValueType.Int, Int = v },
-                    uint v => new AtkValue { Type = ValueType.UInt, UInt = v },
-                    float v => new AtkValue { Type = ValueType.Float, Float = v },
-                    bool v => new AtkValue { Type = ValueType.Bool, Byte = (byte)(v ? 1 : 0) },
+                    int v => new AtkValue { Type = AtkValueType.Int, Int = v },
+                    uint v => new AtkValue { Type = AtkValueType.UInt, UInt = v },
+                    float v => new AtkValue { Type = AtkValueType.Float, Float = v },
+                    bool v => new AtkValue { Type = AtkValueType.Bool, Byte = (byte)(v ? 1 : 0) },
                     string v => AllocStringValue(v),
                     _ => default,
                 };
@@ -154,7 +152,7 @@ internal static unsafe partial class GameDialogManager {
             return true;
         } finally {
             for (var i = 0; i < args.Length; i++) {
-                if (atkValues[i].Type == ValueType.String)
+                if (atkValues[i].Type == AtkValueType.String)
                     Marshal.FreeHGlobal((nint)(byte*)atkValues[i].String);
             }
             Marshal.FreeHGlobal((nint)atkValues);
@@ -166,6 +164,6 @@ internal static unsafe partial class GameDialogManager {
         var ptr = Marshal.AllocHGlobal(bytes.Length + 1);
         Marshal.Copy(bytes, 0, ptr, bytes.Length);
         Marshal.WriteByte(ptr, bytes.Length, 0);
-        return new AtkValue { Type = ValueType.String, String = (byte*)ptr };
+        return new AtkValue { Type = AtkValueType.String, String = (byte*)ptr };
     }
 }

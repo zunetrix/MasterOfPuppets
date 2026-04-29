@@ -4,9 +4,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Dalamud.Game.Chat;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.Text;
-using Dalamud.Game.Text.SeStringHandling;
 
 namespace MasterOfPuppets;
 
@@ -19,7 +18,7 @@ internal class FallGuys : SeasonalEventRunner {
         new(@"^You obtain \d+ MGF\.$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 
-    protected override HashSet<ushort> ValidTerritories { get; } = [1165];
+    protected override HashSet<uint> ValidTerritories { get; } = [1165];
 
     private volatile bool _mgfObtained;
 
@@ -86,14 +85,17 @@ internal class FallGuys : SeasonalEventRunner {
         }
     }
 
-    private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
+    private void OnChatMessage(IHandleableChatMessage message) {
+        if (message.IsHandled)
+            return;
 
+        // TODO: replace by LogKind sheet
         uint mgfChatType = 2110;
 
-        if ((uint)type != mgfChatType) {
+        if ((uint)message.LogKind != mgfChatType) {
             return;
         }
-        if (MgfRegex.IsMatch(message.TextValue))
+        if (MgfRegex.IsMatch(message.Message.ToString()))
             _mgfObtained = true;
     }
 }

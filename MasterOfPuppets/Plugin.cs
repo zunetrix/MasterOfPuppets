@@ -40,7 +40,8 @@ public class Plugin : IDalamudPlugin {
 
         Ui = new PluginUi(this);
         // Dalamud.Utility.Util.GetHostPlatform();
-        IpcProvider = new IpcProvider(this, Dalamud.Utility.Util.IsWine() ? new LinuxIpcTransport() : new TinyIpcTransport());
+        // IpcProvider = new IpcProvider(this, Dalamud.Utility.Util.IsWine() ? new LinuxIpcTransport() : new TinyIpcTransport());
+        IpcProvider = new IpcProvider(this, new TinyIpcTransport());
         ChatWatcher = new ChatWatcher(this);
         ItemMover = new ItemMover(this);
         MacroManager = new MacroManager(this);
