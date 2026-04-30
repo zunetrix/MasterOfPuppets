@@ -96,9 +96,9 @@ public sealed class GameUiDebugWidget : Widget {
             $"{position.ToString("G", CultureInfo.InvariantCulture)} [{(position - DalamudApi.ObjectTable[0].Position).Length():N2}]");
     }
 
-    private static void HookCheckbox<T>(string label, HookEntry<T> entry) where T : Delegate {
-        var value = entry.IsEnabled;
-        if (ImGui.Checkbox(label, ref value))
-            entry.Toggle();
-    }
+    // private static void HookCheckbox<T>(string label, HookEntry<T> entry) where T : Delegate {
+    //     var value = entry.IsEnabled;
+    //     if (ImGui.Checkbox(label, ref value))
+    //         entry.Toggle();
+    // }
 }

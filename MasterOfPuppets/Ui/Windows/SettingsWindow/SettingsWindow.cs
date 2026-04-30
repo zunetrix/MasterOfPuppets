@@ -202,6 +202,19 @@ public class SettingsWindow : Window {
         ImGui.Spacing();
         ImGui.Spacing();
 
+        using (ImGuiGroupPanel.BeginGroupPanel("Render Hack")) {
+            bool enabled = Plugin.GameRenderManager.Enabled;
+            if (ImGui.Checkbox("Render Hack", ref enabled)) {
+                if (enabled) {
+                    Plugin.GameRenderManager.DisableRendering(true);
+                } else
+                    Plugin.GameRenderManager.DisableRendering(false);
+            }
+        }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
         using (ImGuiGroupPanel.BeginGroupPanel("Cam Hack")) {
             bool enabled = GameCameraManager.Enabled;
             if (ImGui.Checkbox("Cam Hack", ref enabled)) {
