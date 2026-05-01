@@ -5,6 +5,7 @@ using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
@@ -25,6 +26,14 @@ public class SettingsWindow : Window {
     private SettingsDisplayObjectLimitType _objectQuantityType;
     // commandKey → { defaultAlias → current input text }
     private readonly Dictionary<string, Dictionary<string, string>> _aliasInputs = new();
+
+    private string _newProfileName = string.Empty;
+    private string _profileSearchFilter = string.Empty;
+    private int _renamingProfileIdx = -1;
+    private string _renameProfileBuffer = string.Empty;
+    private bool _renamingProfileFocusPending = false;
+    private string _profileKeySearchFilter = string.Empty;
+    private bool _showOnlyEnabledProfileKeys = false;
 
     //  keyboard filter popup
     private const string KbFilterPopupId = "Key Filter##KbFilter";
@@ -528,6 +537,187 @@ public class SettingsWindow : Window {
         using var tabItem = ImRaii.TabItem($"{Language.SettingsGameSettingsTab}###GameSettingsTab");
         if (!tabItem) return;
 
+        ImGui.Text("Game Settings Profiles");
+        using (ImRaii.Group()) {
+            if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Plus, "##gspadd", "New profile"))
+                ImGui.OpenPopup("##gspnew");
+
+            using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor))
+            using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
+                if (ImGui.BeginPopup("##gspnew")) {
+                    ImGui.Text("Name:");
+                    ImGui.SameLine();
+                    ImGui.SetNextItemWidth(180);
+                    bool enter = ImGui.InputText("##gspnewname", ref _newProfileName, 64, ImGuiInputTextFlags.EnterReturnsTrue);
+                    bool dupName = !string.IsNullOrWhiteSpace(_newProfileName) &&
+                        Plugin.Config.GameSettingsProfiles.Any(p => p.Name.Equals(_newProfileName.Trim(), StringComparison.OrdinalIgnoreCase));
+                    if (dupName) {
+                        ImGui.SameLine();
+                        ImGui.TextColored(Style.Colors.Yellow, "already exists");
+                    }
+                    if ((enter || ImGui.Button("Create")) && !string.IsNullOrWhiteSpace(_newProfileName) && !dupName) {
+                        var profile = GameSettingsManager.CreateProfile(_newProfileName.Trim(), Plugin.Config.GameSettingsProfileKeys);
+                        Plugin.Config.GameSettingsProfiles.Add(profile);
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                        ImGui.CloseCurrentPopup();
+                    }
+                    ImGui.EndPopup();
+                }
+            }
+
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(-1);
+            ImGui.InputTextWithHint("##gspsrch", Language.SearchInputLabel, ref _profileSearchFilter, 64);
+        }
+
+        var profiles = Plugin.Config.GameSettingsProfiles;
+        float btnW = ImGui.GetFrameHeight();
+        float spc = ImGui.GetStyle().ItemSpacing.X + 3 * ImGuiHelpers.GlobalScale;
+        float actColW = btnW * 5 + spc * 4;
+
+        if (ImGui.BeginTable("##gsptbl", 3,
+            ImGuiTableFlags.RowBg | ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV,
+            new Vector2(-1, 200 * ImGuiHelpers.GlobalScale))) {
+            ImGui.TableSetupScrollFreeze(0, 1);
+            ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 28f);
+            ImGui.TableSetupColumn("Profile", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("##gspacts", ImGuiTableColumnFlags.WidthFixed, actColW);
+            ImGui.TableHeadersRow();
+
+            for (int i = 0; i < profiles.Count; i++) {
+                var profile = profiles[i];
+                if (!string.IsNullOrEmpty(_profileSearchFilter) &&
+                    !profile.Name.Contains(_profileSearchFilter, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                ImGui.PushID($"gsp_{i}");
+                ImGui.TableNextRow();
+
+                ImGui.TableNextColumn();
+                ImGui.TextDisabled($"{i + 1}");
+
+                ImGui.TableNextColumn();
+                if (_renamingProfileIdx == i) {
+                    if (_renamingProfileFocusPending) {
+                        ImGui.SetKeyboardFocusHere();
+                        _renamingProfileFocusPending = false;
+                    }
+                    ImGui.SetNextItemWidth(-1);
+                    if (ImGui.InputText("##gsprenin", ref _renameProfileBuffer, 64,
+                        ImGuiInputTextFlags.EnterReturnsTrue | ImGuiInputTextFlags.AutoSelectAll))
+                        CommitProfileRename(i);
+                    if (ImGui.IsItemDeactivated() && _renamingProfileIdx == i)
+                        CommitProfileRename(i);
+                } else {
+                    ImGui.Selectable(profile.Name, false);
+                }
+
+                ImGui.TableNextColumn();
+
+                if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##gspdel", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl) {
+                    Plugin.Config.GameSettingsProfiles.RemoveAt(i);
+                    if (_renamingProfileIdx == i) _renamingProfileIdx = -1;
+                    else if (_renamingProfileIdx > i) _renamingProfileIdx--;
+                    Plugin.Config.Save();
+                    Plugin.IpcProvider.SyncConfiguration();
+                    ImGui.PopID();
+                    break;
+                }
+
+                ImGui.SameLine();
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Pen, $"##gsprnm", "Rename")) {
+                    _renamingProfileIdx = i;
+                    _renameProfileBuffer = profile.Name;
+                    _renamingProfileFocusPending = true;
+                }
+
+                ImGui.SameLine();
+                if (ImGuiUtil.IconButton(FontAwesomeIcon.Save, $"##gspsave", "Update snapshot from current settings")) {
+                    var newProfile = GameSettingsManager.CreateProfile(profile.Name, Plugin.Config.GameSettingsProfileKeys);
+                    Plugin.Config.GameSettingsProfiles[i] = newProfile;
+                    Plugin.Config.Save();
+                    Plugin.IpcProvider.SyncConfiguration();
+
+                    DalamudApi.ShowNotification($"Game Settings Profile Updated", NotificationType.Info, 5000);
+                }
+
+                ImGui.SameLine();
+                if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Play, $"##gspapp", "Apply locally")) {
+                    GameSettingsManager.ApplyProfile(profile, Plugin.Config.GameSettingsProfileKeys);
+                }
+
+                ImGui.SameLine();
+                if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.BroadcastTower, $"##gspbr", "Broadcast apply to all clients")) {
+                    Plugin.IpcProvider.BroadcastApplyGameSettingsProfile(profile.Name);
+                }
+
+                ImGui.PopID();
+            }
+            ImGui.EndTable();
+        }
+
+        ImGui.Spacing();
+
+        if (ImGui.CollapsingHeader("Profile Config Keys")) {
+            ImGui.TextWrapped("Select which game settings should be stored in profiles. Unchecked keys will be ignored.");
+
+            ImGui.InputTextWithHint("##gspskeysearch", Language.SearchInputLabel, ref _profileKeySearchFilter, 64);
+
+            ImGui.Checkbox("Show Selected", ref _showOnlyEnabledProfileKeys);
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.List, "##BtnSelectDefaultSettingsKeys", "Select Default")) {
+                Plugin.Config.GameSettingsProfileKeys.Clear();
+                foreach (var key in GameSettingsManager.DefaultGameSettingsProfileKeys) {
+                    Plugin.Config.GameSettingsProfileKeys.Add(key);
+                }
+
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Check, "##BtnSelectAllSettingsKeys", "Select All")) {
+                var allKeys = GameSettingsManager.GetAllGameSettingsKeys();
+                foreach (var k in allKeys) {
+                    Plugin.Config.GameSettingsProfileKeys.Add(k);
+                }
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Times, "##BtnSelectNoneSettingsKeys", "Select None")) {
+                Plugin.Config.GameSettingsProfileKeys.Clear();
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.Spacing();
+
+            ImGui.BeginChild("##ProfileKeysList", new Vector2(-1, 200 * ImGuiHelpers.GlobalScale), true);
+            var keys = GameSettingsManager.GetAllGameSettingsKeys();
+            foreach (var key in keys) {
+                if (!string.IsNullOrEmpty(_profileKeySearchFilter) && !key.Contains(_profileKeySearchFilter, StringComparison.OrdinalIgnoreCase)) continue;
+
+                bool enabled = Plugin.Config.GameSettingsProfileKeys.Contains(key);
+                if (_showOnlyEnabledProfileKeys && !enabled) continue;
+
+                if (ImGui.Checkbox(key, ref enabled)) {
+                    if (enabled) Plugin.Config.GameSettingsProfileKeys.Add(key);
+                    else Plugin.Config.GameSettingsProfileKeys.Remove(key);
+                    Plugin.Config.Save();
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+            }
+            ImGui.EndChild();
+        }
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+
         ImGui.Text("Game Settings Broadcast");
         ImGuiUtil.HelpMarker("Change for all clients");
         ImGui.Separator();
@@ -639,6 +829,18 @@ public class SettingsWindow : Window {
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();
         Plugin.IpcProvider.RefreshCommands();
+    }
+
+    private void CommitProfileRename(int i) {
+        if (_renamingProfileIdx != i) return;
+        var trimmed = _renameProfileBuffer.Trim();
+        if (!string.IsNullOrEmpty(trimmed) &&
+            !Plugin.Config.GameSettingsProfiles.Any(p => p.Name.Equals(trimmed, StringComparison.OrdinalIgnoreCase))) {
+            Plugin.Config.GameSettingsProfiles[i].Name = trimmed;
+        }
+        _renamingProfileIdx = -1;
+        Plugin.Config.Save();
+        Plugin.IpcProvider.SyncConfiguration();
     }
 
     private void DrawKeyboardFilterPopup() {

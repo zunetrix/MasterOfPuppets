@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace MasterOfPuppets.Ipc;
 
@@ -25,5 +26,20 @@ internal partial class IpcProvider {
     private void HandleSetGameSettingsAlwaysInput(IpcMessage message) {
         var enabled = message.DataStruct<uint>();
         GameSettingsManager.SetAlwaysInput(enabled);
+    }
+
+    public void BroadcastApplyGameSettingsProfile(string profileName) {
+        BroadCast(IpcMessage.Create(IpcMessageType.ApplyGameSettingsProfile, profileName).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.ApplyGameSettingsProfile)]
+    private void HandleApplyGameSettingsProfile(IpcMessage message) {
+        var profileName = message.Data?.ToString() ?? string.Empty;
+        var profile = Plugin.Config.GameSettingsProfiles.FirstOrDefault(p => string.Equals(p.Name, profileName, StringComparison.OrdinalIgnoreCase));
+        if (profile != null) {
+            GameSettingsManager.ApplyProfile(profile, Plugin.Config.GameSettingsProfileKeys);
+        } else {
+            DalamudApi.PluginLog.Warning($"Could not find Game Settings Profile to apply: {profileName}");
+        }
     }
 }

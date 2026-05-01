@@ -468,6 +468,14 @@ public class PluginCommandManager : IDisposable {
                 case "addon":
                     GameDialogManager.ShowMoogleCollection();
                     break;
+                case "settingsprofile": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ChatGui.PrintError("Usage: /mop settingsprofile \"profile name\"");
+                            return;
+                        }
+                        Plugin.IpcProvider.BroadcastApplyGameSettingsProfile(parsedArgs[1]);
+                    }
+                    break;
                 case "settings":
                     Plugin.Ui.SettingsWindow.Toggle();
                     break;

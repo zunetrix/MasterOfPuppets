@@ -89,4 +89,5 @@ public enum IpcMessageType {
     // game settings
     SetGameSettingsObjectQuantity,
     SetGameSettingsAlwaysInput,
+    ApplyGameSettingsProfile,
 }

@@ -77,6 +77,11 @@ public sealed class GeneralDebugWidget : Widget {
         //     ImGui.Text($"{ActionManager.Instance()->QueuedActionId}");
         // }
 
+        ImGui.SameLine();
+        if (ImGui.Button("Log Unmapped Keys to Debug")) {
+            GameSettingsManager.DebugLogUnmappedKeys();
+        }
+
         if (ImGui.Button("Use Invalid Item name")) {
             var item = ItemHelper.GetExecutableAction("Lominsan Sparkler Flare");
             DalamudApi.PluginLog.Warning($"item: {item?.ActionName}");

@@ -565,6 +565,19 @@ public static class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop settingsprofile \"profile name\"",
+            SuggestionCommand = "/mop settingsprofile \"\"",
+            Example = """
+            /mop settingsprofile low
+            /mop settingsprofile high
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Changes the game settings according to those saved in the profile.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mop logout",
             SuggestionCommand = "/mop logout",
             Example = """
