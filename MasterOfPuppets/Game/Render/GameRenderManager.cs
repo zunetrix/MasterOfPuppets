@@ -240,21 +240,21 @@ public class GameRenderManager : IDisposable {
         // RestoreAll();
     }
 
-    private void RestoreAll() {
-        // RenderModels.RestoreFromConfig();
-        // RenderModel5.RestoreFromConfig();
-        // ModelRenderer.RestoreFromConfig();
-        // RenderHuman.RestoreFromConfig();
-        // RenderCharaBase.RestoreFromConfig();
-        // RenderCharaBaseMat.RestoreFromConfig();
-        // RenderVfxObject.RestoreFromConfig();
-        // CharaAnimations.RestoreFromConfig();
-        // RenderTerrain.RestoreFromConfig();
-        // RenderWater.RestoreFromConfig();
-        // RenderLights.RestoreFromConfig();
-        // CameraMatrices.RestoreFromConfig();
-        // GeometryRenderer.RestoreFromConfig();
-    }
+    // private void RestoreAll() {
+    //     RenderModels.RestoreFromConfig();
+    //     RenderModel5.RestoreFromConfig();
+    //     ModelRenderer.RestoreFromConfig();
+    //     RenderHuman.RestoreFromConfig();
+    //     RenderCharaBase.RestoreFromConfig();
+    //     RenderCharaBaseMat.RestoreFromConfig();
+    //     RenderVfxObject.RestoreFromConfig();
+    //     CharaAnimations.RestoreFromConfig();
+    //     RenderTerrain.RestoreFromConfig();
+    //     RenderWater.RestoreFromConfig();
+    //     RenderLights.RestoreFromConfig();
+    //     CameraMatrices.RestoreFromConfig();
+    //     GeometryRenderer.RestoreFromConfig();
+    // }
 
     public void DisableRendering(bool disabled) {
         // _plugin.Config.DisableRendering = disabled;

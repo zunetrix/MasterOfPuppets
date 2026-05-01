@@ -438,13 +438,15 @@ public class PluginCommandManager : IDisposable {
                 case "renderhack":
                 case "rh":
                     if (parsedArgs.Count < 2) {
-                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
+                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off|toggle\"", NotificationType.Error, 5000);
                         return;
                     }
                     if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
                         Plugin.GameRenderManager.DisableRendering(true);
                     else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
                         Plugin.GameRenderManager.DisableRendering(false);
+                    else if (parsedArgs[1].Equals("toggle", StringComparison.OrdinalIgnoreCase))
+                        Plugin.GameRenderManager.DisableRendering(!Plugin.GameRenderManager.Enabled);
                     break;
                 case "keybroadcast":
                     if (parsedArgs.Count < 2) {

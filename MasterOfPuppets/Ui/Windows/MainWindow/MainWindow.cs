@@ -675,6 +675,7 @@ public partial class MainWindow : Window {
             TitleBarButtons.Add(new TitleBarButton() {
                 AvailableClickthrough = false,
                 Icon = FontAwesomeIcon.Heart,
+                IconColor = Style.Colors.Red,
                 ShowTooltip = () => ImGuiUtil.ToolTip("Discord"),
                 Click = _ => WindowsApi.OpenUrl("https://discord.gg/BTsHyBzGsN")
             });
@@ -683,6 +684,7 @@ public partial class MainWindow : Window {
             TitleBarButtons.Add(new TitleBarButton() {
                 AvailableClickthrough = false,
                 Icon = FontAwesomeIcon.Bug,
+                IconColor = Style.Colors.Green,
                 ShowTooltip = () => ImGuiUtil.ToolTip("Debug"),
                 Click = _ => Ui.DebugWindow.Toggle()
             });
