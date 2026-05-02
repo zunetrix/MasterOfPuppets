@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 
+using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Movement;
 
 namespace MasterOfPuppets.Formations;
@@ -10,7 +11,7 @@ public static class FormationMath {
         ToMopWorld(point.Offset, point.Angle, originPosition, originRotation);
 
     public static (Vector3 Position, float Rotation) ToMopWorld(Vector3 offset, float angleDegrees, Vector3 originPosition, float originRotation) {
-        var position = RotateOffset(offset, originRotation) + originPosition;
+        var position = offset.ApplyLeaderRotation(originRotation, originPosition);
         var rotation = originRotation + angleDegrees * Angle.DegToRad;
         return (position, rotation);
     }
@@ -27,9 +28,12 @@ public static class FormationMath {
         FormationPoint memberPoint,
         Vector3 anchorWorldPosition,
         float anchorWorldRotation) {
-        var originRotation = anchorWorldRotation - anchorPoint.Angle * Angle.DegToRad;
-        var originPosition = anchorWorldPosition - RotateOffset(anchorPoint.Offset, originRotation);
-        return ToMopWorld(memberPoint, originPosition, originRotation);
+        var memberRelativeToAnchor = memberPoint.Offset - anchorPoint.Offset;
+        var memberRotationRelativeToAnchor = NormalizeDegrees(memberPoint.Angle - anchorPoint.Angle);
+        var worldPosition = memberRelativeToAnchor.ApplyLeaderRotation(anchorWorldRotation, anchorWorldPosition);
+        var worldRotation = anchorWorldRotation + memberRotationRelativeToAnchor * Angle.DegToRad;
+
+        return (worldPosition, worldRotation);
     }
 
     public static float NormalizeDegrees(float degrees) {
@@ -41,15 +45,15 @@ public static class FormationMath {
     }
 
     public static float DirectionToDegrees(float x, float z) =>
-        NormalizeDegrees(MathF.Atan2(-x, z) * Angle.RadToDeg);
+        NormalizeDegrees(MathF.Atan2(x, -z) * Angle.RadToDeg);
 
     public static Vector3 RotateOffset(Vector3 offset, float rotationRadians) {
         float cos = MathF.Cos(rotationRadians);
         float sin = MathF.Sin(rotationRadians);
 
         return new Vector3(
-            offset.X * cos - offset.Z * sin,
+            offset.X * cos + offset.Z * sin,
             offset.Y,
-            offset.X * sin + offset.Z * cos);
+            -offset.X * sin + offset.Z * cos);
     }
 }

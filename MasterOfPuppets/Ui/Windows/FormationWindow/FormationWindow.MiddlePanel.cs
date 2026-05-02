@@ -159,8 +159,7 @@ public partial class FormationWindow {
     }
 
     private static void DrawArrow(ImDrawListPtr dl, float px, float py, float angleDeg, uint color, float size = 0.5f) {
-        var plotRotation = (180f - angleDeg) * Angle.DegToRad;
-        var mat = Matrix3x2.CreateRotation(plotRotation);
+        var mat = Matrix3x2.CreateRotation(angleDeg * Angle.DegToRad);
         float h = size * 0.5f;
 
         var pts = new Vector2[4];

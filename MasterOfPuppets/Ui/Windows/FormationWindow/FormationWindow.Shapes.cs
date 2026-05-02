@@ -64,10 +64,12 @@ public partial class FormationWindow {
                 float bearing = FormationMath.DirectionToDegrees(dx, dz);
                 p.Angle = _faceMode switch {
                     0 => bearing,           // Outward: face away from center
-                    1 => bearing + 180f,    // Inward: face toward center
-                    2 => 180f,              // North
+                    1 => -bearing,          // Inward: face toward center
+                    2 => 0f,                // North
                     _ => 0f
                 };
+                if (_faceMode != 2)
+                    p.Angle += _shapeAngleOff;
                 p.Angle = FormationMath.NormalizeDegrees(p.Angle);
             }
         }
@@ -80,7 +82,7 @@ public partial class FormationWindow {
                 float dx = b.X - a.X;
                 float dz = b.Z - a.Z;
                 if (MathF.Abs(dx) > 0.001f || MathF.Abs(dz) > 0.001f)
-                    newPoints[i].Angle = FormationMath.DirectionToDegrees(dx, dz);
+                    newPoints[i].Angle = FormationMath.NormalizeDegrees(FormationMath.DirectionToDegrees(dx, dz) + _shapeAngleOff);
             }
         }
 

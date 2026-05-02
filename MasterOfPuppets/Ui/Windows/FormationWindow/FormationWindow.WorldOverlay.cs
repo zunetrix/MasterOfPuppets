@@ -28,20 +28,15 @@ public partial class FormationWindow {
         if (player == null) return;
         var bdl = ImGui.GetBackgroundDrawList(ImGui.GetMainViewport());
         var playerPos = player.Position;
-        float leaderRot = player.Rotation;
+        float anchorRot = player.Rotation;
         var localCid = DalamudApi.PlayerState.ContentId;
-        var myPoint = formation.Points.FirstOrDefault(p => p.Cids.Contains(localCid));
+        var myPoint = formation.Points.FirstOrDefault(p => p.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(localCid));
+        if (myPoint == null) return;
 
         for (int i = 0; i < formation.Points.Count; i++) {
             var pt = formation.Points[i];
 
-            Vector3 worldPos;
-            float facingRad;
-            if (formation.ExecutionMode == FormationExecutionMode.RelativeToLocalAssignedPoint && myPoint != null) {
-                (worldPos, facingRad) = FormationMath.GetMopRelativeWorld(myPoint, pt, playerPos, leaderRot);
-            } else {
-                (worldPos, facingRad) = FormationMath.ToMopWorld(pt, playerPos, leaderRot);
-            }
+            var (worldPos, facingRad) = FormationMath.GetMopRelativeWorld(myPoint, pt, playerPos, anchorRot);
 
             uint c = i == _selPoint ? 0xFFFFAA00u : 0xFF3388FFu;
 

@@ -1,8 +1,13 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
+
+using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Interface.ImGuiNotification;
+
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 
 using MasterOfPuppets.Formations;
 
@@ -11,36 +16,36 @@ namespace MasterOfPuppets.Ipc;
 internal partial class IpcProvider {
 
     /// <summary>
-    /// Broadcasts a formation execution to all local clients (excluding the leader).
-    /// The leader's world position, facing, and content ID are included so each
-    /// client can rotate its assigned offset into world space.
+    /// Broadcasts a formation execution to all local clients.
+    /// The anchor's world position, facing, and content ID are included so each
+    /// client can place its assigned point relative to the anchor's saved point.
     /// </summary>
-    public void ExecuteFormation(string name, FormationExecutionMode? modeOverride = null) {
+    public void ExecuteFormation(string name, bool useTargetAnchor = false) {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
+
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
-        var mode = modeOverride ?? formation?.ExecutionMode ?? FormationExecutionMode.LeaderOrigin;
-        var orderedCids = mode == FormationExecutionMode.ClientOrder
-            ? string.Join(",", GetConnectedPeers()
-                .Select(peer => peer.ContentId)
-                .Append(DalamudApi.PlayerState.ContentId)
-                .Distinct()
-                .OrderBy(cidValue => cidValue)
-                .Select(cidValue => cidValue.ToString(CultureInfo.InvariantCulture)))
-            : string.Empty;
-        var pos = player.Position;
-        var rot = player.Rotation;
-        var cid = DalamudApi.PlayerState.ContentId;
+        if (formation == null) {
+            DalamudApi.ShowNotification($"Formation '{name}' not found.", NotificationType.Error, 5000);
+            return;
+        }
+
+        if (!TryGetFormationAnchor(useTargetAnchor, out var anchorPos, out var anchorRot, out var anchorCid))
+            return;
+
+        if (GetAssignedPoint(formation, anchorCid) == null) {
+            DalamudApi.ShowNotification("Formation anchor is not assigned to this formation.", NotificationType.Error, 5000);
+            return;
+        }
+
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteFormation,
             name,
-            pos.X.ToString("G", CultureInfo.InvariantCulture),
-            pos.Y.ToString("G", CultureInfo.InvariantCulture),
-            pos.Z.ToString("G", CultureInfo.InvariantCulture),
-            rot.ToString("G", CultureInfo.InvariantCulture),
-            cid.ToString(CultureInfo.InvariantCulture),
-            mode.ToString(),
-            orderedCids).Serialize(), includeSelf: false);
+            anchorPos.X.ToString("G", CultureInfo.InvariantCulture),
+            anchorPos.Y.ToString("G", CultureInfo.InvariantCulture),
+            anchorPos.Z.ToString("G", CultureInfo.InvariantCulture),
+            anchorRot.ToString("G", CultureInfo.InvariantCulture),
+            anchorCid.ToString(CultureInfo.InvariantCulture)).Serialize(), includeSelf: true);
     }
 
     [IpcHandle(IpcMessageType.ExecuteFormation)]
@@ -50,14 +55,8 @@ internal partial class IpcProvider {
         if (!float.TryParse(message.StringData[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float lx)) return;
         if (!float.TryParse(message.StringData[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float ly)) return;
         if (!float.TryParse(message.StringData[3], NumberStyles.Float, CultureInfo.InvariantCulture, out float lz)) return;
-        if (!float.TryParse(message.StringData[4], NumberStyles.Float, CultureInfo.InvariantCulture, out float leaderRot)) return;
-        if (!ulong.TryParse(message.StringData[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong leaderCid)) return;
-        var mode = FormationExecutionMode.LeaderOrigin;
-        if (message.StringData.Length >= 7)
-            Enum.TryParse(message.StringData[6], ignoreCase: true, out mode);
-        var clientOrder = message.StringData.Length >= 8
-            ? ParseClientOrder(message.StringData[7])
-            : [];
+        if (!float.TryParse(message.StringData[4], NumberStyles.Float, CultureInfo.InvariantCulture, out float anchorRot)) return;
+        if (!ulong.TryParse(message.StringData[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong anchorCid)) return;
 
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
@@ -67,58 +66,68 @@ internal partial class IpcProvider {
         }
 
         var playerCid = DalamudApi.PlayerState.ContentId;
-        if (playerCid == leaderCid) return;
+        if (playerCid == anchorCid) return;
 
-        var point = GetPointForExecutionMode(formation, mode, playerCid, clientOrder);
+        var point = GetAssignedPoint(formation, playerCid);
         if (point == null) return;
 
-        var leaderPos = new Vector3(lx, ly, lz);
-        Vector3 worldPos;
-        float facingRad;
+        var anchorPoint = GetAssignedPoint(formation, anchorCid);
+        if (anchorPoint == null) return;
 
-        if (mode == FormationExecutionMode.RelativeToLocalAssignedPoint) {
-            var anchorPoint = formation.Points.FirstOrDefault(p => p.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(leaderCid));
-            if (anchorPoint == null)
-                return;
-
-            (worldPos, facingRad) = FormationMath.GetMopRelativeWorld(anchorPoint, point, leaderPos, leaderRot);
-        } else {
-            (worldPos, facingRad) = FormationMath.ToMopWorld(point, leaderPos, leaderRot);
-        }
-        // DalamudApi.PluginLog.Warning($"[ExecuteFormation] leaderPos: {leaderPos} worldPos: {worldPos} faceDirection: {facingRad}");
+        var anchorPos = new Vector3(lx, ly, lz);
+        var (worldPos, facingRad) = FormationMath.GetMopRelativeWorld(anchorPoint, point, anchorPos, anchorRot);
+        // DalamudApi.PluginLog.Warning($"[ExecuteFormation] anchorPos: {anchorPos} worldPos: {worldPos} faceDirection: {facingRad}");
 
         // Plugin.MovementManager.MoveTo(worldPos, facingRad.Radians());
         Plugin.SimpleInputMovement.MoveTo(worldPos, precision: Plugin.Config.FormationMovePrecision, faceDirection: facingRad);
 
-        // Member faces the same direction as the leader (north offset = 0)
-        // Plugin.MovementManager.MoveTo(worldPos, leaderRot.Radians());
+        // Member faces the same direction as the anchor (north offset = 0)
+        // Plugin.MovementManager.MoveTo(worldPos, anchorRot.Radians());
     }
 
-    private FormationPoint? GetPointForExecutionMode(Formation formation, FormationExecutionMode mode, ulong playerCid, IReadOnlyList<ulong> clientOrder) {
-        if (mode == FormationExecutionMode.ClientOrder) {
-            var orderIndex = -1;
-            for (int i = 0; i < clientOrder.Count; i++) {
-                if (clientOrder[i] == playerCid) {
-                    orderIndex = i;
-                    break;
-                }
-            }
-            return orderIndex >= 0 && orderIndex < formation.Points.Count
-                ? formation.Points[orderIndex]
-                : null;
+    private FormationPoint? GetAssignedPoint(Formation formation, ulong playerCid) =>
+        formation.Points.FirstOrDefault(p => p.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(playerCid));
+
+    private static unsafe ulong GetPlayerContentId(IGameObject playerObject) =>
+        ((BattleChara*)playerObject.Address)->ContentId;
+
+    private bool TryGetFormationAnchor(bool useTargetAnchor, out Vector3 position, out float rotation, out ulong cid) {
+        position = default;
+        rotation = default;
+        cid = default;
+
+        var player = DalamudApi.ObjectTable.LocalPlayer;
+        if (player == null) return false;
+
+        if (!useTargetAnchor) {
+            position = player.Position;
+            rotation = player.Rotation;
+            cid = DalamudApi.PlayerState.ContentId;
+            return cid != 0;
         }
 
-        return formation.Points.FirstOrDefault(p => p.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(playerCid));
-    }
+        var targetObjectId = player.TargetObjectId;
+        if (targetObjectId == 0) {
+            DalamudApi.ShowNotification("No target selected for formation anchor.", NotificationType.Error, 5000);
+            return false;
+        }
 
-    private static IReadOnlyList<ulong> ParseClientOrder(string csv) {
-        if (string.IsNullOrWhiteSpace(csv))
-            return [];
+        var target = player.TargetObject?.GameObjectId == targetObjectId
+            ? player.TargetObject
+            : DalamudApi.ObjectTable.FirstOrDefault(o => o?.GameObjectId == targetObjectId);
+        if (target == null || target.ObjectKind != ObjectKind.Pc) {
+            DalamudApi.ShowNotification("Formation target must be a player character.", NotificationType.Error, 5000);
+            return false;
+        }
 
-        return csv
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(s => ulong.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cid) ? cid : 0)
-            .Where(cid => cid != 0)
-            .ToList();
+        cid = GetPlayerContentId(target);
+        if (cid == 0) {
+            DalamudApi.ShowNotification("Could not resolve target character content ID.", NotificationType.Error, 5000);
+            return false;
+        }
+
+        position = target.Position;
+        rotation = target.Rotation;
+        return true;
     }
 }

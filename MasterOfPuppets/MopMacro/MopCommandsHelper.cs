@@ -1399,14 +1399,13 @@ public static class MopCommandsHelper {
             SuggestionCommand = "/mop formation ",
             Example = """
             /mop formation "My Formation"
-            /mop formation "My Formation" relative
-            /mop formation "My Formation" sequence
+            /mop formation "My Formation" target
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
             Broadcasts formation execution to all local clients.
-            Uses the formation's saved execution mode unless a mode override is supplied.
             Each client moves to the formation point whose assigned CIDs/groups include it.
+            Add target to use your current target as the formation anchor.
             """
         },
         new MopAction {

@@ -20,16 +20,6 @@ public partial class FormationWindow {
         var pt2 = _selPoint >= 0 && _selPoint < formation.Points.Count
             ? formation.Points[_selPoint] : null;
 
-        var executionMode = formation.ExecutionMode;
-        ImGui.SetNextItemWidth(-1);
-        if (ImGuiUtil.EnumCombo("##fiexecutionmode", ref executionMode)) {
-            formation.ExecutionMode = executionMode;
-            Plugin.Config.Save();
-            Plugin.IpcProvider.SyncConfiguration();
-        }
-        if (ImGui.IsItemHovered())
-            ImGui.SetTooltip("Formation execution mode");
-
         var precision = Plugin.Config.FormationMovePrecision;
         ImGui.SetNextItemWidth(-1);
         if (ImGui.DragFloat("Precision##fiprecision", ref precision, 0.01f, 0.01f, 5f, "%.2f")) {
