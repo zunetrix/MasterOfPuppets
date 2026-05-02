@@ -201,8 +201,8 @@
       },
       "XivIpc": {
         "type": "Transitive",
-        "resolved": "0.0.7",
-        "contentHash": "fLSPdP7R4YZH8UrWFuqoNOnUDxmIebKn8thvPTAMwHbMPbJufLse/5qDTVoYsdqzT2I0BQBzq3kEADL4/quPPQ=="
+        "resolved": "0.0.8",
+        "contentHash": "MGQt+wVUjj7HKYzBUbhpUOEoJuzEFl3GXr9T+bXZCMZ7SI9WUUyTx/jxULoMdTZoYgiueCGuKcW1wuEHTDDi0w=="
       },
       "xunit.abstractions": {
         "type": "Transitive",
@@ -251,7 +251,7 @@
           "KTrie": "[2.6.0, )",
           "Sprache": "[2.3.1, )",
           "TinyIpc": "[5.2.0, )",
-          "XivIpc": "[0.0.7, )",
+          "XivIpc": "[0.0.8, )",
           "protobuf-net": "[3.2.56, )"
         }
       }

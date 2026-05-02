@@ -68,6 +68,7 @@ public partial class FormationWindow {
         var dl = ImPlot.GetPlotDrawList();
 
         dl.AddCircle(ImPlot.PlotToPixels(0.0f, 0.0f), 4f, 0x88FFFFFF);
+        DrawNorthMarker(dl, limit);
 
         bool anyDragged = false;
         int pointId = 0;
@@ -158,7 +159,8 @@ public partial class FormationWindow {
     }
 
     private static void DrawArrow(ImDrawListPtr dl, float px, float py, float angleDeg, uint color, float size = 0.5f) {
-        var mat = Matrix3x2.CreateRotation(-angleDeg * Angle.DegToRad);
+        var plotRotation = (180f - angleDeg) * Angle.DegToRad;
+        var mat = Matrix3x2.CreateRotation(plotRotation);
         float h = size * 0.5f;
 
         var pts = new Vector2[4];
@@ -168,6 +170,20 @@ public partial class FormationWindow {
         }
 
         dl.AddPolyline(ref pts[0], 4, color, ImDrawFlags.Closed, 1.5f);
+    }
+
+    private static void DrawNorthMarker(ImDrawListPtr dl, float limit) {
+        var top = ImPlot.PlotToPixels(0f, limit * 0.86f);
+        var bottom = ImPlot.PlotToPixels(0f, limit * 0.72f);
+        var left = ImPlot.PlotToPixels(-limit * 0.035f, limit * 0.79f);
+        var right = ImPlot.PlotToPixels(limit * 0.035f, limit * 0.79f);
+        var label = "N";
+        var labelSize = ImGui.CalcTextSize(label);
+
+        dl.AddLine(bottom, top, 0x99FFFFFF, 1.5f);
+        dl.AddLine(top, left, 0x99FFFFFF, 1.5f);
+        dl.AddLine(top, right, 0x99FFFFFF, 1.5f);
+        dl.AddText(top - new Vector2(labelSize.X * 0.5f, labelSize.Y + 4f), 0xCCFFFFFF, label);
     }
 
     private void DrawShapeToolbar(Formation? formation) {

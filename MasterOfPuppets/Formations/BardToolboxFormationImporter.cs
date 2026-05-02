@@ -175,8 +175,8 @@ public static class BardToolboxFormationImporter {
         var index = entry.Value<int?>("i") ?? int.MaxValue;
 
         return new FormationPoint {
-            Offset = position,
-            Angle = FormationMath.NormalizeDegrees(-rotation * Angle.RadToDeg),
+            Offset = new Vector3(position.X, position.Y, -position.Z),
+            Angle = FormationMath.NormalizeDegrees(rotation * Angle.RadToDeg),
             Cids = cid == 0 ? [] : [cid],
             GroupIds = [$"{BardToolboxEntryIndexPrefix}{index.ToString(CultureInfo.InvariantCulture)}"],
         };

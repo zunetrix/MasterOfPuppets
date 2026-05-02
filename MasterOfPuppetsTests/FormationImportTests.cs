@@ -19,7 +19,8 @@ public class FormationImportTests {
         Assert.Equal(2, import.Formations[0].Points.Count);
         Assert.Equal((ulong)222, import.Formations[0].Points[0].Cids[0]);
         Assert.Equal((ulong)111, import.Formations[0].Points[1].Cids[0]);
-        Assert.Equal(-90f, import.Formations[0].Points[1].Angle, 0.001f);
+        Assert.Equal(-2f, import.Formations[0].Points[1].Offset.Z, 0.001f);
+        Assert.Equal(90f, import.Formations[0].Points[1].Angle, 0.001f);
         Assert.Equal("Alpha@Gilgamesh", import.CharacterNames[111]);
     }
 
@@ -47,7 +48,7 @@ public class FormationImportTests {
     public void Mop_World_Math_Round_Trips_Position_And_Angle() {
         var point = new FormationPoint {
             Offset = new Vector3(3f, 0f, -2f),
-            Angle = 45f,
+            Angle = -45f,
         };
         var origin = new Vector3(10f, 0f, 10f);
         var originRotation = 0.5f;
@@ -59,6 +60,17 @@ public class FormationImportTests {
         Assert.Equal(point.Offset.Y, offset.Y, 0.001f);
         Assert.Equal(point.Offset.Z, offset.Z, 0.001f);
         Assert.Equal(point.Angle, angle, 0.001f);
+    }
+
+    [Fact]
+    public void Mop_World_Math_Uses_Ffxiv_Cardinal_Rotations() {
+        var offset = new Vector3(0f, 0f, 1f);
+        var origin = Vector3.Zero;
+
+        Assert.Equal(1f, FormationMath.ToMopWorld(offset, 0f, origin, 0f).Position.Z, 0.001f);
+        Assert.Equal(-1f, FormationMath.ToMopWorld(offset, 0f, origin, MathF.PI).Position.Z, 0.001f);
+        Assert.Equal(1f, FormationMath.ToMopWorld(offset, 0f, origin, -MathF.PI / 2f).Position.X, 0.001f);
+        Assert.Equal(-1f, FormationMath.ToMopWorld(offset, 0f, origin, MathF.PI / 2f).Position.X, 0.001f);
     }
 
     [Fact]
@@ -78,8 +90,22 @@ public class FormationImportTests {
             new Vector3(10, 0, 10),
             0f);
 
-        Assert.Equal(9f, position.X, 0.001f);
+        Assert.Equal(11f, position.X, 0.001f);
         Assert.Equal(10f, position.Z, 0.001f);
+        Assert.Equal(-90f * Angle.DegToRad, rotation, 0.001f);
+    }
+
+    [Fact]
+    public void Mop_World_Math_Keeps_Existing_Game_Coordinate_Offsets_At_South_Facing_Origin() {
+        var point = new FormationPoint {
+            Offset = new Vector3(2f, 0f, 3f),
+            Angle = 90f,
+        };
+
+        var (position, rotation) = FormationMath.ToMopWorld(point, new Vector3(10f, 0f, 20f), 0f);
+
+        Assert.Equal(12f, position.X, 0.001f);
+        Assert.Equal(23f, position.Z, 0.001f);
         Assert.Equal(90f * Angle.DegToRad, rotation, 0.001f);
     }
 

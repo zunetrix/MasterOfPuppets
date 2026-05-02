@@ -10,7 +10,6 @@ using MasterOfPuppets.Util;
 namespace MasterOfPuppets;
 
 public class GameRenderManager : IDisposable {
-    private readonly Plugin _plugin;
     private bool _enabled;
     public bool Enabled => _enabled;
 
@@ -141,10 +140,10 @@ public class GameRenderManager : IDisposable {
     // 4A 8B 3C 20 0f 85 ?? ?? ?? ?? 41 83 BD ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 48 89 ?? ??
 
     [Signature("41 83 BD ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 48 89 AC 24")] // 7.5
-    private readonly nint? _renderSkipMemoryAddress;
+    private nint? _renderSkipMemoryAddress = null;
 
     [Signature("41 83 BD ?? ?? ?? ?? ?? 75 ?? 48 8B 0D")] // 7.5
-    private readonly nint? _renderSkipPostEffectMemoryAddress;
+    private nint? _renderSkipPostEffectMemoryAddress = null;
 
     private MemoryReplacement? _memoryPatch;
     private MemoryReplacement? _memoryPatch2;

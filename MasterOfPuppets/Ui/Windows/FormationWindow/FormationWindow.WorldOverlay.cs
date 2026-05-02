@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Numerics;
 
@@ -9,17 +8,14 @@ using MasterOfPuppets.Formations;
 namespace MasterOfPuppets;
 
 public partial class FormationWindow {
-    // DrawWorldArrow: CreateRotationY is CCW when viewed from above in math space,
-    // but FFXIV Z is inverted so it effectively becomes CW - pass worldRot directly.
     private static bool DrawWorldArrow(ImDrawListPtr dl, Vector3 worldPos, float worldRot, uint color, float sizeM) {
         if (!DalamudApi.GameGui.WorldToScreen(worldPos, out _)) return false;
 
-        var mat = Matrix4x4.CreateRotationY(worldRot);
         float h = sizeM * 0.5f;
 
         var pts = new Vector2[4];
         for (int i = 0; i < 4; i++) {
-            var v = Vector3.Transform(ArrowVertices3D[i] * h, mat) + worldPos;
+            var v = FormationMath.RotateOffset(ArrowVertices3D[i] * h, worldRot) + worldPos;
             DalamudApi.GameGui.WorldToScreen(v, out pts[i]);
         }
 

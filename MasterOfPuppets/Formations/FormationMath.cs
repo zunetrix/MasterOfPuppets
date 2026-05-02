@@ -10,17 +10,15 @@ public static class FormationMath {
         ToMopWorld(point.Offset, point.Angle, originPosition, originRotation);
 
     public static (Vector3 Position, float Rotation) ToMopWorld(Vector3 offset, float angleDegrees, Vector3 originPosition, float originRotation) {
-        var matrix = Matrix4x4.CreateRotationY(originRotation + MathF.PI);
-        var position = Vector3.Transform(offset, matrix) + originPosition;
-        var rotation = originRotation - angleDegrees * Angle.DegToRad;
+        var position = RotateOffset(offset, originRotation) + originPosition;
+        var rotation = originRotation + angleDegrees * Angle.DegToRad;
         return (position, rotation);
     }
 
     public static (Vector3 Offset, float AngleDegrees) ToMopRelative(Vector3 position, float rotation, Vector3 originPosition, float originRotation) {
         var relativePosition = position - originPosition;
-        var matrix = Matrix4x4.CreateRotationY(-originRotation - MathF.PI);
-        var offset = Vector3.Transform(relativePosition, matrix);
-        var angleDegrees = NormalizeDegrees((originRotation - rotation) * Angle.RadToDeg);
+        var offset = RotateOffset(relativePosition, -originRotation);
+        var angleDegrees = NormalizeDegrees((rotation - originRotation) * Angle.RadToDeg);
         return (offset, angleDegrees);
     }
 
@@ -29,14 +27,9 @@ public static class FormationMath {
         FormationPoint memberPoint,
         Vector3 anchorWorldPosition,
         float anchorWorldRotation) {
-        var anchorRotation = -anchorPoint.Angle * Angle.DegToRad;
-        Matrix4x4.Invert(
-            Matrix4x4.CreateRotationY(anchorRotation) * Matrix4x4.CreateTranslation(anchorPoint.Offset),
-            out var inverseAnchor);
-
-        var relativePosition = Vector3.Transform(memberPoint.Offset, inverseAnchor);
-        var relativeRotation = (-memberPoint.Angle + anchorPoint.Angle) * Angle.DegToRad;
-        return ToAbsolute(relativePosition, relativeRotation, anchorWorldPosition, anchorWorldRotation);
+        var originRotation = anchorWorldRotation - anchorPoint.Angle * Angle.DegToRad;
+        var originPosition = anchorWorldPosition - RotateOffset(anchorPoint.Offset, originRotation);
+        return ToMopWorld(memberPoint, originPosition, originRotation);
     }
 
     public static float NormalizeDegrees(float degrees) {
@@ -47,9 +40,16 @@ public static class FormationMath {
         return degrees;
     }
 
-    private static (Vector3 Position, float Rotation) ToAbsolute(Vector3 relativePosition, float relativeRotation, Vector3 pivotPosition, float pivotRotation) {
-        var matrix = Matrix4x4.CreateRotationY(pivotRotation + MathF.PI);
-        var position = Vector3.Transform(relativePosition, matrix) + pivotPosition;
-        return (position, relativeRotation + pivotRotation);
+    public static float DirectionToDegrees(float x, float z) =>
+        NormalizeDegrees(MathF.Atan2(-x, z) * Angle.RadToDeg);
+
+    public static Vector3 RotateOffset(Vector3 offset, float rotationRadians) {
+        float cos = MathF.Cos(rotationRadians);
+        float sin = MathF.Sin(rotationRadians);
+
+        return new Vector3(
+            offset.X * cos - offset.Z * sin,
+            offset.Y,
+            offset.X * sin + offset.Z * cos);
     }
 }

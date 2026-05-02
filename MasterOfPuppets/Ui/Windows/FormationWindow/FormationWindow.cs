@@ -69,12 +69,11 @@ public partial class FormationWindow : Window {
 
     /// <summary>
     /// Canonical arrow vertices - tip at (0, 1) in local space.
-    /// Angle = 0 points north in both plot-space and world-space.
+    /// The plot rotates this north-up arrow from FFXIV/game facing degrees.
     /// </summary>
     public static readonly Vector2[] ArrowVertices2D = [new(0, 1), new(1, -1), new(0, -0.5f), new(-1, -1)];
 
-    /// <summary>World-space equivalent - tip at (0, 0, 1) = south at rot=0,
-    /// but CreateRotationY(worldRot) in FFXIV space rotates it to face north at rot=0.</summary>
+    /// <summary>World-space equivalent: tip at +Z, which is south/facing 0 in FFXIV game coordinates.</summary>
     public static readonly Vector3[] ArrowVertices3D = [new(0, 0, 1), new(1, 0, -1), new(0, 0, -0.5f), new(-1, 0, -1)];
 
     private Formation? SelectedFormation =>

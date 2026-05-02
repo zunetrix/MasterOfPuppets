@@ -16,10 +16,10 @@ namespace MasterOfPuppets.Movement;
 public unsafe class SimpleInputMovement : IDisposable {
 
     [Signature("74 0C 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ??", ScanType = ScanType.StaticAddress)]
-    private readonly nint _moveControllerSubMemberForMineInstance;
+    private nint _moveControllerSubMemberForMineInstance = 0;
 
     [Signature("40 53 48 83 EC ?? 48 8B 41 20 48 8B D9 80 B8 02 02 00 00 ??", ScanType = ScanType.Text)]
-    private readonly delegate* unmanaged<nint, long> _moveStop;
+    private delegate* unmanaged<nint, long> _moveStop = null;
 
     /// <summary>Current injected direction. Set to None to stop injection.</summary>
     public MovementDirection Direction {
