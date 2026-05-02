@@ -6,6 +6,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 
+using MasterOfPuppets.Formations;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -18,6 +19,26 @@ public partial class FormationWindow {
 
         var pt2 = _selPoint >= 0 && _selPoint < formation.Points.Count
             ? formation.Points[_selPoint] : null;
+
+        var executionMode = formation.ExecutionMode;
+        ImGui.SetNextItemWidth(-1);
+        if (ImGuiUtil.EnumCombo("##fiexecutionmode", ref executionMode)) {
+            formation.ExecutionMode = executionMode;
+            Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
+        }
+        if (ImGui.IsItemHovered())
+            ImGui.SetTooltip("Formation execution mode");
+
+        var precision = Plugin.Config.FormationMovePrecision;
+        ImGui.SetNextItemWidth(-1);
+        if (ImGui.DragFloat("Precision##fiprecision", ref precision, 0.01f, 0.01f, 5f, "%.2f")) {
+            Plugin.Config.FormationMovePrecision = precision;
+            Plugin.Config.Save();
+            Plugin.IpcProvider.SyncConfiguration();
+        }
+
+        ImGui.Separator();
 
         //  Points list
         ImGui.SetNextItemOpen(true, ImGuiCond.Appearing);
@@ -88,12 +109,12 @@ public partial class FormationWindow {
                             }
                         }
 
-                        // Column 1: X (displayed in plot-space so it matches the visual preview)
+                        // Column 1: saved formation X (also plot X)
                         ImGui.TableNextColumn();
                         ImGui.SetNextItemWidth(-1);
-                        var plotX = p.Offset.X; // OffsetToPlot: plotX = -worldX
+                        var plotX = p.Offset.X;
                         if (ImGui.DragFloat("##x", ref plotX, 0.001f, -500f, 500f, "%.3f")) {
-                            p.Offset.X = plotX; // PlotToOffset: worldX = -plotX
+                            p.Offset.X = plotX;
                         }
                         if (ImGui.IsItemActivated()) {
                             _selPoint = i;
@@ -108,7 +129,7 @@ public partial class FormationWindow {
                             Plugin.IpcProvider.SyncConfiguration();
                         }
 
-                        // Column 2: Z (plot Y = worldZ, no negation needed)
+                        // Column 2: saved formation Z
                         ImGui.TableNextColumn();
                         ImGui.SetNextItemWidth(-1);
                         ImGui.DragFloat("##z", ref p.Offset.Z, 0.001f, -500f, 500f, "%.3f");

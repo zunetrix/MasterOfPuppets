@@ -3,13 +3,14 @@ using System.Linq;
 using System.Numerics;
 
 using Dalamud.Game.ClientState.Objects.Types;
-using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using BattleChara = FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara;
 
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Util;
+
+using BattleChara = FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara;
+using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace MasterOfPuppets;
 

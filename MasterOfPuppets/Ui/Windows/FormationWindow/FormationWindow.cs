@@ -3,6 +3,7 @@ using System.Linq;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 
@@ -15,6 +16,7 @@ public partial class FormationWindow : Window {
     private Plugin Plugin { get; }
 
     //  Left panel
+    private readonly FileDialogManager _fileDialogManager = new();
     private string _searchFilter = string.Empty;
     private int _selFormation = -1;
     private string _newFmName = string.Empty;
@@ -79,10 +81,15 @@ public partial class FormationWindow : Window {
         _selFormation >= 0 && _selFormation < Plugin.Config.Formations.Count
             ? Plugin.Config.Formations[_selFormation] : null;
 
-    public FormationWindow(Plugin plugin) : base("Formations (WIP)###FormationsWindow") {
+    public FormationWindow(Plugin plugin) : base("Formations###FormationsWindow") {
         Plugin = plugin;
         Size = ImGuiHelpers.ScaledVector2(960, 620);
         SizeCondition = ImGuiCond.FirstUseEver;
+    }
+
+    public override void PreDraw() {
+        _fileDialogManager.Draw();
+        base.PreDraw();
     }
 
     public override void Draw() {

@@ -39,14 +39,14 @@ public partial class FormationWindow {
             _ => new List<FormationPoint>()
         };
 
-        // Step 1: Apply global rotation offset in world XZ plane (CW, FFXIV convention)
+        // Step 1: Apply global rotation offset in world XZ plane (CW from north).
         float angleOffRad = _shapeAngleOff * Angle.DegToRad;
         if (angleOffRad != 0) {
             float cos = MathF.Cos(angleOffRad);
             float sin = MathF.Sin(angleOffRad);
             foreach (var p in newPoints) {
-                float nx = p.Offset.X * cos + p.Offset.Z * sin;
-                float nz = -p.Offset.X * sin + p.Offset.Z * cos;
+                float nx = p.Offset.X * cos - p.Offset.Z * sin;
+                float nz = p.Offset.X * sin + p.Offset.Z * cos;
                 p.Offset = new Vector3(nx, 0, nz);
             }
         }
@@ -70,12 +70,11 @@ public partial class FormationWindow {
                 float bearing = MathF.Atan2(dx, -dz) * Angle.RadToDeg;
                 p.Angle = _faceMode switch {
                     0 => bearing,           // Outward: face away from center
-                    1 => -bearing,          // Inward: face toward center (exact opposite)
+                    1 => bearing + 180f,    // Inward: face toward center
                     2 => 0f,                // North
                     _ => 0f
                 };
-                if (_faceMode != 2)
-                    p.Angle += _shapeAngleOff;
+                p.Angle = FormationMath.NormalizeDegrees(p.Angle);
             }
         }
 
@@ -87,7 +86,7 @@ public partial class FormationWindow {
                 float dx = b.X - a.X;
                 float dz = b.Z - a.Z;
                 if (MathF.Abs(dx) > 0.001f || MathF.Abs(dz) > 0.001f)
-                    newPoints[i].Angle = MathF.Atan2(dx, -dz) * Angle.RadToDeg + _shapeAngleOff;
+                    newPoints[i].Angle = FormationMath.NormalizeDegrees(MathF.Atan2(dx, -dz) * Angle.RadToDeg);
             }
         }
 

@@ -8,6 +8,7 @@ using Dalamud.Game.Command;
 using Dalamud.Interface.ImGuiNotification;
 
 using MasterOfPuppets.Camera;
+using MasterOfPuppets.Formations;
 using MasterOfPuppets.Movement;
 using MasterOfPuppets.Util;
 
@@ -413,7 +414,10 @@ public class PluginCommandManager : IDisposable {
                             Plugin.Ui.FormationWindow.Toggle();
                             return;
                         }
-                        Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
+                        FormationExecutionMode? modeOverride = null;
+                        if (parsedArgs.Count >= 3 && TryParseFormationExecutionMode(parsedArgs[2], out var mode))
+                            modeOverride = mode;
+                        Plugin.IpcProvider.ExecuteFormation(parsedArgs[1], modeOverride);
                     }
                     break;
                 case "layout": {
@@ -528,5 +532,31 @@ public class PluginCommandManager : IDisposable {
         var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
         if (parsedArgs.Count >= 2)
             Plugin.IpcProvider.EnqueueCharacterMacroActions(parsedArgs[1], parsedArgs[0]);
+    }
+
+    private static bool TryParseFormationExecutionMode(string input, out FormationExecutionMode mode) {
+        mode = FormationExecutionMode.LeaderOrigin;
+        input = input.Trim().TrimStart('-');
+
+        if (input.Equals("origin", StringComparison.OrdinalIgnoreCase) ||
+            input.Equals("leader", StringComparison.OrdinalIgnoreCase) ||
+            input.Equals("leaderorigin", StringComparison.OrdinalIgnoreCase)) {
+            mode = FormationExecutionMode.LeaderOrigin;
+            return true;
+        }
+
+        if (input.Equals("relative", StringComparison.OrdinalIgnoreCase) ||
+            input.Equals("btb", StringComparison.OrdinalIgnoreCase)) {
+            mode = FormationExecutionMode.RelativeToLocalAssignedPoint;
+            return true;
+        }
+
+        if (input.Equals("sequence", StringComparison.OrdinalIgnoreCase) ||
+            input.Equals("clientorder", StringComparison.OrdinalIgnoreCase)) {
+            mode = FormationExecutionMode.ClientOrder;
+            return true;
+        }
+
+        return Enum.TryParse(input, ignoreCase: true, out mode);
     }
 }

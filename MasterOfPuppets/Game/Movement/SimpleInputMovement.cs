@@ -16,7 +16,7 @@ namespace MasterOfPuppets.Movement;
 public unsafe class SimpleInputMovement : IDisposable {
 
     [Signature("74 0C 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ??", ScanType = ScanType.StaticAddress)]
-    private nint _moveControllerSubMemberForMineInstance;
+    private readonly nint _moveControllerSubMemberForMineInstance;
 
     [Signature("40 53 48 83 EC ?? 48 8B 41 20 48 8B D9 80 B8 02 02 00 00 ??", ScanType = ScanType.Text)]
     private readonly delegate* unmanaged<nint, long> _moveStop;

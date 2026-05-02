@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using Dalamud.Game.Text;
 using Dalamud.Game.Chat;
+using Dalamud.Game.Text;
 
 using MasterOfPuppets.Util;
 

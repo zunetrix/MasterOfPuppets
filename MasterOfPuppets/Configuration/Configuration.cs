@@ -185,6 +185,10 @@ internal class Configuration : IPluginConfiguration {
     public bool AutoSaveMacro { get; set; } = false;
     public string MacroExportPath { get; set; } = DalamudApi.PluginInterface.ConfigDirectory.FullName ?? string.Empty;
     public MacroImportMode MacroImportMode { get; set; } = MacroImportMode.AppendAll;
+    public MacroImportMode FormationImportMode { get; set; } = MacroImportMode.AppendAll;
+    public bool IncludeBardToolboxCharactersOnFormationImport { get; set; } = true;
+    public bool BackupBeforeFormationImport { get; set; } = true;
+    public float FormationMovePrecision { get; set; } = 0.1f;
     public bool IncludeCidOnExport { get; set; } = false;
     public bool IncludeCidOnImport { get; set; } = true;
     public bool BackupBeforeImport { get; set; } = true;

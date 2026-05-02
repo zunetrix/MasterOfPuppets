@@ -6,8 +6,8 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Bindings.ImPlot;
 using Dalamud.Game.ClientState.Objects.Types;
 
-using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Extensions;
+using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Formations;
 using MasterOfPuppets.Movement;
 
@@ -111,7 +111,7 @@ public partial class FormationWindow {
                 if (keyAlt) {
                     x = origX;
                     y = origY;
-                    pt.Angle += ImGui.GetIO().MouseDelta.X;
+                    pt.Angle = FormationMath.NormalizeDegrees(pt.Angle + ImGui.GetIO().MouseDelta.X);
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Left)) {
                         Plugin.Config.Save();
                         Plugin.IpcProvider.SyncConfiguration();
@@ -158,8 +158,7 @@ public partial class FormationWindow {
     }
 
     private static void DrawArrow(ImDrawListPtr dl, float px, float py, float angleDeg, uint color, float size = 0.5f) {
-        // No negation: FFXIV rotation is CW, plot +Y is north, both match with positive angle
-        var mat = Matrix3x2.CreateRotation(angleDeg * Angle.DegToRad);
+        var mat = Matrix3x2.CreateRotation(-angleDeg * Angle.DegToRad);
         float h = size * 0.5f;
 
         var pts = new Vector2[4];
@@ -318,6 +317,7 @@ public partial class FormationWindow {
             leaderObj = DalamudApi.ObjectTable.FirstOrDefault(o => o.EntityId == leaderMember.EntityId);
 
         var originPos = leaderObj?.Position ?? player.Position;
+        var originRot = leaderObj?.Rotation ?? player.Rotation;
 
         if (!_appendMode) formation.Points.Clear();
 
@@ -325,11 +325,11 @@ public partial class FormationWindow {
             var obj = DalamudApi.ObjectTable.FirstOrDefault(o => o.EntityId == member.EntityId);
             if (obj == null) continue;
 
-            var offset = obj.Position - originPos;
+            var (offset, angleDegrees) = FormationMath.ToMopRelative(obj.Position, obj.Rotation, originPos, originRot);
 
             var point = new FormationPoint {
                 Offset = new Vector3(offset.X, 0, offset.Z),
-                Angle = obj.Rotation,
+                Angle = angleDegrees,
             };
 
             if (member.ContentId != 0)

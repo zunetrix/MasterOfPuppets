@@ -5,6 +5,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
 using MasterOfPuppets.Camera;
+using MasterOfPuppets.Formations;
 using MasterOfPuppets.Ipc;
 using MasterOfPuppets.Movement;
 using MasterOfPuppets.Resources;
@@ -23,6 +24,7 @@ public class Plugin : IDalamudPlugin {
     internal ItemMover ItemMover { get; }
     internal MacroHandler MacroHandler { get; }
     internal MacroManager MacroManager { get; }
+    internal FormationManager FormationManager { get; }
     internal CompletionIndex CompletionIndex { get; }
     internal MovementManager MovementManager { get; }
     internal FollowPath FollowPath { get; }
@@ -40,11 +42,11 @@ public class Plugin : IDalamudPlugin {
 
         Ui = new PluginUi(this);
         // Dalamud.Utility.Util.GetHostPlatform();
-        // IpcProvider = new IpcProvider(this, Dalamud.Utility.Util.IsWine() ? new LinuxIpcTransport() : new TinyIpcTransport());
-        IpcProvider = new IpcProvider(this, new TinyIpcTransport());
+        IpcProvider = new IpcProvider(this, Dalamud.Utility.Util.IsWine() ? new LinuxIpcTransport() : new TinyIpcTransport());
         ChatWatcher = new ChatWatcher(this);
         ItemMover = new ItemMover(this);
         MacroManager = new MacroManager(this);
+        FormationManager = new FormationManager(this);
         MacroHandler = new MacroHandler(this);
         PluginCommandManager = new PluginCommandManager(this);
         CompletionIndex = new CompletionIndex();
@@ -131,4 +133,3 @@ public class Plugin : IDalamudPlugin {
         Ui.Dispose();
     }
 }
-

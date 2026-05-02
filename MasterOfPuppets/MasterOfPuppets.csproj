@@ -33,8 +33,14 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
   <!-- Linux build -->
-  <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
+  <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' and '$(DALAMUD_HOME)' != ''">
     <DalamudLibPath>$(DALAMUD_HOME)</DalamudLibPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' and '$(DALAMUD_HOME)' == '' and Exists('$(HOME)/.xlcore/dalamud/Hooks/dev/Dalamud.dll')">
+    <DalamudLibPath>$(HOME)/.xlcore/dalamud/Hooks/dev</DalamudLibPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' and '$(DALAMUD_HOME)' == '' and '$(DalamudLibPath)' == '' and Exists('$(HOME)/.xlcore/dalamud/Hooks/15.0.0.1/Dalamud.dll')">
+    <DalamudLibPath>$(HOME)/.xlcore/dalamud/Hooks/15.0.0.1</DalamudLibPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(IsCI)' == 'true'">
     <DalamudLibPath>$(HOME)/dalamud</DalamudLibPath>
@@ -46,7 +52,7 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
     <PackageReference Include="TinyIpc" Version="5.2.0" />
     <PackageReference Include="protobuf-net" Version="3.2.56" />
     <!-- linux wrapper for TinyIpc -->
-    <PackageReference Include="XivIpc " Version="0.0.7" />
+    <PackageReference Include="XivIpc " Version="0.0.8" />
     <!-- Parser combinators for condition expressions -->
     <PackageReference Include="Sprache" Version="2.3.1" />
     <!-- Efficient text searching -->

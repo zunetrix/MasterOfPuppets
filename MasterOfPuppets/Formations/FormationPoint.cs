@@ -10,7 +10,7 @@ public class FormationPoint {
     [JsonPropertyName("offset")]
     public Vector3 Offset;
 
-    /// <summary>Facing angle in degrees. Convention: 0 = south, increases CCW (matches FFXIV rotation).</summary>
+    /// <summary>MoP editor facing angle in degrees. Convention: 0 = north, increases clockwise.</summary>
     [JsonPropertyName("angle")]
     public float Angle;
 

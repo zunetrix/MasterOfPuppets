@@ -4,9 +4,7 @@ using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 
-using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Formations;
-using MasterOfPuppets.Movement;
 
 namespace MasterOfPuppets;
 
@@ -37,20 +35,19 @@ public partial class FormationWindow {
         float leaderRot = player.Rotation;
         var localCid = DalamudApi.PlayerState.ContentId;
         var myPoint = formation.Points.FirstOrDefault(p => p.Cids.Contains(localCid));
-        var myOffset = myPoint?.Offset ?? Vector3.Zero;
-        float myAngle = myPoint?.Angle ?? 0f;
 
         for (int i = 0; i < formation.Points.Count; i++) {
             var pt = formation.Points[i];
 
-            // Same as HandleExecuteFormation: ApplyLeaderRotation on offset relative to my point
-            var worldPos = (pt.Offset - myOffset).ApplyLeaderRotation(leaderRot, playerPos);
+            Vector3 worldPos;
+            float facingRad;
+            if (formation.ExecutionMode == FormationExecutionMode.RelativeToLocalAssignedPoint && myPoint != null) {
+                (worldPos, facingRad) = FormationMath.GetMopRelativeWorld(myPoint, pt, playerPos, leaderRot);
+            } else {
+                (worldPos, facingRad) = FormationMath.ToMopWorld(pt, playerPos, leaderRot);
+            }
 
             uint c = i == _selPoint ? 0xFFFFAA00u : 0xFF3388FFu;
-
-            // Same formula as HandleExecuteFormation: leaderRot + point.Angle * DegToRad
-            float relAngle = myPoint != null ? pt.Angle - myAngle : pt.Angle;
-            float facingRad = leaderRot + relAngle * Angle.DegToRad;
 
             if (!DrawWorldArrow(bdl, worldPos, facingRad, c, _markerSizeWorld)) continue;
             if (DalamudApi.GameGui.WorldToScreen(worldPos, out var centerPx)) {
