@@ -86,19 +86,39 @@ public partial class MacroHandler : IDisposable {
         bool SkipGlobalDelay = false
     );
 
+    private sealed record ResolvedMacroActions(string MacroName, string[] Actions);
+
     private readonly Dictionary<string, MacroCommand> _commands;
+
+    public static bool CommandSkipsGlobalDelay(string command) =>
+        command.ToLowerInvariant() switch {
+            "mopwait" or
+            "mopmacro" or
+            "mopobjectquantity" or
+            "moptarget" or
+            "moptargetof" or
+            "moptargetclear" or
+            "moptargetmyminion" or
+            "mopenablewalk" or
+            "mopdisablewalk" or
+            "moptogglewalk" or
+            "mopface" or
+            "mopfaceabs" or
+            "mopmovegearsets" => true,
+            _ => false,
+        };
 
     public MacroHandler(Plugin plugin) {
         Plugin = plugin;
 
         _commands = new Dictionary<string, MacroCommand>(StringComparer.OrdinalIgnoreCase) {
-            ["mopwait"] = new(HandleMopWait, SkipGlobalDelay: true),
-            ["mopmacro"] = new(HandleMopMacro, SkipGlobalDelay: true),
-            ["mopobjectquantity"] = new(HandleMopObjectQuantity, SkipGlobalDelay: true),
-            ["moptarget"] = new(HandleMopTarget, SkipGlobalDelay: true),
-            ["moptargetof"] = new(HandleMopTargetOf, SkipGlobalDelay: true),
-            ["moptargetclear"] = new(HandleMopTargetClear, SkipGlobalDelay: true),
-            ["moptargetmyminion"] = new(HandleMopTargetMyMinion, SkipGlobalDelay: true),
+            ["mopwait"] = new(HandleMopWait, SkipGlobalDelay: CommandSkipsGlobalDelay("mopwait")),
+            ["mopmacro"] = new(HandleMopMacro, SkipGlobalDelay: CommandSkipsGlobalDelay("mopmacro")),
+            ["mopobjectquantity"] = new(HandleMopObjectQuantity, SkipGlobalDelay: CommandSkipsGlobalDelay("mopobjectquantity")),
+            ["moptarget"] = new(HandleMopTarget, SkipGlobalDelay: CommandSkipsGlobalDelay("moptarget")),
+            ["moptargetof"] = new(HandleMopTargetOf, SkipGlobalDelay: CommandSkipsGlobalDelay("moptargetof")),
+            ["moptargetclear"] = new(HandleMopTargetClear, SkipGlobalDelay: CommandSkipsGlobalDelay("moptargetclear")),
+            ["moptargetmyminion"] = new(HandleMopTargetMyMinion, SkipGlobalDelay: CommandSkipsGlobalDelay("moptargetmyminion")),
             ["mopaction"] = new(HandleMopAction),
             ["mopitem"] = new(HandleMopItem),
             ["moppetbarslot"] = new(HandleMopPetBarSlot),
@@ -106,15 +126,16 @@ public partial class MacroHandler : IDisposable {
             ["mophotbaremote"] = new(HandleMopHotbarEmote),
             ["mopmove"] = new(HandleMopMove),
             ["mopmoverelativeto"] = new(HandleMopMoveRelativeTo),
+            ["mopformationmove"] = new(HandleMopFormationMove),
             ["mopmovetotarget"] = new(HandleMopMoveToTarget),
             ["mopmovetocharacter"] = new(HandleMopMoveToCharacter),
             ["mopstopmove"] = new(HandleMopStopMove),
-            ["mopenablewalk"] = new(HandleMopEnableWalk, SkipGlobalDelay: true),
-            ["mopdisablewalk"] = new(HandleMopDisableWalk, SkipGlobalDelay: true),
-            ["moptogglewalk"] = new(HandleMopToggleWalk, SkipGlobalDelay: true),
-            ["mopface"] = new(HandleMopFace, SkipGlobalDelay: true),
-            ["mopfaceabs"] = new(HandleMopFaceAbs, SkipGlobalDelay: true),
-            ["mopmovegearsets"] = new(HandleMopMoveGearsets, SkipGlobalDelay: true),
+            ["mopenablewalk"] = new(HandleMopEnableWalk, SkipGlobalDelay: CommandSkipsGlobalDelay("mopenablewalk")),
+            ["mopdisablewalk"] = new(HandleMopDisableWalk, SkipGlobalDelay: CommandSkipsGlobalDelay("mopdisablewalk")),
+            ["moptogglewalk"] = new(HandleMopToggleWalk, SkipGlobalDelay: CommandSkipsGlobalDelay("moptogglewalk")),
+            ["mopface"] = new(HandleMopFace, SkipGlobalDelay: CommandSkipsGlobalDelay("mopface")),
+            ["mopfaceabs"] = new(HandleMopFaceAbs, SkipGlobalDelay: CommandSkipsGlobalDelay("mopfaceabs")),
+            ["mopmovegearsets"] = new(HandleMopMoveGearsets, SkipGlobalDelay: CommandSkipsGlobalDelay("mopmovegearsets")),
         };
 
         Task.Run(() => RunWorker(_macroChannel, _macroState, _cts.Token));
@@ -252,18 +273,72 @@ public partial class MacroHandler : IDisposable {
         } while (shouldLoop && !token.IsCancellationRequested);
     }
 
-    private string[] GetLocalPlayerMacroActions(string macroNameOrNumber) {
-        int macroIndex = Plugin.MacroManager.FindMacroIndex(macroNameOrNumber);
+    private ResolvedMacroActions ResolveLocalPlayerMacroActions(int macroIndex, Dictionary<string, string>? inlineVars = null) {
         var macro = Plugin.MacroManager.GetMacroByIndex(macroIndex);
         var playerCid = DalamudApi.PlayerState.ContentId;
-        return macro.GetCidActions(playerCid, Plugin.Config.CidsGroups);
+        var actions = macro.GetCidActions(
+            playerCid,
+            Plugin.Config.CidsGroups,
+            inlineVars,
+            MacroRuntimeVariables.FromCurrentGameState());
+        return new ResolvedMacroActions(macro.Name, actions);
+    }
+
+    private ResolvedMacroActions ResolveLocalPlayerMacroActions(string macroNameOrNumber, Dictionary<string, string>? inlineVars = null) {
+        int macroIndex = Plugin.MacroManager.FindMacroIndex(macroNameOrNumber);
+        return ResolveLocalPlayerMacroActions(macroIndex, inlineVars);
+    }
+
+    private async Task<ResolvedMacroActions> ResolveLocalPlayerMacroActionsOnFrameworkThread(
+        int macroIndex,
+        Dictionary<string, string>? inlineVars = null) {
+        ResolvedMacroActions? resolved = null;
+        await DalamudApi.Framework.RunOnFrameworkThread(() => {
+            resolved = ResolveLocalPlayerMacroActions(macroIndex, inlineVars);
+        });
+        return resolved ?? new ResolvedMacroActions(string.Empty, []);
+    }
+
+    private async Task<ResolvedMacroActions> ResolveLocalPlayerMacroActionsOnFrameworkThread(
+        string macroNameOrNumber,
+        Dictionary<string, string>? inlineVars = null) {
+        ResolvedMacroActions? resolved = null;
+        await DalamudApi.Framework.RunOnFrameworkThread(() => {
+            resolved = ResolveLocalPlayerMacroActions(macroNameOrNumber, inlineVars);
+        });
+        return resolved ?? new ResolvedMacroActions(string.Empty, []);
+    }
+
+    private async Task ResolveAndEnqueueLocalPlayerMacroActions(
+        int macroIndex,
+        Dictionary<string, string>? inlineVars,
+        CancellationToken token = default) {
+        try {
+            var resolved = await ResolveLocalPlayerMacroActionsOnFrameworkThread(macroIndex, inlineVars);
+            if (token.IsCancellationRequested)
+                return;
+            EnqueueMacroActions(resolved.MacroName, resolved.Actions, Plugin.Config.DelayBetweenActions);
+        } catch (Exception ex) {
+            DalamudApi.PluginLog.Error(ex, $"[MacroHandler] Failed to resolve macro {macroIndex + 1}");
+        }
+    }
+
+    private async Task ResolveAndEnqueueLocalPlayerMacroActions(
+        string macroNameOrNumber,
+        Dictionary<string, string>? inlineVars,
+        CancellationToken token = default) {
+        try {
+            var resolved = await ResolveLocalPlayerMacroActionsOnFrameworkThread(macroNameOrNumber, inlineVars);
+            if (token.IsCancellationRequested)
+                return;
+            EnqueueMacroActions(resolved.MacroName, resolved.Actions, Plugin.Config.DelayBetweenActions);
+        } catch (Exception ex) {
+            DalamudApi.PluginLog.Error(ex, $"[MacroHandler] Failed to resolve macro {macroNameOrNumber}");
+        }
     }
 
     public void ExecuteMacro(int macroIndex, Dictionary<string, string>? inlineVars = null) {
-        var macro = Plugin.MacroManager.GetMacroByIndex(macroIndex);
-        var playerCid = DalamudApi.PlayerState.ContentId;
-        var actions = macro.GetCidActions(playerCid, Plugin.Config.CidsGroups, inlineVars);
-        EnqueueMacroActions(macro.Name, actions, Plugin.Config.DelayBetweenActions);
+        _ = ResolveAndEnqueueLocalPlayerMacroActions(macroIndex, inlineVars);
     }
 
     // Per-queue stop

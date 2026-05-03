@@ -10,6 +10,7 @@ using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Formations;
 using MasterOfPuppets.Movement;
+using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
@@ -186,131 +187,11 @@ public partial class FormationWindow {
     }
 
     private void DrawShapeToolbar(Formation? formation) {
-        ImGui.SetNextItemWidth(110);
-        int shapeTypeInt = (int)_shapeType;
-        if (ImGui.Combo("##shtypei", ref shapeTypeInt, ShapeNames, ShapeNames.Length)) {
-            _shapeType = (ShapeType)shapeTypeInt;
-            // Reset some defaults when changing types to avoid weirdness
-            if (_shapeN < 1) _shapeN = 8;
-            if (_shapeRadius < 0.1f) _shapeRadius = 5f;
+        if (ImGui.Button("Generate Shape...##fi")) {
+            ImGui.OpenPopup("Generate Shape##FormationShapeGenerator");
         }
 
-        ImGui.SameLine();
-        ImGui.Text("N:");
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(38);
-        ImGui.DragInt("##shni", ref _shapeN, 0.2f, 1, 64);
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Total number of points");
-
-        ImGui.SameLine();
-        // Context-sensitive parameters
-        switch (_shapeType) {
-            case ShapeType.Circle:
-            case ShapeType.FigureEight:
-            case ShapeType.Heart:
-            case ShapeType.Arc:
-            case ShapeType.Lissajous:
-                ShowParam("R:", ref _shapeRadius, "Radius / Scale");
-                break;
-            case ShapeType.Rectangle:
-                ShowParam("W:", ref _shapeWidth, "Width");
-                ImGui.SameLine();
-                ShowParam("D:", ref _shapeDepth, "Depth");
-                break;
-            case ShapeType.Line:
-            case ShapeType.Chevron:
-            case ShapeType.Cross:
-                ShowParam("Sp:", ref _shapeSpacing, "Spacing");
-                if (_shapeType == ShapeType.Cross) { ImGui.SameLine(); ShowParam("Len:", ref _shapeWidth, "Arm Length"); }
-                break;
-            case ShapeType.StaggeredLine:
-            case ShapeType.Zigzag:
-                ShowParam("Sp:", ref _shapeSpacing, "Step Spacing");
-                ImGui.SameLine();
-                ShowParam("Amp:", ref _shapeRadius, "Amplitude / Depth Offset");
-                break;
-            case ShapeType.Spiral:
-            case ShapeType.LogarithmicSpiral:
-                ShowParam("St:", ref _shapeRadius, _shapeType == ShapeType.Spiral ? "Radial Step" : "a-parameter");
-                ImGui.SameLine();
-                ShowParam("Rot:", ref _shapeRadius2, "Rotations (b-param for Log)");
-                break;
-            case ShapeType.Polygon:
-            case ShapeType.Rose:
-            case ShapeType.StarPolygon:
-                ShowParam("R:", ref _shapeRadius, "Radius");
-                ImGui.SameLine();
-                ImGui.Text(_shapeType == ShapeType.Rose ? "Pet:" : "Sides:");
-                ImGui.SameLine();
-                ImGui.SetNextItemWidth(30);
-                ImGui.DragInt("##shpint", ref _shapeParamInt, 0.1f, 1, 32);
-                break;
-            case ShapeType.Star:
-            case ShapeType.SpokedWheel:
-                ShowParam("R1:", ref _shapeRadius, "Outer Radius");
-                ImGui.SameLine();
-                ShowParam("R2:", ref _shapeRadius2, "Inner Radius");
-                ImGui.SameLine();
-                ImGui.Text(_shapeType == ShapeType.Star ? "Pts:" : "Spoke:");
-                ImGui.SameLine();
-                ImGui.SetNextItemWidth(30);
-                ImGui.DragInt("##shpint", ref _shapeParamInt, 0.1f, 1, 32);
-                break;
-            case ShapeType.Ellipse:
-                ShowParam("RX:", ref _shapeRadius, "Radius X");
-                ImGui.SameLine();
-                ShowParam("RZ:", ref _shapeRadius2, "Radius Z");
-                break;
-            case ShapeType.SineWave:
-                ShowParam("Amp:", ref _shapeRadius, "Amplitude");
-                ImGui.SameLine();
-                ShowParam("Wave:", ref _shapeRadius2, "Wavelength");
-                ImGui.SameLine();
-                ShowParam("Len:", ref _shapeWidth, "Total Length");
-                break;
-            case ShapeType.Grid:
-                ShowParam("SpX:", ref _shapeSpacing, "X Spacing");
-                ImGui.SameLine();
-                ShowParam("SpZ:", ref _shapeWidth, "Z Spacing");
-                ImGui.SameLine();
-                ImGui.Text("Col:");
-                ImGui.SameLine();
-                ImGui.SetNextItemWidth(30);
-                ImGui.DragInt("##shpint", ref _shapeParamInt, 0.1f, 1, 32);
-                break;
-            case ShapeType.Hypotrochoid:
-                ShowParam("R:", ref _shapeRadius); ImGui.SameLine();
-                ShowParam("r:", ref _shapeRadius2); ImGui.SameLine();
-                ShowParam("d:", ref _shapeWidth); ImGui.SameLine();
-                ShowParam("Rot:", ref _shapeDepth);
-                break;
-            case ShapeType.RingWithCenter:
-                ShowParam("R:", ref _shapeRadius);
-                ImGui.SameLine();
-                ImGui.Text("Ctr:");
-                ImGui.SameLine();
-                ImGui.SetNextItemWidth(30);
-                ImGui.DragInt("##shpint", ref _shapeParamInt, 0.1f, 1, 16);
-                break;
-        }
-
-        ImGui.SameLine();
-        ImGui.Text("A\u00b0:");
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(40);
-        ImGui.DragFloat("##shai", ref _shapeAngleOff, 1f, -180f, 180f, "%.0f");
-
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(70);
-        ImGui.Combo("##shfacei", ref _faceMode, FaceNames, FaceNames.Length);
-
-        ImGui.SameLine();
-        ImGui.Checkbox("Ap##shappi", ref _appendMode);
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Append to existing points");
-
-        ImGui.SameLine();
-        if (ImGui.Button("Gen##i") && formation != null)
-            GenerateShape(formation);
+        DrawShapeGeneratorModal(formation);
     }
 
     private static void ShowParam(string label, ref float val, string? tooltip = null) {
@@ -319,6 +200,201 @@ public partial class FormationWindow {
         ImGui.SetNextItemWidth(40);
         ImGui.DragFloat($"##shp_{label}", ref val, 0.1f, 0f, 100f, "%.1f");
         if (tooltip != null && ImGui.IsItemHovered()) ImGui.SetTooltip(tooltip);
+    }
+
+    private void DrawShapeGeneratorModal(Formation? formation) {
+        ImGui.SetNextWindowSize(new Vector2(460f, 0f), ImGuiCond.FirstUseEver);
+        if (!ImGui.BeginPopupModal("Generate Shape##FormationShapeGenerator", ImGuiWindowFlags.AlwaysAutoResize))
+            return;
+
+        ImGui.Text("Shape");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(240);
+        int shapeTypeInt = (int)_shapeType;
+        if (ImGui.Combo("##shapeType", ref shapeTypeInt, FormationShapeGenerator.ShapeNames, FormationShapeGenerator.ShapeNames.Length)) {
+            _shapeType = (FormationShapeType)shapeTypeInt;
+            if (_shapeN < 1) _shapeN = 8;
+            if (_shapeRadius < 0.1f) _shapeRadius = 5f;
+        }
+
+        ImGui.Text("Point count");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(110);
+        ImGui.DragInt("##shapePointCount", ref _shapeN, 0.2f, 1, 64);
+
+        ImGui.Text("Anchor mode");
+        ImGuiUtil.HelpMarker("""
+            Shape only: every generated point lies on the selected shape.
+            Anchor at center: point 1, or the first character in the selected group, is placed at the center. Remaining characters form the shape around it.
+            """);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(180);
+        ImGui.Combo("##shapeAnchorMode", ref _shapeAnchorMode, FormationShapeGenerator.AnchorModeNames, FormationShapeGenerator.AnchorModeNames.Length);
+
+        DrawShapeAssignmentControls();
+
+        ImGui.Separator();
+        DrawShapeParameterControls();
+
+        ImGui.Separator();
+        ImGui.Text("Rotation offset");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(110);
+        ImGui.DragFloat("##shapeAngleOffset", ref _shapeAngleOff, 1f, -180f, 180f, "%.0f deg");
+
+        ImGui.Text("Facing");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(160);
+        ImGui.Combo("##shapeFaceMode", ref _faceMode, FormationShapeGenerator.FaceModeNames, FormationShapeGenerator.FaceModeNames.Length);
+
+        ImGui.Checkbox("Append to existing points##shapeAppend", ref _appendMode);
+
+        ImGui.Separator();
+        bool disabled = formation == null;
+        if (disabled) ImGui.BeginDisabled();
+        if (ImGui.Button("Generate##shapeGenerate", new Vector2(120, 0)) && formation != null) {
+            GenerateShape(formation);
+            ImGui.CloseCurrentPopup();
+        }
+        if (disabled) ImGui.EndDisabled();
+
+        ImGui.SameLine();
+        if (ImGui.Button("Cancel##shapeCancel", new Vector2(100, 0))) {
+            ImGui.CloseCurrentPopup();
+        }
+
+        ImGui.EndPopup();
+    }
+
+    private void DrawShapeAssignmentControls() {
+        var groupNames = Plugin.Config.CidsGroups.Select(g => g.Name).ToList();
+        if (!string.IsNullOrWhiteSpace(_shapeAssignGroupSelected)
+            && Plugin.Config.CidsGroups.All(g => !g.Name.Equals(_shapeAssignGroupSelected, StringComparison.OrdinalIgnoreCase)))
+            _shapeAssignGroupSelected = string.Empty;
+
+        ImGui.Text("Assign from group");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(240);
+        ImGui.BeginDisabled(groupNames.Count == 0);
+        if (_shapeGroupCombo.Draw("##shapeAssignGroup", groupNames, ref _shapeAssignGroupSelected)) {
+            var group = GetShapeAssignmentGroup();
+            if (group != null)
+                _shapeN = Math.Clamp(group.Cids.Count, 1, 64);
+        }
+        ImGui.EndDisabled();
+
+        ImGui.SameLine();
+        ImGui.BeginDisabled(string.IsNullOrWhiteSpace(_shapeAssignGroupSelected));
+        if (ImGui.Button("Clear##shapeAssignGroupClear"))
+            _shapeAssignGroupSelected = string.Empty;
+        ImGui.EndDisabled();
+
+        var selectedGroup = GetShapeAssignmentGroup();
+        if (selectedGroup != null) {
+            var assigned = Math.Min(_shapeN, selectedGroup.Cids.Count);
+            var centerText = _shapeAnchorMode == (int)FormationShapeAnchorMode.AnchorAtCenter && assigned > 0
+                ? " First group character becomes the center point."
+                : string.Empty;
+            ImGui.TextDisabled($"Will assign {assigned} of {selectedGroup.Cids.Count} group character(s) directly.{centerText}");
+        } else if (groupNames.Count == 0) {
+            ImGui.TextDisabled("No character groups available.");
+        } else {
+            ImGui.TextDisabled("Generated points will be unassigned.");
+        }
+    }
+
+    private void DrawShapeParameterControls() {
+        switch (_shapeType) {
+            case FormationShapeType.Circle:
+            case FormationShapeType.FigureEight:
+            case FormationShapeType.Heart:
+            case FormationShapeType.Arc:
+            case FormationShapeType.Lissajous:
+                ShowModalFloat("Radius / scale", ref _shapeRadius);
+                break;
+            case FormationShapeType.Rectangle:
+                ShowModalFloat("Width", ref _shapeWidth);
+                ShowModalFloat("Depth", ref _shapeDepth);
+                break;
+            case FormationShapeType.Line:
+            case FormationShapeType.Chevron:
+                ShowModalFloat("Spacing", ref _shapeSpacing);
+                break;
+            case FormationShapeType.Cross:
+                ShowModalFloat("Spacing", ref _shapeSpacing);
+                ShowModalFloat("Arm length", ref _shapeWidth);
+                break;
+            case FormationShapeType.StaggeredLine:
+            case FormationShapeType.Zigzag:
+                ShowModalFloat("Step spacing", ref _shapeSpacing);
+                ShowModalFloat("Amplitude / depth", ref _shapeRadius);
+                break;
+            case FormationShapeType.Spiral:
+                ShowModalFloat("Radial step", ref _shapeRadius);
+                ShowModalFloat("Rotations", ref _shapeRadius2);
+                break;
+            case FormationShapeType.LogarithmicSpiral:
+                ShowModalFloat("A parameter", ref _shapeRadius);
+                ShowModalFloat("B parameter", ref _shapeRadius2);
+                break;
+            case FormationShapeType.Polygon:
+            case FormationShapeType.StarPolygon:
+                ShowModalFloat("Radius", ref _shapeRadius);
+                ShowModalInt("Sides", ref _shapeParamInt, 3, 32);
+                break;
+            case FormationShapeType.Rose:
+                ShowModalFloat("Radius", ref _shapeRadius);
+                ShowModalInt("Petals", ref _shapeParamInt, 1, 32);
+                break;
+            case FormationShapeType.Star:
+                ShowModalFloat("Outer radius", ref _shapeRadius);
+                ShowModalFloat("Inner radius", ref _shapeRadius2);
+                ShowModalInt("Points", ref _shapeParamInt, 2, 32);
+                break;
+            case FormationShapeType.SpokedWheel:
+                ShowModalFloat("Outer radius", ref _shapeRadius);
+                ShowModalFloat("Inner radius", ref _shapeRadius2);
+                ShowModalInt("Spokes", ref _shapeParamInt, 1, 32);
+                break;
+            case FormationShapeType.Ellipse:
+                ShowModalFloat("Radius X", ref _shapeRadius);
+                ShowModalFloat("Radius Z", ref _shapeRadius2);
+                break;
+            case FormationShapeType.SineWave:
+                ShowModalFloat("Amplitude", ref _shapeRadius);
+                ShowModalFloat("Wavelength", ref _shapeRadius2);
+                ShowModalFloat("Total length", ref _shapeWidth);
+                break;
+            case FormationShapeType.Grid:
+                ShowModalFloat("X spacing", ref _shapeSpacing);
+                ShowModalFloat("Z spacing", ref _shapeWidth);
+                ShowModalInt("Columns", ref _shapeParamInt, 1, 32);
+                break;
+            case FormationShapeType.Hypotrochoid:
+                ShowModalFloat("R", ref _shapeRadius);
+                ShowModalFloat("r", ref _shapeRadius2);
+                ShowModalFloat("d", ref _shapeWidth);
+                ShowModalFloat("Rotations", ref _shapeDepth);
+                break;
+            case FormationShapeType.RingWithCenter:
+                ShowModalFloat("Radius", ref _shapeRadius);
+                ShowModalInt("Center points", ref _shapeParamInt, 1, 16);
+                break;
+        }
+    }
+
+    private static void ShowModalFloat(string label, ref float value) {
+        ImGui.Text(label);
+        ImGui.SameLine(150);
+        ImGui.SetNextItemWidth(140);
+        ImGui.DragFloat($"##shape_{label}", ref value, 0.1f, 0f, 100f, "%.1f");
+    }
+
+    private static void ShowModalInt(string label, ref int value, int min, int max) {
+        ImGui.Text(label);
+        ImGui.SameLine(150);
+        ImGui.SetNextItemWidth(140);
+        ImGui.DragInt($"##shape_{label}", ref value, 0.1f, min, max);
     }
 
     private void SnapshotParty(Formation formation) {

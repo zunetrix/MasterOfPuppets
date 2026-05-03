@@ -19,7 +19,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class MacroEditorWindow : Window {
+public partial class MacroEditorWindow : Window {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
     private Macro MacroItem = new();
@@ -353,6 +353,12 @@ public class MacroEditorWindow : Window {
             var newCommand = new Command { Cids = new(), Actions = "" };
             MacroItem.Commands.Add(newCommand);
         }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonWalkingArrowRight, $"##GenerateCommandsBtn", "Generate Commands")) {
+            ImGui.OpenPopup("Generate Commands##MacroCommandGenerator");
+        }
+        DrawMacroCommandGeneratorModal();
 
         ImGui.SameLine();
         ImGui.Text("Commands");

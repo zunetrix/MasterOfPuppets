@@ -64,6 +64,36 @@ public partial class MacroHandler {
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// /mopformationmove "Formation Name" [forward|backward] [stride] [sequenceIndex]
+    /// Broadcasts one saved-formation movement step from the current/origin character.
+    /// </summary>
+    private async Task HandleMopFormationMove(string macroId, string args, CancellationToken token) {
+        var parts = ArgumentParser.ParseMacroArgs(args);
+        if (parts.Count < 1) {
+            DalamudApi.PluginLog.Warning("[mopformationmove] missing formation name");
+            return;
+        }
+
+        var reverse = parts.Count >= 2
+            && (parts[1].Equals("backward", System.StringComparison.OrdinalIgnoreCase)
+                || parts[1].Equals("reverse", System.StringComparison.OrdinalIgnoreCase));
+        var step = 1;
+        if (parts.Count >= 3 && !int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out step)) {
+            DalamudApi.PluginLog.Warning($"[mopformationmove] invalid stride: \"{parts[2]}\"");
+            step = 1;
+        }
+
+        var sequenceIndex = 0;
+        if (parts.Count >= 4 && !int.TryParse(parts[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out sequenceIndex)) {
+            DalamudApi.PluginLog.Warning($"[mopformationmove] invalid sequence index: \"{parts[3]}\"");
+            sequenceIndex = 0;
+        }
+
+        await Plugin.IpcProvider.ExecuteFormationMove(parts[0], reverse, step, sequenceIndex);
+        DalamudApi.PluginLog.Debug($"[mopformationmove] formation=\"{parts[0]}\" reverse={reverse} stride={step} sequenceIndex={sequenceIndex}");
+    }
+
     /// <summary>/mopmovetotarget - moves to the current target's world position.</summary>
     private Task HandleMopMoveToTarget(string macroId, string args, CancellationToken token) {
         Plugin.MovementManager.MoveToTarget();
@@ -85,6 +115,7 @@ public partial class MacroHandler {
 
     /// <summary>/mopstopmove - immediately stops all movement and clears pending waypoints.</summary>
     private Task HandleMopStopMove(string macroId, string args, CancellationToken token) {
+        Plugin.SimpleInputMovement.StopMove();
         Plugin.MovementManager.StopMove();
         DalamudApi.PluginLog.Debug("[mopstopmove]");
         return Task.CompletedTask;

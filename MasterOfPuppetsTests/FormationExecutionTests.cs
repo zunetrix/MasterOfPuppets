@@ -108,6 +108,89 @@ public class FormationExecutionTests {
         AssertClose(0f, memberWorldRotation);
     }
 
+    [Fact]
+    public void FormationPath_BuildDestinationSequence_SkipsAnchorAndWalksFromRecipientPoint() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = Vector3.Zero },
+                new FormationPoint { Offset = new Vector3(1f, 0f, 0f) },
+                new FormationPoint { Offset = new Vector3(2f, 0f, 0f) },
+                new FormationPoint { Offset = new Vector3(3f, 0f, 0f) },
+            ],
+        };
+
+        var forward = FormationPath.BuildDestinationSequence(formation, anchorPointIndex: 0, startPointIndex: 2, step: 1, reverse: false);
+        var backward = FormationPath.BuildDestinationSequence(formation, anchorPointIndex: 0, startPointIndex: 2, step: 1, reverse: true);
+        var strideTwo = FormationPath.BuildDestinationSequence(formation, anchorPointIndex: 0, startPointIndex: 1, step: 2, reverse: false);
+
+        Assert.Equal([2, 3, 1], forward);
+        Assert.Equal([2, 1, 3], backward);
+        Assert.Equal([1, 3, 2], strideTwo);
+    }
+
+    [Fact]
+    public void FormationPath_BuildWorldMove_UsesAnchorRelativeFormationMath() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = new Vector3(0f, 0f, 0f), Angle = 0f },
+                new FormationPoint { Offset = new Vector3(0f, 0f, 2f), Angle = 180f },
+                new FormationPoint { Offset = new Vector3(2f, 0f, 0f), Angle = 90f },
+            ],
+        };
+
+        var move0 = FormationPath.BuildWorldMove(
+            formation,
+            anchorPointIndex: 0,
+            startPointIndex: 1,
+            anchorWorldPosition: new Vector3(10f, 0f, 20f),
+            anchorWorldRotation: MathF.PI / 2f,
+            step: 1,
+            reverse: false,
+            sequenceIndex: 0);
+        var move1 = FormationPath.BuildWorldMove(
+            formation,
+            anchorPointIndex: 0,
+            startPointIndex: 1,
+            anchorWorldPosition: new Vector3(10f, 0f, 20f),
+            anchorWorldRotation: MathF.PI / 2f,
+            step: 1,
+            reverse: false,
+            sequenceIndex: 1);
+
+        Assert.NotNull(move0);
+        Assert.NotNull(move1);
+        AssertClose(12f, move0.Value.Position.X);
+        AssertClose(20f, move0.Value.Position.Z);
+        AssertClose(MathF.PI / 2f + MathF.PI, move0.Value.Rotation);
+        AssertClose(10f, move1.Value.Position.X);
+        AssertClose(18f, move1.Value.Position.Z);
+        AssertClose(MathF.PI, move1.Value.Rotation);
+    }
+
+    [Fact]
+    public void FormationPath_BuildWorldMove_WrapsSequenceIndex() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = Vector3.Zero },
+                new FormationPoint { Offset = new Vector3(1f, 0f, 0f) },
+                new FormationPoint { Offset = new Vector3(2f, 0f, 0f) },
+            ],
+        };
+
+        var move = FormationPath.BuildWorldMove(
+            formation,
+            anchorPointIndex: 0,
+            startPointIndex: 1,
+            anchorWorldPosition: Vector3.Zero,
+            anchorWorldRotation: 0f,
+            step: 1,
+            reverse: false,
+            sequenceIndex: 2);
+
+        Assert.NotNull(move);
+        AssertClose(1f, move.Value.Position.X);
+    }
+
     private static void AssertClose(float expected, float actual, float tolerance = 0.0001f) =>
         Assert.InRange(MathF.Abs(expected - actual), 0f, tolerance);
 }

@@ -28,21 +28,7 @@ public partial class FormationWindow : Window {
     private int _selPoint = -1;
 
     //  Shape generator
-    private enum ShapeType {
-        Circle, Rectangle, Line, StaggeredLine, FigureEight, Spiral,
-        Polygon, Star, Rose, Heart, Ellipse, Arc, SineWave,
-        Zigzag, Grid, SpokedWheel, Hypotrochoid, Lissajous,
-        StarPolygon, LogarithmicSpiral, Chevron, RingWithCenter, Cross
-    }
-
-    private static readonly string[] ShapeNames = [
-        "Circle", "Rectangle", "Line", "Staggered Line", "Figure 8", "Spiral",
-        "Polygon", "Star", "Rose", "Heart", "Ellipse", "Arc", "Sine Wave",
-        "Zigzag", "Grid", "Spoked Wheel", "Hypotrochoid", "Lissajous",
-        "Star Poly", "Log Spiral", "Chevron", "Ring Center", "Cross"
-    ];
-    private static readonly string[] FaceNames = ["Outward", "Inward", "North", "Tangent"];
-    private ShapeType _shapeType = ShapeType.Circle;
+    private FormationShapeType _shapeType = FormationShapeType.Circle;
     private int _shapeN = 8;
     private float _shapeRadius = 5f;
     private float _shapeRadius2 = 3f; // Inner radius or Radius Y
@@ -51,8 +37,11 @@ public partial class FormationWindow : Window {
     private float _shapeSpacing = 1.5f;
     private float _shapeAngleOff;
     private int _shapeParamInt = 4; // Cols, Petals, sides, etc.
-    private int _faceMode;
+    private int _faceMode = (int)FormationShapeFaceMode.Inward;
+    private int _shapeAnchorMode;
     private bool _appendMode;
+    private readonly ImGuiComboSearch _shapeGroupCombo = new();
+    private string _shapeAssignGroupSelected = string.Empty;
 
     //  World overlay
     private bool _worldOverlay;

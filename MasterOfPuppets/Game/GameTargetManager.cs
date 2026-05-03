@@ -147,8 +147,13 @@ public static class GameTargetManager {
     public static ulong? GetTargetObjectId() =>
         DalamudApi.ObjectTable.LocalPlayer?.TargetObject?.GameObjectId;
 
-    public static string GetTargetName() =>
-        DalamudApi.ObjectTable.LocalPlayer?.TargetObject?.GetPlayerNameWorld() ?? string.Empty;
+    public static string GetTargetName() {
+        var target = DalamudApi.ObjectTable.LocalPlayer?.TargetObject;
+        if (target == null)
+            return string.Empty;
+
+        return target.GetPlayerNameWorld() ?? target.Name.TextValue;
+    }
 
     public static void InteractWithTarget() {
         DalamudApi.Framework.RunOnTick(() => {

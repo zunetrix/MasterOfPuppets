@@ -1178,6 +1178,22 @@ public static class MopCommandsHelper {
         new MopAction
         {
             Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopformationmove \"Formation Name\" [forward|backward] [stride] [sequenceIndex]",
+            SuggestionCommand = "/mopformationmove \"Formation Name\" forward 1 0",
+            Example = """
+            /mopformationmove "Circle" forward 1 0
+            /mopformationmove "Circle" backward 2 3
+            """,
+            Notes = """
+            Broadcasts one saved-formation movement step from the current character.
+            Stride is the skip amount through formation point order; sequenceIndex is the zero-based step to execute from each recipient's computed path.
+            Generated formation macros use one line per movement so waits, pet actions, and other macro actions can run between moves.
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
             TextCommand = "/mopstopmove",
             SuggestionCommand = "/mopstopmove",
             Example = """
