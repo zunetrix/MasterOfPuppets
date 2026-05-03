@@ -2,16 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
+using MasterOfPuppets;
 using MasterOfPuppets.Formations;
 using MasterOfPuppets.Movement;
 
 using Xunit;
 
-public class FormationExecutionTests {
+public class FormationExecutionTests
+{
     [Fact]
-    public void GetAssignedPoint_Finds_Direct_Cid_Assignments() {
+    public void GetAssignedPoint_Finds_Direct_Cid_Assignments()
+    {
         const ulong issuerCid = 1001;
-        var formation = new Formation {
+        var formation = new Formation
+        {
             Points = [
                 new FormationPoint { Offset = Vector3.Zero, Cids = [issuerCid] },
                 new FormationPoint { Offset = new Vector3(0f, 0f, 2f), Cids = [1002] },
@@ -25,9 +29,11 @@ public class FormationExecutionTests {
     }
 
     [Fact]
-    public void GetAssignedPoint_Finds_Group_Cid_Assignments() {
+    public void GetAssignedPoint_Finds_Group_Cid_Assignments()
+    {
         const ulong groupedCid = 2001;
-        var formation = new Formation {
+        var formation = new Formation
+        {
             Points = [
                 new FormationPoint { Offset = new Vector3(1f, 0f, 0f), GroupIds = ["Group A"] },
             ],
@@ -43,11 +49,13 @@ public class FormationExecutionTests {
     }
 
     [Fact]
-    public void Target_Anchor_Does_Not_Require_Target_Cid_To_Be_Assigned() {
+    public void Target_Anchor_Does_Not_Require_Target_Cid_To_Be_Assigned()
+    {
         const ulong issuerCid = 3001;
         const ulong memberCid = 3002;
         const ulong unassignedTargetCid = 9999;
-        var formation = new Formation {
+        var formation = new Formation
+        {
             Points = [
                 new FormationPoint { Offset = Vector3.Zero, Angle = 0f, Cids = [issuerCid] },
                 new FormationPoint { Offset = new Vector3(0f, 0f, 2f), Angle = 180f, Cids = [memberCid] },
@@ -76,12 +84,15 @@ public class FormationExecutionTests {
     }
 
     [Fact]
-    public void Target_Anchor_Places_Members_Relative_To_Issuer_Point_At_Target_Transform() {
-        var issuerPoint = new FormationPoint {
+    public void Target_Anchor_Places_Members_Relative_To_Issuer_Point_At_Target_Transform()
+    {
+        var issuerPoint = new FormationPoint
+        {
             Offset = new Vector3(1f, 0f, 1f),
             Angle = 45f,
         };
-        var memberPoint = new FormationPoint {
+        var memberPoint = new FormationPoint
+        {
             Offset = new Vector3(1f, 0f, 3f),
             Angle = -45f,
         };
@@ -109,8 +120,10 @@ public class FormationExecutionTests {
     }
 
     [Fact]
-    public void FormationPath_BuildDestinationSequence_SkipsAnchorAndWalksFromRecipientPoint() {
-        var formation = new Formation {
+    public void FormationPath_BuildDestinationSequence_SkipsAnchorAndWalksFromRecipientPoint()
+    {
+        var formation = new Formation
+        {
             Points = [
                 new FormationPoint { Offset = Vector3.Zero },
                 new FormationPoint { Offset = new Vector3(1f, 0f, 0f) },
@@ -129,8 +142,10 @@ public class FormationExecutionTests {
     }
 
     [Fact]
-    public void FormationPath_BuildWorldMove_UsesAnchorRelativeFormationMath() {
-        var formation = new Formation {
+    public void FormationPath_BuildWorldMove_UsesAnchorRelativeFormationMath()
+    {
+        var formation = new Formation
+        {
             Points = [
                 new FormationPoint { Offset = new Vector3(0f, 0f, 0f), Angle = 0f },
                 new FormationPoint { Offset = new Vector3(0f, 0f, 2f), Angle = 180f },
@@ -168,8 +183,10 @@ public class FormationExecutionTests {
     }
 
     [Fact]
-    public void FormationPath_BuildWorldMove_WrapsSequenceIndex() {
-        var formation = new Formation {
+    public void FormationPath_BuildWorldMove_WrapsSequenceIndex()
+    {
+        var formation = new Formation
+        {
             Points = [
                 new FormationPoint { Offset = Vector3.Zero },
                 new FormationPoint { Offset = new Vector3(1f, 0f, 0f) },

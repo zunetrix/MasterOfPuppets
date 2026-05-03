@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
+namespace MasterOfPuppets;
+
 public class Character {
     [JsonPropertyName("cid")]
     public ulong Cid;

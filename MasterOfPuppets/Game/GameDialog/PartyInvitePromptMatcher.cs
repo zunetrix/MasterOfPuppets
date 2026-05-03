@@ -2,9 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Lumina.Excel.Sheets;
 namespace MasterOfPuppets;
 
 public static class PartyInvitePromptMatcher {
+    // TODO: replace by sheet string (locale-aware)
+    private static string TextPartyInvite =>
+        DalamudApi.DataManager.GetExcelSheet<Addon>(DalamudApi.ClientState.ClientLanguage)
+            ?.GetRow(120).Text.ExtractText()
+        ?? "Join <string(lstr1)>'s party?";
     private const string PartyInvitePrefix = "Join ";
     private const string PartyInviteSuffix = "'s party?";
 

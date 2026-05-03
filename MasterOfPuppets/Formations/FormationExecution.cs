@@ -7,12 +7,12 @@ public static class FormationExecution {
     public static FormationPoint? GetAssignedPoint(
         Formation formation,
         ulong contentId,
-        IReadOnlyList<global::CidGroup>? groups = null) =>
+        IReadOnlyList<CidGroup>? groups = null) =>
         formation.Points.FirstOrDefault(p => p.GetEffectiveCids(groups).Contains(contentId));
 
     public static int GetAssignedPointIndex(
         Formation formation,
         ulong contentId,
-        IReadOnlyList<global::CidGroup>? groups = null) =>
+        IReadOnlyList<CidGroup>? groups = null) =>
         formation.Points.FindIndex(p => p.GetEffectiveCids(groups).Contains(contentId));
 }

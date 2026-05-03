@@ -9,7 +9,6 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
 
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
@@ -291,6 +290,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         notification?.DismissNow();
     }
 
+    // TODO: replace by GameDialogManager.FireCallback?
     private static bool SendTitleAction(string addonName, params long[] args) {
         if (args.Length % 2 != 0)
             throw new ArgumentException("The parameter length must be an integer multiple of 2.", nameof(args));

@@ -5,7 +5,7 @@ using System.Linq;
 namespace MasterOfPuppets;
 
 public readonly record struct AutoLoginCandidate(ulong ContentId, string Name) {
-    public static AutoLoginCandidate? FromCharacter(global::Character character) {
+    public static AutoLoginCandidate? FromCharacter(Character character) {
         var name = ExtractLoginName(character.Name);
         return name == null ? null : new AutoLoginCandidate(character.Cid, name);
     }

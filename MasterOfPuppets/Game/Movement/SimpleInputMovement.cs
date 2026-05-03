@@ -21,7 +21,7 @@ public unsafe class SimpleInputMovement : IDisposable {
     private nint _moveControllerSubMemberForMineInstance = 0;
 
     [Signature("40 53 48 83 EC ?? 48 8B 41 20 48 8B D9 80 B8 02 02 00 00 ??", ScanType = ScanType.Text)]
-    private delegate* unmanaged<nint, long> _moveStop = null;
+    private readonly delegate* unmanaged<nint, long> _moveStop = null;
 
     /// <summary>Current injected direction. Set to None to stop injection.</summary>
     public MovementDirection Direction {

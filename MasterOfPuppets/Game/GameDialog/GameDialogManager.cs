@@ -37,7 +37,7 @@ internal static unsafe partial class GameDialogManager {
 
     public static bool IsAddonOpen(string name) {
         var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(name);
-        return addon != null;
+        return addon != null && addon->IsVisible;
     }
 
     public static bool IsAddonReady(string name) {
@@ -76,10 +76,31 @@ internal static unsafe partial class GameDialogManager {
 
     /// <summary>Clicks the entry at zero-based <paramref name="index"/> in <paramref name="addonName"/>. Locale-independent.</summary>
     public static bool SelectStringAtIndex(int index, string addonName = AddonName.SelectString) {
-        var addon = GetAddonByName(addonName);
+        var addon = (AddonSelectString*)GetAddonByName(addonName);
         if (addon == null) return false;
-        var count = ((AddonSelectString*)addon)->PopupMenu.PopupMenu.EntryCount;
+        var count = addon->PopupMenu.PopupMenu.EntryCount;
+        // for (var i = 0; i < count; i++) {
+        //     var ptr = addon->PopupMenu.PopupMenu.EntryNames[i].Value;
+        //     if (ptr == null) continue;
+        //     var text = new ReadOnlySeStringSpan(ptr).ExtractText();
+        //     if (string.IsNullOrEmpty(text)) continue;
+        //     DalamudApi.PluginLog.Warning($"i: {i} - {text}");
+        // }
         return count > index && FireCallback(addonName, index);
+    }
+
+    public static void LogSelectString(string addonName = AddonName.SelectString) {
+        var addon = (AddonSelectString*)GetAddonByName(addonName);
+        if (addon == null) return;
+        var count = addon->PopupMenu.PopupMenu.EntryCount;
+
+        for (var i = 0; i < count; i++) {
+            var ptr = addon->PopupMenu.PopupMenu.EntryNames[i].Value;
+            if (ptr == null) continue;
+            var text = new ReadOnlySeStringSpan(ptr).ExtractText();
+            if (string.IsNullOrEmpty(text)) continue;
+            DalamudApi.PluginLog.Warning($"i: {i} - {text}");
+        }
     }
 
     public static bool ClickYes() => FireCallback(AddonName.SelectYesno, 0);
@@ -137,8 +158,8 @@ internal static unsafe partial class GameDialogManager {
 
     // C# type → AtkValue.Type: int→Int, uint→UInt, float→Float, bool→Bool, string→String
     // Uses Marshal.AllocHGlobal so string values can be allocated and freed safely (supports string args).
-    internal static bool FireCallback(string name, params object[] args) {
-        var addon = GetAddonByName(name);
+    internal static bool FireCallback(string addonName, params object[] args) {
+        var addon = GetAddonByName(addonName);
         if (addon == null) return false;
 
         var atkValues = (AtkValue*)Marshal.AllocHGlobal(args.Length * sizeof(AtkValue));

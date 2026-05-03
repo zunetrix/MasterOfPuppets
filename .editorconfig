@@ -59,12 +59,6 @@ dotnet_style_prefer_simplified_interpolation = true:suggestion
 # Field preferences
 dotnet_style_readonly_field = true:warning
 
-[{MasterOfPuppets/Game/Movement/SimpleInputMovement.cs,MasterOfPuppets/Game/Movement/OverrideMovement.cs,MasterOfPuppets/Game/Movement/OverrideCamera.cs,MasterOfPuppets/Game/Render/GameRenderManager.cs}]
-# Dalamud signature injection assigns [Signature] fields after construction.
-# IDE0044/dotnet format would make them readonly, which prevents assignment.
-dotnet_style_readonly_field = false:none
-dotnet_diagnostic.IDE0044.severity = none
-
 # Parameter preferences
 dotnet_code_quality_unused_parameters = all:suggestion
 

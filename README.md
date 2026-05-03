@@ -181,6 +181,10 @@ Notes:
  - https://github.com/Haselnussbomber/HaselDebug
  - https://github.com/Haselnussbomber/HaselCommon
  - https://github.com/rail2025/AetherBlackbox
+ - https://github.com/bilk/RenderManager
+ - https://github.com/BoxuChan/RenderManager
+ - https://github.com/Knightmore/game-reversing
+ - https://github.com/Knightmore/Henchman
 
 # Game Sheet Preview
  - https://exd.camora.dev

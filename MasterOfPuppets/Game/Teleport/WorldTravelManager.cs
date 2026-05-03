@@ -43,29 +43,6 @@ internal static unsafe class WorldTravelManager {
         });
     }
 
-    /// <summary>
-    /// Returns the world names currently visible in the <c>WorldTravelSelect</c> addon.
-    /// Reads list component NodeList[4], items at indices 3-9 - Lifestream
-    /// </summary>
-    public static string[] GetAvailableWorldDestinations() {
-        var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(GameDialogManager.AddonName.WorldTravelSelect);
-        if (addon == null || !addon->IsVisible || addon->UldManager.NodeListCount < 5) return [];
-        var listNode = addon->UldManager.NodeList[4]->GetAsAtkComponentNode();
-        if (listNode == null) return [];
-        var list = new List<string>();
-        for (var i = 3; i <= 9; i++) {
-            var itemNode = listNode->Component->UldManager.NodeList[i];
-            if (itemNode == null) break;
-            var textNode = itemNode->GetAsAtkComponentNode()
-                ->Component->UldManager.NodeList[4]->GetAsAtkTextNode();
-            if (textNode == null) break;
-            var text = textNode->NodeText.ToString().Trim();
-            if (string.IsNullOrEmpty(text)) break;
-            list.Add(text);
-        }
-        return [.. list];
-    }
-
     //  Step 1
     //  Wait until the nearest aetheryte is targeted, then interact.
     private static void Step_WaitForAetheryteTarget(string world) {
@@ -106,7 +83,7 @@ internal static unsafe class WorldTravelManager {
         string[] worlds = [];
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
-            stopWhen: () => { worlds = GetAvailableWorldDestinations(); return ok = worlds.Length > 0; },
+            stopWhen: () => { worlds = GameDialogManager.GetAvailableWorldDestinations(); return ok = worlds.Length > 0; },
             callback: () => {
                 if (!ok) { DalamudApi.PluginLog.Warning("[TravelToWorld] step3 timeout: WorldTravelSelect worlds not loaded"); return; }
                 var index = System.Array.IndexOf(worlds, world);

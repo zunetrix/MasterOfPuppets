@@ -24,9 +24,9 @@ public sealed class MacroRuntimeVariables {
     }
 
     private string ResolvePlaceholder(string value) {
-        if (value.Equals("<me>", StringComparison.OrdinalIgnoreCase))
+        if (value.Equals("[me]", StringComparison.OrdinalIgnoreCase))
             return Me;
-        if (value.Equals("<t>", StringComparison.OrdinalIgnoreCase))
+        if (value.Equals("[t]", StringComparison.OrdinalIgnoreCase))
             return Target;
         return value;
     }

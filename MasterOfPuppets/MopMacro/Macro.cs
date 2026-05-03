@@ -5,7 +5,7 @@ using System.Numerics;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
-using MasterOfPuppets;
+namespace MasterOfPuppets;
 
 public class Command {
     [JsonPropertyName("cids")]

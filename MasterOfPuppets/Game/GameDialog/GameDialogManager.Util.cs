@@ -1,14 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
 using Lumina.Text.ReadOnly;
-
-using MasterOfPuppets.Extensions;
-
 namespace MasterOfPuppets;
 
 // from: Lifestream Utils

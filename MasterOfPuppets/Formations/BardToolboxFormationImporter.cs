@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using System.Numerics;
 
-using MasterOfPuppets;
 using MasterOfPuppets.Movement;
 
 using Newtonsoft.Json.Linq;
@@ -66,7 +65,7 @@ public static class BardToolboxFormationImporter {
 
     public static BardToolboxFormationImportResult ImportInto(
         IList<Formation> targetFormations,
-        IList<global::Character> targetCharacters,
+        IList<Character> targetCharacters,
         BardToolboxFormationImport import,
         MacroImportMode importMode,
         bool includeCharacters = true) {
@@ -138,7 +137,7 @@ public static class BardToolboxFormationImporter {
                 if (cid == 0 || existingCids.Contains(cid) || string.IsNullOrWhiteSpace(name))
                     continue;
 
-                targetCharacters.Add(new global::Character { Cid = cid, Name = name });
+                targetCharacters.Add(new Character { Cid = cid, Name = name });
                 existingCids.Add(cid);
                 importedCharacters++;
             }

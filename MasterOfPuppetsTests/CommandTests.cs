@@ -1,5 +1,7 @@
 using Xunit;
 
+using MasterOfPuppets;
+
 public class CommandTests
 {
 

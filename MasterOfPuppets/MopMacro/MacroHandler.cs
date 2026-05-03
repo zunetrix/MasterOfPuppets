@@ -104,6 +104,7 @@ public partial class MacroHandler : IDisposable {
             "moptogglewalk" or
             "mopface" or
             "mopfaceabs" or
+            "swapgearsets" or
             "mopmovegearsets" => true,
             _ => false,
         };
@@ -136,6 +137,7 @@ public partial class MacroHandler : IDisposable {
             ["mopface"] = new(HandleMopFace, SkipGlobalDelay: CommandSkipsGlobalDelay("mopface")),
             ["mopfaceabs"] = new(HandleMopFaceAbs, SkipGlobalDelay: CommandSkipsGlobalDelay("mopfaceabs")),
             ["mopmovegearsets"] = new(HandleMopMoveGearsets, SkipGlobalDelay: CommandSkipsGlobalDelay("mopmovegearsets")),
+            // ["swapgearsets"] = new(HandleMopSwapgearsets, SkipGlobalDelay: CommandSkipsGlobalDelay("swapgearsets")),
         };
 
         Task.Run(() => RunWorker(_macroChannel, _macroState, _cts.Token));

@@ -67,7 +67,8 @@ public class MacroTests
 
         var result = macro.GetCidActions(
             1,
-            runtimeVariables: new MacroRuntimeVariables {
+            runtimeVariables: new MacroRuntimeVariables
+            {
                 Me = "Current Character@World",
                 Target = "Target Character@World",
             });
@@ -94,7 +95,8 @@ public class MacroTests
         var result = macro.GetCidActions(
             1,
             inlineVars: new Dictionary<string, string> { ["target"] = "inline target" },
-            runtimeVariables: new MacroRuntimeVariables {
+            runtimeVariables: new MacroRuntimeVariables
+            {
                 Target = "runtime target",
             });
 
@@ -117,7 +119,8 @@ public class MacroTests
 
         var result = macro.GetCidActions(
             1,
-            runtimeVariables: new MacroRuntimeVariables {
+            runtimeVariables: new MacroRuntimeVariables
+            {
                 Target = "runtime target",
             });
 
@@ -139,8 +142,9 @@ public class MacroTests
 
         var result = macro.GetCidActions(
             1,
-            inlineVars: new Dictionary<string, string> { ["target"] = "<t>" },
-            runtimeVariables: new MacroRuntimeVariables {
+            inlineVars: new Dictionary<string, string> { ["target"] = "[t]" },
+            runtimeVariables: new MacroRuntimeVariables
+            {
                 Target = "Selected Target@World",
             });
 
