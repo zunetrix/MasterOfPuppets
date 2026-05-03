@@ -6,7 +6,6 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 
-using MasterOfPuppets.Formations;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -21,8 +20,9 @@ public partial class FormationWindow {
             ? formation.Points[_selPoint] : null;
 
         var precision = Plugin.Config.FormationMovePrecision;
+        ImGui.Text("Precision");
         ImGui.SetNextItemWidth(-1);
-        if (ImGui.DragFloat("Precision##fiprecision", ref precision, 0.01f, 0.01f, 5f, "%.2f")) {
+        if (ImGui.DragFloat("##FormationPrecisionInput", ref precision, 0.01f, 0.01f, 5f, "%.2f")) {
             Plugin.Config.FormationMovePrecision = precision;
             Plugin.Config.Save();
             Plugin.IpcProvider.SyncConfiguration();
