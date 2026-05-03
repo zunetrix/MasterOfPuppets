@@ -19,15 +19,13 @@ public partial class MacroHandler {
         await Task.Delay(delayMs, token);
     }
 
-    private Task HandleMopMacro(string macroId, string args, CancellationToken token) {
+    private async Task HandleMopMacro(string macroId, string args, CancellationToken token) {
         var macroName = args.Trim().Trim('"');
         if (string.IsNullOrWhiteSpace(macroName)) {
             DalamudApi.PluginLog.Warning($"[mopmacro] invalid argument: \"{args}\"");
-            return Task.CompletedTask;
+            return;
         }
 
-        var actions = GetLocalPlayerMacroActions(macroName);
-        EnqueueMacroActions(args, actions, Plugin.Config.DelayBetweenActions);
-        return Task.CompletedTask;
+        await ResolveAndEnqueueLocalPlayerMacroActions(macroName, null, token);
     }
 }

@@ -413,7 +413,15 @@ public class PluginCommandManager : IDisposable {
                             Plugin.Ui.FormationWindow.Toggle();
                             return;
                         }
-                        Plugin.IpcProvider.ExecuteFormation(parsedArgs[1]);
+                        var useTargetAnchor = false;
+                        if (parsedArgs.Count >= 3) {
+                            if (!parsedArgs[2].Equals("target", StringComparison.OrdinalIgnoreCase)) {
+                                DalamudApi.ShowNotification("Invalid formation argument. Use: /mop formation \"Name\" [target]", NotificationType.Error, 5000);
+                                return;
+                            }
+                            useTargetAnchor = true;
+                        }
+                        Plugin.IpcProvider.ExecuteFormation(parsedArgs[1], useTargetAnchor);
                     }
                     break;
                 case "layout": {
@@ -529,4 +537,5 @@ public class PluginCommandManager : IDisposable {
         if (parsedArgs.Count >= 2)
             Plugin.IpcProvider.EnqueueCharacterMacroActions(parsedArgs[1], parsedArgs[0]);
     }
+
 }

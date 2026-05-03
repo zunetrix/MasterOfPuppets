@@ -66,9 +66,9 @@
       },
       "XivIpc": {
         "type": "Direct",
-        "requested": "[0.0.7, )",
-        "resolved": "0.0.7",
-        "contentHash": "fLSPdP7R4YZH8UrWFuqoNOnUDxmIebKn8thvPTAMwHbMPbJufLse/5qDTVoYsdqzT2I0BQBzq3kEADL4/quPPQ=="
+        "requested": "[0.0.8, )",
+        "resolved": "0.0.8",
+        "contentHash": "MGQt+wVUjj7HKYzBUbhpUOEoJuzEFl3GXr9T+bXZCMZ7SI9WUUyTx/jxULoMdTZoYgiueCGuKcW1wuEHTDDi0w=="
       },
       "MessagePack": {
         "type": "Transitive",

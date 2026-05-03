@@ -34,7 +34,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.ApplyGameSettingsProfile)]
     private void HandleApplyGameSettingsProfile(IpcMessage message) {
-        var profileName = message.Data?.ToString() ?? string.Empty;
+        var profileName = message.StringData?.FirstOrDefault() ?? string.Empty;
         var profile = Plugin.Config.GameSettingsProfiles.FirstOrDefault(p => string.Equals(p.Name, profileName, StringComparison.OrdinalIgnoreCase));
         if (profile != null) {
             GameSettingsManager.ApplyProfile(profile, Plugin.Config.GameSettingsProfileKeys);

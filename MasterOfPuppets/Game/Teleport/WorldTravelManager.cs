@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 using Dalamud.Game.ClientState.Objects.Enums;
 
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -7,8 +9,6 @@ using Lumina.Excel.Sheets;
 
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Util;
-
-using System.Collections.Generic;
 
 namespace MasterOfPuppets;
 

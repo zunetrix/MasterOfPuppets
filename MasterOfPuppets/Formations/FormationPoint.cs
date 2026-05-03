@@ -6,11 +6,11 @@ using System.Text.Json.Serialization;
 namespace MasterOfPuppets.Formations;
 
 public class FormationPoint {
-    /// <summary>World-space offset from the formation leader's position. Y is typically 0.</summary>
+    /// <summary>Saved formation offset in game-space XZ. Y is typically 0.</summary>
     [JsonPropertyName("offset")]
     public Vector3 Offset;
 
-    /// <summary>Facing angle in degrees. Convention: 0 = south, increases CCW (matches FFXIV rotation).</summary>
+    /// <summary>Facing angle in MOP degrees. Zero points north in the plot and follows the existing MOP config convention.</summary>
     [JsonPropertyName("angle")]
     public float Angle;
 

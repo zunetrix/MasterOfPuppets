@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using Dalamud.Game.Text;
 using Dalamud.Game.Chat;
+using Dalamud.Game.Text;
 
 using MasterOfPuppets.Util;
 
@@ -116,7 +116,11 @@ internal class ChatWatcher : IDisposable {
         string macroNameOrIndex = args[0];
         int macroIndex = Plugin.MacroManager.FindMacroIndex(macroNameOrIndex);
         var macro = Plugin.MacroManager.GetMacroByIndex(macroIndex);
-        var playerActions = macro.GetCidActions(DalamudApi.PlayerState.ContentId, Plugin.Config.CidsGroups, inlineVars);
+        var playerActions = macro.GetCidActions(
+            DalamudApi.PlayerState.ContentId,
+            Plugin.Config.CidsGroups,
+            inlineVars,
+            MacroRuntimeVariables.FromCurrentGameState());
 
         Plugin.MacroHandler.EnqueueMacroActions(macro.Name, playerActions, Plugin.Config.DelayBetweenActions);
     }
