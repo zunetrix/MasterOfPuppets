@@ -7,8 +7,8 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Ipc;
-using MasterOfPuppets.WindowLayouts;
 using MasterOfPuppets.Util.ImGuiExt;
+using MasterOfPuppets.WindowLayouts;
 
 namespace MasterOfPuppets;
 

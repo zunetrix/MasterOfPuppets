@@ -41,7 +41,7 @@ public unsafe class OverrideCamera : IDisposable {
 
     private delegate void RMICameraDelegate(CameraEx* self, int inputMode, float speedH, float speedV);
     [Signature("48 8B C4 53 48 81 EC ?? ?? ?? ?? 44 0F 29 50 ??")]
-    private readonly Hook<RMICameraDelegate> _rmiCameraHook = null!;
+    private Hook<RMICameraDelegate> _rmiCameraHook = null!;
 
     public OverrideCamera() {
         DalamudApi.GameInteropProvider.InitializeFromAttributes(this);

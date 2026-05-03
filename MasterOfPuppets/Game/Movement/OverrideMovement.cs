@@ -69,7 +69,7 @@ public unsafe class OverrideMovement : IDisposable {
         byte* haveBackwardOrStrafe, byte* a6, byte bAdditiveUnk);
 
     [Signature("E8 ?? ?? ?? ?? 80 7B 3E 00 48 8D 3D")]
-    private readonly Hook<RMIWalkDelegate> _rmiWalkHook = null;
+    private Hook<RMIWalkDelegate> _rmiWalkHook = null;
 
     // -------------------------------------------------------------------------
     // RMIFly hook - unchanged from the original
@@ -78,7 +78,7 @@ public unsafe class OverrideMovement : IDisposable {
     private delegate void RMIFlyDelegate(void* self, PlayerMoveControllerFlyInput* result);
 
     [Signature("E8 ?? ?? ?? ?? 0F B6 0D ?? ?? ?? ?? B8")]
-    private readonly Hook<RMIFlyDelegate> _rmiFlyHook = null;
+    private Hook<RMIFlyDelegate> _rmiFlyHook = null;
 
     // -------------------------------------------------------------------------
     // MCIsInputActive hook  (new - was missing from the original)
@@ -95,7 +95,7 @@ public unsafe class OverrideMovement : IDisposable {
     private delegate byte MoveControlIsInputActiveDelegate(void* self, byte inputSourceFlags);
 
     [Signature("E8 ?? ?? ?? ?? 84 C0 74 09 84 DB 74 1A")]
-    private readonly Hook<MoveControlIsInputActiveDelegate> _mcIsInputActiveHook = null;
+    private Hook<MoveControlIsInputActiveDelegate> _mcIsInputActiveHook = null;
 
     // -------------------------------------------------------------------------
     // Constructor / Dispose

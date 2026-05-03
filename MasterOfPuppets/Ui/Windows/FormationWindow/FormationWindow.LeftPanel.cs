@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 
@@ -36,6 +37,59 @@ public partial class FormationWindow {
                             AddFormation();
                             ImGui.CloseCurrentPopup();
                         }
+                        ImGui.EndPopup();
+                    }
+                }
+            }
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, "##fiimport", "Import BardToolbox JSON"))
+                ImGui.OpenPopup("##fiimportpopup");
+
+            using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor)) {
+                using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
+                    if (ImGui.BeginPopup("##fiimportpopup")) {
+                        ImGui.Text("Import Mode:");
+                        var importMode = Plugin.Config.FormationImportMode;
+                        if (ImGuiUtil.EnumCombo("##FormationImportMode", ref importMode)) {
+                            Plugin.Config.FormationImportMode = importMode;
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+
+                        var includeCharacters = Plugin.Config.IncludeBardToolboxCharactersOnFormationImport;
+                        if (ImGui.Checkbox("Import characters", ref includeCharacters)) {
+                            Plugin.Config.IncludeBardToolboxCharactersOnFormationImport = includeCharacters;
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+
+                        var backupBeforeImport = Plugin.Config.BackupBeforeFormationImport;
+                        if (ImGui.Checkbox("Backup first", ref backupBeforeImport)) {
+                            Plugin.Config.BackupBeforeFormationImport = backupBeforeImport;
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+
+                        if (ImGui.Button("Import File")) {
+                            _fileDialogManager.OpenFileDialog(
+                                title: "Import BardToolbox JSON",
+                                filters: ".json",
+                                startPath: Plugin.Config.MacroExportPath,
+                                selectionCountMax: 1,
+                                callback: (result, selectedPaths) => {
+                                    if (!result || selectedPaths.Count == 0) return;
+                                    if (!File.Exists(selectedPaths[0])) return;
+
+                                    Plugin.FormationManager.ImportBardToolboxConfigFromFile(
+                                        selectedPaths[0],
+                                        Plugin.Config.FormationImportMode,
+                                        Plugin.Config.IncludeBardToolboxCharactersOnFormationImport,
+                                        Plugin.Config.BackupBeforeFormationImport);
+                                });
+                            ImGui.CloseCurrentPopup();
+                        }
+
                         ImGui.EndPopup();
                     }
                 }

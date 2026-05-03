@@ -9,6 +9,44 @@ using MasterOfPuppets.Util;
 namespace MasterOfPuppets;
 
 public partial class MacroHandler {
+    public sealed record FormationMoveCommandOptions(
+        string FormationName,
+        bool Reverse,
+        int Step,
+        int SequenceIndex,
+        MovementArrivalMode ArrivalMode,
+        string? InvalidArrivalModeArgument);
+
+    public static FormationMoveCommandOptions? ParseFormationMoveCommandArgs(string args) {
+        var parts = ArgumentParser.ParseMacroArgs(args);
+        if (parts.Count < 1)
+            return null;
+
+        var reverse = parts.Count >= 2
+            && (parts[1].Equals("backward", System.StringComparison.OrdinalIgnoreCase)
+                || parts[1].Equals("reverse", System.StringComparison.OrdinalIgnoreCase));
+        var step = 1;
+        if (parts.Count >= 3 && !int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out step))
+            step = 1;
+
+        var sequenceIndex = 0;
+        if (parts.Count >= 4 && !int.TryParse(parts[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out sequenceIndex))
+            sequenceIndex = 0;
+
+        var arrivalMode = MovementArrivalMode.Continuous;
+        string? invalidArrivalMode = null;
+        if (parts.Count >= 5) {
+            if (parts[4].Equals("precise", System.StringComparison.OrdinalIgnoreCase))
+                arrivalMode = MovementArrivalMode.Precise;
+            else if (parts[4].Equals("continuous", System.StringComparison.OrdinalIgnoreCase))
+                arrivalMode = MovementArrivalMode.Continuous;
+            else
+                invalidArrivalMode = parts[4];
+        }
+
+        return new FormationMoveCommandOptions(parts[0], reverse, step, sequenceIndex, arrivalMode, invalidArrivalMode);
+    }
+
     /// <summary>
     /// /mopmove X Y Z [angle]
     /// Moves to an offset from the player's current position.
@@ -64,6 +102,30 @@ public partial class MacroHandler {
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// /mopformationmove "Formation Name" [forward|backward] [stride] [sequenceIndex] [precise]
+    /// Broadcasts one saved-formation movement step from the current/origin character.
+    /// </summary>
+    private async Task HandleMopFormationMove(string macroId, string args, CancellationToken token) {
+        var options = ParseFormationMoveCommandArgs(args);
+        if (options == null) {
+            DalamudApi.PluginLog.Warning("[mopformationmove] missing formation name");
+            return;
+        }
+
+        if (options.InvalidArrivalModeArgument != null)
+            DalamudApi.PluginLog.Warning($"[mopformationmove] invalid arrival mode: \"{options.InvalidArrivalModeArgument}\"");
+
+        await Plugin.IpcProvider.ExecuteFormationMove(
+            options.FormationName,
+            options.Reverse,
+            options.Step,
+            options.SequenceIndex,
+            options.ArrivalMode);
+        DalamudApi.PluginLog.Debug(
+            $"[mopformationmove] formation=\"{options.FormationName}\" reverse={options.Reverse} stride={options.Step} sequenceIndex={options.SequenceIndex} arrivalMode={options.ArrivalMode}");
+    }
+
     /// <summary>/mopmovetotarget - moves to the current target's world position.</summary>
     private Task HandleMopMoveToTarget(string macroId, string args, CancellationToken token) {
         Plugin.MovementManager.MoveToTarget();
@@ -85,6 +147,7 @@ public partial class MacroHandler {
 
     /// <summary>/mopstopmove - immediately stops all movement and clears pending waypoints.</summary>
     private Task HandleMopStopMove(string macroId, string args, CancellationToken token) {
+        Plugin.SimpleInputMovement.StopMove();
         Plugin.MovementManager.StopMove();
         DalamudApi.PluginLog.Debug("[mopstopmove]");
         return Task.CompletedTask;

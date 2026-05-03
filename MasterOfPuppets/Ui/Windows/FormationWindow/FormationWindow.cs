@@ -3,6 +3,7 @@ using System.Linq;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 
@@ -15,6 +16,7 @@ public partial class FormationWindow : Window {
     private Plugin Plugin { get; }
 
     //  Left panel
+    private readonly FileDialogManager _fileDialogManager = new();
     private string _searchFilter = string.Empty;
     private int _selFormation = -1;
     private string _newFmName = string.Empty;
@@ -26,21 +28,7 @@ public partial class FormationWindow : Window {
     private int _selPoint = -1;
 
     //  Shape generator
-    private enum ShapeType {
-        Circle, Rectangle, Line, StaggeredLine, FigureEight, Spiral,
-        Polygon, Star, Rose, Heart, Ellipse, Arc, SineWave,
-        Zigzag, Grid, SpokedWheel, Hypotrochoid, Lissajous,
-        StarPolygon, LogarithmicSpiral, Chevron, RingWithCenter, Cross
-    }
-
-    private static readonly string[] ShapeNames = [
-        "Circle", "Rectangle", "Line", "Staggered Line", "Figure 8", "Spiral",
-        "Polygon", "Star", "Rose", "Heart", "Ellipse", "Arc", "Sine Wave",
-        "Zigzag", "Grid", "Spoked Wheel", "Hypotrochoid", "Lissajous",
-        "Star Poly", "Log Spiral", "Chevron", "Ring Center", "Cross"
-    ];
-    private static readonly string[] FaceNames = ["Outward", "Inward", "North", "Tangent"];
-    private ShapeType _shapeType = ShapeType.Circle;
+    private FormationShapeType _shapeType = FormationShapeType.Circle;
     private int _shapeN = 8;
     private float _shapeRadius = 5f;
     private float _shapeRadius2 = 3f; // Inner radius or Radius Y
@@ -49,8 +37,11 @@ public partial class FormationWindow : Window {
     private float _shapeSpacing = 1.5f;
     private float _shapeAngleOff;
     private int _shapeParamInt = 4; // Cols, Petals, sides, etc.
-    private int _faceMode;
+    private int _faceMode = (int)FormationShapeFaceMode.Inward;
+    private int _shapeAnchorMode;
     private bool _appendMode;
+    private readonly ImGuiComboSearch _shapeGroupCombo = new();
+    private string _shapeAssignGroupSelected = string.Empty;
 
     //  World overlay
     private bool _worldOverlay;
@@ -67,22 +58,26 @@ public partial class FormationWindow : Window {
 
     /// <summary>
     /// Canonical arrow vertices - tip at (0, 1) in local space.
-    /// Angle = 0 points north in both plot-space and world-space.
+    /// The plot rotates this north-up arrow from FFXIV/game facing degrees.
     /// </summary>
     public static readonly Vector2[] ArrowVertices2D = [new(0, 1), new(1, -1), new(0, -0.5f), new(-1, -1)];
 
-    /// <summary>World-space equivalent - tip at (0, 0, 1) = south at rot=0,
-    /// but CreateRotationY(worldRot) in FFXIV space rotates it to face north at rot=0.</summary>
+    /// <summary>World-space equivalent: tip at +Z, which is south/facing 0 in FFXIV game coordinates.</summary>
     public static readonly Vector3[] ArrowVertices3D = [new(0, 0, 1), new(1, 0, -1), new(0, 0, -0.5f), new(-1, 0, -1)];
 
     private Formation? SelectedFormation =>
         _selFormation >= 0 && _selFormation < Plugin.Config.Formations.Count
             ? Plugin.Config.Formations[_selFormation] : null;
 
-    public FormationWindow(Plugin plugin) : base("Formations (WIP)###FormationsWindow") {
+    public FormationWindow(Plugin plugin) : base("Formations###FormationsWindow") {
         Plugin = plugin;
         Size = ImGuiHelpers.ScaledVector2(960, 620);
         SizeCondition = ImGuiCond.FirstUseEver;
+    }
+
+    public override void PreDraw() {
+        _fileDialogManager.Draw();
+        base.PreDraw();
     }
 
     public override void Draw() {

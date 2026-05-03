@@ -3,13 +3,14 @@ using System.Linq;
 using System.Numerics;
 
 using Dalamud.Game.ClientState.Objects.Types;
-using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using BattleChara = FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara;
 
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Util;
+
+using BattleChara = FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara;
+using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace MasterOfPuppets;
 
@@ -146,8 +147,13 @@ public static class GameTargetManager {
     public static ulong? GetTargetObjectId() =>
         DalamudApi.ObjectTable.LocalPlayer?.TargetObject?.GameObjectId;
 
-    public static string GetTargetName() =>
-        DalamudApi.ObjectTable.LocalPlayer?.TargetObject?.GetPlayerNameWorld() ?? string.Empty;
+    public static string GetTargetName() {
+        var target = DalamudApi.ObjectTable.LocalPlayer?.TargetObject;
+        if (target == null)
+            return string.Empty;
+
+        return target.GetPlayerNameWorld() ?? target.Name.TextValue;
+    }
 
     public static void InteractWithTarget() {
         DalamudApi.Framework.RunOnTick(() => {

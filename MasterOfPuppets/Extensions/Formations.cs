@@ -1,17 +1,15 @@
-// <summary>
 using System;
 using System.Numerics;
 
 namespace MasterOfPuppets.Extensions;
 
-/// Conversion helpers between FFXIV world-space and plot-space (canonical math space).
+/// Conversion helpers between FFXIV world-space and plot-space.
 ///
-/// FFXIV world:  X = east,  Y = up,  Z = south  (rotation 0 = north/−Z, increases CW)
-/// Plot-space:   X = west,  Y = north            (rotation 0 = north/+Y, increases CCW)
+/// FFXIV world:  X = east,  Y = up,  Z = south.
+/// Plot-space:   X = west,  Y = north.
 ///
-/// To go from world to plot: plotX = −worldX, plotY = worldZ
-/// To go from plot to world: worldX = −plotX, worldZ = plotY
-/// </summary>
+/// To go from world to plot: plotX = -worldX, plotY = worldZ.
+/// To go from plot to world: worldX = -plotX, worldZ = plotY.
 internal static class FormationConventions {
     /// <summary>Converts a saved formation offset (world XZ) to plot-space XY.</summary>
     public static Vector2 OffsetToPlot(this Vector3 offset)
@@ -21,12 +19,8 @@ internal static class FormationConventions {
     public static Vector3 PlotToOffset(this Vector2 plot)
     => new(-plot.X, 0f, plot.Y);
 
-    /// <summary>
-    /// Rotates a world-space offset by the leader's FFXIV rotation and returns the world position.
-    /// FFXIV rotation: 0 = north (−Z), CW positive → converted to CCW radians for math.
-    /// </summary>
+    /// <summary>Rotates a saved formation offset by the anchor's FFXIV rotation.</summary>
     public static Vector3 ApplyLeaderRotation(this Vector3 offset, float leaderRotRad, Vector3 leaderPos) {
-        // Convert FFXIV CW rotation to CCW for standard math rotation on XZ plane
         float angle = -leaderRotRad;
         float cos = MathF.Cos(angle);
         float sin = MathF.Sin(angle);

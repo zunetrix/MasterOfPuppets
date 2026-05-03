@@ -184,5 +184,14 @@ public class ArgsParserTests
         Assert.Equal("/ac \"standard step\"", result["cmd"]);
         Assert.Equal("/clap", result["emote"]);
     }
-}
 
+    [Fact]
+    public void ParseInlineVars_TargetPlaceholder_IsCaptured()
+    {
+        var result = ArgumentParser.ParseInlineVars("-var=$target=<t>;$delay=0.5");
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("<t>", result["target"]);
+        Assert.Equal("0.5", result["delay"]);
+    }
+}

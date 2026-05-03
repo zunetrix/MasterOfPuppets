@@ -5,6 +5,8 @@ using System.Numerics;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
+using MasterOfPuppets;
+
 public class Command {
     [JsonPropertyName("cids")]
     public List<ulong> Cids = new List<ulong>();
@@ -173,10 +175,16 @@ public class Command {
     }
 
     private static Dictionary<string, string> MergeVariables(
+        Dictionary<string, string>? runtimeVars,
         Dictionary<string, string>? macroVars,
         Dictionary<string, string> commandVars
     ) {
         var result = new Dictionary<string, string>();
+
+        if (runtimeVars != null) {
+            foreach (var (k, v) in runtimeVars)
+                result[k] = v;
+        }
 
         if (macroVars != null) {
             foreach (var (k, v) in macroVars)
@@ -192,6 +200,7 @@ public class Command {
 
     public string[] GetActionList(
         Dictionary<string, string>? macroVariables = null,
+        Dictionary<string, string>? runtimeVariables = null,
         Dictionary<string, string>? inlineOverrides = null) {
         if (string.IsNullOrWhiteSpace(Actions))
             return Array.Empty<string>();
@@ -200,7 +209,7 @@ public class Command {
 
         var commandVars = ExtractVariables(lines);
 
-        var mergedVars = MergeVariables(macroVariables, commandVars);
+        var mergedVars = MergeVariables(runtimeVariables, macroVariables, commandVars);
 
         if (inlineOverrides != null)
             foreach (var (k, v) in inlineOverrides) mergedVars[k] = v;
@@ -251,12 +260,18 @@ public class Macro {
         return Command.ExtractVariables(lines);
     }
 
-    public string[] GetCidActions(ulong cid, IReadOnlyList<CidGroup>? groups = null, Dictionary<string, string>? inlineVars = null) {
+    public string[] GetCidActions(
+        ulong cid,
+        IReadOnlyList<CidGroup>? groups = null,
+        Dictionary<string, string>? inlineVars = null,
+        MacroRuntimeVariables? runtimeVariables = null) {
         var macroVars = GetMacroVariables();
+        var runtimeVars = runtimeVariables?.ToDictionary();
+        var resolvedInlineVars = runtimeVariables?.ResolveInlinePlaceholders(inlineVars) ?? inlineVars;
 
         return Commands
             .FirstOrDefault(c => c.GetEffectiveCids(groups).Contains(cid))
-            ?.GetActionList(macroVars, inlineVars)
+            ?.GetActionList(macroVars, runtimeVars, resolvedInlineVars)
             ?? Array.Empty<string>();
     }
 

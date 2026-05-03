@@ -1,6 +1,6 @@
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
-
 using System.Runtime.InteropServices;
+
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 
 namespace MasterOfPuppets;
 

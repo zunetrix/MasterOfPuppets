@@ -1,10 +1,10 @@
-// using System;
-// using System.Threading;
-// using System.Threading.Tasks;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-// using XivIpc.Messaging;
+using XivIpc.Messaging;
 
-// namespace MasterOfPuppets.Ipc;
+namespace MasterOfPuppets.Ipc;
 
 // /// <summary>
 // /// IPC transport for Linux / Wine environments using the embedded XivIpc transport.
@@ -18,36 +18,39 @@
 // /// out-of-the-box in Wine/Proton and connects directly between plugin instances.
 // /// </para>
 // /// </summary>
-// internal sealed class LinuxIpcTransport : IIpcTransport {
-//     private readonly UnixSidecarTinyMessageBus? _bus;
+internal sealed class LinuxIpcTransport : IIpcTransport {
+    private readonly UnixSidecarTinyMessageBus? _bus;
 
-//     public event Action<byte[]>? MessageReceived;
-//     public bool IsAvailable { get; }
+    public event Action<BinaryData>? MessageReceived;
+    public bool IsAvailable { get; }
 
-//     /// <param name="channelName">Name of the IPC channel. Must match across all plugin instances.</param>
-//     public LinuxIpcTransport(string channelName = "MasterOfPuppets.IPC") {
-//         try {
-//             // Note: 1 << 24 (16MB) is the default payload size
-//             _bus = new UnixSidecarTinyMessageBus(channelName, 1 << 24);
-//             _bus.MessageReceived += OnBusMessageReceived;
-//             IsAvailable = true;
-//         } catch (Exception ex) {
-//             DalamudApi.PluginLog.Error(ex, "LinuxIpcTransport: XivMessageBus init failed.");
-//         }
-//     }
+    /// <param name="channelName">Name of the IPC channel. Must match across all plugin instances.</param>
+    public LinuxIpcTransport(string channelName = "MasterOfPuppets.IPC") {
+        try {
+            // Note: 1 << 24 (16MB) is the default payload size
+            _bus = new UnixSidecarTinyMessageBus(channelName, 1 << 24);
+            _bus.MessageReceived += OnBusMessageReceived;
+            IsAvailable = true;
+        } catch (Exception ex) {
+            DalamudApi.PluginLog.Error(ex, "LinuxIpcTransport: XivMessageBus init failed.");
+        }
+    }
 
-//     private void OnBusMessageReceived(object? sender, XivMessageReceivedEventArgs e) {
-//         MessageReceived?.Invoke(e.Message);
-//     }
+    private void OnBusMessageReceived(object? sender, XivMessageReceivedEventArgs e) {
+        MessageReceived?.Invoke(BinaryData.FromBytes(e.Message));
+    }
 
-//     public Task PublishAsync(byte[] payload, CancellationToken ct = default) {
-//         if (!IsAvailable || _bus is null) return Task.CompletedTask;
-//         return _bus.PublishAsync(payload);
-//     }
+    public Task PublishAsync(BinaryData payload, CancellationToken ct = default) {
+        ArgumentNullException.ThrowIfNull(payload);
+        ct.ThrowIfCancellationRequested();
 
-//     public void Dispose() {
-//         if (_bus is null) return;
-//         _bus.MessageReceived -= OnBusMessageReceived;
-//         _bus.Dispose();
-//     }
-// }
+        if (!IsAvailable || _bus is null) return Task.CompletedTask;
+        return _bus.PublishAsync(payload.ToArray());
+    }
+
+    public void Dispose() {
+        if (_bus is null) return;
+        _bus.MessageReceived -= OnBusMessageReceived;
+        _bus.Dispose();
+    }
+}

@@ -63,7 +63,7 @@ internal partial class IpcProvider {
     [IpcHandle(IpcMessageType.RequestWindowInfo)]
     private void HandleRequestWindowInfo(IpcMessage _) {
         DalamudApi.PluginLog.Debug("[WindowLayout] Received RequestWindowInfo, querying HWND...");
-        
+
         if (!Plugin.GameWindowManager.GetWindowVisualBounds(out var rect)) {
             DalamudApi.PluginLog.Error("[WindowLayout] GetWindowRect failed.");
             return;

@@ -33,6 +33,7 @@ public enum IpcMessageType {
 
     // formation
     ExecuteFormation,
+    ExecuteFormationMove,
 
     // peer data request
     RequestEmoteList,
