@@ -365,22 +365,26 @@ public class PluginCommandManager : IDisposable {
                 case "movefrontdoor":
                     Plugin.IpcProvider.ExecuteMoveToFrontDoor();
                     break;
-                case "ward": {
+                case "ward":
+                case "residentialtravel":
+                case "rt": {
                         if (parsedArgs.Count < 2 ||
                             !int.TryParse(parsedArgs[1], out var wardNumber) ||
                             wardNumber is < 1 or > 30) {
                             DalamudApi.ShowNotification("Invalid arguments. Expected ward number (1-30)", NotificationType.Error, 5000);
                             return;
                         }
-                        Plugin.IpcProvider.ExecuteTeleportToWard(wardNumber);
+                        ResidentialTeleportManager.TeleportToWard(wardNumber);
                     }
                     break;
-                case "world": {
+                case "world":
+                case "worldtravel":
+                case "wt": {
                         if (parsedArgs.Count < 2 || string.IsNullOrWhiteSpace(parsedArgs[1])) {
                             DalamudApi.ShowNotification("Invalid arguments. Expected world name", NotificationType.Error, 5000);
                             return;
                         }
-                        Plugin.IpcProvider.ExecuteTravelToWorld(parsedArgs[1]);
+                        WorldTravelManager.TravelToWorld(parsedArgs[1]);
                     }
                     break;
                 case "objectquantity": {
