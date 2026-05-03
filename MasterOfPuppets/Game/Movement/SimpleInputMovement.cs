@@ -142,7 +142,11 @@ public unsafe class SimpleInputMovement : IDisposable {
     // Returns the CancellationTokenSource so the caller can cancel externally,
     // or null if movement was refused because Performing is already active.
     // -------------------------------------------------------------------------
-    public CancellationTokenSource? MoveTo(Vector3 destination, float precision = 0.3f, float? faceDirection = null) {
+    public CancellationTokenSource? MoveTo(
+        Vector3 destination,
+        float precision = 0.3f,
+        float? faceDirection = null,
+        MovementArrivalMode arrivalMode = MovementArrivalMode.Precise) {
         // Refuse to start while the player is performing - movement is blocked
         // by the game anyway, so there is nothing useful we could do.
         if (DalamudApi.Condition[ConditionFlag.Performing])
@@ -158,6 +162,7 @@ public unsafe class SimpleInputMovement : IDisposable {
         // regardless of whether we finish, are cancelled, or Performing fires.
         uint savedMoveMode = DalamudApi.GameConfig.UiControl.GetUInt("MoveMode");
         uint savedPadMode = DalamudApi.GameConfig.UiConfig.GetUInt("PadMode");
+        var savedIsWalking = IsWalking;
 
         DalamudApi.GameConfig.UiControl.Set("MoveMode", 0u);
         DalamudApi.GameConfig.UiConfig.Set("PadMode", 0u);
@@ -184,7 +189,7 @@ public unsafe class SimpleInputMovement : IDisposable {
 
                 // Slow before the stop radius so we do not run through the destination
                 // and make repeated endpoint corrections.
-                IsWalking = GetArrivalState(distance, precision) == ArrivalMovementState.Walk;
+                IsWalking = GetArrivalState(distance, precision, arrivalMode) == ArrivalMovementState.Walk;
             },
             callback: () => {
                 // Restore control settings regardless of how the loop ended.
@@ -192,12 +197,14 @@ public unsafe class SimpleInputMovement : IDisposable {
                 DalamudApi.GameConfig.UiConfig.Set("PadMode", savedPadMode);
 
                 Direction = MovementDirection.None;
-                try {
-                    MoveStopNative();
-                } catch {
-                    // ignored
+                if (arrivalMode == MovementArrivalMode.Precise) {
+                    try {
+                        MoveStopNative();
+                    } catch {
+                        // ignored
+                    }
                 }
-                IsWalking = false;
+                IsWalking = savedIsWalking;
 
                 // Apply endpoint rotation only on clean arrival (not on cancel
                 // or Performing - the player may be mid-performance already).
@@ -232,14 +239,25 @@ public unsafe class SimpleInputMovement : IDisposable {
         return cts;
     }
 
-    public static ArrivalMovementState GetArrivalState(float distance, float precision) {
+    public static ArrivalMovementState GetArrivalState(
+        float distance,
+        float precision,
+        MovementArrivalMode arrivalMode = MovementArrivalMode.Precise) {
         if (distance < precision)
             return ArrivalMovementState.Stop;
+
+        if (arrivalMode == MovementArrivalMode.Continuous)
+            return ArrivalMovementState.Run;
 
         return distance < precision + ArrivalWalkBuffer
             ? ArrivalMovementState.Walk
             : ArrivalMovementState.Run;
     }
+}
+
+public enum MovementArrivalMode {
+    Precise,
+    Continuous,
 }
 
 public enum ArrivalMovementState {

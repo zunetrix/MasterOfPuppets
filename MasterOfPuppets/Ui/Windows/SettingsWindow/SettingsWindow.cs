@@ -315,6 +315,16 @@ public class SettingsWindow : Window {
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, "##ShowCharactersBtnParty", Language.ShowCharactersBtn))
                 Plugin.Ui.CharactersWindow.Toggle();
 
+            using (ImRaii.PushIndent()) {
+                var onlyFromCharacters = Plugin.Config.AutoAcceptPartyInviteOnlyFromCharacters;
+                if (ImGui.Checkbox("Only from characters list##AutoAcceptPartyInviteOnlyFromCharacters", ref onlyFromCharacters)) {
+                    Plugin.Config.AutoAcceptPartyInviteOnlyFromCharacters = onlyFromCharacters;
+                    Plugin.Config.Save();
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+                ImGuiUtil.HelpMarker("When enabled, party invites are accepted only if the inviter matches a character in the Characters window.");
+            }
+
             var acceptTeleport = Plugin.Config.AutoAcceptTeleport;
             if (ImGui.Checkbox("Auto-accept teleport requests", ref acceptTeleport)) {
                 Plugin.Config.AutoAcceptTeleport = acceptTeleport;

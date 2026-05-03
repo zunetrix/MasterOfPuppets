@@ -152,4 +152,39 @@ public class MacroTests
     {
         Assert.False(MacroHandler.CommandSkipsGlobalDelay("mopformationmove"));
     }
+
+    [Fact]
+    public void ParseFormationMoveCommandArgs_Defaults_To_Continuous()
+    {
+        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0");
+
+        Assert.NotNull(result);
+        Assert.Equal("Circle", result.FormationName);
+        Assert.False(result.Reverse);
+        Assert.Equal(1, result.Step);
+        Assert.Equal(0, result.SequenceIndex);
+        Assert.Equal(MasterOfPuppets.Movement.MovementArrivalMode.Continuous, result.ArrivalMode);
+    }
+
+    [Fact]
+    public void ParseFormationMoveCommandArgs_Accepts_Precise_Flag()
+    {
+        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" backward 2 3 precise");
+
+        Assert.NotNull(result);
+        Assert.True(result.Reverse);
+        Assert.Equal(2, result.Step);
+        Assert.Equal(3, result.SequenceIndex);
+        Assert.Equal(MasterOfPuppets.Movement.MovementArrivalMode.Precise, result.ArrivalMode);
+    }
+
+    [Fact]
+    public void ParseFormationMoveCommandArgs_Invalid_ArrivalMode_Falls_Back_To_Continuous()
+    {
+        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 careful");
+
+        Assert.NotNull(result);
+        Assert.Equal(MasterOfPuppets.Movement.MovementArrivalMode.Continuous, result.ArrivalMode);
+        Assert.Equal("careful", result.InvalidArrivalModeArgument);
+    }
 }

@@ -92,7 +92,9 @@ public class Plugin : IDalamudPlugin {
             var charConfig = Config.Characters.FirstOrDefault(c => c.Cid == DalamudApi.PlayerState.ContentId);
             GameDialogManager.AutoAcceptUpdate(
                 Config.AutoAcceptPartyInvite && (charConfig?.AutoAcceptPartyInvite ?? true),
-                Config.AutoAcceptTeleport && (charConfig?.AutoAcceptTeleport ?? true));
+                Config.AutoAcceptTeleport && (charConfig?.AutoAcceptTeleport ?? true),
+                Config.AutoAcceptPartyInviteOnlyFromCharacters,
+                Config.Characters.Select(c => c.Name));
         }
     }
 

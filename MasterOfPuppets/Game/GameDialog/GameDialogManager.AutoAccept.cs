@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 using FFXIVClientStructs.FFXIV.Client.UI;
 
@@ -21,7 +23,11 @@ internal static unsafe partial class GameDialogManager {
     /// Called every framework tick. Auto-accepts party invites and/or teleport requests
     /// by matching the SelectYesno prompt text against known Addon row fragments.
     /// </summary>
-    public static void AutoAcceptUpdate(bool acceptParty, bool acceptTeleport) {
+    public static void AutoAcceptUpdate(
+        bool acceptParty,
+        bool acceptTeleport,
+        bool acceptPartyOnlyFromCharacters = false,
+        IEnumerable<string>? partyInviteCharacterNames = null) {
         if (!acceptParty && !acceptTeleport) return;
         if (!IsAddonVisible(AddonName.SelectYesno)) return;
 
@@ -31,7 +37,12 @@ internal static unsafe partial class GameDialogManager {
         var text = addon->PromptText->NodeText.ToString();
         if (string.IsNullOrEmpty(text)) return;
 
-        if (acceptParty && ContainsAllFragments(text, TextAcceptJoinParty)) { ClickYes(); return; }
+        if (acceptParty && ContainsAllFragments(text, TextAcceptJoinParty)) {
+            if (!acceptPartyOnlyFromCharacters ||
+                PartyInvitePromptMatcher.IsInviterInCharacterList(text, partyInviteCharacterNames ?? Enumerable.Empty<string>()))
+                ClickYes();
+            return;
+        }
         if (acceptTeleport && ContainsAllFragments(text, TextAcceptTeleport)) { ClickYes(); return; }
     }
 

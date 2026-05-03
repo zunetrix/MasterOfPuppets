@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Dalamud.Interface.ImGuiNotification;
 
 using MasterOfPuppets.Formations;
+using MasterOfPuppets.Movement;
 
 namespace MasterOfPuppets.Ipc;
 
@@ -94,10 +95,20 @@ internal partial class IpcProvider {
         // Plugin.MovementManager.MoveTo(worldPos, anchorRot.Radians());
     }
 
-    public Task ExecuteFormationMove(string name, bool reverse = false, int step = 1, int sequenceIndex = 0) =>
-        DalamudApi.Framework.RunOnFrameworkThread(() => ExecuteFormationMoveOnFrameworkThread(name, reverse, step, sequenceIndex));
+    public Task ExecuteFormationMove(
+        string name,
+        bool reverse = false,
+        int step = 1,
+        int sequenceIndex = 0,
+        MovementArrivalMode arrivalMode = MovementArrivalMode.Continuous) =>
+        DalamudApi.Framework.RunOnFrameworkThread(() => ExecuteFormationMoveOnFrameworkThread(name, reverse, step, sequenceIndex, arrivalMode));
 
-    private void ExecuteFormationMoveOnFrameworkThread(string name, bool reverse = false, int step = 1, int sequenceIndex = 0) {
+    private void ExecuteFormationMoveOnFrameworkThread(
+        string name,
+        bool reverse = false,
+        int step = 1,
+        int sequenceIndex = 0,
+        MovementArrivalMode arrivalMode = MovementArrivalMode.Continuous) {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
 
@@ -128,7 +139,8 @@ internal partial class IpcProvider {
             issuerCid.ToString(CultureInfo.InvariantCulture),
             reverse ? "1" : "0",
             Math.Max(1, step).ToString(CultureInfo.InvariantCulture),
-            sequenceIndex.ToString(CultureInfo.InvariantCulture)).Serialize(), includeSelf: true);
+            sequenceIndex.ToString(CultureInfo.InvariantCulture),
+            arrivalMode == MovementArrivalMode.Precise ? "precise" : "continuous").Serialize(), includeSelf: true);
     }
 
     [IpcHandle(IpcMessageType.ExecuteFormationMove)]
@@ -147,6 +159,9 @@ internal partial class IpcProvider {
         var reverse = message.StringData[6] == "1";
         if (!int.TryParse(message.StringData[7], NumberStyles.Integer, CultureInfo.InvariantCulture, out var step)) return;
         if (!int.TryParse(message.StringData[8], NumberStyles.Integer, CultureInfo.InvariantCulture, out var sequenceIndex)) return;
+        var arrivalMode = message.StringData.Length >= 10 && message.StringData[9].Equals("precise", StringComparison.OrdinalIgnoreCase)
+            ? MovementArrivalMode.Precise
+            : MovementArrivalMode.Continuous;
 
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
@@ -179,7 +194,11 @@ internal partial class IpcProvider {
         if (move == null)
             return;
 
-        Plugin.SimpleInputMovement.MoveTo(move.Value.Position, precision: Plugin.Config.FormationMovePrecision, faceDirection: move.Value.Rotation);
+        Plugin.SimpleInputMovement.MoveTo(
+            move.Value.Position,
+            precision: Plugin.Config.FormationMovePrecision,
+            faceDirection: move.Value.Rotation,
+            arrivalMode: arrivalMode);
     }
 
     private FormationPoint? GetAssignedPoint(Formation formation, ulong playerCid) =>

@@ -30,4 +30,24 @@ public class SimpleInputMovementTests {
         Assert.Equal(ArrivalMovementState.Walk, SimpleInputMovement.GetArrivalState(distance: 0.7f, precision: 0.25f));
         Assert.Equal(ArrivalMovementState.Run, SimpleInputMovement.GetArrivalState(distance: 0.76f, precision: 0.25f));
     }
+
+    [Fact]
+    public void GetArrivalState_Continuous_Runs_Inside_Walk_Buffer() {
+        var state = SimpleInputMovement.GetArrivalState(
+            distance: 0.5f,
+            precision: 0.1f,
+            MovementArrivalMode.Continuous);
+
+        Assert.Equal(ArrivalMovementState.Run, state);
+    }
+
+    [Fact]
+    public void GetArrivalState_Continuous_Stops_When_Inside_Precision_Radius() {
+        var state = SimpleInputMovement.GetArrivalState(
+            distance: 0.09f,
+            precision: 0.1f,
+            MovementArrivalMode.Continuous);
+
+        Assert.Equal(ArrivalMovementState.Stop, state);
+    }
 }

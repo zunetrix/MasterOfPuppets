@@ -208,6 +208,7 @@ internal class Configuration : IPluginConfiguration {
     public bool MultiboxEnabled { get; set; } = false;
     public bool KeyboardBroadcastEnabled { get; set; } = true;
     public bool AutoAcceptPartyInvite { get; set; } = false;
+    public bool AutoAcceptPartyInviteOnlyFromCharacters { get; set; } = false;
     public bool AutoAcceptTeleport { get; set; } = false;
     public HashSet<int> KeyboardBroadcastIgnoredKeys { get; set; } = new();
     public bool ShowCharacterNameInWindowTitle { get; set; } = true;
