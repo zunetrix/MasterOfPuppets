@@ -517,8 +517,24 @@ public class SettingsWindow : Window {
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
-            ImGuiUtil.ToolTip("Use this option to run a macro on login and configure things like sound, window layout, and camhack");
+            ImGuiUtil.HelpMarker("""
+            Enable this option to run a macro on login and configure settings like sound, window layout, renderhack, settings profile, and getting the leader. You can set up different commands for each case.
 
+            Main character:
+                /mop settingsprofile "normal"
+                /mop getleader
+                /mop layout "bard"
+                /pvis HidePlayer off
+
+
+            Other characters:
+                /mop settingsprofile "low"
+                /mop layout "bard"
+                /mop renderhack on
+                /pvis HidePlayer on
+            """);
+
+            ImGui.Spacing();
             if (runLoginMacro) {
                 using (ImRaii.PushIndent()) {
                     ImGui.Text("Macro:");
