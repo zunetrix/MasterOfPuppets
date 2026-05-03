@@ -49,8 +49,13 @@ internal static unsafe partial class GameDialogManager {
 
     //  WorldTravelSelect
     /// <summary>Selects world at zero-based <paramref name="index"/> in the <c>WorldTravelSelect</c> addon.</summary>
-    public static bool SelectWorldTravelEntry(int index) =>
-        FireCallback(AddonName.WorldTravelSelect, index + 2); // Ls: Callback.Fire(addon, true, index + 2)
+    public static bool SelectWorldTravelEntry(int index) {
+        // var addon = GetAddonByName(AddonName.WorldTravelSelect);
+        // if (addon == null) return false;
+        // return addon->FireCallbackInt(index + 2);
+
+        return FireCallback(AddonName.WorldTravelSelect, 0, index + 2); // Ls: Callback.Fire(addon, true, index + 2)
+    }
 
     // town aetheryte
     public static bool ClickTeleportTownOption(int teleportOptionIndex) {

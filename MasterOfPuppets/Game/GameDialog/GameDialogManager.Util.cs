@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
 
+using Dalamud.Memory;
+using Dalamud.Utility;
+
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
 using Lumina.Text.ReadOnly;
@@ -9,18 +13,29 @@ namespace MasterOfPuppets;
 // from: Lifestream Utils
 internal static unsafe partial class GameDialogManager {
 
-    internal static string[] GetAvailableWorldDestinations() {
-        if (TryGetAddonByName<AtkUnitBase>("WorldTravelSelect", out var addon) && IsAddonReady(addon)) {
-            List<string> arr = [];
-            for (var i = 3; i <= 9; i++) {
-                var item = addon->UldManager.NodeList[4]->GetAsAtkComponentNode()->Component->UldManager.NodeList[i];
-                var text = new ReadOnlySeStringSpan(item->GetAsAtkComponentNode()->Component->UldManager.NodeList[4]->GetAsAtkTextNode()->NodeText.AsSpan()).ExtractText();
-                if (text == "") break;
-                arr.Add(text);
-            }
-            return [.. arr];
+    internal static List<string> GetAddonEntries(AddonSelectString* addon) {
+        var list = new List<string>();
+        for (var i = 0; i < addon->PopupMenu.PopupMenu.EntryCount; i++) {
+            list.Add(MemoryHelper.ReadSeStringNullTerminated((nint)addon->PopupMenu.PopupMenu.EntryNames[i].Value).ToString().Trim());
         }
-        return Array.Empty<string>();
+        //PluginLog.Debug($"{list.Print()}");
+        return list;
+    }
+
+    internal static List<string> GetAvailableWorldDestinations() {
+        var ret = new List<string>();
+        var stringArray = RaptureAtkModule.Instance()->AtkArrayDataHolder.StringArrays[(int)StringArrayType.WorldTranslate];
+        if (stringArray != null) {
+            for (var i = 3; i <= 10; i++) {
+                var str = stringArray->StringArray[i];
+                if (str.HasValue) {
+                    var worldName = MemoryHelper.ReadStringNullTerminated((nint)str.Value).Trim();
+                    if (worldName.IsNullOrEmpty()) break;
+                    ret.Add(worldName);
+                }
+            }
+        }
+        return ret;
     }
 
     internal static string[] GetAvailableAethernetDestinations() {

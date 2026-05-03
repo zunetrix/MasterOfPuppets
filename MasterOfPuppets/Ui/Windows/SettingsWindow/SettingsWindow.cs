@@ -325,6 +325,7 @@ public class SettingsWindow : Window {
                 ImGuiUtil.HelpMarker("When enabled, party invites are accepted only if the inviter matches a character in the Characters window.");
             }
 
+            ImGui.Spacing();
             var acceptTeleport = Plugin.Config.AutoAcceptTeleport;
             if (ImGui.Checkbox("Auto-accept teleport requests", ref acceptTeleport)) {
                 Plugin.Config.AutoAcceptTeleport = acceptTeleport;

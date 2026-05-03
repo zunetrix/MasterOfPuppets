@@ -1,9 +1,7 @@
+using System;
 using System.Collections.Generic;
 
 using Dalamud.Game.ClientState.Objects.Enums;
-
-using FFXIVClientStructs.FFXIV.Client.UI;
-using FFXIVClientStructs.FFXIV.Component.GUI;
 
 using Lumina.Excel.Sheets;
 
@@ -15,9 +13,9 @@ namespace MasterOfPuppets;
 /// <summary>
 /// Handles world travel via the aetheryte menu <c>WorldTravelSelect</c> flow.
 /// </summary>
-internal static unsafe class WorldTravelManager {
+internal static class WorldTravelManager {
 
-    //// Aetheryte menu list index: "Visit Another World Server."
+    // Aetheryte menu list index: "Visit Another World Server."
     private const int IndexVisitAnotherWorld = 2;
 
     // Addon row 102338 = "Visit Another World Server." (locale-aware, icon stripped).
@@ -80,13 +78,13 @@ internal static unsafe class WorldTravelManager {
     //  Ls: Callback.Fire(addon, true, index + 2)
     private static void Step_WaitForWorldTravelSelect(string world) {
         var ok = false;
-        string[] worlds = [];
+        List<string> worlds = [];
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
-            stopWhen: () => { worlds = GameDialogManager.GetAvailableWorldDestinations(); return ok = worlds.Length > 0; },
+            stopWhen: () => { worlds = GameDialogManager.GetAvailableWorldDestinations(); return ok = worlds.Count > 0; },
             callback: () => {
                 if (!ok) { DalamudApi.PluginLog.Warning("[TravelToWorld] step3 timeout: WorldTravelSelect worlds not loaded"); return; }
-                var index = System.Array.IndexOf(worlds, world);
+                int index = worlds.FindIndex(w => string.Equals(w, world, StringComparison.OrdinalIgnoreCase));
                 if (index == -1) {
                     DalamudApi.PluginLog.Warning($"[WorldTravel] '{world}' not available. Found: [{string.Join(", ", worlds)}]");
                     return;
