@@ -14,6 +14,8 @@ using MasterOfPuppets.Util;
 namespace MasterOfPuppets.Movement;
 
 public unsafe class SimpleInputMovement : IDisposable {
+    public const float ArrivalWalkBuffer = 0.5f;
+
 
     [Signature("74 0C 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ??", ScanType = ScanType.StaticAddress)]
     private nint _moveControllerSubMemberForMineInstance = 0;
@@ -110,23 +112,29 @@ public unsafe class SimpleInputMovement : IDisposable {
     }
 
     public void StopMove() {
+        CancelActiveMove(callNativeStop: true);
+    }
+
+    private void CancelActiveMove(bool callNativeStop) {
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = null;
 
         _direction = MovementDirection.None;
         _playerMoveHook?.Disable();
+        IsWalking = false;
 
-        // DalamudApi.Framework.RunOnFrameworkThread(() => {
-        //     if (_playerMoveHook == null) return;
-        //     if (DalamudApi.ObjectTable.LocalPlayer == null || !DalamudApi.ClientState.IsLoggedIn)
-        //         return;
-        //     try {
-        //         MoveStopNative();
-        //     } catch {
-        //         // ignored
-        //     }
-        // });
+        if (!callNativeStop)
+            return;
+
+        if (DalamudApi.ObjectTable.LocalPlayer == null || !DalamudApi.ClientState.IsLoggedIn)
+            return;
+
+        try {
+            MoveStopNative();
+        } catch {
+            // ignored
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -141,7 +149,7 @@ public unsafe class SimpleInputMovement : IDisposable {
             return null;
 
         // Cancel any previous move before starting a new one.
-        StopMove();
+        CancelActiveMove(callNativeStop: false);
 
         var cts = new CancellationTokenSource();
         _cts = cts;
@@ -167,13 +175,16 @@ public unsafe class SimpleInputMovement : IDisposable {
                     return;
                 }
 
+                var distance = player.Position.Distance2D(destination);
+
                 // Re-face target every frame in case the player drifts.
                 GameFunctions.FaceDirection(destination);
 
                 Direction = MovementDirection.Forward;
 
-                // Slow to walk when close for a cleaner arrival.
-                IsWalking = player.Position.Distance2D(destination) < precision;
+                // Slow before the stop radius so we do not run through the destination
+                // and make repeated endpoint corrections.
+                IsWalking = GetArrivalState(distance, precision) == ArrivalMovementState.Walk;
             },
             callback: () => {
                 // Restore control settings regardless of how the loop ended.
@@ -220,6 +231,21 @@ public unsafe class SimpleInputMovement : IDisposable {
 
         return cts;
     }
+
+    public static ArrivalMovementState GetArrivalState(float distance, float precision) {
+        if (distance < precision)
+            return ArrivalMovementState.Stop;
+
+        return distance < precision + ArrivalWalkBuffer
+            ? ArrivalMovementState.Walk
+            : ArrivalMovementState.Run;
+    }
+}
+
+public enum ArrivalMovementState {
+    Run,
+    Walk,
+    Stop,
 }
 
 public enum MovementDirection : int {

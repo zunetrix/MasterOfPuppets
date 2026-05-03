@@ -1405,7 +1405,7 @@ public static class MopCommandsHelper {
             * This is a plugin command (works only on local clients)
             Broadcasts formation execution to all local clients.
             Each client moves to the formation point whose assigned CIDs/groups include it.
-            Add target to use your current target as the formation anchor.
+            Add target to place your assigned formation point at your current target.
             """
         },
         new MopAction {

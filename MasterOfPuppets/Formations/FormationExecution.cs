@@ -1,0 +1,12 @@
+using System.Collections.Generic;
+using System.Linq;
+
+namespace MasterOfPuppets.Formations;
+
+public static class FormationExecution {
+    public static FormationPoint? GetAssignedPoint(
+        Formation formation,
+        ulong contentId,
+        IReadOnlyList<global::CidGroup>? groups = null) =>
+        formation.Points.FirstOrDefault(p => p.GetEffectiveCids(groups).Contains(contentId));
+}

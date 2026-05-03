@@ -3,11 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Numerics;
 
-using Dalamud.Game.ClientState.Objects.Enums;
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface.ImGuiNotification;
-
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
 
 using MasterOfPuppets.Formations;
 
@@ -31,13 +27,17 @@ internal partial class IpcProvider {
             return;
         }
 
-        if (!TryGetFormationAnchor(useTargetAnchor, out var anchorPos, out var anchorRot, out var anchorCid))
+        var issuerCid = DalamudApi.PlayerState.ContentId;
+        if (issuerCid == 0)
             return;
 
-        if (GetAssignedPoint(formation, anchorCid) == null) {
-            DalamudApi.ShowNotification("Formation anchor is not assigned to this formation.", NotificationType.Error, 5000);
+        if (GetAssignedPoint(formation, issuerCid) == null) {
+            DalamudApi.ShowNotification($"Current character is not assigned to formation '{name}'.", NotificationType.Error, 5000);
             return;
         }
+
+        if (!TryGetFormationAnchor(useTargetAnchor, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid))
+            return;
 
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteFormation,
             name,
@@ -86,12 +86,9 @@ internal partial class IpcProvider {
     }
 
     private FormationPoint? GetAssignedPoint(Formation formation, ulong playerCid) =>
-        formation.Points.FirstOrDefault(p => p.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(playerCid));
+        FormationExecution.GetAssignedPoint(formation, playerCid, Plugin.Config.CidsGroups);
 
-    private static unsafe ulong GetPlayerContentId(IGameObject playerObject) =>
-        ((BattleChara*)playerObject.Address)->ContentId;
-
-    private bool TryGetFormationAnchor(bool useTargetAnchor, out Vector3 position, out float rotation, out ulong cid) {
+    private bool TryGetFormationAnchor(bool useTargetAnchor, ulong issuerCid, out Vector3 position, out float rotation, out ulong cid) {
         position = default;
         rotation = default;
         cid = default;
@@ -102,7 +99,7 @@ internal partial class IpcProvider {
         if (!useTargetAnchor) {
             position = player.Position;
             rotation = player.Rotation;
-            cid = DalamudApi.PlayerState.ContentId;
+            cid = issuerCid;
             return cid != 0;
         }
 
@@ -115,19 +112,14 @@ internal partial class IpcProvider {
         var target = player.TargetObject?.GameObjectId == targetObjectId
             ? player.TargetObject
             : DalamudApi.ObjectTable.FirstOrDefault(o => o?.GameObjectId == targetObjectId);
-        if (target == null || target.ObjectKind != ObjectKind.Pc) {
-            DalamudApi.ShowNotification("Formation target must be a player character.", NotificationType.Error, 5000);
-            return false;
-        }
-
-        cid = GetPlayerContentId(target);
-        if (cid == 0) {
-            DalamudApi.ShowNotification("Could not resolve target character content ID.", NotificationType.Error, 5000);
+        if (target == null) {
+            DalamudApi.ShowNotification("Could not resolve formation target.", NotificationType.Error, 5000);
             return false;
         }
 
         position = target.Position;
         rotation = target.Rotation;
+        cid = issuerCid;
         return true;
     }
 }
