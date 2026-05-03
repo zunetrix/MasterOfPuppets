@@ -586,34 +586,34 @@ public class SettingsWindow : Window {
             ImGui.InputTextWithHint("##gspsrch", Language.SearchInputLabel, ref _profileSearchFilter, 64);
         }
 
-        using (ImRaii.Group()) {
-            var applyOnLogin = Plugin.Config.ApplyGameSettingsProfileOnLogin;
-            if (ImGui.Checkbox("Apply profile on login", ref applyOnLogin)) {
-                Plugin.Config.ApplyGameSettingsProfileOnLogin = applyOnLogin;
-                Plugin.Config.Save();
-                Plugin.IpcProvider.SyncConfiguration();
-            }
+        // using (ImRaii.Group()) {
+        //     var applyOnLogin = Plugin.Config.ApplyGameSettingsProfileOnLogin;
+        //     if (ImGui.Checkbox("Apply profile on login", ref applyOnLogin)) {
+        //         Plugin.Config.ApplyGameSettingsProfileOnLogin = applyOnLogin;
+        //         Plugin.Config.Save();
+        //         Plugin.IpcProvider.SyncConfiguration();
+        //     }
 
-            ImGui.SameLine();
-            var selectedProfile = string.IsNullOrWhiteSpace(Plugin.Config.LoginGameSettingsProfile)
-                ? "Select..."
-                : Plugin.Config.LoginGameSettingsProfile;
-            ImGui.SetNextItemWidth(220 * ImGuiHelpers.GlobalScale);
-            if (ImGui.BeginCombo("##LoginGameSettingsProfile", selectedProfile)) {
-                foreach (var profile in Plugin.Config.GameSettingsProfiles) {
-                    var selected = string.Equals(Plugin.Config.LoginGameSettingsProfile, profile.Name, StringComparison.OrdinalIgnoreCase);
-                    if (ImGui.Selectable(profile.Name, selected)) {
-                        Plugin.Config.LoginGameSettingsProfile = profile.Name;
-                        Plugin.Config.Save();
-                        Plugin.IpcProvider.SyncConfiguration();
-                    }
-                    if (selected)
-                        ImGui.SetItemDefaultFocus();
-                }
-                ImGui.EndCombo();
-            }
-            ImGuiUtil.HelpMarker("Applies one saved profile when this client logs in. Include AutoAfkSwitchingTime and FPSInActive in profile keys to cover AFK time and background frame limit.");
-        }
+        //     ImGui.SameLine();
+        //     var selectedProfile = string.IsNullOrWhiteSpace(Plugin.Config.LoginGameSettingsProfile)
+        //         ? "Select..."
+        //         : Plugin.Config.LoginGameSettingsProfile;
+        //     ImGui.SetNextItemWidth(220 * ImGuiHelpers.GlobalScale);
+        //     if (ImGui.BeginCombo("##LoginGameSettingsProfile", selectedProfile)) {
+        //         foreach (var profile in Plugin.Config.GameSettingsProfiles) {
+        //             var selected = string.Equals(Plugin.Config.LoginGameSettingsProfile, profile.Name, StringComparison.OrdinalIgnoreCase);
+        //             if (ImGui.Selectable(profile.Name, selected)) {
+        //                 Plugin.Config.LoginGameSettingsProfile = profile.Name;
+        //                 Plugin.Config.Save();
+        //                 Plugin.IpcProvider.SyncConfiguration();
+        //             }
+        //             if (selected)
+        //                 ImGui.SetItemDefaultFocus();
+        //         }
+        //         ImGui.EndCombo();
+        //     }
+        //     ImGuiUtil.HelpMarker("Applies one saved profile when this client logs in. Include AutoAfkSwitchingTime and FPSInActive in profile keys to cover AFK time and background frame limit.");
+        // }
 
         ImGui.Spacing();
 

@@ -109,15 +109,15 @@ public class Plugin : IDalamudPlugin {
             Ui.MainWindow.IsOpen = true;
         }
 
-        if (Config.ApplyGameSettingsProfileOnLogin && !string.IsNullOrWhiteSpace(Config.LoginGameSettingsProfile)) {
-            var profile = Config.GameSettingsProfiles.FirstOrDefault(p =>
-                p.Name.Equals(Config.LoginGameSettingsProfile, StringComparison.OrdinalIgnoreCase));
-            if (profile != null) {
-                GameSettingsManager.ApplyProfile(profile, Config.GameSettingsProfileKeys);
-            } else {
-                DalamudApi.PluginLog.Warning($"Could not find Game Settings Profile to apply on login: {Config.LoginGameSettingsProfile}");
-            }
-        }
+        // if (Config.ApplyGameSettingsProfileOnLogin && !string.IsNullOrWhiteSpace(Config.LoginGameSettingsProfile)) {
+        //     var profile = Config.GameSettingsProfiles.FirstOrDefault(p =>
+        //         p.Name.Equals(Config.LoginGameSettingsProfile, StringComparison.OrdinalIgnoreCase));
+        //     if (profile != null) {
+        //         GameSettingsManager.ApplyProfile(profile, Config.GameSettingsProfileKeys);
+        //     } else {
+        //         DalamudApi.PluginLog.Warning($"Could not find Game Settings Profile to apply on login: {Config.LoginGameSettingsProfile}");
+        //     }
+        // }
 
         if (Config.RunLoginMacro) {
             int macroIndex = MacroManager.FindMacroIndex(Config.LoginMacro);
