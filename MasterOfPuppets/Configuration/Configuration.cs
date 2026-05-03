@@ -214,6 +214,8 @@ internal class Configuration : IPluginConfiguration {
     public bool AllowFreeGameWindowResize { get; set; } = true;
     public bool RunLoginMacro { get; set; } = false;
     public string LoginMacro { get; set; } = string.Empty;
+    public bool ApplyGameSettingsProfileOnLogin { get; set; } = false;
+    public string LoginGameSettingsProfile { get; set; } = string.Empty;
     // Interface
     public bool OpenOnStartup { get; set; } = false;
 

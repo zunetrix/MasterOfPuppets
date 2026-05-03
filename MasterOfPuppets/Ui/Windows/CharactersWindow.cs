@@ -135,13 +135,14 @@ public class CharactersWindow : Window {
         float actionsColWidth = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.X;
         float kbColWidth = ImGui.GetFrameHeight();
 
-        if (!ImGui.BeginTable("##CharactersTable", 6,
+        if (!ImGui.BeginTable("##CharactersTable", 7,
             ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
             ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV))
             return;
 
         ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 28 * ImGuiHelpers.GlobalScale);
         ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn("Login", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
         ImGui.TableSetupColumn("KB", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
         ImGui.TableSetupColumn("Party", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
         ImGui.TableSetupColumn("TP", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
@@ -189,7 +190,21 @@ public class CharactersWindow : Window {
                 }
             }
 
-            // col 2: keyboard broadcast toggle
+            // col 2: auto-login toggle
+            ImGui.TableNextColumn();
+            bool loginEnabled = allCharacters[i].AutoLoginEnabled;
+            if (ImGui.Checkbox($"##Login_{allCharacters[i].Cid}", ref loginEnabled)) {
+                allCharacters[i].AutoLoginEnabled = loginEnabled;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+                if (loginEnabled && !DalamudApi.ClientState.IsLoggedIn)
+                    Plugin.AutoLoginManager.Start();
+                else if (!Plugin.Config.Characters.Any(c => c.AutoLoginEnabled))
+                    Plugin.AutoLoginManager.Stop();
+            }
+            ImGuiUtil.ToolTip("Use this character for title-screen auto-login.");
+
+            // col 3: keyboard broadcast toggle
             ImGui.TableNextColumn();
             bool kbEnabled = allCharacters[i].KeyboardBroadcastEnabled;
             if (ImGui.Checkbox($"##KB_{allCharacters[i].Cid}", ref kbEnabled)) {
@@ -199,7 +214,7 @@ public class CharactersWindow : Window {
             }
             ImGuiUtil.ToolTip("Allow this character to receive keyboard broadcast from the master client");
 
-            // col 3: auto accept party invite toggle
+            // col 4: auto accept party invite toggle
             ImGui.TableNextColumn();
             bool partyEnabled = allCharacters[i].AutoAcceptPartyInvite;
             if (ImGui.Checkbox($"##Party_{allCharacters[i].Cid}", ref partyEnabled)) {
@@ -209,7 +224,7 @@ public class CharactersWindow : Window {
             }
             ImGuiUtil.ToolTip("Allow this character to auto-accept party invites (requires global toggle in Settings)");
 
-            // col 4: auto accept teleport toggle
+            // col 5: auto accept teleport toggle
             ImGui.TableNextColumn();
             bool tpEnabled = allCharacters[i].AutoAcceptTeleport;
             if (ImGui.Checkbox($"##TP_{allCharacters[i].Cid}", ref tpEnabled)) {
@@ -219,7 +234,7 @@ public class CharactersWindow : Window {
             }
             ImGuiUtil.ToolTip("Allow this character to auto-accept teleport requests (requires global toggle in Settings)");
 
-            // col 5: action buttons (right-aligned by column sizing)
+            // col 6: action buttons (right-aligned by column sizing)
             ImGui.TableNextColumn();
             bool alreadyCopied = _copiedCids.Contains(allCharacters[i].Cid);
             var copyColor = alreadyCopied ? Style.Colors.Green : Style.Colors.White;

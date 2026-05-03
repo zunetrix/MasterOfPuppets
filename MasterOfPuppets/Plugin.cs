@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Linq;
 
@@ -33,6 +34,7 @@ public class Plugin : IDalamudPlugin {
     internal GameRenderManager GameRenderManager { get; }
     internal GameWindowManager GameWindowManager { get; }
     internal KeyboardBroadcastManager KeyboardBroadcastManager { get; }
+    internal AutoLoginManager AutoLoginManager { get; }
 
     public Plugin(IDalamudPluginInterface pluginInterface) {
         pluginInterface.Create<DalamudApi>();
@@ -58,6 +60,7 @@ public class Plugin : IDalamudPlugin {
         GameRenderManager = new GameRenderManager(this);
         GameWindowManager = new GameWindowManager(this);
         KeyboardBroadcastManager = new KeyboardBroadcastManager(this);
+        AutoLoginManager = new AutoLoginManager(this);
 
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
         DalamudApi.PluginInterface.LanguageChanged += OnLanguageChange;
@@ -71,6 +74,10 @@ public class Plugin : IDalamudPlugin {
 
         if (Config.OpenOnStartup) {
             Ui.MainWindow.IsOpen = true;
+        }
+
+        if (Config.Characters.Any(c => c.AutoLoginEnabled) && !DalamudApi.ClientState.IsLoggedIn) {
+            AutoLoginManager.Start();
         }
     }
 
@@ -94,8 +101,20 @@ public class Plugin : IDalamudPlugin {
     }
 
     private void OnLogin() {
+        AutoLoginManager.Stop();
+
         if (Config.OpenOnLogin) {
             Ui.MainWindow.IsOpen = true;
+        }
+
+        if (Config.ApplyGameSettingsProfileOnLogin && !string.IsNullOrWhiteSpace(Config.LoginGameSettingsProfile)) {
+            var profile = Config.GameSettingsProfiles.FirstOrDefault(p =>
+                p.Name.Equals(Config.LoginGameSettingsProfile, StringComparison.OrdinalIgnoreCase));
+            if (profile != null) {
+                GameSettingsManager.ApplyProfile(profile, Config.GameSettingsProfileKeys);
+            } else {
+                DalamudApi.PluginLog.Warning($"Could not find Game Settings Profile to apply on login: {Config.LoginGameSettingsProfile}");
+            }
         }
 
         if (Config.RunLoginMacro) {
@@ -108,6 +127,8 @@ public class Plugin : IDalamudPlugin {
 
     private void OnLogout(int type, int code) {
         Ui.MainWindow.IsOpen = false;
+        if (Config.Characters.Any(c => c.AutoLoginEnabled))
+            AutoLoginManager.Start();
     }
 
     public void Dispose() {
@@ -128,6 +149,7 @@ public class Plugin : IDalamudPlugin {
         FollowPath.Dispose();
         SimpleInputMovement.Dispose();
         KeyboardBroadcastManager.Dispose();
+        AutoLoginManager.Dispose();
         GameWindowManager.Dispose();
         GameRenderManager.Dispose();
         Ui.Dispose();

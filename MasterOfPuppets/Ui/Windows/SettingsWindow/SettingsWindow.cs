@@ -327,42 +327,7 @@ public class SettingsWindow : Window {
                 Plugin.Ui.CharactersWindow.Toggle();
         }
 
-        using (ImGuiGroupPanel.BeginGroupPanel("Login Macro")) {
-            var runLoginMacro = Plugin.Config.RunLoginMacro;
-            if (ImGui.Checkbox("Run macro on login", ref runLoginMacro)) {
-                Plugin.Config.RunLoginMacro = runLoginMacro;
-                Plugin.IpcProvider.SyncConfiguration();
-            }
-            ImGuiUtil.ToolTip("Use this option to run a macro on login and configure things like sound, window layout, and camhack");
-
-            if (runLoginMacro) {
-                using (ImRaii.PushIndent()) {
-                    ImGui.Text("Macro:");
-                    ImGui.SameLine();
-                    ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
-                    string currentMacro = string.IsNullOrEmpty(Plugin.Config.LoginMacro) ? "Select..." : Plugin.Config.LoginMacro;
-
-                    using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor, true))
-                    using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1, true))
-                    using (ImRaii.PushFont(UiBuilder.DefaultFont)) {
-                        if (ImGui.BeginCombo("##OnLoginMacroCombo", currentMacro)) {
-                            foreach (var macro in Plugin.Config.Macros) {
-                                bool isSelected = Plugin.Config.LoginMacro == macro.Name;
-                                if (ImGui.Selectable(macro.Name, isSelected)) {
-                                    Plugin.Config.LoginMacro = macro.Name;
-                                    Plugin.Config.Save();
-                                    Plugin.IpcProvider.SyncConfiguration();
-                                }
-                                if (isSelected) {
-                                    ImGui.SetItemDefaultFocus();
-                                }
-                            }
-                            ImGui.EndCombo();
-                        }
-                    }
-                }
-            }
-        }
+        DrawLoginMacroGroup();
 
         ImGui.Spacing();
         ImGui.Spacing();
@@ -533,6 +498,46 @@ public class SettingsWindow : Window {
 
     }
 
+    private void DrawLoginMacroGroup() {
+        using (ImGuiGroupPanel.BeginGroupPanel("Login Macro")) {
+            var runLoginMacro = Plugin.Config.RunLoginMacro;
+            if (ImGui.Checkbox("Run macro on login", ref runLoginMacro)) {
+                Plugin.Config.RunLoginMacro = runLoginMacro;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.ToolTip("Use this option to run a macro on login and configure things like sound, window layout, and camhack");
+
+            if (runLoginMacro) {
+                using (ImRaii.PushIndent()) {
+                    ImGui.Text("Macro:");
+                    ImGui.SameLine();
+                    ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
+                    string currentMacro = string.IsNullOrEmpty(Plugin.Config.LoginMacro) ? "Select..." : Plugin.Config.LoginMacro;
+
+                    using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor, true))
+                    using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1, true))
+                    using (ImRaii.PushFont(UiBuilder.DefaultFont)) {
+                        if (ImGui.BeginCombo("##OnLoginMacroCombo", currentMacro)) {
+                            foreach (var macro in Plugin.Config.Macros) {
+                                bool isSelected = Plugin.Config.LoginMacro == macro.Name;
+                                if (ImGui.Selectable(macro.Name, isSelected)) {
+                                    Plugin.Config.LoginMacro = macro.Name;
+                                    Plugin.Config.Save();
+                                    Plugin.IpcProvider.SyncConfiguration();
+                                }
+                                if (isSelected) {
+                                    ImGui.SetItemDefaultFocus();
+                                }
+                            }
+                            ImGui.EndCombo();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private void DrawGameSettingsTab() {
         using var tabItem = ImRaii.TabItem($"{Language.SettingsGameSettingsTab}###GameSettingsTab");
         if (!tabItem) return;
@@ -570,6 +575,37 @@ public class SettingsWindow : Window {
             ImGui.SetNextItemWidth(-1);
             ImGui.InputTextWithHint("##gspsrch", Language.SearchInputLabel, ref _profileSearchFilter, 64);
         }
+
+        using (ImRaii.Group()) {
+            var applyOnLogin = Plugin.Config.ApplyGameSettingsProfileOnLogin;
+            if (ImGui.Checkbox("Apply profile on login", ref applyOnLogin)) {
+                Plugin.Config.ApplyGameSettingsProfileOnLogin = applyOnLogin;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.SameLine();
+            var selectedProfile = string.IsNullOrWhiteSpace(Plugin.Config.LoginGameSettingsProfile)
+                ? "Select..."
+                : Plugin.Config.LoginGameSettingsProfile;
+            ImGui.SetNextItemWidth(220 * ImGuiHelpers.GlobalScale);
+            if (ImGui.BeginCombo("##LoginGameSettingsProfile", selectedProfile)) {
+                foreach (var profile in Plugin.Config.GameSettingsProfiles) {
+                    var selected = string.Equals(Plugin.Config.LoginGameSettingsProfile, profile.Name, StringComparison.OrdinalIgnoreCase);
+                    if (ImGui.Selectable(profile.Name, selected)) {
+                        Plugin.Config.LoginGameSettingsProfile = profile.Name;
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+                    if (selected)
+                        ImGui.SetItemDefaultFocus();
+                }
+                ImGui.EndCombo();
+            }
+            ImGuiUtil.HelpMarker("Applies one saved profile when this client logs in. Include AutoAfkSwitchingTime and FPSInActive in profile keys to cover AFK time and background frame limit.");
+        }
+
+        ImGui.Spacing();
 
         var profiles = Plugin.Config.GameSettingsProfiles;
         float btnW = ImGui.GetFrameHeight();

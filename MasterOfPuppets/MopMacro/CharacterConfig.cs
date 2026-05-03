@@ -16,6 +16,9 @@ public class Character {
 
     [JsonPropertyName("autoAcceptTeleport")]
     public bool AutoAcceptTeleport = true;
+
+    [JsonPropertyName("autoLogin")]
+    public bool AutoLoginEnabled = false;
 }
 
 public class CidGroup {

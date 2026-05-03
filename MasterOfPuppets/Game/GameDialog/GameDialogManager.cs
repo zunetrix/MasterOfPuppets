@@ -35,6 +35,11 @@ internal static unsafe partial class GameDialogManager {
         return addon != null && addon->IsVisible;
     }
 
+    public static bool IsAddonOpen(string name) {
+        var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(name);
+        return addon != null;
+    }
+
     public static bool IsAddonReady(string name) {
         var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(name);
         return addon != null && addon->IsVisible && addon->IsReady && addon->IsFullyLoaded(); //&& addon->UldManager.LoadedState != AtkLoadState.Loaded;
@@ -132,7 +137,7 @@ internal static unsafe partial class GameDialogManager {
 
     // C# type → AtkValue.Type: int→Int, uint→UInt, float→Float, bool→Bool, string→String
     // Uses Marshal.AllocHGlobal so string values can be allocated and freed safely (supports string args).
-    private static bool FireCallback(string name, params object[] args) {
+    internal static bool FireCallback(string name, params object[] args) {
         var addon = GetAddonByName(name);
         if (addon == null) return false;
 
