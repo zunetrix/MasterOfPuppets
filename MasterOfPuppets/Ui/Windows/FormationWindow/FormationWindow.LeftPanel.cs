@@ -5,6 +5,7 @@ using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 
@@ -227,8 +228,28 @@ public partial class FormationWindow {
             }
 
             ImGui.SameLine();
-            if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Play, $"##fiexec{i}", "Execute formation"))
+            if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Play, $"##fiexec{i}", Language.ExecuteFormationBtn))
                 Plugin.IpcProvider.ExecuteFormation(f.Name);
+            ImGui.OpenPopupOnItemClick($"##fiexecmenu{i}", ImGuiPopupFlags.MouseButtonRight);
+
+            using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor)) {
+                using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
+                    if (ImGui.BeginPopup($"##fiexecmenu{i}")) {
+                        var formationName = EscapeQuotedCommandArgument(f.Name);
+                        if (ImGui.MenuItem("Copy Execute Command")) {
+                            ImGui.SetClipboardText($"/mop formation \"{formationName}\"");
+                            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                        }
+
+                        if (ImGui.MenuItem("Copy Target Execute Command")) {
+                            ImGui.SetClipboardText($"/mop formation \"{formationName}\" target");
+                            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                        }
+
+                        ImGui.EndPopup();
+                    }
+                }
+            }
 
             ImGui.PopID();
         }
@@ -259,6 +280,8 @@ public partial class FormationWindow {
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();
     }
+
+    private static string EscapeQuotedCommandArgument(string value) => value.Replace("\"", "\\\"");
 
     private string MakeUniqueName(string baseName) {
         if (!Plugin.Config.Formations.Any(f => f.Name == baseName)) return baseName;
