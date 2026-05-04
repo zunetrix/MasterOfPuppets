@@ -37,12 +37,12 @@ internal partial class IpcProvider {
     }
 
     public void StopMovement() {
-        BroadCast(IpcMessage.Create(IpcMessageType.StopMovement).Serialize(), includeSelf: true);
+        Plugin.StopAllMovementLocal();
+        BroadCast(IpcMessage.Create(IpcMessageType.StopMovement).Serialize(), includeSelf: false);
     }
 
     [IpcHandle(IpcMessageType.StopMovement)]
     private void HandleStopMovement(IpcMessage message) {
-        Plugin.SimpleInputMovement.StopMove();
-        Plugin.MovementManager.StopMove();
+        Plugin.StopAllMovementLocal();
     }
 }

@@ -28,16 +28,16 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
     private readonly Plugin _plugin;
     private readonly Stopwatch _stateTimer = new();
     private LoginState _state = LoginState.Idle;
-    private int _worldIndex;
     private int _stateDelayMs;
     private List<AutoLoginCandidate> _candidates = [];
-    private List<string> _worldQueue = [];
+    private AutoLoginTarget? _target;
     private string _pendingCharacterName = string.Empty;
     private int _pendingCharacterIndex = -1;
     private bool _hasPendingCharacterSelection;
     private IActiveNotification? _cancelNotification;
 
     private const int StateTimeoutMs = 30_000;
+    private const int ConfirmingLoginTimeoutMs = 120_000;
     private const int CharacterSelectDelayMinMs = 2_000;
     private const int CharacterSelectDelayMaxMs = 4_000;
 
@@ -63,8 +63,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             return;
         }
 
-        _worldIndex = 0;
-        _worldQueue = [];
+        _target = null;
         ClearPendingCharacterSelection();
         ShowCancelNotification();
         SetState(LoginState.WaitingTitleMenu);
@@ -82,7 +81,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         _stateDelayMs = 0;
         _stateTimer.Reset();
         _candidates = [];
-        _worldQueue = [];
+        _target = null;
         ClearPendingCharacterSelection();
         if (dismissNotification)
             DismissCancelNotification();
@@ -101,8 +100,8 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
                 return;
             }
 
-            if (_stateTimer.ElapsedMilliseconds > StateTimeoutMs) {
-                DalamudApi.PluginLog.Warning($"[AutoLogin] Timed out in state {_state}.");
+            if (_stateTimer.ElapsedMilliseconds > GetStateTimeoutMs()) {
+                LogTimeout();
                 Stop();
                 return;
             }
@@ -139,17 +138,36 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         if (!GameDialogManager.IsAddonOpen("_CharaSelectWorldServer"))
             return;
 
-        if (_worldQueue.Count == 0) {
-            var visibleWorlds = WorldNames;
-            if (visibleWorlds.Count == 0)
-                return;
+        var visibleWorlds = WorldNames;
+        if (visibleWorlds.Count == 0)
+            return;
 
-            _worldQueue = AutoLoginPlanner.BuildWorldQueue(_candidates, ReadLobbyEntries(), visibleWorlds);
-            DalamudApi.PluginLog.Information(
-                $"[AutoLogin] World scan queue: {(_worldQueue.Count == 0 ? "<empty>" : string.Join(", ", _worldQueue))}.");
+        var lobbyEntries = ReadLobbyEntries();
+        if (lobbyEntries.Count == 0) {
+            DalamudApi.PluginLog.Warning("[AutoLogin] Lobby character data was unavailable.");
+            Stop();
+            return;
         }
 
-        SelectNextWorldCandidate();
+        _target = AutoLoginPlanner.ResolveTarget(_candidates, lobbyEntries);
+        if (_target == null) {
+            DalamudApi.PluginLog.Warning("[AutoLogin] Could not resolve an enabled auto-login character from lobby data.");
+            Stop();
+            return;
+        }
+
+        DalamudApi.PluginLog.Information(
+            $"[AutoLogin] Resolved auto-login target: {_target.Value.CharacterName} on {_target.Value.WorldName}.");
+        if (!SelectWorld(_target.Value.WorldName, out var worldIndex)) {
+            DalamudApi.PluginLog.Warning(
+                $"[AutoLogin] Resolved world '{_target.Value.WorldName}' was not visible in the world selector.");
+            Stop();
+            return;
+        }
+
+        DalamudApi.PluginLog.Information(
+            $"[AutoLogin] Checking resolved character {_target.Value.CharacterName} on {_target.Value.WorldName} at index {worldIndex}.");
+        SetState(LoginState.WaitingCharacterList);
     }
 
     private void HandleWaitingCharacterList() {
@@ -164,14 +182,20 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             _pendingCharacterIndex < 0 ||
             _pendingCharacterIndex >= visibleCharacters.Count ||
             !visibleCharacters[_pendingCharacterIndex].Equals(_pendingCharacterName, StringComparison.InvariantCultureIgnoreCase)) {
+            if (_target == null) {
+                DalamudApi.PluginLog.Warning("[AutoLogin] Resolved auto-login target was cleared before character selection.");
+                Stop();
+                return;
+            }
+
             if (!AutoLoginPlanner.TryFindVisibleCandidate(
-                    _candidates,
+                    [new AutoLoginCandidate(0, _target.Value.CharacterName)],
                     visibleCharacters,
                     out _pendingCharacterName,
                     out _pendingCharacterIndex)) {
-                DalamudApi.PluginLog.Information(
-                    $"[AutoLogin] No checked character visible on this world. Checked: {string.Join(", ", _candidates.Select(c => c.Name))}. Visible: {string.Join(", ", visibleCharacters)}.");
-                SelectNextWorldCandidate();
+                DalamudApi.PluginLog.Warning(
+                    $"[AutoLogin] Resolved character '{_target.Value.CharacterName}' was not visible after selecting {_target.Value.WorldName}.");
+                Stop();
                 return;
             }
 
@@ -209,22 +233,18 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             SendTitleAction(GameDialogManager.AddonName.SelectYesno, 3, 0);
     }
 
-    private void SelectNextWorldCandidate() {
-        ClearPendingCharacterSelection();
-        while (_worldIndex < _worldQueue.Count) {
-            var world = _worldQueue[_worldIndex++];
-            if (!SelectWorld(world, out var worldIndex)) {
-                DalamudApi.PluginLog.Debug($"[AutoLogin] World '{world}' not available in current list.");
-                continue;
-            }
+    private int GetStateTimeoutMs() => _state == LoginState.ConfirmingLogin
+        ? ConfirmingLoginTimeoutMs
+        : StateTimeoutMs;
 
-            DalamudApi.PluginLog.Information($"[AutoLogin] Checking checked characters on {world} at index {worldIndex}.");
-            SetState(LoginState.WaitingCharacterList);
+    private void LogTimeout() {
+        if (_state == LoginState.ConfirmingLogin) {
+            DalamudApi.PluginLog.Information(
+                $"[AutoLogin] Login confirmation still pending after {ConfirmingLoginTimeoutMs}ms; stopping auto-login watcher after character selection was submitted.");
             return;
         }
 
-        DalamudApi.PluginLog.Warning("[AutoLogin] None of the configured characters were found on the current data center.");
-        Stop();
+        DalamudApi.PluginLog.Warning($"[AutoLogin] Timed out in state {_state}.");
     }
 
     private List<AutoLoginCandidate> GetLoginCandidates() {

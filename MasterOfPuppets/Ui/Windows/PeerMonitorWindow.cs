@@ -8,6 +8,8 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
+using MasterOfPuppets.Ipc;
+
 namespace MasterOfPuppets;
 
 public class PeerMonitorWindow : Window {
@@ -64,9 +66,7 @@ public class PeerMonitorWindow : Window {
         ImGui.Separator();
 
         //  Table
-        var offlineThreshold = _autoRefresh
-            ? TimeSpan.FromSeconds(RefreshTotalSeconds * 2.5)
-            : TimeSpan.FromMinutes(10);
+        var inviteFilterFreshThreshold = IpcProvider.PeerCharacterDataMaxAge;
 
         using var table = ImRaii.Table(
             "##peers", 6,
@@ -76,7 +76,7 @@ public class PeerMonitorWindow : Window {
 
         ImGui.TableSetupScrollFreeze(0, 1);
         ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 20);
-        ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, 20);
+        ImGui.TableSetupColumn("Fresh", ImGuiTableColumnFlags.WidthFixed, 45);
         ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableSetupColumn("Home World", ImGuiTableColumnFlags.WidthFixed, 120);
         ImGui.TableSetupColumn("Current World", ImGuiTableColumnFlags.WidthFixed, 120);
@@ -89,10 +89,10 @@ public class PeerMonitorWindow : Window {
             ImGui.TableNextColumn();
             ImGui.Text($"{index + 1:00}");
 
-            // Status icon
+            // Freshness uses the same threshold as auto-accept invite filtering.
             ImGui.TableNextColumn();
-            var isOnline = DateTime.UtcNow - info.LastSeen < offlineThreshold;
-            var (icon, color) = isOnline
+            var isFreshForInviteFilter = DateTime.UtcNow - info.LastSeen <= inviteFilterFreshThreshold;
+            var (icon, color) = isFreshForInviteFilter
                 ? (FontAwesomeIcon.Check, Style.Colors.Green)
                 : (FontAwesomeIcon.Times, Style.Colors.Red);
             using (ImRaii.PushColor(ImGuiCol.Text, color)) {

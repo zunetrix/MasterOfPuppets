@@ -173,6 +173,10 @@ public class MovementManager : IDisposable {
     public void StopMove() {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             _stuckRetryCount = 0;
+            if (_pendingTask is { IsCompleted: true })
+                _pendingTask.Dispose();
+            _pendingTask = null;
+            _pendingFacing = null;
             GameFunctions.StopFollow();
             _follow.ForceStop();
         });

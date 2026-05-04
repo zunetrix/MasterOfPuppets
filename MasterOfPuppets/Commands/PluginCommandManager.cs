@@ -178,7 +178,7 @@ public class PluginCommandManager : IDisposable {
                     }
                     break;
                 case "stopmoveinput":
-                    Plugin.SimpleInputMovement.StopMove();
+                    Plugin.StopAllMovementLocal();
                     break;
                 case "move": {
                         if (parsedArgs.Count < 2) {

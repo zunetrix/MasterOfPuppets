@@ -18,36 +18,45 @@ public class AutoLoginPlannerTests {
     }
 
     [Fact]
-    public void BuildWorldQueue_UsesCurrentWorldForMatchingCharacter() {
-        var queue = AutoLoginPlanner.BuildWorldQueue(
+    public void ResolveTarget_UsesCurrentWorldForMatchingCharacter() {
+        var target = AutoLoginPlanner.ResolveTarget(
             [new AutoLoginCandidate(42, "Test Character")],
             [
                 LobbyEntry(42, "Test Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos"),
                 LobbyEntry(100, "Other Character", currentWorld: "Diabolos", homeWorld: "Diabolos"),
-            ],
-            ["Diabolos", "Halicarnassus", "Maduin"]);
+            ]);
 
-        Assert.Equal(["Halicarnassus", "Diabolos"], queue);
+        Assert.NotNull(target);
+        Assert.Equal("Test Character", target.Value.CharacterName);
+        Assert.Equal("Halicarnassus", target.Value.WorldName);
     }
 
     [Fact]
-    public void BuildWorldQueue_DoesNotAddWorldsWithoutLobbyCharacters() {
-        var queue = AutoLoginPlanner.BuildWorldQueue(
-            [new AutoLoginCandidate(999, "Missing Character")],
-            [LobbyEntry(42, "Other Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos")],
-            ["Diabolos", "Halicarnassus", "Maduin"]);
+    public void ResolveTarget_MatchesByNameWhenContentIdIsMissing() {
+        var target = AutoLoginPlanner.ResolveTarget(
+            [new AutoLoginCandidate(0, "Test Character")],
+            [LobbyEntry(42, "Test Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos")]);
 
-        Assert.Equal(["Halicarnassus"], queue);
+        Assert.NotNull(target);
+        Assert.Equal("Halicarnassus", target.Value.WorldName);
     }
 
     [Fact]
-    public void BuildWorldQueue_FallsBackToAllVisibleWorldsWhenLobbyEntriesUnavailable() {
-        var queue = AutoLoginPlanner.BuildWorldQueue(
+    public void ResolveTarget_DoesNotFallbackToOtherLobbyCharacters() {
+        var target = AutoLoginPlanner.ResolveTarget(
             [new AutoLoginCandidate(999, "Missing Character")],
-            [],
-            ["Diabolos", "Halicarnassus"]);
+            [LobbyEntry(42, "Other Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos")]);
 
-        Assert.Equal(["Diabolos", "Halicarnassus"], queue);
+        Assert.Null(target);
+    }
+
+    [Fact]
+    public void ResolveTarget_DoesNotFallbackWhenLobbyEntriesUnavailable() {
+        var target = AutoLoginPlanner.ResolveTarget(
+            [new AutoLoginCandidate(999, "Missing Character")],
+            []);
+
+        Assert.Null(target);
     }
 
     [Fact]

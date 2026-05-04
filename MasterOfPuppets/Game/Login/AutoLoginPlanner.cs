@@ -33,30 +33,21 @@ public readonly record struct AutoLoginLobbyEntry(
     string RawJson,
     string ClientSelectWorldName);
 
-public static class AutoLoginPlanner {
-    public static List<string> BuildWorldQueue(
-        IReadOnlyList<AutoLoginCandidate> candidates,
-        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
-        IReadOnlyList<string> visibleWorlds) {
-        var worldQueue = new List<string>();
-        var visibleWorldSet = visibleWorlds.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
+public readonly record struct AutoLoginTarget(string CharacterName, string WorldName);
 
+public static class AutoLoginPlanner {
+    public static AutoLoginTarget? ResolveTarget(
+        IReadOnlyList<AutoLoginCandidate> candidates,
+        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
         foreach (var candidate in candidates) {
             var entry = FindCandidateEntry(candidate, lobbyEntries);
-            if (entry == null)
+            if (entry == null || string.IsNullOrWhiteSpace(entry.Value.CurrentWorldName))
                 continue;
 
-            AddWorld(worldQueue, visibleWorldSet, entry.Value.CurrentWorldName);
+            return new AutoLoginTarget(entry.Value.Name, entry.Value.CurrentWorldName);
         }
 
-        foreach (var entry in lobbyEntries)
-            AddWorld(worldQueue, visibleWorldSet, entry.CurrentWorldName);
-
-        if (lobbyEntries.Count == 0)
-            foreach (var world in visibleWorlds)
-                AddWorld(worldQueue, visibleWorldSet, world);
-
-        return worldQueue;
+        return null;
     }
 
     public static bool TryFindVisibleCandidate(
@@ -94,13 +85,5 @@ public static class AutoLoginPlanner {
         }
 
         return null;
-    }
-
-    private static void AddWorld(List<string> worldQueue, HashSet<string> visibleWorldSet, string worldName) {
-        if (string.IsNullOrWhiteSpace(worldName) || !visibleWorldSet.Contains(worldName))
-            return;
-
-        if (!worldQueue.Contains(worldName, StringComparer.InvariantCultureIgnoreCase))
-            worldQueue.Add(worldName);
     }
 }
