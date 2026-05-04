@@ -93,7 +93,7 @@ internal class ChatWatcher : IDisposable {
         if (!parsedArgs.Any()) return;
 
 #if DEBUG
-        DalamudApi.PluginLog.Debug($"OnChatMessage: [{parsedArgs[0]}]: {string.Join("|", parsedArgs.Skip(1))}");
+        DalamudApi.PluginLog.Debug($"OnChatMessage ({senderName} - {message.LogKind}): [{parsedArgs[0]}]: {string.Join("|", parsedArgs.Skip(1))}");
 #endif
 
         if (CommandHandlers.TryGetValue(parsedArgs[0], out var action)) {
