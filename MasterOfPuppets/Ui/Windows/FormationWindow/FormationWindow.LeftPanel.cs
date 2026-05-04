@@ -10,6 +10,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
@@ -235,7 +236,7 @@ public partial class FormationWindow {
             using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor)) {
                 using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
                     if (ImGui.BeginPopup($"##fiexecmenu{i}")) {
-                        var formationName = EscapeQuotedCommandArgument(f.Name);
+                        var formationName = ArgumentParser.EscapeQuotedArgument(f.Name);
                         if (ImGui.MenuItem("Copy Execute Command")) {
                             ImGui.SetClipboardText($"/mop formation \"{formationName}\"");
                             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
@@ -280,8 +281,6 @@ public partial class FormationWindow {
         Plugin.Config.Save();
         Plugin.IpcProvider.SyncConfiguration();
     }
-
-    private static string EscapeQuotedCommandArgument(string value) => value.Replace("\"", "\\\"");
 
     private string MakeUniqueName(string baseName) {
         if (!Plugin.Config.Formations.Any(f => f.Name == baseName)) return baseName;

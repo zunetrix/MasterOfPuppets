@@ -6,6 +6,7 @@ using System.Numerics;
 
 using MasterOfPuppets.Formations;
 using MasterOfPuppets.Movement;
+using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
 
@@ -125,7 +126,7 @@ public static class FormationMacroGenerator {
         var anchorMode = options.FormationMoveAnchorMode == FormationMoveAnchorMode.Target ? " target" : string.Empty;
         var lines = new List<string>();
         for (var i = 0; i < waits.Count; i++) {
-            lines.Add($"/mopformationmove \"{EscapeQuotedArgument(formationName)}\" {direction} {step} {i} {arrivalMode}{anchorMode}");
+            lines.Add($"/mopformationmove \"{ArgumentParser.EscapeQuotedArgument(formationName)}\" {direction} {step} {i} {arrivalMode}{anchorMode}");
             lines.Add($"/mopwait {waits[i].ToString("F2", CultureInfo.InvariantCulture)}");
         }
 
@@ -222,7 +223,7 @@ public static class FormationMacroGenerator {
                     continue;
                 }
 
-                lines.Add($"/moptarget \"{EscapeQuotedArgument(targetName)}\"");
+                lines.Add($"/moptarget \"{ArgumentParser.EscapeQuotedArgument(targetName)}\"");
                 lines.Add(options.PetActionCommand);
                 lines.Add($"/mopwait {waits[i].ToString("F2", CultureInfo.InvariantCulture)}");
             }
@@ -287,9 +288,6 @@ public static class FormationMacroGenerator {
         targetName = characterName;
         return true;
     }
-
-    private static string EscapeQuotedArgument(string value) =>
-        value.Replace("\"", "\\\"", StringComparison.Ordinal);
 
     private static List<IndexedPoint> SequenceFrom(
         int startFormationIndex,

@@ -34,6 +34,8 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
     private string _pendingCharacterName = string.Empty;
     private int _pendingCharacterIndex = -1;
     private bool _hasPendingCharacterSelection;
+    private bool _loggedWorldSelectorSnapshot;
+    private bool _loggedCharacterListSnapshot;
     private IActiveNotification? _cancelNotification;
 
     private const int StateTimeoutMs = 30_000;
@@ -64,7 +66,11 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         }
 
         _target = null;
+        _loggedWorldSelectorSnapshot = false;
+        _loggedCharacterListSnapshot = false;
         ClearPendingCharacterSelection();
+        DalamudApi.PluginLog.Information(
+            $"[AutoLogin] Starting with candidates: {string.Join(", ", _candidates.Select(c => $"{c.Name}({c.ContentId})"))}.");
         ShowCancelNotification();
         SetState(LoginState.WaitingTitleMenu);
         DalamudApi.Framework.Update += OnFrameworkUpdate;
@@ -82,6 +88,8 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         _stateTimer.Reset();
         _candidates = [];
         _target = null;
+        _loggedWorldSelectorSnapshot = false;
+        _loggedCharacterListSnapshot = false;
         ClearPendingCharacterSelection();
         if (dismissNotification)
             DismissCancelNotification();
@@ -130,12 +138,17 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         if (!GameDialogManager.IsAddonVisible("_TitleMenu"))
             return;
 
-        if (SendTitleAction("_TitleMenu", 3, 4))
+        if (SendTitleAction("_TitleMenu", 3, 4)) {
+            DalamudApi.PluginLog.Debug("[AutoLogin] Sent title menu character select action.");
             SetState(LoginState.WaitingWorldList);
+        }
     }
 
     private void HandleWaitingWorldList() {
-        if (!GameDialogManager.IsAddonOpen("_CharaSelectWorldServer"))
+        if (TryResumeFromOpenCharacterList())
+            return;
+
+        if (!GameDialogManager.IsAddonVisible("_CharaSelectWorldServer"))
             return;
 
         var visibleWorlds = WorldNames;
@@ -143,8 +156,10 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             return;
 
         var lobbyEntries = ReadLobbyEntries();
+        LogWorldSelectorSnapshot(visibleWorlds, lobbyEntries);
         if (lobbyEntries.Count == 0) {
             DalamudApi.PluginLog.Warning("[AutoLogin] Lobby character data was unavailable.");
+            DalamudApi.PluginLog.Warning($"[AutoLogin] Lobby snapshot: {FormatLobbySnapshot(lobbyEntries)}");
             Stop();
             return;
         }
@@ -152,6 +167,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         _target = AutoLoginPlanner.ResolveTarget(_candidates, lobbyEntries);
         if (_target == null) {
             DalamudApi.PluginLog.Warning("[AutoLogin] Could not resolve an enabled auto-login character from lobby data.");
+            DalamudApi.PluginLog.Warning($"[AutoLogin] Lobby snapshot: {FormatLobbySnapshot(lobbyEntries)}");
             Stop();
             return;
         }
@@ -170,13 +186,51 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         SetState(LoginState.WaitingCharacterList);
     }
 
+    private bool TryResumeFromOpenCharacterList() {
+        if (!GameDialogManager.IsAddonVisible("_CharaSelectListMenu"))
+            return false;
+
+        var visibleCharacters = CharacterNames;
+        if (visibleCharacters.Count == 0)
+            return false;
+
+        var lobbyEntries = ReadLobbyEntries();
+        LogCharacterListSnapshot(visibleCharacters, lobbyEntries);
+
+        if (!AutoLoginPlanner.TryResolveDirectCharacterListTarget(
+                _candidates,
+                lobbyEntries,
+                visibleCharacters,
+                out var target,
+                out var characterIndex,
+                out var reason)) {
+            DalamudApi.PluginLog.Warning(
+                $"[AutoLogin] Character list is open, but no whitelisted auto-login character is selectable: {reason}. Checked: {string.Join(", ", _candidates.Select(c => c.Name))}. Visible: {string.Join(", ", visibleCharacters)}. Lobby: {FormatLobbySnapshot(lobbyEntries)}.");
+            if (GameDialogManager.IsAddonVisible("_CharaSelectWorldServer") && WorldNames.Count > 0) {
+                DalamudApi.PluginLog.Debug("[AutoLogin] World selector is visible; falling back to world selector path.");
+                return false;
+            }
+
+            Stop();
+            return true;
+        }
+
+        _target = target;
+        DalamudApi.PluginLog.Information(
+            $"[AutoLogin] Character list already open; checking resolved character {_target.Value.CharacterName} at index {characterIndex}. Resolution: {reason}.");
+        SetState(LoginState.WaitingCharacterList);
+        return true;
+    }
+
     private void HandleWaitingCharacterList() {
-        if (!GameDialogManager.IsAddonOpen("_CharaSelectListMenu"))
+        if (!GameDialogManager.IsAddonVisible("_CharaSelectListMenu"))
             return;
 
         var visibleCharacters = CharacterNames;
         if (visibleCharacters.Count == 0)
             return;
+
+        LogCharacterListSnapshot(visibleCharacters, ReadLobbyEntries());
 
         if (!_hasPendingCharacterSelection ||
             _pendingCharacterIndex < 0 ||
@@ -244,8 +298,85 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             return;
         }
 
+        DalamudApi.PluginLog.Warning(BuildStateDiagnostics());
         DalamudApi.PluginLog.Warning($"[AutoLogin] Timed out in state {_state}.");
     }
+
+    private string BuildStateDiagnostics() {
+        var worldNames = TryReadList(() => WorldNames);
+        var characterNames = TryReadList(() => CharacterNames);
+        var lobbyEntries = TryReadList(ReadLobbyEntries);
+
+        return
+            $"[AutoLogin] State diagnostics: state={_state}; " +
+            $"{FormatAddonState("_TitleMenu")}; " +
+            $"{FormatAddonState("_CharaSelectWorldServer")}; " +
+            $"{FormatAddonState("_CharaSelectListMenu")}; " +
+            $"{FormatAddonState(GameDialogManager.AddonName.SelectYesno)}; " +
+            $"worlds={worldNames.Count} [{Preview(worldNames)}]; " +
+            $"characters={characterNames.Count} [{Preview(characterNames)}]; " +
+            $"lobbyEntries={lobbyEntries.Count} [{FormatLobbySnapshot(lobbyEntries)}]; " +
+            $"candidates=[{string.Join(", ", _candidates.Select(c => c.Name))}]";
+    }
+
+    private void LogWorldSelectorSnapshot(IReadOnlyList<string> worldNames, IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
+        if (_loggedWorldSelectorSnapshot)
+            return;
+
+        _loggedWorldSelectorSnapshot = true;
+        DalamudApi.PluginLog.Debug(
+            $"[AutoLogin] World selector snapshot: worlds={worldNames.Count} [{Preview(worldNames)}]; lobbyEntries={lobbyEntries.Count} [{FormatLobbySnapshot(lobbyEntries)}].");
+    }
+
+    private void LogCharacterListSnapshot(IReadOnlyList<string> characterNames, IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
+        if (_loggedCharacterListSnapshot)
+            return;
+
+        _loggedCharacterListSnapshot = true;
+        DalamudApi.PluginLog.Debug(
+            $"[AutoLogin] Character list snapshot: characters={characterNames.Count} [{Preview(characterNames)}]; lobbyEntries={lobbyEntries.Count} [{FormatLobbySnapshot(lobbyEntries)}].");
+    }
+
+    private static string FormatAddonState(string addonName) {
+        try {
+            return $"{addonName}=open:{GameDialogManager.IsAddonOpen(addonName)},visible:{GameDialogManager.IsAddonVisible(addonName)}";
+        } catch (Exception ex) {
+            return $"{addonName}=error:{ex.GetType().Name}";
+        }
+    }
+
+    private static List<T> TryReadList<T>(Func<List<T>> read) {
+        try {
+            return read();
+        } catch {
+            return [];
+        }
+    }
+
+    private static string Preview(IReadOnlyList<string> values) =>
+        string.Join(", ", values.Take(8));
+
+    private static string FormatLobbySnapshot(IReadOnlyList<AutoLoginLobbyEntry> entries) {
+        if (entries.Count == 0)
+            return "<empty>";
+
+        return string.Join("; ", entries.Select(FormatLobbyEntry));
+    }
+
+    private static string FormatLobbyEntry(AutoLoginLobbyEntry entry, int index) {
+        var rawJsonLength = string.IsNullOrEmpty(entry.RawJson) ? 0 : entry.RawJson.Length;
+        return
+            $"idx={index} cid={entry.ContentId} " +
+            $"name=\"{LogValue(entry.Name)}\" " +
+            $"current=\"{LogValue(entry.CurrentWorldName)}\" currentId={entry.CurrentWorldId} " +
+            $"home=\"{LogValue(entry.HomeWorldName)}\" homeId={entry.HomeWorldId} " +
+            $"clientSelectWorld=\"{LogValue(entry.ClientSelectWorldName)}\" rawJsonLen={rawJsonLength}";
+    }
+
+    private static string LogValue(string value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? "<blank>"
+            : value.Replace("\"", "\\\"", StringComparison.Ordinal);
 
     private List<AutoLoginCandidate> GetLoginCandidates() {
         return _plugin.Config.Characters
@@ -267,6 +398,9 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
     private static bool SelectWorld(string worldName, out int index) {
         index = WorldNames.FindIndex(i => i.Equals(worldName, StringComparison.InvariantCultureIgnoreCase));
         if (index < 0)
+            return false;
+
+        if (!GameDialogManager.IsAddonVisible("_CharaSelectWorldServer"))
             return false;
 
         return SendTitleAction("_CharaSelectWorldServer", 3, 25, 3, 0, 3, index);
