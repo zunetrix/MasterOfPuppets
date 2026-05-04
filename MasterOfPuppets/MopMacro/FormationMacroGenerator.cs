@@ -5,6 +5,7 @@ using System.Linq;
 using System.Numerics;
 
 using MasterOfPuppets.Formations;
+using MasterOfPuppets.Movement;
 
 namespace MasterOfPuppets;
 
@@ -21,9 +22,17 @@ public sealed class FormationMacroGeneratorOptions {
     public bool ClosedLoop { get; set; } = true;
     public int Step { get; set; } = 1;
     public bool Reverse { get; set; }
+    public MovementArrivalMode FormationMoveArrivalMode { get; set; } = MovementArrivalMode.Continuous;
+    public FormationMoveAnchorMode FormationMoveAnchorMode { get; set; } = FormationMoveAnchorMode.Self;
     public int Precision { get; set; } = 2;
     public bool UseMatchingGroups { get; set; }
     public string PetActionCommand { get; set; } = "/pac \"Place\" <t>";
+    public bool LinkPetTraversalToMovement { get; set; } = true;
+    public int PetStep { get; set; } = 1;
+    public bool PetReverse { get; set; }
+    public bool TransformRelativeMovesByOriginRotation { get; set; }
+    public bool EmitRelativeMoveFacing { get; set; }
+    public float OriginRotationRadians { get; set; }
 }
 
 public enum FormationMacroGeneratorMode {
@@ -112,9 +121,11 @@ public static class FormationMacroGenerator {
         var step = Math.Max(1, options.Step);
         var waitOrder = SequenceFrom(destinations[0].Index, destinations, step, options.Reverse);
         var waits = SegmentDelays(waitOrder, anchor, options);
+        var arrivalMode = options.FormationMoveArrivalMode == MovementArrivalMode.Precise ? "precise" : "continuous";
+        var anchorMode = options.FormationMoveAnchorMode == FormationMoveAnchorMode.Target ? " target" : string.Empty;
         var lines = new List<string>();
         for (var i = 0; i < waits.Count; i++) {
-            lines.Add($"/mopformationmove \"{EscapeQuotedArgument(formationName)}\" {direction} {step} {i}");
+            lines.Add($"/mopformationmove \"{EscapeQuotedArgument(formationName)}\" {direction} {step} {i} {arrivalMode}{anchorMode}");
             lines.Add($"/mopwait {waits[i].ToString("F2", CultureInfo.InvariantCulture)}");
         }
 
@@ -144,13 +155,17 @@ public static class FormationMacroGenerator {
 
             for (int i = 0; i < order.Count; i++) {
                 var point = order[i].Point;
-                var relative = point.Offset - anchor.Offset;
-                lines.Add(
+                var (relative, facing) = BuildRelativeMove(anchor, point, options);
+                var line =
                     "/mopmoverelativeto "
                     + $"{Format(relative.X, options.Precision)} "
                     + $"{Format(relative.Y, options.Precision)} "
                     + $"{Format(relative.Z, options.Precision)} "
-                    + $"\"{options.OriginReference}\"");
+                    + $"\"{options.OriginReference}\"";
+                if (facing.HasValue)
+                    line += $" {Format(facing.Value, options.Precision)}";
+
+                lines.Add(line);
                 lines.Add($"/mopwait {waits[i].ToString("F2", CultureInfo.InvariantCulture)}");
             }
 
@@ -163,6 +178,24 @@ public static class FormationMacroGenerator {
         }
     }
 
+    private static (Vector3 Offset, float? FacingDegrees) BuildRelativeMove(
+        FormationPoint anchor,
+        FormationPoint point,
+        FormationMacroGeneratorOptions options) {
+        if (!options.TransformRelativeMovesByOriginRotation)
+            return (point.Offset - anchor.Offset, null);
+
+        var (position, rotation) = FormationMath.GetMopRelativeWorld(
+            anchor,
+            point,
+            Vector3.Zero,
+            options.OriginRotationRadians);
+        var facing = options.EmitRelativeMoveFacing
+            ? FormationMath.NormalizeDegrees(rotation * 180f / MathF.PI)
+            : (float?)null;
+        return (position, facing);
+    }
+
     private static void AddPetPlacementCommands(
         Macro macro,
         IReadOnlyList<IndexedPoint> destinations,
@@ -171,13 +204,14 @@ public static class FormationMacroGenerator {
         IReadOnlyList<CidGroup>? groups,
         IReadOnlyList<Character>? characters,
         List<string> warnings) {
-        var step = Math.Max(1, options.Step);
+        var step = Math.Max(1, options.LinkPetTraversalToMovement ? options.Step : options.PetStep);
+        var reverse = options.LinkPetTraversalToMovement ? options.Reverse : options.PetReverse;
         foreach (var start in destinations) {
             var assignment = BuildAssignment(start.Point, groups, options.UseMatchingGroups);
             if (assignment.IsEmpty)
                 continue;
 
-            var order = SequenceFrom(start.Index, destinations, step, options.Reverse);
+            var order = SequenceFrom(start.Index, destinations, step, reverse);
             var waits = SegmentDelays(order, anchor, options);
             var lines = new List<string>();
 
@@ -310,8 +344,11 @@ public static class FormationMacroGenerator {
     private static int PositiveMod(int value, int mod) =>
         (value % mod + mod) % mod;
 
-    private static string Format(float value, int precision) =>
-        value.ToString($"F{Math.Clamp(precision, 0, 6)}", CultureInfo.InvariantCulture);
+    private static string Format(float value, int precision) {
+        if (MathF.Abs(value) < 0.000001f)
+            value = 0f;
+        return value.ToString($"F{Math.Clamp(precision, 0, 6)}", CultureInfo.InvariantCulture);
+    }
 
     private sealed record IndexedPoint(int Index, FormationPoint Point);
     private sealed record CommandAssignment(List<ulong> Cids, List<string> GroupIds) {

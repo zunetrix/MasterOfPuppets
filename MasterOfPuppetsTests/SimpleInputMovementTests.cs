@@ -1,3 +1,5 @@
+using System.Numerics;
+
 using MasterOfPuppets.Movement;
 
 using Xunit;
@@ -49,5 +51,37 @@ public class SimpleInputMovementTests {
             MovementArrivalMode.Continuous);
 
         Assert.Equal(ArrivalMovementState.Stop, state);
+    }
+
+    [Fact]
+    public void ProgressTracker_Does_Not_Report_Stuck_On_First_Sample() {
+        var tracker = new SimpleMovementProgressTracker();
+
+        var stuck = tracker.Update(Vector3.Zero, nowMs: 1_000, movementTolerance: 0.05f, timeoutMs: 500);
+
+        Assert.False(stuck);
+    }
+
+    [Fact]
+    public void ProgressTracker_Reports_Stuck_After_Timeout_Without_Significant_Movement() {
+        var tracker = new SimpleMovementProgressTracker();
+
+        Assert.False(tracker.Update(Vector3.Zero, nowMs: 1_000, movementTolerance: 0.05f, timeoutMs: 500));
+
+        var stuck = tracker.Update(new Vector3(0.01f, 0, 0), nowMs: 1_500, movementTolerance: 0.05f, timeoutMs: 500);
+
+        Assert.True(stuck);
+    }
+
+    [Fact]
+    public void ProgressTracker_Resets_Timeout_When_Position_Changes_Significantly() {
+        var tracker = new SimpleMovementProgressTracker();
+
+        Assert.False(tracker.Update(Vector3.Zero, nowMs: 1_000, movementTolerance: 0.05f, timeoutMs: 500));
+        Assert.False(tracker.Update(new Vector3(0.10f, 0, 0), nowMs: 1_400, movementTolerance: 0.05f, timeoutMs: 500));
+
+        var stuck = tracker.Update(new Vector3(0.11f, 0, 0), nowMs: 1_800, movementTolerance: 0.05f, timeoutMs: 500);
+
+        Assert.False(stuck);
     }
 }

@@ -89,7 +89,13 @@ internal partial class IpcProvider {
         // DalamudApi.PluginLog.Warning($"[ExecuteFormation] anchorPos: {anchorPos} worldPos: {worldPos} faceDirection: {facingRad}");
 
         // Plugin.MovementManager.MoveTo(worldPos, facingRad.Radians());
-        Plugin.SimpleInputMovement.MoveTo(worldPos, precision: Plugin.Config.FormationMovePrecision, faceDirection: facingRad);
+        Plugin.SimpleInputMovement.MoveTo(
+            worldPos,
+            precision: Plugin.Config.FormationMovePrecision,
+            faceDirection: facingRad,
+            stopOnStuck: Plugin.Config.StopOnStuck,
+            stuckTolerance: Plugin.Config.StuckTolerance,
+            stuckTimeoutMs: Plugin.Config.StuckTimeoutMs);
 
         // Member faces the same direction as the anchor (north offset = 0)
         // Plugin.MovementManager.MoveTo(worldPos, anchorRot.Radians());
@@ -100,15 +106,17 @@ internal partial class IpcProvider {
         bool reverse = false,
         int step = 1,
         int sequenceIndex = 0,
-        MovementArrivalMode arrivalMode = MovementArrivalMode.Continuous) =>
-        DalamudApi.Framework.RunOnFrameworkThread(() => ExecuteFormationMoveOnFrameworkThread(name, reverse, step, sequenceIndex, arrivalMode));
+        MovementArrivalMode arrivalMode = MovementArrivalMode.Continuous,
+        FormationMoveAnchorMode anchorMode = FormationMoveAnchorMode.Self) =>
+        DalamudApi.Framework.RunOnFrameworkThread(() => ExecuteFormationMoveOnFrameworkThread(name, reverse, step, sequenceIndex, arrivalMode, anchorMode));
 
     private void ExecuteFormationMoveOnFrameworkThread(
         string name,
         bool reverse = false,
         int step = 1,
         int sequenceIndex = 0,
-        MovementArrivalMode arrivalMode = MovementArrivalMode.Continuous) {
+        MovementArrivalMode arrivalMode = MovementArrivalMode.Continuous,
+        FormationMoveAnchorMode anchorMode = FormationMoveAnchorMode.Self) {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
 
@@ -128,19 +136,21 @@ internal partial class IpcProvider {
             return;
         }
 
-        var anchorPos = player.Position;
-        var anchorRot = player.Rotation;
+        if (!TryGetFormationAnchor(anchorMode == FormationMoveAnchorMode.Target, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid))
+            return;
+
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteFormationMove,
             name,
             anchorPos.X.ToString("G", CultureInfo.InvariantCulture),
             anchorPos.Y.ToString("G", CultureInfo.InvariantCulture),
             anchorPos.Z.ToString("G", CultureInfo.InvariantCulture),
             anchorRot.ToString("G", CultureInfo.InvariantCulture),
-            issuerCid.ToString(CultureInfo.InvariantCulture),
+            anchorCid.ToString(CultureInfo.InvariantCulture),
             reverse ? "1" : "0",
             Math.Max(1, step).ToString(CultureInfo.InvariantCulture),
             sequenceIndex.ToString(CultureInfo.InvariantCulture),
-            arrivalMode == MovementArrivalMode.Precise ? "precise" : "continuous").Serialize(), includeSelf: true);
+            arrivalMode == MovementArrivalMode.Precise ? "precise" : "continuous",
+            anchorMode == FormationMoveAnchorMode.Target ? "target" : "self").Serialize(), includeSelf: true);
     }
 
     [IpcHandle(IpcMessageType.ExecuteFormationMove)]
@@ -162,7 +172,6 @@ internal partial class IpcProvider {
         var arrivalMode = message.StringData.Length >= 10 && message.StringData[9].Equals("precise", StringComparison.OrdinalIgnoreCase)
             ? MovementArrivalMode.Precise
             : MovementArrivalMode.Continuous;
-
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
         if (formation == null) {
@@ -198,7 +207,10 @@ internal partial class IpcProvider {
             move.Value.Position,
             precision: Plugin.Config.FormationMovePrecision,
             faceDirection: move.Value.Rotation,
-            arrivalMode: arrivalMode);
+            arrivalMode: arrivalMode,
+            stopOnStuck: Plugin.Config.StopOnStuck,
+            stuckTolerance: Plugin.Config.StuckTolerance,
+            stuckTimeoutMs: Plugin.Config.StuckTimeoutMs);
     }
 
     private FormationPoint? GetAssignedPoint(Formation formation, ulong playerCid) =>

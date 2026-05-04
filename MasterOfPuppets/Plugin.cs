@@ -87,6 +87,7 @@ public class Plugin : IDalamudPlugin {
         FollowPath.Update(framework);
         MovementManager.Update();
         KeyboardBroadcastManager.Update();
+        IpcProvider.UpdateCharacterDataHeartbeat();
 
         if (Config.AutoAcceptPartyInvite || Config.AutoAcceptTeleport) {
             var charConfig = Config.Characters.FirstOrDefault(c => c.Cid == DalamudApi.PlayerState.ContentId);
@@ -94,12 +95,18 @@ public class Plugin : IDalamudPlugin {
                 Config.AutoAcceptPartyInvite && (charConfig?.AutoAcceptPartyInvite ?? true),
                 Config.AutoAcceptTeleport && (charConfig?.AutoAcceptTeleport ?? true),
                 Config.AutoAcceptPartyInviteOnlyFromCharacters,
-                Config.Characters.Select(c => c.Name));
+                Config.Characters,
+                IpcProvider.GetFreshPeerCharacterData());
         }
     }
 
     private static void OnLanguageChange(string langCode) {
         Language.Culture = new CultureInfo(langCode);
+    }
+
+    internal void StopAllMovementLocal() {
+        SimpleInputMovement.StopMove();
+        MovementManager.StopMove();
     }
 
     private void OnLogin() {

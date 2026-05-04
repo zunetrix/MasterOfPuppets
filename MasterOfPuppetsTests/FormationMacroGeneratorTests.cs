@@ -4,6 +4,7 @@ using System.Numerics;
 
 using MasterOfPuppets;
 using MasterOfPuppets.Formations;
+using MasterOfPuppets.Movement;
 
 using Xunit;
 
@@ -38,6 +39,54 @@ public class FormationMacroGeneratorTests {
         Assert.Equal("/mopmoverelativeto 0.00 0.00 2.00 \"Origin Character@World\"", lines[4]);
         Assert.Equal("/mopwait 4.00", lines[5]);
         Assert.Equal("/moploop", lines[6]);
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_CanBakeOriginRotationIntoRelativeMoveCoordinatesAndFacing() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = Vector3.Zero, Angle = 0f, Cids = [100] },
+                new FormationPoint { Offset = new Vector3(0f, 0f, 2f), Angle = 90f, Cids = [101] },
+            ],
+        };
+
+        var macro = FormationMacroGenerator.GenerateLoopMacro(formation, new FormationMacroGeneratorOptions {
+            OriginReference = "Origin Character@World",
+            TransformRelativeMovesByOriginRotation = true,
+            EmitRelativeMoveFacing = true,
+            OriginRotationRadians = MathF.PI / 2f,
+            TravelSecondsPerUnit = 1f,
+            GlobalDelaySeconds = 0f,
+        });
+
+        var lines = macro.Commands[0].Actions.Split('\n');
+        Assert.Equal("/mopmoverelativeto 2.00 0.00 0.00 \"Origin Character@World\" 180.00", lines[0]);
+        Assert.DoesNotContain("/mopformationmove", macro.Commands[0].Actions);
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_GeneratedShapeStyleMovement_UsesStaticRelativeMoveCommands() {
+        var formation = new Formation {
+            Points = FormationShapeGenerator.Generate(new FormationShapeSpec {
+                Type = FormationShapeType.Circle,
+                Count = 4,
+                Radius = 2f,
+                AnchorMode = FormationShapeAnchorMode.AnchorAtCenter,
+                AssignedCids = [100, 101, 102, 103],
+            }),
+        };
+
+        var macro = FormationMacroGenerator.GenerateLoopMacro(formation, new FormationMacroGeneratorOptions {
+            OriginReference = "Origin Character@World",
+            TransformRelativeMovesByOriginRotation = true,
+            EmitRelativeMoveFacing = true,
+            OriginRotationRadians = 0f,
+        });
+
+        Assert.Equal(3, macro.Commands.Count);
+        var lines = macro.Commands[0].Actions.Split('\n');
+        Assert.Equal("/mopmoverelativeto 0.00 0.00 -2.00 \"Origin Character@World\" -180.00", lines[0]);
+        Assert.DoesNotContain("/mopformationmove", macro.Commands[0].Actions);
     }
 
     [Fact]
@@ -311,9 +360,34 @@ public class FormationMacroGeneratorTests {
             .Where(line => line.StartsWith("/mopformationmove"))
             .ToArray();
         Assert.Equal(7, moves.Length);
-        Assert.Equal("/mopformationmove \"Circle\" forward 1 0", moves[0]);
-        Assert.Equal("/mopformationmove \"Circle\" forward 1 6", moves[6]);
+        Assert.Equal("/mopformationmove \"Circle\" forward 1 0 continuous", moves[0]);
+        Assert.Equal("/mopformationmove \"Circle\" forward 1 6 continuous", moves[6]);
         Assert.EndsWith("/moploop", command.Actions);
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_ExistingFormationMovement_EmitsArrivalAndTargetAnchor() {
+        var formation = BuildEightPointFormation();
+
+        var result = FormationMacroGenerator.GenerateLoopMacroWithDiagnostics(
+            formation,
+            new FormationMacroGeneratorOptions {
+                Mode = FormationMacroGeneratorMode.Movement,
+                AnchorPointIndex = 0,
+                UseFormationMoveCommand = true,
+                FormationMoveName = "Circle",
+                OriginContentId = 100,
+                FormationMoveArrivalMode = MovementArrivalMode.Precise,
+                FormationMoveAnchorMode = FormationMoveAnchorMode.Target,
+            });
+
+        var command = Assert.Single(result.Macro.Commands);
+        var moves = command.Actions
+            .Split('\n')
+            .Where(line => line.StartsWith("/mopformationmove"))
+            .ToArray();
+
+        Assert.Equal("/mopformationmove \"Circle\" forward 1 0 precise target", moves[0]);
     }
 
     [Fact]
@@ -338,9 +412,9 @@ public class FormationMacroGeneratorTests {
 
         var command = Assert.Single(result.Macro.Commands);
         var lines = command.Actions.Split('\n');
-        Assert.Equal("/mopformationmove \"Circle\" forward 1 0", lines[0]);
+        Assert.Equal("/mopformationmove \"Circle\" forward 1 0 continuous", lines[0]);
         Assert.Equal("/mopwait 0.10", lines[1]);
-        Assert.Equal("/mopformationmove \"Circle\" forward 1 1", lines[2]);
+        Assert.Equal("/mopformationmove \"Circle\" forward 1 1 continuous", lines[2]);
         Assert.Equal("/mopwait 0.10", lines[3]);
     }
 
@@ -439,12 +513,38 @@ public class FormationMacroGeneratorTests {
         Assert.Empty(result.Warnings);
         Assert.Equal(8, result.Macro.Commands.Count);
         Assert.Equal([100UL], result.Macro.Commands[0].Cids);
-        Assert.Contains("/mopformationmove \"Circle\" forward 1 0", result.Macro.Commands[0].Actions);
+        Assert.Contains("/mopformationmove \"Circle\" forward 1 0 continuous", result.Macro.Commands[0].Actions);
         Assert.DoesNotContain("/mopformationpath", result.Macro.Commands[0].Actions);
         Assert.All(result.Macro.Commands.Skip(1), command => {
             Assert.DoesNotContain(100UL, command.Cids);
             Assert.Contains("/moppetbarslot 1", command.Actions);
         });
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_PetPlacement_CanUseIndependentStrideAndDirection() {
+        var formation = BuildEightPointFormation();
+        var characters = Enumerable.Range(1, 7)
+            .Select(i => new Character { Cid = (ulong)(100 + i), Name = $"Character {i}@World" })
+            .ToArray();
+
+        var result = FormationMacroGenerator.GenerateLoopMacroWithDiagnostics(
+            formation,
+            new FormationMacroGeneratorOptions {
+                Mode = FormationMacroGeneratorMode.PetPlacement,
+                AnchorPointIndex = 0,
+                OriginContentId = 100,
+                LinkPetTraversalToMovement = false,
+                PetStep = 2,
+                PetReverse = true,
+            },
+            characters: characters);
+
+        var command = Assert.Single(result.Macro.Commands, command => command.Cids.SequenceEqual([101UL]));
+        var lines = command.Actions.Split('\n');
+        Assert.Equal("/moptarget \"Character 1@World\"", lines[0]);
+        Assert.Equal("/moptarget \"Character 6@World\"", lines[3]);
+        Assert.Equal("/moptarget \"Character 4@World\"", lines[6]);
     }
 
     private static Formation BuildEightPointFormation() {

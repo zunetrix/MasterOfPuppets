@@ -90,11 +90,12 @@ public unsafe class SimpleInputMovement : IDisposable {
     }
 
     public void Dispose() {
-        _cts?.Cancel();
-        _cts?.Dispose();
+        var cts = _cts;
         _cts = null;
+        cts?.Cancel();
+        cts?.Dispose();
 
-        _direction = MovementDirection.None;
+        Direction = MovementDirection.None;
 
         _playerMoveHook?.Disable();
         _playerMoveHook?.Dispose();
@@ -112,16 +113,23 @@ public unsafe class SimpleInputMovement : IDisposable {
     }
 
     public void StopMove() {
-        CancelActiveMove(callNativeStop: true);
+        if (DalamudApi.Framework.IsInFrameworkUpdateThread) {
+            CancelActiveMove(callNativeStop: true);
+            return;
+        }
+
+        _ = DalamudApi.Framework.RunOnFrameworkThread(() => CancelActiveMove(callNativeStop: true));
     }
 
     private void CancelActiveMove(bool callNativeStop) {
-        _cts?.Cancel();
-        _cts?.Dispose();
-        _cts = null;
+        var cts = _cts;
+        if (cts != null) {
+            cts.Cancel();
+            if (ReferenceEquals(_cts, cts))
+                _cts = null;
+        }
 
-        _direction = MovementDirection.None;
-        _playerMoveHook?.Disable();
+        Direction = MovementDirection.None;
         IsWalking = false;
 
         if (!callNativeStop)
@@ -146,17 +154,34 @@ public unsafe class SimpleInputMovement : IDisposable {
         Vector3 destination,
         float precision = 0.3f,
         float? faceDirection = null,
-        MovementArrivalMode arrivalMode = MovementArrivalMode.Precise) {
+        MovementArrivalMode arrivalMode = MovementArrivalMode.Precise,
+        bool stopOnStuck = false,
+        float stuckTolerance = 0.05f,
+        int stuckTimeoutMs = 500) {
+        if (!DalamudApi.Framework.IsInFrameworkUpdateThread) {
+            _ = DalamudApi.Framework.RunOnFrameworkThread(() => MoveTo(
+                destination,
+                precision,
+                faceDirection,
+                arrivalMode,
+                stopOnStuck,
+                stuckTolerance,
+                stuckTimeoutMs));
+            return null;
+        }
+
         // Refuse to start while the player is performing - movement is blocked
         // by the game anyway, so there is nothing useful we could do.
         if (DalamudApi.Condition[ConditionFlag.Performing])
             return null;
 
-        // Cancel any previous move before starting a new one.
-        CancelActiveMove(callNativeStop: false);
+        // Cancel any previous move before starting a new one. Use native stop as
+        // well so continuous moves cannot leave latched input behind.
+        CancelActiveMove(callNativeStop: true);
 
         var cts = new CancellationTokenSource();
         _cts = cts;
+        var stuckTracker = stopOnStuck ? new SimpleMovementProgressTracker() : null;
 
         // Snapshot current control settings so we can restore them on exit,
         // regardless of whether we finish, are cancelled, or Performing fires.
@@ -181,6 +206,12 @@ public unsafe class SimpleInputMovement : IDisposable {
                 }
 
                 var distance = player.Position.Distance2D(destination);
+                if (stuckTracker != null && stuckTracker.Update(player.Position, Environment.TickCount64, stuckTolerance, stuckTimeoutMs)) {
+                    DalamudApi.PluginLog.Warning(
+                        $"[SimpleInputMovement] Stuck for {stuckTimeoutMs}ms near {player.Position}; destination={destination}; stopping.");
+                    CancelActiveMove(callNativeStop: true);
+                    return;
+                }
 
                 // Re-face target every frame in case the player drifts.
                 GameFunctions.FaceDirection(destination);
@@ -192,29 +223,36 @@ public unsafe class SimpleInputMovement : IDisposable {
                 IsWalking = GetArrivalState(distance, precision, arrivalMode) == ArrivalMovementState.Walk;
             },
             callback: () => {
-                // Restore control settings regardless of how the loop ended.
-                DalamudApi.GameConfig.UiControl.Set("MoveMode", savedMoveMode);
-                DalamudApi.GameConfig.UiConfig.Set("PadMode", savedPadMode);
+                var newerMoveStarted = _cts != null && !ReferenceEquals(_cts, cts);
+                if (!newerMoveStarted) {
+                    // Restore control settings unless this callback belongs to
+                    // an older move that was replaced by a newer one.
+                    DalamudApi.GameConfig.UiControl.Set("MoveMode", savedMoveMode);
+                    DalamudApi.GameConfig.UiConfig.Set("PadMode", savedPadMode);
 
-                Direction = MovementDirection.None;
-                if (arrivalMode == MovementArrivalMode.Precise) {
-                    try {
-                        MoveStopNative();
-                    } catch {
-                        // ignored
+                    Direction = MovementDirection.None;
+                    if (arrivalMode == MovementArrivalMode.Precise) {
+                        try {
+                            MoveStopNative();
+                        } catch {
+                            // ignored
+                        }
+                    }
+
+                    IsWalking = savedIsWalking;
+
+                    // Apply endpoint rotation only on clean arrival (not on cancel
+                    // or Performing - the player may be mid-performance already).
+                    if (faceDirection is float rot
+                        && !cts.IsCancellationRequested
+                        && !DalamudApi.Condition[ConditionFlag.Performing]) {
+                        GameFunctions.FaceDirectionDeferred(rot.Radians());
                     }
                 }
-                IsWalking = savedIsWalking;
 
-                // Apply endpoint rotation only on clean arrival (not on cancel
-                // or Performing - the player may be mid-performance already).
-                if (faceDirection is float rot
-                    && !cts.IsCancellationRequested
-                    && !DalamudApi.Condition[ConditionFlag.Performing]) {
-                    GameFunctions.FaceDirectionDeferred(rot.Radians());
-                }
-
-                _cts = null;
+                if (ReferenceEquals(_cts, cts))
+                    _cts = null;
+                cts.Dispose();
             },
             stopWhen: () => {
                 // var player = DalamudApi.ObjectTable.LocalPlayer;
@@ -264,6 +302,35 @@ public enum ArrivalMovementState {
     Run,
     Walk,
     Stop,
+}
+
+public sealed class SimpleMovementProgressTracker {
+    private Vector3 _lastSignificantPosition;
+    private long _lastProgressMs;
+    private bool _hasPosition;
+
+    public void Reset() {
+        _lastSignificantPosition = default;
+        _lastProgressMs = 0;
+        _hasPosition = false;
+    }
+
+    public bool Update(Vector3 position, long nowMs, float movementTolerance, int timeoutMs) {
+        if (!_hasPosition) {
+            _lastSignificantPosition = position;
+            _lastProgressMs = nowMs;
+            _hasPosition = true;
+            return false;
+        }
+
+        if (Vector3.Distance(position, _lastSignificantPosition) > Math.Max(0, movementTolerance)) {
+            _lastSignificantPosition = position;
+            _lastProgressMs = nowMs;
+            return false;
+        }
+
+        return nowMs - _lastProgressMs >= Math.Max(1, timeoutMs);
+    }
 }
 
 public enum MovementDirection : int {

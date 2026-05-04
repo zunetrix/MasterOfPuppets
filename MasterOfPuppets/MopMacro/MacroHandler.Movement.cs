@@ -1,8 +1,10 @@
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 
+using MasterOfPuppets.Formations;
 using MasterOfPuppets.Movement;
 using MasterOfPuppets.Util;
 
@@ -15,7 +17,8 @@ public partial class MacroHandler {
         int Step,
         int SequenceIndex,
         MovementArrivalMode ArrivalMode,
-        string? InvalidArrivalModeArgument);
+        FormationMoveAnchorMode AnchorMode,
+        string? InvalidArgument);
 
     public static FormationMoveCommandOptions? ParseFormationMoveCommandArgs(string args) {
         var parts = ArgumentParser.ParseMacroArgs(args);
@@ -34,17 +37,22 @@ public partial class MacroHandler {
             sequenceIndex = 0;
 
         var arrivalMode = MovementArrivalMode.Continuous;
-        string? invalidArrivalMode = null;
-        if (parts.Count >= 5) {
-            if (parts[4].Equals("precise", System.StringComparison.OrdinalIgnoreCase))
+        var anchorMode = FormationMoveAnchorMode.Self;
+        string? invalidArgument = null;
+        foreach (var part in parts.Skip(4)) {
+            if (part.Equals("precise", System.StringComparison.OrdinalIgnoreCase))
                 arrivalMode = MovementArrivalMode.Precise;
-            else if (parts[4].Equals("continuous", System.StringComparison.OrdinalIgnoreCase))
+            else if (part.Equals("continuous", System.StringComparison.OrdinalIgnoreCase))
                 arrivalMode = MovementArrivalMode.Continuous;
+            else if (part.Equals("target", System.StringComparison.OrdinalIgnoreCase))
+                anchorMode = FormationMoveAnchorMode.Target;
+            else if (part.Equals("self", System.StringComparison.OrdinalIgnoreCase))
+                anchorMode = FormationMoveAnchorMode.Self;
             else
-                invalidArrivalMode = parts[4];
+                invalidArgument ??= part;
         }
 
-        return new FormationMoveCommandOptions(parts[0], reverse, step, sequenceIndex, arrivalMode, invalidArrivalMode);
+        return new FormationMoveCommandOptions(parts[0], reverse, step, sequenceIndex, arrivalMode, anchorMode, invalidArgument);
     }
 
     /// <summary>
@@ -103,8 +111,8 @@ public partial class MacroHandler {
     }
 
     /// <summary>
-    /// /mopformationmove "Formation Name" [forward|backward] [stride] [sequenceIndex] [precise]
-    /// Broadcasts one saved-formation movement step from the current/origin character.
+    /// /mopformationmove "Formation Name" [forward|backward] [stride] [sequenceIndex] [continuous|precise] [self|target]
+    /// Broadcasts one saved-formation movement step from the selected anchor.
     /// </summary>
     private async Task HandleMopFormationMove(string macroId, string args, CancellationToken token) {
         var options = ParseFormationMoveCommandArgs(args);
@@ -113,17 +121,18 @@ public partial class MacroHandler {
             return;
         }
 
-        if (options.InvalidArrivalModeArgument != null)
-            DalamudApi.PluginLog.Warning($"[mopformationmove] invalid arrival mode: \"{options.InvalidArrivalModeArgument}\"");
+        if (options.InvalidArgument != null)
+            DalamudApi.PluginLog.Warning($"[mopformationmove] invalid argument: \"{options.InvalidArgument}\"");
 
         await Plugin.IpcProvider.ExecuteFormationMove(
             options.FormationName,
             options.Reverse,
             options.Step,
             options.SequenceIndex,
-            options.ArrivalMode);
+            options.ArrivalMode,
+            options.AnchorMode);
         DalamudApi.PluginLog.Debug(
-            $"[mopformationmove] formation=\"{options.FormationName}\" reverse={options.Reverse} stride={options.Step} sequenceIndex={options.SequenceIndex} arrivalMode={options.ArrivalMode}");
+            $"[mopformationmove] formation=\"{options.FormationName}\" reverse={options.Reverse} stride={options.Step} sequenceIndex={options.SequenceIndex} arrivalMode={options.ArrivalMode} anchorMode={options.AnchorMode}");
     }
 
     /// <summary>/mopmovetotarget - moves to the current target's world position.</summary>
@@ -147,8 +156,7 @@ public partial class MacroHandler {
 
     /// <summary>/mopstopmove - immediately stops all movement and clears pending waypoints.</summary>
     private Task HandleMopStopMove(string macroId, string args, CancellationToken token) {
-        Plugin.SimpleInputMovement.StopMove();
-        Plugin.MovementManager.StopMove();
+        Plugin.StopAllMovementLocal();
         DalamudApi.PluginLog.Debug("[mopstopmove]");
         return Task.CompletedTask;
     }
