@@ -57,7 +57,9 @@ public static class GameTargetManager {
         }
 
         TargetNearestObjectInternal(actor =>
-            actor.Name.TextValue.Contains(objectName, StringComparison.InvariantCultureIgnoreCase));
+        actor.Name.TextValue.Contains(objectName, StringComparison.InvariantCultureIgnoreCase)
+        || (actor.GetPlayerNameWorld()?.Contains(objectName, StringComparison.InvariantCultureIgnoreCase) ?? false)
+        );
     }
 
     public static void TargetObject(ulong objectId) {

@@ -132,6 +132,13 @@ public class PluginCommandManager : IDisposable {
                 case "stop":
                     Plugin.MacroHandler.StopMacroQueueExecution();
                     break;
+                case "target":
+                    if (parsedArgs.Count <= 1) {
+                        DalamudApi.ShowNotification($"Invalid arguments, expected target name", NotificationType.Error, 5000);
+                        return;
+                    }
+                    GameTargetManager.TargetObject(parsedArgs[1]);
+                    break;
                 case "targetmytarget":
                 case "tmt":
                     Plugin.IpcProvider.ExecuteTargetMyTarget();
