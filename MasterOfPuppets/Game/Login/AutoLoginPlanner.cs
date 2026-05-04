@@ -36,6 +36,62 @@ public readonly record struct AutoLoginLobbyEntry(
 public readonly record struct AutoLoginTarget(string CharacterName, string WorldName);
 
 public static class AutoLoginPlanner {
+    public static bool TryResolveDirectCharacterListTarget(
+        IReadOnlyList<AutoLoginCandidate> candidates,
+        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
+        IReadOnlyList<string> visibleCharacters,
+        out AutoLoginTarget target,
+        out int index,
+        out string reason) {
+        target = default;
+        index = -1;
+
+        if (candidates.Count == 0) {
+            reason = "no enabled auto-login candidates were configured";
+            return false;
+        }
+
+        if (lobbyEntries.Count == 0) {
+            if (TryFindVisibleCandidate(candidates, visibleCharacters, out var visibleCandidate, out index)) {
+                target = new AutoLoginTarget(visibleCandidate, string.Empty);
+                reason = "lobby data was unavailable; fell back to visible configured character";
+                return true;
+            }
+
+            reason = "lobby data was unavailable and no configured character was visible";
+            return false;
+        }
+
+        var visibleConfiguredWithoutWorld = string.Empty;
+        for (var i = 0; i < visibleCharacters.Count; i++) {
+            var candidate = FindCandidateByVisibleName(candidates, visibleCharacters[i]);
+            if (candidate == null)
+                continue;
+
+            var entry = FindCandidateEntry(candidate.Value, lobbyEntries);
+            if (entry == null)
+                continue;
+
+            target = new AutoLoginTarget(entry.Value.Name, entry.Value.CurrentWorldName);
+            if (string.IsNullOrWhiteSpace(entry.Value.CurrentWorldName)) {
+                visibleConfiguredWithoutWorld = entry.Value.Name;
+                continue;
+            }
+
+            index = i;
+            reason = $"resolved visible whitelisted character '{entry.Value.Name}' from lobby data";
+            return true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(visibleConfiguredWithoutWorld)) {
+            reason = $"lobby data for visible whitelisted character '{visibleConfiguredWithoutWorld}' did not include a current world";
+            return false;
+        }
+
+        reason = "lobby data did not contain any visible whitelisted character";
+        return false;
+    }
+
     public static AutoLoginTarget? ResolveTarget(
         IReadOnlyList<AutoLoginCandidate> candidates,
         IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
@@ -82,6 +138,17 @@ public static class AutoLoginPlanner {
         foreach (var entry in lobbyEntries) {
             if (entry.Name.Equals(candidate.Name, StringComparison.InvariantCultureIgnoreCase))
                 return entry;
+        }
+
+        return null;
+    }
+
+    private static AutoLoginCandidate? FindCandidateByVisibleName(
+        IReadOnlyList<AutoLoginCandidate> candidates,
+        string visibleCharacterName) {
+        foreach (var candidate in candidates) {
+            if (candidate.Name.Equals(visibleCharacterName, StringComparison.InvariantCultureIgnoreCase))
+                return candidate;
         }
 
         return null;

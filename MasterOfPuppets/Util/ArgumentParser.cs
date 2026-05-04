@@ -28,6 +28,9 @@ public static class ArgumentParser {
         return -1;
     }
 
+    public static string EscapeQuotedArgument(string value) =>
+        value.Replace("\"", "\\\"", StringComparison.Ordinal);
+
     /// <summary>
     /// Parses a full chat message into tokens, delegating to ParseCommandArgs
     /// and applying FFXIV token transpilation ([t] -> <t>, [me] -> <me>, etc.)

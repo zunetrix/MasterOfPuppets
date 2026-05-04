@@ -108,6 +108,9 @@ public class PluginCommandManager : IDisposable {
 
     private void OnMainCommand(string command, string arguments) {
         var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
+        if (parsedArgs.Count == 1 && parsedArgs[0].StartsWith("gamemacro ", StringComparison.OrdinalIgnoreCase)) {
+            parsedArgs = ArgumentParser.ParseMacroArgs(parsedArgs[0]);
+        }
 
         if (parsedArgs.Any()) {
             var subcommand = parsedArgs[0];
@@ -126,6 +129,18 @@ public class PluginCommandManager : IDisposable {
                             : null;
 
                         Plugin.IpcProvider.RunMacro(macroIndex, inlineVars);
+                    }
+                    break;
+                case "gamemacro": {
+                        if (parsedArgs.Count <= 1) {
+                            DalamudApi.ShowNotification("Usage: /mop gamemacro <index|name> [individual|i|shared|share|s]", NotificationType.Error, 5000);
+                            return;
+                        }
+
+                        var scopeArg = parsedArgs.Count > 2 ? parsedArgs[2] : null;
+                        if (!GameMacroManager.TryExecute(parsedArgs[1], scopeArg, out var error)) {
+                            DalamudApi.ShowNotification(error, NotificationType.Error, 5000);
+                        }
                     }
                     break;
 

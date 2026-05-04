@@ -129,6 +129,11 @@ internal class Language {
             return ResourceManager.GetString("RunMacroBtn", resourceCulture);
         }
     }
+    internal static string ExecuteFormationBtn {
+        get {
+            return ResourceManager.GetString("ExecuteFormationBtn", resourceCulture);
+        }
+    }
     internal static string MacroTextInputLabel {
         get {
             return ResourceManager.GetString("MacroTextInputLabel", resourceCulture);
@@ -410,4 +415,3 @@ internal class Language {
         }
     }
 }
-

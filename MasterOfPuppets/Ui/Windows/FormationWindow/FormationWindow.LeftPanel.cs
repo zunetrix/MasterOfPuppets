@@ -5,10 +5,12 @@ using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
@@ -227,8 +229,28 @@ public partial class FormationWindow {
             }
 
             ImGui.SameLine();
-            if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Play, $"##fiexec{i}", "Execute formation"))
+            if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Play, $"##fiexec{i}", Language.ExecuteFormationBtn))
                 Plugin.IpcProvider.ExecuteFormation(f.Name);
+            ImGui.OpenPopupOnItemClick($"##fiexecmenu{i}", ImGuiPopupFlags.MouseButtonRight);
+
+            using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor)) {
+                using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
+                    if (ImGui.BeginPopup($"##fiexecmenu{i}")) {
+                        var formationName = ArgumentParser.EscapeQuotedArgument(f.Name);
+                        if (ImGui.MenuItem("Copy Execute Command")) {
+                            ImGui.SetClipboardText($"/mop formation \"{formationName}\"");
+                            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                        }
+
+                        if (ImGui.MenuItem("Copy Target Execute Command")) {
+                            ImGui.SetClipboardText($"/mop formation \"{formationName}\" target");
+                            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                        }
+
+                        ImGui.EndPopup();
+                    }
+                }
+            }
 
             ImGui.PopID();
         }

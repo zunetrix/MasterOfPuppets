@@ -75,6 +75,102 @@ public class AutoLoginPlannerTests {
         Assert.Equal(1, index);
     }
 
+    [Fact]
+    public void TryResolveDirectCharacterListTarget_SelectsVisibleWhitelistedCandidateConfirmedByLobby() {
+        var found = AutoLoginPlanner.TryResolveDirectCharacterListTarget(
+            [
+                new AutoLoginCandidate(42, "Test Character"),
+                new AutoLoginCandidate(100, "Other Character"),
+            ],
+            [
+                LobbyEntry(42, "Test Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos"),
+                LobbyEntry(100, "Other Character", currentWorld: "Diabolos", homeWorld: "Diabolos"),
+            ],
+            ["Other Character", "Test Character"],
+            out var target,
+            out var index,
+            out var reason);
+
+        Assert.True(found, reason);
+        Assert.Equal("Other Character", target.CharacterName);
+        Assert.Equal("Diabolos", target.WorldName);
+        Assert.Equal(0, index);
+    }
+
+    [Fact]
+    public void TryResolveDirectCharacterListTarget_SelectsWhitelistedPartialLobbyCharacter() {
+        var found = AutoLoginPlanner.TryResolveDirectCharacterListTarget(
+            [
+                new AutoLoginCandidate(42, "Test Character"),
+                new AutoLoginCandidate(100, "Other Character"),
+            ],
+            [LobbyEntry(100, "Other Character", currentWorld: "Diabolos", homeWorld: "Diabolos")],
+            ["Other Character"],
+            out var target,
+            out var index,
+            out var reason);
+
+        Assert.True(found, reason);
+        Assert.Equal("Other Character", target.CharacterName);
+        Assert.Equal("Diabolos", target.WorldName);
+        Assert.Equal(0, index);
+    }
+
+    [Fact]
+    public void TryResolveDirectCharacterListTarget_DoesNotSelectNonWhitelistedVisibleCharacter() {
+        var found = AutoLoginPlanner.TryResolveDirectCharacterListTarget(
+            [
+                new AutoLoginCandidate(42, "Test Character"),
+                new AutoLoginCandidate(100, "Other Character"),
+            ],
+            [LobbyEntry(999, "Not Configured", currentWorld: "Diabolos", homeWorld: "Diabolos")],
+            ["Not Configured"],
+            out var target,
+            out var index,
+            out var reason);
+
+        Assert.False(found);
+        Assert.Equal(default, target);
+        Assert.Equal(-1, index);
+        Assert.Contains("visible whitelisted", reason);
+    }
+
+    [Fact]
+    public void TryResolveDirectCharacterListTarget_RejectsVisibleWhitelistedCharacterMissingFromLobby() {
+        var found = AutoLoginPlanner.TryResolveDirectCharacterListTarget(
+            [new AutoLoginCandidate(42, "Test Character")],
+            [LobbyEntry(999, "Not Configured", currentWorld: "Diabolos", homeWorld: "Diabolos")],
+            ["Test Character"],
+            out var target,
+            out var index,
+            out var reason);
+
+        Assert.False(found);
+        Assert.Equal(default, target);
+        Assert.Equal(-1, index);
+        Assert.Contains("visible whitelisted", reason);
+    }
+
+    [Fact]
+    public void TryResolveDirectCharacterListTarget_FallsBackToVisibleCandidateWhenLobbyUnavailable() {
+        var found = AutoLoginPlanner.TryResolveDirectCharacterListTarget(
+            [
+                new AutoLoginCandidate(42, "Test Character"),
+                new AutoLoginCandidate(100, "Other Character"),
+            ],
+            [],
+            ["Other Character", "Test Character"],
+            out var target,
+            out var index,
+            out var reason);
+
+        Assert.True(found, reason);
+        Assert.Equal("Other Character", target.CharacterName);
+        Assert.Equal(string.Empty, target.WorldName);
+        Assert.Equal(0, index);
+        Assert.Contains("lobby data was unavailable", reason);
+    }
+
     private static AutoLoginLobbyEntry LobbyEntry(
         ulong cid,
         string name,

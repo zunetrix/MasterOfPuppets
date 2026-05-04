@@ -83,6 +83,16 @@ public class ArgsParserTests
         Assert.Empty(result);
     }
 
+    [Theory]
+    [InlineData("Formation", "Formation")]
+    [InlineData("Formation \"Alpha\"", "Formation \\\"Alpha\\\"")]
+    [InlineData("\"Quoted\"", "\\\"Quoted\\\"")]
+    public void EscapeQuotedArgument_EscapesDoubleQuotes(string input, string expected)
+    {
+        var result = ArgumentParser.EscapeQuotedArgument(input);
+        Assert.Equal(expected, result);
+    }
+
     [Fact(DisplayName = "Command with character name and command")]
     public void CommandWithQuotedName_ReturnsTwoArgs()
     {

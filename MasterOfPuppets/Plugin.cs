@@ -136,8 +136,6 @@ public class Plugin : IDalamudPlugin {
 
     private void OnLogout(int type, int code) {
         Ui.MainWindow.IsOpen = false;
-        if (Config.Characters.Any(c => c.AutoLoginEnabled))
-            AutoLoginManager.Start();
     }
 
     public void Dispose() {

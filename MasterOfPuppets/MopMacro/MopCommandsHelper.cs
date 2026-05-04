@@ -30,6 +30,28 @@ public static class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop gamemacro <index|\"Game Macro Name\"> [individual|i|shared|share|s]",
+            SuggestionCommand = "/mop gamemacro ",
+            Example = """
+            /mop gamemacro 01 i
+            /mop gamemacro 12 shared
+            /mop gamemacro "Buff Opener" individual
+            /mop gamemacro "Travel Setup"
+
+            Broadcast:
+            /mopbr /mop gamemacro "Buff Opener" i
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Executes an in-game FFXIV macro from the individual or shared macro set.
+
+            Numeric indexes use the game macro index directly (0-99), matching BardToolbox runmacro behavior.
+            If scope is omitted for a name, individual macros are searched first, then shared macros.
+            If the same name exists more than once, specify individual or shared, or rename one macro.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mop stop",
             SuggestionCommand = "/mop stop",
             Example = """
