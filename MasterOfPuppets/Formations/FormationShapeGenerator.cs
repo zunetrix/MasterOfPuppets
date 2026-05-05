@@ -135,9 +135,12 @@ public static class FormationShapeGenerator {
             foreach (var p in points) {
                 float dx = p.Offset.X - centerX;
                 float dz = p.Offset.Z - centerZ;
-                float outward = MathF.Abs(dx) < 0.001f && MathF.Abs(dz) < 0.001f
-                    ? 0f
-                    : StoredDeltaToPlotAngleDegrees(dx, dz);
+                if (MathF.Abs(dx) < 0.001f && MathF.Abs(dz) < 0.001f) {
+                    p.Angle = 0f;
+                    continue;
+                }
+
+                float outward = StoredDeltaToPlotAngleDegrees(dx, dz);
                 p.Angle = spec.FaceMode switch {
                     FormationShapeFaceMode.Outward => outward,
                     FormationShapeFaceMode.Inward => outward + 180f,

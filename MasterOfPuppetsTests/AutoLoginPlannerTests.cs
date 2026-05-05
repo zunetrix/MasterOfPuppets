@@ -15,48 +15,60 @@ public class AutoLoginPlannerTests {
         Assert.NotNull(candidate);
         Assert.Equal(42UL, candidate.Value.ContentId);
         Assert.Equal("Test Character", candidate.Value.Name);
+        Assert.Equal("Diabolos", candidate.Value.HomeWorldName);
     }
 
     [Fact]
-    public void ResolveTarget_UsesCurrentWorldForMatchingCharacter() {
-        var target = AutoLoginPlanner.ResolveTarget(
+    public void BuildWorldQueue_UsesCurrentWorldForMatchingCharacterFirst() {
+        var queue = AutoLoginPlanner.BuildWorldQueue(
             [new AutoLoginCandidate(42, "Test Character")],
             [
                 LobbyEntry(42, "Test Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos"),
                 LobbyEntry(100, "Other Character", currentWorld: "Diabolos", homeWorld: "Diabolos"),
-            ]);
+            ],
+            ["Diabolos", "Halicarnassus", "Cuchulainn"]);
 
-        Assert.NotNull(target);
-        Assert.Equal("Test Character", target.Value.CharacterName);
-        Assert.Equal("Halicarnassus", target.Value.WorldName);
+        Assert.Equal(["Halicarnassus", "Diabolos", "Cuchulainn"], queue);
     }
 
     [Fact]
-    public void ResolveTarget_MatchesByNameWhenContentIdIsMissing() {
-        var target = AutoLoginPlanner.ResolveTarget(
+    public void BuildWorldQueue_MatchesByNameWhenContentIdIsMissing() {
+        var queue = AutoLoginPlanner.BuildWorldQueue(
             [new AutoLoginCandidate(0, "Test Character")],
-            [LobbyEntry(42, "Test Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos")]);
+            [LobbyEntry(42, "Test Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos")],
+            ["Diabolos", "Halicarnassus"]);
 
-        Assert.NotNull(target);
-        Assert.Equal("Halicarnassus", target.Value.WorldName);
+        Assert.Equal(["Halicarnassus", "Diabolos"], queue);
     }
 
     [Fact]
-    public void ResolveTarget_DoesNotFallbackToOtherLobbyCharacters() {
-        var target = AutoLoginPlanner.ResolveTarget(
-            [new AutoLoginCandidate(999, "Missing Character")],
-            [LobbyEntry(42, "Other Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos")]);
+    public void BuildWorldQueue_ScansVisibleWorldsWhenLobbyEntriesUnavailable() {
+        var queue = AutoLoginPlanner.BuildWorldQueue(
+            [new AutoLoginCandidate(42, "Test Character", "Golem")],
+            [],
+            ["Diabolos", "Halicarnassus"]);
 
-        Assert.Null(target);
+        Assert.Equal(["Diabolos", "Halicarnassus"], queue);
     }
 
     [Fact]
-    public void ResolveTarget_DoesNotFallbackWhenLobbyEntriesUnavailable() {
-        var target = AutoLoginPlanner.ResolveTarget(
-            [new AutoLoginCandidate(999, "Missing Character")],
-            []);
+    public void BuildWorldQueue_DoesNotUseConfiguredHomeWorldForSelection() {
+        var queue = AutoLoginPlanner.BuildWorldQueue(
+            [new AutoLoginCandidate(42, "Test Character", "Halicarnassus")],
+            [],
+            ["Diabolos", "Halicarnassus"]);
 
-        Assert.Null(target);
+        Assert.Equal(["Diabolos", "Halicarnassus"], queue);
+    }
+
+    [Fact]
+    public void BuildWorldQueue_DeduplicatesLobbyCurrentWorldsAgainstVisibleFallback() {
+        var queue = AutoLoginPlanner.BuildWorldQueue(
+            [new AutoLoginCandidate(42, "Test Character")],
+            [LobbyEntry(42, "Test Character", currentWorld: "Diabolos", homeWorld: "Golem")],
+            ["Diabolos", "Halicarnassus", "Diabolos"]);
+
+        Assert.Equal(["Diabolos", "Halicarnassus"], queue);
     }
 
     [Fact]
@@ -136,19 +148,20 @@ public class AutoLoginPlannerTests {
     }
 
     [Fact]
-    public void TryResolveDirectCharacterListTarget_RejectsVisibleWhitelistedCharacterMissingFromLobby() {
+    public void TryResolveDirectCharacterListTarget_SelectsVisibleWhitelistedCharacterMissingFromLobby() {
         var found = AutoLoginPlanner.TryResolveDirectCharacterListTarget(
-            [new AutoLoginCandidate(42, "Test Character")],
+            [new AutoLoginCandidate(42, "Test Character", "Diabolos")],
             [LobbyEntry(999, "Not Configured", currentWorld: "Diabolos", homeWorld: "Diabolos")],
             ["Test Character"],
             out var target,
             out var index,
             out var reason);
 
-        Assert.False(found);
-        Assert.Equal(default, target);
-        Assert.Equal(-1, index);
-        Assert.Contains("visible whitelisted", reason);
+        Assert.True(found, reason);
+        Assert.Equal("Test Character", target.CharacterName);
+        Assert.Equal(string.Empty, target.WorldName);
+        Assert.Equal(0, index);
+        Assert.Contains("without lobby confirmation", reason);
     }
 
     [Fact]

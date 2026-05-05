@@ -30,18 +30,27 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
     private LoginState _state = LoginState.Idle;
     private int _stateDelayMs;
     private List<AutoLoginCandidate> _candidates = [];
+    private List<string> _worldQueue = [];
+    private int _worldIndex;
     private AutoLoginTarget? _target;
     private string _pendingCharacterName = string.Empty;
     private int _pendingCharacterIndex = -1;
     private bool _hasPendingCharacterSelection;
     private bool _loggedWorldSelectorSnapshot;
     private bool _loggedCharacterListSnapshot;
+    private bool _loggedDirectCharacterListMismatch;
+    private bool _loginConfirmationSubmitted;
+    private bool _loggedWaitingLoginConfirmation;
+    private bool _loggedWaitingWorldListAfterTitleAction;
+    private bool _waitingForWorldSelectionSettle;
+    private bool _loggedWaitingForWorldSelectionSettle;
     private IActiveNotification? _cancelNotification;
 
     private const int StateTimeoutMs = 30_000;
     private const int ConfirmingLoginTimeoutMs = 120_000;
     private const int CharacterSelectDelayMinMs = 2_000;
     private const int CharacterSelectDelayMaxMs = 4_000;
+    private const int WorldSelectSettleMs = 1_000;
 
     private static AtkArrayDataHolder* AtkArrayDataHolder =>
         &Framework.Instance()->GetUIModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder;
@@ -66,11 +75,19 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         }
 
         _target = null;
+        _worldQueue = [];
+        _worldIndex = 0;
         _loggedWorldSelectorSnapshot = false;
         _loggedCharacterListSnapshot = false;
+        _loggedDirectCharacterListMismatch = false;
+        _loginConfirmationSubmitted = false;
+        _loggedWaitingLoginConfirmation = false;
+        _loggedWaitingWorldListAfterTitleAction = false;
+        _waitingForWorldSelectionSettle = false;
+        _loggedWaitingForWorldSelectionSettle = false;
         ClearPendingCharacterSelection();
         DalamudApi.PluginLog.Information(
-            $"[AutoLogin] Starting with candidates: {string.Join(", ", _candidates.Select(c => $"{c.Name}({c.ContentId})"))}.");
+            $"[AutoLogin] Starting with candidates: {string.Join(", ", _candidates.Select(FormatCandidate))}.");
         ShowCancelNotification();
         SetState(LoginState.WaitingTitleMenu);
         DalamudApi.Framework.Update += OnFrameworkUpdate;
@@ -87,9 +104,17 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         _stateDelayMs = 0;
         _stateTimer.Reset();
         _candidates = [];
+        _worldQueue = [];
+        _worldIndex = 0;
         _target = null;
         _loggedWorldSelectorSnapshot = false;
         _loggedCharacterListSnapshot = false;
+        _loggedDirectCharacterListMismatch = false;
+        _loginConfirmationSubmitted = false;
+        _loggedWaitingLoginConfirmation = false;
+        _loggedWaitingWorldListAfterTitleAction = false;
+        _waitingForWorldSelectionSettle = false;
+        _loggedWaitingForWorldSelectionSettle = false;
         ClearPendingCharacterSelection();
         if (dismissNotification)
             DismissCancelNotification();
@@ -148,8 +173,14 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         if (TryResumeFromOpenCharacterList())
             return;
 
-        if (!GameDialogManager.IsAddonVisible("_CharaSelectWorldServer"))
+        if (!GameDialogManager.IsAddonOpen("_CharaSelectWorldServer")) {
+            if (GameDialogManager.IsAddonVisible("_TitleMenu") && !_loggedWaitingWorldListAfterTitleAction) {
+                _loggedWaitingWorldListAfterTitleAction = true;
+                DalamudApi.PluginLog.Debug("[AutoLogin] Waiting for character select world list after title menu action; not resubmitting while title menu remains visible.");
+            }
+
             return;
+        }
 
         var visibleWorlds = WorldNames;
         if (visibleWorlds.Count == 0)
@@ -157,33 +188,21 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
 
         var lobbyEntries = ReadLobbyEntries();
         LogWorldSelectorSnapshot(visibleWorlds, lobbyEntries);
-        if (lobbyEntries.Count == 0) {
-            DalamudApi.PluginLog.Warning("[AutoLogin] Lobby character data was unavailable.");
-            DalamudApi.PluginLog.Warning($"[AutoLogin] Lobby snapshot: {FormatLobbySnapshot(lobbyEntries)}");
+        if (_worldQueue.Count == 0) {
+            _worldQueue = AutoLoginPlanner.BuildWorldQueue(_candidates, lobbyEntries, visibleWorlds);
+            _worldIndex = 0;
+            DalamudApi.PluginLog.Information(
+                $"[AutoLogin] World scan queue (lobby current worlds first, then visible fallback): {(_worldQueue.Count == 0 ? "<empty>" : string.Join(", ", _worldQueue))}.");
+        }
+
+        if (_worldQueue.Count == 0) {
+            DalamudApi.PluginLog.Warning("[AutoLogin] Could not build an auto-login world scan queue.");
+            DalamudApi.PluginLog.Warning($"[AutoLogin] World selector snapshot: worlds={visibleWorlds.Count} [{Preview(visibleWorlds)}]; lobby={FormatLobbySnapshot(lobbyEntries)}; candidates=[{string.Join(", ", _candidates.Select(FormatCandidate))}]");
             Stop();
             return;
         }
 
-        _target = AutoLoginPlanner.ResolveTarget(_candidates, lobbyEntries);
-        if (_target == null) {
-            DalamudApi.PluginLog.Warning("[AutoLogin] Could not resolve an enabled auto-login character from lobby data.");
-            DalamudApi.PluginLog.Warning($"[AutoLogin] Lobby snapshot: {FormatLobbySnapshot(lobbyEntries)}");
-            Stop();
-            return;
-        }
-
-        DalamudApi.PluginLog.Information(
-            $"[AutoLogin] Resolved auto-login target: {_target.Value.CharacterName} on {_target.Value.WorldName}.");
-        if (!SelectWorld(_target.Value.WorldName, out var worldIndex)) {
-            DalamudApi.PluginLog.Warning(
-                $"[AutoLogin] Resolved world '{_target.Value.WorldName}' was not visible in the world selector.");
-            Stop();
-            return;
-        }
-
-        DalamudApi.PluginLog.Information(
-            $"[AutoLogin] Checking resolved character {_target.Value.CharacterName} on {_target.Value.WorldName} at index {worldIndex}.");
-        SetState(LoginState.WaitingCharacterList);
+        SelectNextWorldCandidate();
     }
 
     private bool TryResumeFromOpenCharacterList() {
@@ -204,15 +223,13 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
                 out var target,
                 out var characterIndex,
                 out var reason)) {
-            DalamudApi.PluginLog.Warning(
-                $"[AutoLogin] Character list is open, but no whitelisted auto-login character is selectable: {reason}. Checked: {string.Join(", ", _candidates.Select(c => c.Name))}. Visible: {string.Join(", ", visibleCharacters)}. Lobby: {FormatLobbySnapshot(lobbyEntries)}.");
-            if (GameDialogManager.IsAddonVisible("_CharaSelectWorldServer") && WorldNames.Count > 0) {
-                DalamudApi.PluginLog.Debug("[AutoLogin] World selector is visible; falling back to world selector path.");
-                return false;
+            if (!_loggedDirectCharacterListMismatch) {
+                _loggedDirectCharacterListMismatch = true;
+                DalamudApi.PluginLog.Warning(
+                    $"[AutoLogin] Character list is open, but no whitelisted auto-login character is selectable yet: {reason}. Continuing to wait for world selector. Checked: {string.Join(", ", _candidates.Select(FormatCandidate))}. Visible: {string.Join(", ", visibleCharacters)}. Lobby: {FormatLobbySnapshot(lobbyEntries)}.");
             }
 
-            Stop();
-            return true;
+            return false;
         }
 
         _target = target;
@@ -226,6 +243,18 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         if (!GameDialogManager.IsAddonVisible("_CharaSelectListMenu"))
             return;
 
+        if (_waitingForWorldSelectionSettle && _stateTimer.ElapsedMilliseconds < WorldSelectSettleMs) {
+            if (!_loggedWaitingForWorldSelectionSettle) {
+                _loggedWaitingForWorldSelectionSettle = true;
+                DalamudApi.PluginLog.Debug(
+                    $"[AutoLogin] Waiting {WorldSelectSettleMs}ms for character list to settle after selecting {CurrentWorldLabel}.");
+            }
+
+            return;
+        }
+
+        _waitingForWorldSelectionSettle = false;
+
         var visibleCharacters = CharacterNames;
         if (visibleCharacters.Count == 0)
             return;
@@ -236,23 +265,18 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             _pendingCharacterIndex < 0 ||
             _pendingCharacterIndex >= visibleCharacters.Count ||
             !visibleCharacters[_pendingCharacterIndex].Equals(_pendingCharacterName, StringComparison.InvariantCultureIgnoreCase)) {
-            if (_target == null) {
-                DalamudApi.PluginLog.Warning("[AutoLogin] Resolved auto-login target was cleared before character selection.");
-                Stop();
-                return;
-            }
-
             if (!AutoLoginPlanner.TryFindVisibleCandidate(
-                    [new AutoLoginCandidate(0, _target.Value.CharacterName)],
+                    _candidates,
                     visibleCharacters,
                     out _pendingCharacterName,
                     out _pendingCharacterIndex)) {
-                DalamudApi.PluginLog.Warning(
-                    $"[AutoLogin] Resolved character '{_target.Value.CharacterName}' was not visible after selecting {_target.Value.WorldName}.");
-                Stop();
+                DalamudApi.PluginLog.Information(
+                    $"[AutoLogin] No whitelisted character visible on {CurrentWorldLabel}. Checked: {string.Join(", ", _candidates.Select(c => c.Name))}. Visible: {string.Join(", ", visibleCharacters)}.");
+                SelectNextWorldCandidate();
                 return;
             }
 
+            _target = new AutoLoginTarget(_pendingCharacterName, _target?.WorldName ?? string.Empty);
             _hasPendingCharacterSelection = true;
             _stateDelayMs = Random.Shared.Next(CharacterSelectDelayMinMs, CharacterSelectDelayMaxMs + 1);
             _stateTimer.Restart();
@@ -273,7 +297,6 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         if (selected) {
             DalamudApi.PluginLog.Information(
                 $"[AutoLogin] Selected character {_pendingCharacterName} at index {_pendingCharacterIndex} after {_stateTimer.ElapsedMilliseconds}ms.");
-            SendTitleAction(GameDialogManager.AddonName.SelectYesno, 3, 0);
             SetState(LoginState.ConfirmingLogin);
         } else {
             DalamudApi.PluginLog.Warning(
@@ -283,8 +306,48 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
     }
 
     private void HandleConfirmingLogin() {
-        if (GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.SelectYesno))
-            SendTitleAction(GameDialogManager.AddonName.SelectYesno, 3, 0);
+        if (_loginConfirmationSubmitted)
+            return;
+
+        if (!GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.SelectYesno)) {
+            if (!_loggedWaitingLoginConfirmation) {
+                _loggedWaitingLoginConfirmation = true;
+                DalamudApi.PluginLog.Debug("[AutoLogin] Waiting for login confirmation SelectYesno.");
+            }
+
+            return;
+        }
+
+        _loginConfirmationSubmitted = true;
+        _stateTimer.Restart();
+        if (SendTitleAction(GameDialogManager.AddonName.SelectYesno, 3, 0)) {
+            DalamudApi.PluginLog.Debug("[AutoLogin] Submitted login confirmation SelectYesno once; waiting for login completion.");
+        } else {
+            DalamudApi.PluginLog.Warning("[AutoLogin] Login confirmation SelectYesno was visible, but callback submission failed; waiting for login completion.");
+        }
+    }
+
+    private void SelectNextWorldCandidate() {
+        ClearPendingCharacterSelection();
+        while (_worldIndex < _worldQueue.Count) {
+            var world = _worldQueue[_worldIndex++];
+            if (!SelectWorld(world, out var selectedWorldIndex)) {
+                DalamudApi.PluginLog.Debug($"[AutoLogin] World '{world}' was not selectable from the current world list.");
+                continue;
+            }
+
+            _target = new AutoLoginTarget(string.Empty, world);
+            DalamudApi.PluginLog.Information(
+                $"[AutoLogin] Checking whitelisted characters on {world} at world index {selectedWorldIndex} ({_worldIndex}/{_worldQueue.Count}).");
+            _waitingForWorldSelectionSettle = true;
+            _loggedWaitingForWorldSelectionSettle = false;
+            SetState(LoginState.WaitingCharacterList);
+            return;
+        }
+
+        DalamudApi.PluginLog.Warning(
+            $"[AutoLogin] None of the configured characters were found on the current data center. Checked worlds: {(_worldQueue.Count == 0 ? "<empty>" : string.Join(", ", _worldQueue))}. Candidates: {string.Join(", ", _candidates.Select(FormatCandidate))}.");
+        Stop();
     }
 
     private int GetStateTimeoutMs() => _state == LoginState.ConfirmingLogin
@@ -316,7 +379,9 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             $"worlds={worldNames.Count} [{Preview(worldNames)}]; " +
             $"characters={characterNames.Count} [{Preview(characterNames)}]; " +
             $"lobbyEntries={lobbyEntries.Count} [{FormatLobbySnapshot(lobbyEntries)}]; " +
-            $"candidates=[{string.Join(", ", _candidates.Select(c => c.Name))}]";
+            $"worldQueueIndex={_worldIndex}; worldQueue=[{string.Join(", ", _worldQueue)}]; " +
+            $"loginConfirmationSubmitted={_loginConfirmationSubmitted}; " +
+            $"candidates=[{string.Join(", ", _candidates.Select(FormatCandidate))}]";
     }
 
     private void LogWorldSelectorSnapshot(IReadOnlyList<string> worldNames, IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
@@ -378,6 +443,11 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             ? "<blank>"
             : value.Replace("\"", "\\\"", StringComparison.Ordinal);
 
+    private static string FormatCandidate(AutoLoginCandidate candidate) =>
+        string.IsNullOrWhiteSpace(candidate.HomeWorldName)
+            ? $"{candidate.Name}({candidate.ContentId})"
+            : $"{candidate.Name}@{candidate.HomeWorldName}({candidate.ContentId})";
+
     private List<AutoLoginCandidate> GetLoginCandidates() {
         return _plugin.Config.Characters
             .Where(c => c.AutoLoginEnabled)
@@ -392,6 +462,10 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         _stateDelayMs = 0;
         if (state == LoginState.WaitingCharacterList)
             ClearPendingCharacterSelection();
+        if (state == LoginState.ConfirmingLogin) {
+            _loginConfirmationSubmitted = false;
+            _loggedWaitingLoginConfirmation = false;
+        }
         _stateTimer.Restart();
     }
 
@@ -400,16 +474,21 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         if (index < 0)
             return false;
 
-        if (!GameDialogManager.IsAddonVisible("_CharaSelectWorldServer"))
+        if (!GameDialogManager.IsAddonOpen("_CharaSelectWorldServer"))
             return false;
 
         return SendTitleAction("_CharaSelectWorldServer", 3, 25, 3, 0, 3, index);
     }
 
+    private string CurrentWorldLabel => _target == null || string.IsNullOrWhiteSpace(_target.Value.WorldName)
+        ? "the selected world"
+        : _target.Value.WorldName;
+
     private void ClearPendingCharacterSelection() {
         _pendingCharacterName = string.Empty;
         _pendingCharacterIndex = -1;
         _hasPendingCharacterSelection = false;
+        _stateDelayMs = 0;
     }
 
     private void ShowCancelNotification() {

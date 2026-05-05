@@ -4,22 +4,30 @@ using System.Linq;
 
 namespace MasterOfPuppets;
 
-public readonly record struct AutoLoginCandidate(ulong ContentId, string Name) {
+public readonly record struct AutoLoginCandidate(ulong ContentId, string Name, string HomeWorldName = "") {
     public static AutoLoginCandidate? FromCharacter(Character character) {
-        var name = ExtractLoginName(character.Name);
-        return name == null ? null : new AutoLoginCandidate(character.Cid, name);
+        var (name, homeWorldName) = ExtractLoginNameWorld(character.Name);
+        return name == null ? null : new AutoLoginCandidate(character.Cid, name, homeWorldName);
     }
 
     public static string? ExtractLoginName(string fullName) {
+        var (name, _) = ExtractLoginNameWorld(fullName);
+        return name;
+    }
+
+    public static (string? Name, string HomeWorldName) ExtractLoginNameWorld(string fullName) {
         if (string.IsNullOrWhiteSpace(fullName))
-            return null;
+            return (null, string.Empty);
 
         var separatorIndex = fullName.LastIndexOf('@');
         var name = separatorIndex > 0
             ? fullName[..separatorIndex].Trim()
             : fullName.Trim();
+        var homeWorldName = separatorIndex > 0 && separatorIndex < fullName.Length - 1
+            ? fullName[(separatorIndex + 1)..].Trim()
+            : string.Empty;
 
-        return string.IsNullOrWhiteSpace(name) ? null : name;
+        return string.IsNullOrWhiteSpace(name) ? (null, string.Empty) : (name, homeWorldName);
     }
 }
 
@@ -36,6 +44,27 @@ public readonly record struct AutoLoginLobbyEntry(
 public readonly record struct AutoLoginTarget(string CharacterName, string WorldName);
 
 public static class AutoLoginPlanner {
+    public static List<string> BuildWorldQueue(
+        IReadOnlyList<AutoLoginCandidate> candidates,
+        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
+        IReadOnlyList<string> visibleWorlds) {
+        var worldQueue = new List<string>();
+        var visibleWorldSet = visibleWorlds.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
+
+        foreach (var candidate in candidates) {
+            var entry = FindCandidateEntry(candidate, lobbyEntries);
+            if (entry == null)
+                continue;
+
+            AddWorld(worldQueue, visibleWorldSet, entry.Value.CurrentWorldName);
+        }
+
+        foreach (var world in visibleWorlds)
+            AddWorld(worldQueue, visibleWorldSet, world);
+
+        return worldQueue;
+    }
+
     public static bool TryResolveDirectCharacterListTarget(
         IReadOnlyList<AutoLoginCandidate> candidates,
         IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
@@ -51,59 +80,31 @@ public static class AutoLoginPlanner {
             return false;
         }
 
-        if (lobbyEntries.Count == 0) {
-            if (TryFindVisibleCandidate(candidates, visibleCharacters, out var visibleCandidate, out index)) {
-                target = new AutoLoginTarget(visibleCandidate, string.Empty);
-                reason = "lobby data was unavailable; fell back to visible configured character";
-                return true;
-            }
-
-            reason = "lobby data was unavailable and no configured character was visible";
-            return false;
-        }
-
-        var visibleConfiguredWithoutWorld = string.Empty;
         for (var i = 0; i < visibleCharacters.Count; i++) {
             var candidate = FindCandidateByVisibleName(candidates, visibleCharacters[i]);
             if (candidate == null)
                 continue;
 
             var entry = FindCandidateEntry(candidate.Value, lobbyEntries);
-            if (entry == null)
-                continue;
-
-            target = new AutoLoginTarget(entry.Value.Name, entry.Value.CurrentWorldName);
-            if (string.IsNullOrWhiteSpace(entry.Value.CurrentWorldName)) {
-                visibleConfiguredWithoutWorld = entry.Value.Name;
-                continue;
-            }
-
+            var worldName = !string.IsNullOrWhiteSpace(entry?.CurrentWorldName)
+                ? entry.Value.CurrentWorldName
+                : string.Empty;
+            target = new AutoLoginTarget(candidate.Value.Name, worldName);
             index = i;
-            reason = $"resolved visible whitelisted character '{entry.Value.Name}' from lobby data";
+            reason = entry == null
+                ? lobbyEntries.Count == 0
+                    ? $"lobby data was unavailable; resolved visible whitelisted character '{candidate.Value.Name}'"
+                    : $"resolved visible whitelisted character '{candidate.Value.Name}' without lobby confirmation"
+                : string.IsNullOrWhiteSpace(entry.Value.CurrentWorldName)
+                    ? $"resolved visible whitelisted character '{candidate.Value.Name}' from lobby data without current world"
+                    : $"resolved visible whitelisted character '{candidate.Value.Name}' from lobby data";
             return true;
         }
 
-        if (!string.IsNullOrWhiteSpace(visibleConfiguredWithoutWorld)) {
-            reason = $"lobby data for visible whitelisted character '{visibleConfiguredWithoutWorld}' did not include a current world";
-            return false;
-        }
-
-        reason = "lobby data did not contain any visible whitelisted character";
+        reason = lobbyEntries.Count == 0
+            ? "lobby data was unavailable and no configured character was visible"
+            : "no visible whitelisted character matched the configured whitelist";
         return false;
-    }
-
-    public static AutoLoginTarget? ResolveTarget(
-        IReadOnlyList<AutoLoginCandidate> candidates,
-        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
-        foreach (var candidate in candidates) {
-            var entry = FindCandidateEntry(candidate, lobbyEntries);
-            if (entry == null || string.IsNullOrWhiteSpace(entry.Value.CurrentWorldName))
-                continue;
-
-            return new AutoLoginTarget(entry.Value.Name, entry.Value.CurrentWorldName);
-        }
-
-        return null;
     }
 
     public static bool TryFindVisibleCandidate(
@@ -152,5 +153,13 @@ public static class AutoLoginPlanner {
         }
 
         return null;
+    }
+
+    private static void AddWorld(List<string> worldQueue, HashSet<string> visibleWorldSet, string worldName) {
+        if (string.IsNullOrWhiteSpace(worldName) || !visibleWorldSet.Contains(worldName))
+            return;
+
+        if (!worldQueue.Contains(worldName, StringComparer.InvariantCultureIgnoreCase))
+            worldQueue.Add(worldName);
     }
 }
