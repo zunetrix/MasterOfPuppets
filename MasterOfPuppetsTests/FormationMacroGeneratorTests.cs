@@ -91,33 +91,6 @@ public class FormationMacroGeneratorTests {
     }
 
     [Fact]
-    public void GenerateLoopMacro_GeneratedShapeStyleMovement_CanFaceAnchorNorth() {
-        var formation = new Formation {
-            Points = FormationShapeGenerator.Generate(new FormationShapeSpec {
-                Type = FormationShapeType.Circle,
-                Count = 4,
-                Radius = 2f,
-                AnchorMode = FormationShapeAnchorMode.AnchorAtCenter,
-                AssignedCids = [100, 101, 102, 103],
-            }),
-        };
-
-        var macro = FormationMacroGenerator.GenerateLoopMacro(formation, new FormationMacroGeneratorOptions {
-            OriginReference = "Origin Character@World",
-            TransformRelativeMovesByOriginRotation = true,
-            EmitRelativeMoveFacing = true,
-            EmitAnchorFacingNorth = true,
-            OriginRotationRadians = 0f,
-        });
-
-        Assert.Equal(4, macro.Commands.Count);
-        Assert.Equal([100UL], macro.Commands[0].Cids);
-        Assert.Equal("/mopfaceabs 0\n/moploop", macro.Commands[0].Actions);
-        Assert.Equal([101UL], macro.Commands[1].Cids);
-        Assert.Contains("/mopmoverelativeto", macro.Commands[1].Actions);
-    }
-
-    [Fact]
     public void GenerateLoopMacro_GeneratedShapeStyleMovement_InwardFacesTowardCenter() {
         AssertGeneratedCircleFacing(FormationShapeFaceMode.Inward, shouldFaceTowardCenter: true);
     }

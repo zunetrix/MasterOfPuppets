@@ -33,7 +33,6 @@ public sealed class FormationMacroGeneratorOptions {
     public bool PetReverse { get; set; }
     public bool TransformRelativeMovesByOriginRotation { get; set; }
     public bool EmitRelativeMoveFacing { get; set; }
-    public bool EmitAnchorFacingNorth { get; set; }
     public float OriginRotationRadians { get; set; }
 }
 
@@ -83,10 +82,6 @@ public static class FormationMacroGenerator {
         };
         var warnings = new List<string>();
 
-        if (options.EmitAnchorFacingNorth
-            && options.Mode is FormationMacroGeneratorMode.Movement or FormationMacroGeneratorMode.MovementAndPetPlacement)
-            AddAnchorFacingCommand(macro, anchor, options, groups);
-
         if (destinations.Count == 0)
             return new FormationMacroGenerationResult { Macro = macro, Warnings = warnings };
 
@@ -101,22 +96,6 @@ public static class FormationMacroGenerator {
             AddPetPlacementCommands(macro, destinations, anchor, options, groups, characters, warnings);
 
         return new FormationMacroGenerationResult { Macro = macro, Warnings = warnings };
-    }
-
-    private static void AddAnchorFacingCommand(
-        Macro macro,
-        FormationPoint anchor,
-        FormationMacroGeneratorOptions options,
-        IReadOnlyList<CidGroup>? groups) {
-        var assignment = BuildAssignment(anchor, groups, options.UseMatchingGroups);
-        if (assignment.IsEmpty)
-            return;
-
-        macro.Commands.Add(new Command {
-            Cids = assignment.Cids,
-            GroupIds = assignment.GroupIds,
-            Actions = "/mopfaceabs 0\n/moploop",
-        });
     }
 
     private static void AddFormationMoveCommand(
