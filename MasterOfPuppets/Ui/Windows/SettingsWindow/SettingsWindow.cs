@@ -64,7 +64,7 @@ public class SettingsWindow : Window {
          K(0xA5,"RAlt",1.25f),K(0x5C,"Win",1.25f),K(0x5D,"Menu",1.25f),K(0xA3,"RCtrl",1.5f)],
     ];
 
-    public SettingsWindow(Plugin plugin) : base($"{Plugin.Name} {Language.SettingsTitle}###SettingsWindow") {
+    public SettingsWindow(Plugin plugin) : base($"{Plugin.Name} {Language.SettingsTitle}###SettingsWindowMop") {
         Plugin = plugin;
 
         Size = ImGuiHelpers.ScaledVector2(400, 300);
