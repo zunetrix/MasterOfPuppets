@@ -106,12 +106,19 @@ public partial class WindowLayoutWindow {
     }
 
     private void DrawMonitorCanvas(WindowLayout layout, WindowsApi.MONITORINFO monitor, uint[] slotColors) {
-        int screenW = monitor.rcWork.Width;
-        int screenH = monitor.rcWork.Height;
-        int workLeft = monitor.rcWork.Left;
-        int workTop = monitor.rcWork.Top;
+        // rcMonitor = full physical resolution - used for canvas aspect/scale and the label
+        int screenW = monitor.rcMonitor.Width;
+        int screenH = monitor.rcMonitor.Height;
+        int originX = monitor.rcMonitor.Left;
+        int originY = monitor.rcMonitor.Top;
         if (screenW <= 0) screenW = 1920;
         if (screenH <= 0) screenH = 1080;
+
+        // rcWork = usable area (taskbar excluded) - used only to clamp drag/resize
+        int workLeft = monitor.rcWork.Left;
+        int workTop = monitor.rcWork.Top;
+        int workW = monitor.rcWork.Width > 0 ? monitor.rcWork.Width : screenW;
+        int workH = monitor.rcWork.Height > 0 ? monitor.rcWork.Height : screenH;
 
         var avail = ImGui.GetContentRegionAvail();
         float aspect = (float)screenW / screenH;
@@ -156,8 +163,8 @@ public partial class WindowLayoutWindow {
             var color = slotColors[i % slotColors.Length];
             bool selected = i == _selSlot;
 
-            float sx = canvasPos.X + (slot.X - workLeft) * scaleX;
-            float sy = canvasPos.Y + (slot.Y - workTop) * scaleY;
+            float sx = canvasPos.X + (slot.X - originX) * scaleX;
+            float sy = canvasPos.Y + (slot.Y - originY) * scaleY;
             float sw = slot.Width * scaleX;
             float sh = slot.Height * scaleY;
 
@@ -196,8 +203,8 @@ public partial class WindowLayoutWindow {
                 var delta = ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0f);
                 int newX = _dragStartX + (int)(delta.X / scaleX);
                 int newY = _dragStartY + (int)(delta.Y / scaleY);
-                slot.X = (int)Math.Clamp(newX, workLeft, workLeft + screenW - slot.Width);
-                slot.Y = (int)Math.Clamp(newY, workTop, workTop + screenH - slot.Height);
+                slot.X = (int)Math.Clamp(newX, workLeft, workLeft + workW - slot.Width);
+                slot.Y = (int)Math.Clamp(newY, workTop, workTop + workH - slot.Height);
             }
 
             if (ImGui.IsItemDeactivatedAfterEdit() || (ImGui.IsItemDeactivated() && ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0f).LengthSquared() > 0)) {
@@ -224,8 +231,8 @@ public partial class WindowLayoutWindow {
                 var delta = ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0f);
                 int newW = _dragStartW + (int)(delta.X / scaleX);
                 int newH = _dragStartH + (int)(delta.Y / scaleY);
-                slot.Width = (int)Math.Clamp(newW, 100, workLeft + screenW - slot.X);
-                slot.Height = (int)Math.Clamp(newH, 60, workTop + screenH - slot.Y);
+                slot.Width = (int)Math.Clamp(newW, 100, workLeft + workW - slot.X);
+                slot.Height = (int)Math.Clamp(newH, 60, workTop + workH - slot.Y);
             }
 
             if (ImGui.IsItemDeactivatedAfterEdit() || (ImGui.IsItemDeactivated() && ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0f).LengthSquared() > 0)) {
