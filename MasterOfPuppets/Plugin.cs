@@ -76,7 +76,7 @@ public class Plugin : IDalamudPlugin {
             Ui.MainWindow.IsOpen = true;
         }
 
-        if (Config.Characters.Any(c => c.AutoLoginEnabled) && !DalamudApi.ClientState.IsLoggedIn) {
+        if (AutoLoginPlanner.HasEnabledCandidates(Config.Characters) && !DalamudApi.ClientState.IsLoggedIn) {
             AutoLoginManager.Start();
         }
     }

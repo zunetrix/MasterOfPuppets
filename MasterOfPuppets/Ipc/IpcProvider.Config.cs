@@ -15,6 +15,9 @@ internal partial class IpcProvider {
         var configString = message.StringData[0];
         bool saveConfigAfterSync = bool.TryParse(message.StringData[1], out var parsed) && parsed;
         Plugin.Config.UpdateFromJson(configString);
+        if (!AutoLoginPlanner.HasEnabledCandidates(Plugin.Config.Characters))
+            Plugin.AutoLoginManager.Stop();
+
         if (saveConfigAfterSync)
             Plugin.Config.Save();
     }

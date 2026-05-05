@@ -6,6 +6,36 @@ namespace MasterOfPuppetsTests;
 
 public class AutoLoginPlannerTests {
     [Fact]
+    public void BuildCandidates_RequiresEnabledValidCharacters() {
+        var candidates = AutoLoginPlanner.BuildCandidates([
+            new Character { Cid = 1, Name = "Disabled Character@Diabolos", AutoLoginEnabled = false },
+            new Character { Cid = 2, Name = "   ", AutoLoginEnabled = true },
+            new Character { Cid = 3, Name = "Enabled Character@Golem", AutoLoginEnabled = true },
+        ]);
+
+        var candidate = Assert.Single(candidates);
+        Assert.Equal(3UL, candidate.ContentId);
+        Assert.Equal("Enabled Character", candidate.Name);
+        Assert.Equal("Golem", candidate.HomeWorldName);
+    }
+
+    [Fact]
+    public void HasEnabledCandidates_ReturnsFalseWithoutEnabledValidCharacter() {
+        Assert.False(AutoLoginPlanner.HasEnabledCandidates([]));
+        Assert.False(AutoLoginPlanner.HasEnabledCandidates([
+            new Character { Cid = 1, Name = "Disabled Character@Diabolos", AutoLoginEnabled = false },
+            new Character { Cid = 2, Name = "", AutoLoginEnabled = true },
+        ]));
+    }
+
+    [Fact]
+    public void HasEnabledCandidates_ReturnsTrueForEnabledValidCharacter() {
+        Assert.True(AutoLoginPlanner.HasEnabledCandidates([
+            new Character { Cid = 1, Name = "Enabled Character@Diabolos", AutoLoginEnabled = true },
+        ]));
+    }
+
+    [Fact]
     public void FromCharacter_StripsStoredWorldName() {
         var candidate = AutoLoginCandidate.FromCharacter(new Character {
             Cid = 42,
