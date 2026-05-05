@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
 
@@ -85,8 +86,45 @@ public class FormationMacroGeneratorTests {
 
         Assert.Equal(3, macro.Commands.Count);
         var lines = macro.Commands[0].Actions.Split('\n');
-        Assert.Equal("/mopmoverelativeto 0.00 0.00 -2.00 \"Origin Character@World\" -180.00", lines[0]);
+        Assert.Equal("/mopmoverelativeto 0.00 0.00 -2.00 \"Origin Character@World\" 0.00", lines[0]);
         Assert.DoesNotContain("/mopformationmove", macro.Commands[0].Actions);
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_GeneratedShapeStyleMovement_CanFaceAnchorNorth() {
+        var formation = new Formation {
+            Points = FormationShapeGenerator.Generate(new FormationShapeSpec {
+                Type = FormationShapeType.Circle,
+                Count = 4,
+                Radius = 2f,
+                AnchorMode = FormationShapeAnchorMode.AnchorAtCenter,
+                AssignedCids = [100, 101, 102, 103],
+            }),
+        };
+
+        var macro = FormationMacroGenerator.GenerateLoopMacro(formation, new FormationMacroGeneratorOptions {
+            OriginReference = "Origin Character@World",
+            TransformRelativeMovesByOriginRotation = true,
+            EmitRelativeMoveFacing = true,
+            EmitAnchorFacingNorth = true,
+            OriginRotationRadians = 0f,
+        });
+
+        Assert.Equal(4, macro.Commands.Count);
+        Assert.Equal([100UL], macro.Commands[0].Cids);
+        Assert.Equal("/mopfaceabs 0\n/moploop", macro.Commands[0].Actions);
+        Assert.Equal([101UL], macro.Commands[1].Cids);
+        Assert.Contains("/mopmoverelativeto", macro.Commands[1].Actions);
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_GeneratedShapeStyleMovement_InwardFacesTowardCenter() {
+        AssertGeneratedCircleFacing(FormationShapeFaceMode.Inward, shouldFaceTowardCenter: true);
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_GeneratedShapeStyleMovement_OutwardFacesAwayFromCenter() {
+        AssertGeneratedCircleFacing(FormationShapeFaceMode.Outward, shouldFaceTowardCenter: false);
     }
 
     [Fact]
@@ -545,6 +583,52 @@ public class FormationMacroGeneratorTests {
         Assert.Equal("/moptarget \"Character 1@World\"", lines[0]);
         Assert.Equal("/moptarget \"Character 6@World\"", lines[3]);
         Assert.Equal("/moptarget \"Character 4@World\"", lines[6]);
+    }
+
+    private static void AssertGeneratedCircleFacing(FormationShapeFaceMode faceMode, bool shouldFaceTowardCenter) {
+        foreach (var originRotation in new[] { 0f, MathF.PI / 2f, MathF.PI, -MathF.PI / 2f }) {
+            var formation = new Formation {
+                Points = FormationShapeGenerator.Generate(new FormationShapeSpec {
+                    Type = FormationShapeType.Circle,
+                    Count = 5,
+                    Radius = 2f,
+                    AnchorMode = FormationShapeAnchorMode.AnchorAtCenter,
+                    FaceMode = faceMode,
+                    AssignedCids = [100, 101, 102, 103, 104],
+                }),
+            };
+
+            var macro = FormationMacroGenerator.GenerateLoopMacro(formation, new FormationMacroGeneratorOptions {
+                OriginReference = "Origin",
+                TransformRelativeMovesByOriginRotation = true,
+                EmitRelativeMoveFacing = true,
+                OriginRotationRadians = originRotation,
+            });
+
+            foreach (var command in macro.Commands) {
+                var line = command.Actions.Split('\n')[0];
+                var (offset, facingDegrees) = ParseRelativeMove(line);
+                var desiredDirection = Vector3.Normalize(shouldFaceTowardCenter ? -offset : offset);
+                var facingDirection = facingDegrees.Degrees().ToDirectionXZ();
+                var dot = Vector3.Dot(desiredDirection, facingDirection);
+
+                Assert.True(
+                    dot > 0.999f,
+                    $"Expected {faceMode} command '{line}' at origin rotation {originRotation} to face {(shouldFaceTowardCenter ? "toward" : "away from")} center; dot={dot}.");
+            }
+        }
+    }
+
+    private static (Vector3 Offset, float FacingDegrees) ParseRelativeMove(string line) {
+        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal("/mopmoverelativeto", parts[0]);
+
+        return (
+            new Vector3(
+                float.Parse(parts[1], CultureInfo.InvariantCulture),
+                float.Parse(parts[2], CultureInfo.InvariantCulture),
+                float.Parse(parts[3], CultureInfo.InvariantCulture)),
+            float.Parse(parts[^1], CultureInfo.InvariantCulture));
     }
 
     private static Formation BuildEightPointFormation() {

@@ -411,6 +411,9 @@ public partial class MacroEditorWindow {
                 PetReverse = _macroGenPetReverse,
                 TransformRelativeMovesByOriginRotation = _macroGenSource == 1 && _macroGenMode != (int)FormationMacroGeneratorMode.PetPlacement,
                 EmitRelativeMoveFacing = _macroGenSource == 1 && _macroGenMode != (int)FormationMacroGeneratorMode.PetPlacement,
+                EmitAnchorFacingNorth = _macroGenSource == 1
+                    && _macroGenMode != (int)FormationMacroGeneratorMode.PetPlacement
+                    && _macroGenShapeAnchorMode == (int)FormationShapeAnchorMode.AnchorAtCenter,
                 OriginRotationRadians = GetLocalPlayerRotation() ?? 0f,
             },
             Plugin.Config.CidsGroups,

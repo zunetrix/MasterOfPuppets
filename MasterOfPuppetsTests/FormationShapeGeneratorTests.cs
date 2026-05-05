@@ -124,6 +124,7 @@ public class FormationShapeGeneratorTests {
         AssertAngleClose(-90f, points[2].Angle);
         AssertAngleClose(180f, points[3].Angle);
         AssertAngleClose(90f, points[4].Angle);
+        AssertAngleClose(0f, points[0].Angle);
     }
 
     [Fact]
@@ -140,6 +141,29 @@ public class FormationShapeGeneratorTests {
         AssertAngleClose(90f, points[2].Angle);
         AssertAngleClose(0f, points[3].Angle);
         AssertAngleClose(-90f, points[4].Angle);
+        AssertAngleClose(0f, points[0].Angle);
+    }
+
+    [Fact]
+    public void AnchorAtCenter_UsesNeutralFacing_ForInwardAndOutward() {
+        var inward = FormationShapeGenerator.Generate(new FormationShapeSpec {
+            Type = FormationShapeType.Circle,
+            Count = 5,
+            Radius = 2f,
+            AnchorMode = FormationShapeAnchorMode.AnchorAtCenter,
+            FaceMode = FormationShapeFaceMode.Inward,
+        });
+        var outward = FormationShapeGenerator.Generate(new FormationShapeSpec {
+            Type = FormationShapeType.Circle,
+            Count = 5,
+            Radius = 2f,
+            AnchorMode = FormationShapeAnchorMode.AnchorAtCenter,
+            FaceMode = FormationShapeFaceMode.Outward,
+        });
+
+        AssertAngleClose(0f, inward[0].Angle);
+        AssertAngleClose(0f, outward[0].Angle);
+        AssertAngleClose(180f, FormationMath.NormalizeDegrees(outward[1].Angle - inward[1].Angle));
     }
 
     [Fact]
