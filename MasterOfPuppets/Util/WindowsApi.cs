@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -136,4 +137,44 @@ public static class WindowsApi {
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool IsZoomed(IntPtr hWnd);
+
+    // Multi-monitor enumeration
+    public delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MONITORINFO {
+        public uint cbSize;
+        public RECT rcMonitor; // full monitor bounds
+        public RECT rcWork;    // work area (excludes taskbar)
+        public uint dwFlags;
+    }
+
+    public const uint MONITORINFOF_PRIMARY = 0x00000001;
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+    /// <summary>Returns all monitors, primary monitor first.</summary>
+    public static List<MONITORINFO> EnumerateMonitors() {
+        var list = new List<MONITORINFO>();
+        EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (hMonitor, hdc, ref rect, data) => {
+            var info = new MONITORINFO { cbSize = (uint)Marshal.SizeOf<MONITORINFO>() };
+            if (GetMonitorInfo(hMonitor, ref info))
+                list.Add(info);
+            return true;
+        }, IntPtr.Zero);
+        // Sort primary first, then left-to-right
+        list.Sort((a, b) => {
+            bool ap = (a.dwFlags & MONITORINFOF_PRIMARY) != 0;
+            bool bp = (b.dwFlags & MONITORINFOF_PRIMARY) != 0;
+            if (ap != bp) return ap ? -1 : 1;
+            return a.rcMonitor.Left.CompareTo(b.rcMonitor.Left);
+        });
+        return list;
+    }
 }

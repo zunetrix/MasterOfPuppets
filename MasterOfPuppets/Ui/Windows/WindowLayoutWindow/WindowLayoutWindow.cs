@@ -29,6 +29,7 @@ public partial class WindowLayoutWindow : Window {
     private int _dragStartY;
     private int _dragStartW;
     private int _dragStartH;
+    private int _selectedMonitorTab = 0;
 
     // Right panel state
     private readonly ImGuiComboSearch _charCombo = new();

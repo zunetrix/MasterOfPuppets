@@ -1,6 +1,4 @@
 using System;
-using System.Diagnostics;
-using System.Linq;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
@@ -23,7 +21,7 @@ public partial class WindowLayoutWindow {
 
         if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Plus, "##wladdslot", "Add slot")) {
             var slot = new WindowLayoutSlot { X = 0, Y = 0, Width = 960, Height = 540 };
-            layout!.Slots.Add(slot);
+            layout.Slots.Add(slot);
             _selSlot = layout.Slots.Count - 1;
             Plugin.Config.Save();
             Plugin.IpcProvider.SyncConfiguration();
@@ -51,6 +49,7 @@ public partial class WindowLayoutWindow {
         ImGuiUtil.ToolTip("Generate a layout pattern like Tile, Stack, or Titlebar.");
 
         ImGui.EndDisabled();
+        // DrawGeneratePopup must stay outside tabs - popups are global
         DrawGeneratePopup();
 
         ImGui.Separator();
@@ -60,20 +59,62 @@ public partial class WindowLayoutWindow {
             return;
         }
 
-        //  Canvas
-        // Read master's current screen resolution for proportional preview
-        if (!WindowsApi.GetWindowRect(Process.GetCurrentProcess().MainWindowHandle, out var masterRect))
-            masterRect = new WindowsApi.RECT { Left = 0, Top = 0, Right = 1920, Bottom = 1080 };
+        // Enumerate monitors; fall back to primary work area if none detected
+        var monitors = WindowsApi.EnumerateMonitors();
+        if (monitors.Count == 0) {
+            GetSystemMetrics_TryGetScreenWorkArea(out var fb);
+            monitors.Add(new WindowsApi.MONITORINFO {
+                cbSize = 0,
+                rcMonitor = fb,
+                rcWork = fb,
+                dwFlags = WindowsApi.MONITORINFOF_PRIMARY,
+            });
+        }
 
-        // Try to get the primary screen working area via user32
-        GetSystemMetrics_TryGetScreenWorkArea(out var workArea);
-        int screenW = workArea.Width;
-        int screenH = workArea.Height;
-        int workLeft = workArea.Left;
-        int workTop = workArea.Top;
+        _selectedMonitorTab = Math.Clamp(_selectedMonitorTab, 0, monitors.Count - 1);
+
+        var slotColors = new uint[] {
+            0xFF4CAF83, 0xFF4C83AF, 0xFFAF834C, 0xFFAF4C83,
+            0xFF83AF4C, 0xFF4C4CAF, 0xFFAF4C4C, 0xFF4CAFAF,
+        };
+
+        if (monitors.Count > 1) {
+            if (ImGui.BeginTabBar("##wlmonitortabs")) {
+                for (int m = 0; m < monitors.Count; m++) {
+                    bool isPrimary = (monitors[m].dwFlags & WindowsApi.MONITORINFOF_PRIMARY) != 0;
+                    var mr = monitors[m].rcMonitor;
+                    string label = isPrimary
+                        ? $"Monitor {m + 1} (Primary)  {mr.Width}x{mr.Height}##wlmontab{m}"
+                        : $"Monitor {m + 1}  {mr.Width}x{mr.Height}##wlmontab{m}";
+                    if (ImGui.BeginTabItem(label)) {
+                        _selectedMonitorTab = m;
+                        DrawMonitorCanvas(layout, monitors[m], slotColors);
+                        ImGui.EndTabItem();
+                    }
+                }
+                ImGui.EndTabBar();
+            }
+        } else {
+            DrawMonitorCanvas(layout, monitors[0], slotColors);
+        }
+    }
+
+    private static bool SlotIntersectsMonitor(WindowLayoutSlot slot, WindowsApi.MONITORINFO mon) {
+        var r = mon.rcMonitor;
+        return slot.X < r.Right && slot.X + slot.Width > r.Left
+            && slot.Y < r.Bottom && slot.Y + slot.Height > r.Top;
+    }
+
+    private void DrawMonitorCanvas(WindowLayout layout, WindowsApi.MONITORINFO monitor, uint[] slotColors) {
+        int screenW = monitor.rcWork.Width;
+        int screenH = monitor.rcWork.Height;
+        int workLeft = monitor.rcWork.Left;
+        int workTop = monitor.rcWork.Top;
+        if (screenW <= 0) screenW = 1920;
+        if (screenH <= 0) screenH = 1080;
 
         var avail = ImGui.GetContentRegionAvail();
-        float aspect = screenW > 0 && screenH > 0 ? (float)screenW / screenH : 16f / 9f;
+        float aspect = (float)screenW / screenH;
         float canvasW = avail.X;
         float canvasH = canvasW / aspect;
         if (canvasH > avail.Y - 2) {
@@ -81,8 +122,8 @@ public partial class WindowLayoutWindow {
             canvasW = canvasH * aspect;
         }
 
-        float scaleX = screenW > 0 ? canvasW / screenW : canvasW / 1920f;
-        float scaleY = screenH > 0 ? canvasH / screenH : canvasH / 1080f;
+        float scaleX = canvasW / screenW;
+        float scaleY = canvasH / screenH;
 
         var canvasPos = ImGui.GetCursorScreenPos();
         var drawList = ImGui.GetWindowDrawList();
@@ -98,19 +139,20 @@ public partial class WindowLayoutWindow {
             ImGui.ColorConvertFloat4ToU32(new Vector4(0.5f, 0.5f, 0.5f, 1f)),
             $"{screenW}x{screenH}");
 
-        // Dummy reserves space without swallowing mouse input.
+        // Clip rendering to canvas bounds
+        drawList.PushClipRect(canvasPos, canvasPos + new Vector2(canvasW, canvasH), true);
+
+        // Dummy reserves the canvas space without stealing mouse focus
         ImGui.Dummy(new Vector2(canvasW, canvasH));
         if (ImGui.IsWindowHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && !ImGui.IsAnyItemHovered())
             _selSlot = -1;
 
-        // Draw slots
-        var slotColors = new uint[] {
-            0xFF4CAF83, 0xFF4C83AF, 0xFFAF834C, 0xFFAF4C83,
-            0xFF83AF4C, 0xFF4C4CAF, 0xFFAF4C4C, 0xFF4CAFAF,
-        };
-
         for (int i = 0; i < layout.Slots.Count; i++) {
             var slot = layout.Slots[i];
+
+            // Skip slots that live entirely on another monitor
+            if (!SlotIntersectsMonitor(slot, monitor)) continue;
+
             var color = slotColors[i % slotColors.Length];
             bool selected = i == _selSlot;
 
@@ -128,26 +170,16 @@ public partial class WindowLayoutWindow {
             drawList.AddRectFilled(slotMin, slotMax, fillColor);
             drawList.AddRect(slotMin, slotMax, borderColor, 0, ImDrawFlags.None, selected ? 2f : 1f);
 
-            // Label: slot number + associated CIDs
-            // var effectiveCids = slot.GetEffectiveCids(Plugin.Config.CidsGroups);
-            // var cidNames = effectiveCids
-            //     .Select(c => Plugin.Config.Characters.FirstOrDefault(ch => ch.Cid == c)?.Name ?? c.ToString("X8"))
-            //     .ToList();
             string label = $"#{i + 1}";
-            // if (cidNames.Count > 0) label += "\n" + string.Join(", ", cidNames.Take(2));
-            // if (cidNames.Count > 2) label += $"\n+{cidNames.Count - 2} more";
-
-            if (sw > 24 && sh > 14) {
-                drawList.AddText(slotMin + new Vector2(4, 3),
-                    0xFFFFFFFF, label);
-            }
+            if (sw > 24 && sh > 14)
+                drawList.AddText(slotMin + new Vector2(4, 3), 0xFFFFFFFF, label);
 
             // Resize handle (bottom-right corner)
             var handleSize = new Vector2(8f * ImGuiHelpers.GlobalScale, 8f * ImGuiHelpers.GlobalScale);
             var handleMin = slotMax - handleSize;
             drawList.AddRectFilled(handleMin, slotMax, borderColor);
 
-            // Hit-test with ImGui IDs
+            // Move button
             ImGui.SetCursorScreenPos(slotMin);
             ImGui.PushID(i * 2);
             ImGui.InvisibleButton("##wlslot", new Vector2(MathF.Max(sw - handleSize.X, 1), MathF.Max(sh, 1)));
@@ -174,7 +206,7 @@ public partial class WindowLayoutWindow {
             }
             ImGui.PopID();
 
-            // Resize handle button
+            // Resize button
             ImGui.SetCursorScreenPos(handleMin);
             ImGui.PushID(i * 2 + 1);
             ImGui.InvisibleButton("##wlresize", handleSize);
@@ -203,15 +235,10 @@ public partial class WindowLayoutWindow {
             ImGui.PopID();
         }
 
-        // Restore cursor below canvas
-        // ImGui.SetCursorScreenPos(canvasPos + new Vector2(0, canvasH + ImGui.GetStyle().ItemSpacing.Y));
-
-        // Slot info strip below canvas
-        // var selSlot = SelectedSlot;
-        // if (selSlot != null) {
-        //     ImGui.TextDisabled($"Slot #{_selSlot + 1}:  X={selSlot.X}  Y={selSlot.Y}  W={selSlot.Width}  H={selSlot.Height}");
-        // }
+        drawList.PopClipRect();
     }
+
+
 
     private int _layoutGenMode = 0; // 0 = Tile, 1 = Stack, 2 = Titlebar
 
@@ -241,7 +268,7 @@ public partial class WindowLayoutWindow {
         ImGui.Text("Generate slots automatically based on a pattern.");
         ImGui.Spacing();
 
-        ImGui.SetNextItemWidth(150);
+        ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
         ImGui.Combo("Pattern##wlgenmode", ref _layoutGenMode, "Grid (Tile)\0Cascade (Stack)\0Titlebar (Minimal)\0");
 
         ImGui.Spacing();
@@ -250,46 +277,46 @@ public partial class WindowLayoutWindow {
 
         if (_layoutGenMode == 0) {
             // Tile
-            ImGui.SetNextItemWidth(120);
+            ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
             ImGui.Combo("Division##wlgentilediv", ref _genTileMode, "Auto-Factorize\0Fixed Columns\0");
 
             if (_genTileMode == 1) {
-                ImGui.SetNextItemWidth(120);
+                ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
                 ImGui.InputInt("Columns##wltiledcols", ref _genTileColumns);
                 _genTileColumns = Math.Clamp(_genTileColumns, 1, 16);
             }
 
-            ImGui.SetNextItemWidth(120);
+            ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
             ImGui.Combo("Proportions##wlgentileasp", ref _genTileAspect, "Stretch to fit\0Keep Aspect (16:9)\0");
         } else if (_layoutGenMode == 1) {
             // Stack
             ImGui.TextDisabled("Base Window Size");
-            ImGui.SetNextItemWidth(80);
+            ImGui.SetNextItemWidth(80 * ImGuiHelpers.GlobalScale);
             ImGui.InputInt("Width##wlgenstackw", ref _genStackWidth);
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(80);
+            ImGui.SetNextItemWidth(80 * ImGuiHelpers.GlobalScale);
             ImGui.InputInt("Height##wlgenstackh", ref _genStackHeight);
 
             ImGui.TextDisabled("Cascade Offset");
-            ImGui.SetNextItemWidth(80);
+            ImGui.SetNextItemWidth(80 * ImGuiHelpers.GlobalScale);
             ImGui.InputInt("Offset X##wlgenstackx", ref _genStackOffsetX);
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(80);
+            ImGui.SetNextItemWidth(80 * ImGuiHelpers.GlobalScale);
             ImGui.InputInt("Offset Y##wlgenstacky", ref _genStackOffsetY);
         } else if (_layoutGenMode == 2) {
             // Titlebar
             ImGui.TextDisabled("Main Slot Size");
-            ImGui.SetNextItemWidth(80);
+            ImGui.SetNextItemWidth(80 * ImGuiHelpers.GlobalScale);
             ImGui.InputInt("Width##wlgentmainw", ref _genTitlebarMainWidth);
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(80);
+            ImGui.SetNextItemWidth(80 * ImGuiHelpers.GlobalScale);
             ImGui.InputInt("Height##wlgentmainh", ref _genTitlebarMainHeight);
 
             ImGui.TextDisabled("Alt Titlebar Size");
-            ImGui.SetNextItemWidth(80);
+            ImGui.SetNextItemWidth(80 * ImGuiHelpers.GlobalScale);
             ImGui.InputInt("Width##wlgentaltw", ref _genTitlebarWidth);
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(80);
+            ImGui.SetNextItemWidth(80 * ImGuiHelpers.GlobalScale);
             ImGui.InputInt("Height##wlgentalth", ref _genTitlebarHeight);
         }
 
