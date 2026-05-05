@@ -44,6 +44,18 @@ public readonly record struct AutoLoginLobbyEntry(
 public readonly record struct AutoLoginTarget(string CharacterName, string WorldName);
 
 public static class AutoLoginPlanner {
+    public static List<AutoLoginCandidate> BuildCandidates(IEnumerable<Character> characters) {
+        return characters
+            .Where(character => character.AutoLoginEnabled)
+            .Select(AutoLoginCandidate.FromCharacter)
+            .Where(candidate => candidate != null)
+            .Select(candidate => candidate!.Value)
+            .ToList();
+    }
+
+    public static bool HasEnabledCandidates(IEnumerable<Character> characters) =>
+        BuildCandidates(characters).Count > 0;
+
     public static List<string> BuildWorldQueue(
         IReadOnlyList<AutoLoginCandidate> candidates,
         IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,

@@ -70,7 +70,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
 
         _candidates = GetLoginCandidates();
         if (_candidates.Count == 0) {
-            DalamudApi.PluginLog.Warning("[AutoLogin] No enabled login characters configured.");
+            DalamudApi.PluginLog.Debug("[AutoLogin] Not starting: no enabled login characters configured.");
             return;
         }
 
@@ -129,6 +129,12 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             }
 
             if (DalamudApi.ClientState.IsLoggedIn) {
+                Stop();
+                return;
+            }
+
+            if (!AutoLoginPlanner.HasEnabledCandidates(_plugin.Config.Characters)) {
+                DalamudApi.PluginLog.Information("[AutoLogin] Stopping: no enabled login characters configured.");
                 Stop();
                 return;
             }
@@ -449,12 +455,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             : $"{candidate.Name}@{candidate.HomeWorldName}({candidate.ContentId})";
 
     private List<AutoLoginCandidate> GetLoginCandidates() {
-        return _plugin.Config.Characters
-            .Where(c => c.AutoLoginEnabled)
-            .Select(AutoLoginCandidate.FromCharacter)
-            .Where(c => c != null)
-            .Select(c => c!.Value)
-            .ToList();
+        return AutoLoginPlanner.BuildCandidates(_plugin.Config.Characters);
     }
 
     private void SetState(LoginState state) {

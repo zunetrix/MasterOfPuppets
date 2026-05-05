@@ -199,7 +199,7 @@ public class CharactersWindow : Window {
                 Plugin.IpcProvider.SyncConfiguration();
                 if (loginEnabled && !DalamudApi.ClientState.IsLoggedIn)
                     Plugin.AutoLoginManager.Start();
-                else if (!Plugin.Config.Characters.Any(c => c.AutoLoginEnabled))
+                else if (!AutoLoginPlanner.HasEnabledCandidates(Plugin.Config.Characters))
                     Plugin.AutoLoginManager.Stop();
             }
             ImGuiUtil.ToolTip("Use this character for title-screen auto-login.");
