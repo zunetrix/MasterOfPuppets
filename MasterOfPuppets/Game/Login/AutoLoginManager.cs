@@ -9,6 +9,7 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin.Services;
 
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
@@ -17,6 +18,8 @@ using InteropGenerator.Runtime;
 namespace MasterOfPuppets;
 
 internal sealed unsafe class AutoLoginManager : IDisposable {
+    private readonly record struct WorldSelectorSnapshot(List<AutoLoginWorldEntry> Worlds, bool UsedAddonWorldEntries, int SelectedWorldIndex);
+
     private enum LoginState {
         Idle,
         WaitingTitleMenu,
@@ -166,7 +169,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
     }
 
     private void HandleWaitingTitleMenu() {
-        if (!GameDialogManager.IsAddonVisible("_TitleMenu"))
+        if (!IsTitleMenuReadyForAutoLogin())
             return;
 
         if (SendTitleAction("_TitleMenu", 3, 4)) {
@@ -188,22 +191,29 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             return;
         }
 
-        var visibleWorlds = WorldNames;
+        var worldSelectorSnapshot = ReadWorldSelectorSnapshot();
+        var visibleWorlds = worldSelectorSnapshot.Worlds;
         if (visibleWorlds.Count == 0)
             return;
 
         var lobbyEntries = ReadLobbyEntries();
-        LogWorldSelectorSnapshot(visibleWorlds, lobbyEntries);
+        LogWorldSelectorSnapshot(worldSelectorSnapshot, lobbyEntries);
         if (_worldQueue.Count == 0) {
-            _worldQueue = AutoLoginPlanner.BuildWorldQueue(_candidates, lobbyEntries, visibleWorlds);
+            var currentLobbyWorlds = GetCurrentLobbyWorlds(lobbyEntries);
+            var queueResult = AutoLoginPlanner.BuildWorldQueueWithDiagnostics(_candidates, lobbyEntries, visibleWorlds, currentLobbyWorlds);
+            _worldQueue = queueResult.Worlds;
             _worldIndex = 0;
+            DalamudApi.PluginLog.Debug(
+                $"[AutoLogin] World selector source: {(worldSelectorSnapshot.UsedAddonWorldEntries ? "AddonCharaSelectWorldServer.WorldEntries" : "StringArrays[1] fallback")}; selectedWorldIndex={worldSelectorSnapshot.SelectedWorldIndex}; currentLobbyWorlds=[{(currentLobbyWorlds.Count == 0 ? "<empty>" : string.Join(", ", currentLobbyWorlds))}].");
+            foreach (var diagnostic in queueResult.Diagnostics)
+                DalamudApi.PluginLog.Debug($"[AutoLogin] World scan diagnostic: {diagnostic}");
             DalamudApi.PluginLog.Information(
-                $"[AutoLogin] World scan queue (lobby current worlds first, then visible fallback): {(_worldQueue.Count == 0 ? "<empty>" : string.Join(", ", _worldQueue))}.");
+                $"[AutoLogin] World scan queue (lobby current worlds first, then configured home worlds, then visible fallback): {(_worldQueue.Count == 0 ? "<empty>" : string.Join(", ", _worldQueue))}.");
         }
 
         if (_worldQueue.Count == 0) {
             DalamudApi.PluginLog.Warning("[AutoLogin] Could not build an auto-login world scan queue.");
-            DalamudApi.PluginLog.Warning($"[AutoLogin] World selector snapshot: worlds={visibleWorlds.Count} [{Preview(visibleWorlds)}]; lobby={FormatLobbySnapshot(lobbyEntries)}; candidates=[{string.Join(", ", _candidates.Select(FormatCandidate))}]");
+            DalamudApi.PluginLog.Warning($"[AutoLogin] World selector snapshot: worlds={visibleWorlds.Count} [{FormatWorldSelectorSnapshot(visibleWorlds)}]; lobby={FormatLobbySnapshot(lobbyEntries)}; candidates=[{string.Join(", ", _candidates.Select(FormatCandidate))}]");
             Stop();
             return;
         }
@@ -372,7 +382,8 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
     }
 
     private string BuildStateDiagnostics() {
-        var worldNames = TryReadList(() => WorldNames);
+        var worldSelectorSnapshot = TryRead(() => ReadWorldSelectorSnapshot());
+        var worldSelectorWorlds = worldSelectorSnapshot.Worlds ?? [];
         var characterNames = TryReadList(() => CharacterNames);
         var lobbyEntries = TryReadList(ReadLobbyEntries);
 
@@ -382,7 +393,9 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             $"{FormatAddonState("_CharaSelectWorldServer")}; " +
             $"{FormatAddonState("_CharaSelectListMenu")}; " +
             $"{FormatAddonState(GameDialogManager.AddonName.SelectYesno)}; " +
-            $"worlds={worldNames.Count} [{Preview(worldNames)}]; " +
+            $"worldSelectorSource={(worldSelectorSnapshot.UsedAddonWorldEntries ? "WorldEntries" : "StringArrayFallback")}; " +
+            $"selectedWorldIndex={worldSelectorSnapshot.SelectedWorldIndex}; " +
+            $"worlds={worldSelectorWorlds.Count} [{FormatWorldSelectorSnapshot(worldSelectorWorlds)}]; " +
             $"characters={characterNames.Count} [{Preview(characterNames)}]; " +
             $"lobbyEntries={lobbyEntries.Count} [{FormatLobbySnapshot(lobbyEntries)}]; " +
             $"worldQueueIndex={_worldIndex}; worldQueue=[{string.Join(", ", _worldQueue)}]; " +
@@ -390,13 +403,13 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             $"candidates=[{string.Join(", ", _candidates.Select(FormatCandidate))}]";
     }
 
-    private void LogWorldSelectorSnapshot(IReadOnlyList<string> worldNames, IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
+    private void LogWorldSelectorSnapshot(WorldSelectorSnapshot snapshot, IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
         if (_loggedWorldSelectorSnapshot)
             return;
 
         _loggedWorldSelectorSnapshot = true;
         DalamudApi.PluginLog.Debug(
-            $"[AutoLogin] World selector snapshot: worlds={worldNames.Count} [{Preview(worldNames)}]; lobbyEntries={lobbyEntries.Count} [{FormatLobbySnapshot(lobbyEntries)}].");
+            $"[AutoLogin] World selector snapshot: source={(snapshot.UsedAddonWorldEntries ? "WorldEntries" : "StringArrayFallback")}; selectedWorldIndex={snapshot.SelectedWorldIndex}; worlds={snapshot.Worlds.Count} [{FormatWorldSelectorSnapshot(snapshot.Worlds)}]; lobbyEntries={lobbyEntries.Count} [{FormatLobbySnapshot(lobbyEntries)}].");
     }
 
     private void LogCharacterListSnapshot(IReadOnlyList<string> characterNames, IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
@@ -424,6 +437,14 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         }
     }
 
+    private static T TryRead<T>(Func<T> read) where T : struct {
+        try {
+            return read();
+        } catch {
+            return default;
+        }
+    }
+
     private static string Preview(IReadOnlyList<string> values) =>
         string.Join(", ", values.Take(8));
 
@@ -432,6 +453,18 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             return "<empty>";
 
         return string.Join("; ", entries.Select(FormatLobbyEntry));
+    }
+
+    private static string FormatWorldSelectorSnapshot(IReadOnlyList<AutoLoginWorldEntry> entries) {
+        if (entries.Count == 0)
+            return "<empty>";
+
+        return string.Join("; ", entries.Take(16).Select(FormatWorldSelectorEntry));
+    }
+
+    private static string FormatWorldSelectorEntry(AutoLoginWorldEntry entry) {
+        var countText = entry.CharacterCount == null ? "unknown" : entry.CharacterCount.ToString();
+        return $"idx={entry.SelectorIndex} id={entry.WorldId} name=\"{LogValue(entry.Name)}\" count={countText}";
     }
 
     private static string FormatLobbyEntry(AutoLoginLobbyEntry entry, int index) {
@@ -471,7 +504,8 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
     }
 
     private static bool SelectWorld(string worldName, out int index) {
-        index = WorldNames.FindIndex(i => i.Equals(worldName, StringComparison.InvariantCultureIgnoreCase));
+        var entry = ReadWorldSelectorSnapshot().Worlds.FirstOrDefault(i => i.Name.Equals(worldName, StringComparison.InvariantCultureIgnoreCase));
+        index = entry.Name == null ? -1 : entry.SelectorIndex;
         if (index < 0)
             return false;
 
@@ -540,6 +574,17 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         return true;
     }
 
+    private static WorldSelectorSnapshot ReadWorldSelectorSnapshot() {
+        var addonWorldEntries = ReadWorldSelectorEntries();
+        if (addonWorldEntries.Count > 0)
+            return new WorldSelectorSnapshot(addonWorldEntries, true, SelectedWorldIndex);
+
+        var fallbackEntries = WorldNames
+            .Select((world, index) => new AutoLoginWorldEntry(world, 0, index, null))
+            .ToList();
+        return new WorldSelectorSnapshot(fallbackEntries, false, SelectedWorldIndex);
+    }
+
     private static List<string> WorldNames {
         get {
             var result = new List<string>();
@@ -551,6 +596,29 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             }
             return result;
         }
+    }
+
+    private static List<AutoLoginWorldEntry> ReadWorldSelectorEntries() {
+        if (!GameDialogManager.IsAddonOpen("_CharaSelectWorldServer"))
+            return [];
+
+        var addonAddress = DalamudApi.GameGui.GetAddonByName("_CharaSelectWorldServer", 1).Address;
+        if (addonAddress == 0)
+            return [];
+
+        var addon = (AddonCharaSelectWorldServer*)addonAddress;
+        var entries = addon->WorldEntries;
+        var result = new List<AutoLoginWorldEntry>((int)entries.Count);
+        for (var i = 0; i < entries.Count; i++) {
+            var entry = entries[i];
+            var name = entry.DisplayName.ToString();
+            if (string.IsNullOrWhiteSpace(name))
+                continue;
+
+            result.Add(new AutoLoginWorldEntry(name, entry.WorldId, i, checked((int)entry.CharacterCount)));
+        }
+
+        return result;
     }
 
     private static List<string> CharacterNames {
@@ -601,12 +669,51 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         }
     }
 
+    private static int SelectedWorldIndex {
+        get {
+            var numberArray = NumberArrays[2];
+            return numberArray == null ? -1 : numberArray->IntArray[167];
+        }
+    }
+
     private static string ReadStringArray(int arrayIndex, int stringIndex) {
         var stringArray = StringArrays[arrayIndex];
         if (stringArray == null || stringIndex < 0 || stringIndex >= stringArray->Size)
             return string.Empty;
 
         return (*(CStringPointer*)((byte*)stringArray->StringArray + stringIndex * (nint)Unsafe.SizeOf<CStringPointer>())).ToString();
+    }
+
+    private static bool IsTitleMenuReadyForAutoLogin() {
+        if (DalamudApi.ClientState.IsLoggedIn || DalamudApi.Condition.Any())
+            return false;
+
+        if (GameDialogManager.IsAddonOpen("TitleDCWorldMap") || GameDialogManager.IsAddonOpen("TitleConnect"))
+            return false;
+
+        var titleAddress = DalamudApi.GameGui.GetAddonByName("_TitleMenu", 1).Address;
+        if (titleAddress == 0)
+            return false;
+
+        var title = (AtkUnitBase*)titleAddress;
+        return title->IsVisible
+               && title->IsReady
+               && title->UldManager.NodeListCount > 3
+               && title->UldManager.NodeList[3] != null
+               && title->UldManager.NodeList[3]->Color.A == 0xFF;
+    }
+
+    private static List<string> GetCurrentLobbyWorlds(IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
+        var result = new List<string>();
+        foreach (var entry in lobbyEntries) {
+            if (string.IsNullOrWhiteSpace(entry.CurrentWorldName) ||
+                result.Contains(entry.CurrentWorldName, StringComparer.InvariantCultureIgnoreCase))
+                continue;
+
+            result.Add(entry.CurrentWorldName);
+        }
+
+        return result;
     }
 
     public void Dispose() {
