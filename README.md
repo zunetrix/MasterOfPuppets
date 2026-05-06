@@ -185,6 +185,7 @@ Notes:
  - https://github.com/BoxuChan/RenderManager
  - https://github.com/Knightmore/game-reversing
  - https://github.com/Knightmore/Henchman
+ - https://github.com/Jaksuhn/ffxiv-bundleoftweaks
 
 # Game Sheet Preview
  - https://exd.camora.dev

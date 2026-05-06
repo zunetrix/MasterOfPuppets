@@ -266,6 +266,7 @@ public class PluginCommandManager : IDisposable {
                     Plugin.IpcProvider.Follow(DalamudApi.PlayerState.EntityId);
                     break;
                 case "stopfollow":
+                case "unfollow":
                     Plugin.IpcProvider.StopFollow();
                     break;
                 case "movetotarget":
