@@ -82,13 +82,112 @@ public class AutoLoginPlannerTests {
     }
 
     [Fact]
-    public void BuildWorldQueue_DoesNotUseConfiguredHomeWorldForSelection() {
+    public void BuildWorldQueue_UsesVisibleConfiguredHomeWorldBeforeFallback() {
         var queue = AutoLoginPlanner.BuildWorldQueue(
             [new AutoLoginCandidate(42, "Test Character", "Halicarnassus")],
             [],
             ["Diabolos", "Halicarnassus"]);
 
+        Assert.Equal(["Halicarnassus", "Diabolos"], queue);
+    }
+
+    [Fact]
+    public void BuildWorldQueue_UsesLobbyCurrentWorldBeforeConfiguredHomeWorld() {
+        var queue = AutoLoginPlanner.BuildWorldQueue(
+            [new AutoLoginCandidate(42, "Test Character", "Diabolos")],
+            [LobbyEntry(42, "Test Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos")],
+            [
+                World("Diabolos", characterCount: 1),
+                World("Halicarnassus", characterCount: 1),
+                World("Cuchulainn", characterCount: 1),
+            ]);
+
+        Assert.Equal(["Halicarnassus", "Diabolos", "Cuchulainn"], queue);
+    }
+
+    [Fact]
+    public void BuildWorldQueue_SkipsConfiguredHomeWorldWhenSelectorCountIsZero() {
+        var queue = AutoLoginPlanner.BuildWorldQueue(
+            [new AutoLoginCandidate(42, "Test Character", "Halicarnassus")],
+            [],
+            [
+                World("Diabolos", characterCount: 1),
+                World("Halicarnassus", characterCount: 0),
+            ]);
+
+        Assert.Equal(["Diabolos"], queue);
+    }
+
+    [Fact]
+    public void BuildWorldQueue_SkipsZeroCountFallbackWorlds() {
+        var queue = AutoLoginPlanner.BuildWorldQueue(
+            [new AutoLoginCandidate(42, "Test Character", "Golem")],
+            [],
+            [
+                World("Diabolos", characterCount: 0),
+                World("Halicarnassus", characterCount: 2),
+            ]);
+
+        Assert.Equal(["Halicarnassus"], queue);
+    }
+
+    [Fact]
+    public void BuildWorldQueue_DoesNotSkipFallbackWorldsWithUnknownCounts() {
+        var queue = AutoLoginPlanner.BuildWorldQueue(
+            [new AutoLoginCandidate(42, "Test Character", "Golem")],
+            [],
+            [
+                World("Diabolos", characterCount: null),
+                World("Halicarnassus", characterCount: null),
+            ]);
+
         Assert.Equal(["Diabolos", "Halicarnassus"], queue);
+    }
+
+    [Fact]
+    public void BuildWorldQueueWithDiagnostics_ReportsHomeShortcutAndZeroCountSkips() {
+        var result = AutoLoginPlanner.BuildWorldQueueWithDiagnostics(
+            [new AutoLoginCandidate(42, "Test Character", "Halicarnassus")],
+            [],
+            [
+                World("Diabolos", characterCount: 1),
+                World("Halicarnassus", characterCount: 0),
+            ]);
+
+        Assert.Equal(["Diabolos"], result.Worlds);
+        Assert.Contains(result.Diagnostics, i => i.Contains("configured home world", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Diagnostics, i => i.Contains("0 characters", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void BuildWorldQueueWithDiagnostics_SkipsCurrentLobbyWorldFromFallbackWhenNoCandidateMatches() {
+        var result = AutoLoginPlanner.BuildWorldQueueWithDiagnostics(
+            [new AutoLoginCandidate(42, "Test Character", "Golem")],
+            [LobbyEntry(100, "Other Character", currentWorld: "Goblin", homeWorld: "Golem")],
+            [
+                World("Diabolos", characterCount: null),
+                World("Goblin", characterCount: null),
+                World("Mateus", characterCount: null),
+            ],
+            ["Goblin"]);
+
+        Assert.Equal(["Diabolos", "Mateus"], result.Worlds);
+        Assert.Contains(result.Diagnostics, i => i.Contains("already loaded as the current lobby world", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void BuildWorldQueueWithDiagnostics_KeepsCurrentLobbyWorldWhenMatchingCandidateQueuedIt() {
+        var result = AutoLoginPlanner.BuildWorldQueueWithDiagnostics(
+            [new AutoLoginCandidate(42, "Test Character", "Golem")],
+            [LobbyEntry(42, "Test Character", currentWorld: "Goblin", homeWorld: "Golem")],
+            [
+                World("Goblin", characterCount: null),
+                World("Diabolos", characterCount: null),
+            ],
+            ["Goblin"]);
+
+        Assert.Equal(["Goblin", "Diabolos"], result.Worlds);
+        Assert.Contains(result.Diagnostics, i => i.Contains("lobby current world", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -228,4 +327,7 @@ public class AutoLoginPlannerTests {
             0,
             string.Empty,
             currentWorld);
+
+    private static AutoLoginWorldEntry World(string name, int? characterCount) =>
+        new(name, 0, 0, characterCount);
 }

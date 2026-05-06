@@ -41,6 +41,10 @@ public readonly record struct AutoLoginLobbyEntry(
     string RawJson,
     string ClientSelectWorldName);
 
+public readonly record struct AutoLoginWorldEntry(string Name, ushort WorldId, int SelectorIndex, int? CharacterCount);
+
+public readonly record struct AutoLoginWorldQueueResult(List<string> Worlds, List<string> Diagnostics);
+
 public readonly record struct AutoLoginTarget(string CharacterName, string WorldName);
 
 public static class AutoLoginPlanner {
@@ -59,22 +63,67 @@ public static class AutoLoginPlanner {
     public static List<string> BuildWorldQueue(
         IReadOnlyList<AutoLoginCandidate> candidates,
         IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
-        IReadOnlyList<string> visibleWorlds) {
+        IReadOnlyList<AutoLoginWorldEntry> visibleWorlds) =>
+        BuildWorldQueueWithDiagnostics(candidates, lobbyEntries, visibleWorlds).Worlds;
+
+    public static List<string> BuildWorldQueue(
+        IReadOnlyList<AutoLoginCandidate> candidates,
+        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
+        IReadOnlyList<string> visibleWorlds) =>
+        BuildWorldQueue(
+            candidates,
+            lobbyEntries,
+            visibleWorlds.Select((world, index) => new AutoLoginWorldEntry(world, 0, index, null)).ToList());
+
+    public static AutoLoginWorldQueueResult BuildWorldQueueWithDiagnostics(
+        IReadOnlyList<AutoLoginCandidate> candidates,
+        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
+        IReadOnlyList<AutoLoginWorldEntry> visibleWorlds,
+        IReadOnlyCollection<string>? fallbackWorldsToSkip = null) {
         var worldQueue = new List<string>();
-        var visibleWorldSet = visibleWorlds.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
+        var diagnostics = new List<string>();
+        var visibleWorldMap = BuildVisibleWorldMap(visibleWorlds);
+        var fallbackWorldSkipSet = BuildWorldSet(fallbackWorldsToSkip);
 
         foreach (var candidate in candidates) {
             var entry = FindCandidateEntry(candidate, lobbyEntries);
-            if (entry == null)
+            if (entry == null) {
+                diagnostics.Add($"No lobby current-world entry for {FormatCandidate(candidate)}.");
                 continue;
+            }
 
-            AddWorld(worldQueue, visibleWorldSet, entry.Value.CurrentWorldName);
+            AddWorld(
+                worldQueue,
+                diagnostics,
+                visibleWorldMap,
+                entry.Value.CurrentWorldName,
+                $"lobby current world for {FormatCandidate(candidate)}");
         }
 
-        foreach (var world in visibleWorlds)
-            AddWorld(worldQueue, visibleWorldSet, world);
+        foreach (var candidate in candidates) {
+            AddWorld(
+                worldQueue,
+                diagnostics,
+                visibleWorldMap,
+                candidate.HomeWorldName,
+                $"configured home world for {FormatCandidate(candidate)}");
+        }
 
-        return worldQueue;
+        foreach (var world in visibleWorlds) {
+            if (fallbackWorldSkipSet.Contains(world.Name)) {
+                diagnostics.Add($"Skipped visible fallback '{world.Name}' at selector index {world.SelectorIndex}: already loaded as the current lobby world.");
+                continue;
+            }
+
+            AddWorld(
+                worldQueue,
+                diagnostics,
+                visibleWorldMap,
+                world.Name,
+                "visible fallback");
+        }
+
+        return new AutoLoginWorldQueueResult(worldQueue, diagnostics);
     }
 
     public static bool TryResolveDirectCharacterListTarget(
@@ -167,11 +216,64 @@ public static class AutoLoginPlanner {
         return null;
     }
 
-    private static void AddWorld(List<string> worldQueue, HashSet<string> visibleWorldSet, string worldName) {
-        if (string.IsNullOrWhiteSpace(worldName) || !visibleWorldSet.Contains(worldName))
-            return;
+    private static Dictionary<string, AutoLoginWorldEntry> BuildVisibleWorldMap(IReadOnlyList<AutoLoginWorldEntry> visibleWorlds) {
+        var result = new Dictionary<string, AutoLoginWorldEntry>(StringComparer.InvariantCultureIgnoreCase);
+        foreach (var world in visibleWorlds) {
+            if (string.IsNullOrWhiteSpace(world.Name) || result.ContainsKey(world.Name))
+                continue;
 
-        if (!worldQueue.Contains(worldName, StringComparer.InvariantCultureIgnoreCase))
-            worldQueue.Add(worldName);
+            result.Add(world.Name, world);
+        }
+
+        return result;
     }
+
+    private static HashSet<string> BuildWorldSet(IReadOnlyCollection<string>? worlds) {
+        var result = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+        if (worlds == null)
+            return result;
+
+        foreach (var world in worlds) {
+            if (!string.IsNullOrWhiteSpace(world))
+                result.Add(world);
+        }
+
+        return result;
+    }
+
+    private static void AddWorld(
+        List<string> worldQueue,
+        List<string> diagnostics,
+        IReadOnlyDictionary<string, AutoLoginWorldEntry> visibleWorldMap,
+        string worldName,
+        string source) {
+        if (string.IsNullOrWhiteSpace(worldName)) {
+            diagnostics.Add($"Skipped blank world from {source}.");
+            return;
+        }
+
+        if (!visibleWorldMap.TryGetValue(worldName, out var world)) {
+            diagnostics.Add($"Skipped {source} '{worldName}': not present in the world selector.");
+            return;
+        }
+
+        if (world.CharacterCount == 0) {
+            diagnostics.Add($"Skipped {source} '{world.Name}' at selector index {world.SelectorIndex}: selector reports 0 characters.");
+            return;
+        }
+
+        if (worldQueue.Contains(world.Name, StringComparer.InvariantCultureIgnoreCase)) {
+            diagnostics.Add($"Skipped {source} '{world.Name}' at selector index {world.SelectorIndex}: already queued.");
+            return;
+        }
+
+        worldQueue.Add(world.Name);
+        var countText = world.CharacterCount == null ? "an unknown number of" : world.CharacterCount.ToString();
+        diagnostics.Add($"Queued {source} '{world.Name}' at selector index {world.SelectorIndex} with {countText} characters.");
+    }
+
+    private static string FormatCandidate(AutoLoginCandidate candidate) =>
+        string.IsNullOrWhiteSpace(candidate.HomeWorldName)
+            ? $"{candidate.Name}({candidate.ContentId})"
+            : $"{candidate.Name}@{candidate.HomeWorldName}({candidate.ContentId})";
 }
