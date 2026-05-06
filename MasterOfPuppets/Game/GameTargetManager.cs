@@ -26,13 +26,8 @@ public static class GameTargetManager {
 
             foreach (var actor in DalamudApi.ObjectTable) {
                 if (actor == null) continue;
+                if (!actor.IsTargetable) continue;
                 if (!match(actor)) continue;
-
-                try {
-                    if (!((GameObject*)actor.Address)->GetIsTargetable()) continue;
-                } catch {
-                    continue;
-                }
 
                 var distSq = actor.DistanceSquaredTo(player);
                 if (distSq >= closestDistSq) continue;
@@ -81,6 +76,7 @@ public static class GameTargetManager {
 
             foreach (var actor in DalamudApi.ObjectTable) {
                 if (actor == null) continue;
+                if (!actor.IsTargetable) continue;
 
                 var lookupName = actor.Name.TextValue;
                 if (actor.ObjectKind == ObjectKind.Pc) {
@@ -88,13 +84,6 @@ public static class GameTargetManager {
                 }
 
                 if (!lookupName.Contains(assistName, StringComparison.InvariantCultureIgnoreCase)) continue;
-
-                try {
-                    if (!((GameObject*)actor.Address)->GetIsTargetable()) continue;
-                } catch {
-                    continue;
-                }
-
                 var distSq = actor.DistanceSquaredTo(player);
                 if (distSq >= closestDistSq) continue;
 
@@ -103,12 +92,7 @@ public static class GameTargetManager {
             }
 
             if (closestMatch?.TargetObject == null) return;
-
-            try {
-                if (!((GameObject*)closestMatch.TargetObject.Address)->GetIsTargetable()) return;
-            } catch {
-                return;
-            }
+            if (!closestMatch.IsTargetable) return;
 
             DalamudApi.PluginLog.Debug($"targeting: {closestMatch.TargetObject.Name.TextValue}");
             DalamudApi.TargetManager.Target = closestMatch.TargetObject;

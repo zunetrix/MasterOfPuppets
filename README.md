@@ -186,10 +186,12 @@ Notes:
  - https://github.com/Knightmore/game-reversing
  - https://github.com/Knightmore/Henchman
  - https://github.com/Jaksuhn/ffxiv-bundleoftweaks
+ - https://github.com/VeraNala/VIWI
 
 # Game Sheet Preview
  - https://exd.camora.dev
 
-## Sig maker
+## IDA Sig maker
  - https://github.com/A200K/IDA-Pro-SigMaker/releases
+ - https://github.com/mahmoudimus/ida-sigmaker
 

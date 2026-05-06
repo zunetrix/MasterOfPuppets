@@ -225,11 +225,12 @@ public class MovementManager : IDisposable {
     }
 
     //  Object lookup
-    public static unsafe Vector3? GetObjectPosition(string objectName) {
+    public static Vector3? GetObjectPosition(string objectName) {
         if (string.IsNullOrWhiteSpace(objectName)) return null;
 
         foreach (var actor in DalamudApi.ObjectTable) {
             if (actor == null) continue;
+            if (!actor.IsTargetable) continue;
 
             var name = actor.Name.TextValue;
             if (name.Length == 0) continue;
@@ -240,12 +241,6 @@ public class MovementManager : IDisposable {
                 name = $"{name}@{world.Name}";
 
             if (!name.Contains(objectName, StringComparison.InvariantCultureIgnoreCase)) continue;
-
-            try {
-                if (!((GameObjectStruct*)actor.Address)->GetIsTargetable()) continue;
-            } catch {
-                continue;
-            }
 
             return actor.Position;
         }
