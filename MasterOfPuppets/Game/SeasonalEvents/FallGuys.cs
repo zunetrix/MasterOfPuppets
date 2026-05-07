@@ -85,7 +85,7 @@ internal class FallGuys : SeasonalEventRunner {
         }
     }
 
-    private void OnChatMessage(IHandleableChatMessage message) {
+    private void OnChatMessage(IChatMessage message) {
         if (message.IsHandled)
             return;
 

@@ -187,6 +187,7 @@ Notes:
  - https://github.com/Knightmore/Henchman
  - https://github.com/Jaksuhn/ffxiv-bundleoftweaks
  - https://github.com/VeraNala/VIWI
+ - https://github.com/Infiziert90/ChatTwo
 
 # Game Sheet Preview
  - https://exd.camora.dev

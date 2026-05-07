@@ -75,7 +75,7 @@ internal class ChatWatcher : IDisposable {
     //     }
     // }
 
-    private void OnChatMessage(IHandleableChatMessage message) {
+    private void OnChatMessage(IChatMessage message) {
         if (!Plugin.Config.UseChatSync) return;
         if (message.IsHandled)
             return;

@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Linq;
 
@@ -22,6 +21,7 @@ public class Plugin : IDalamudPlugin {
     internal PluginCommandManager PluginCommandManager { get; }
     internal IpcProvider IpcProvider { get; }
     internal ChatWatcher ChatWatcher { get; }
+    // internal ChatLogMessageWatcher ChatLogMessageWatcher { get; }
     internal ItemMover ItemMover { get; }
     internal MacroHandler MacroHandler { get; }
     internal MacroManager MacroManager { get; }
@@ -46,6 +46,7 @@ public class Plugin : IDalamudPlugin {
         // Dalamud.Utility.Util.GetHostPlatform();
         IpcProvider = new IpcProvider(this, Dalamud.Utility.Util.IsWine() ? new LinuxIpcTransport() : new TinyIpcTransport());
         ChatWatcher = new ChatWatcher(this);
+        // ChatLogMessageWatcher = new ChatLogMessageWatcher(this);
         ItemMover = new ItemMover(this);
         MacroManager = new MacroManager(this);
         FormationManager = new FormationManager(this);
@@ -149,6 +150,7 @@ public class Plugin : IDalamudPlugin {
         GameCameraManager.Dispose();
         IpcProvider.Dispose();
         ChatWatcher.Dispose();
+        // ChatLogMessageWatcher.Dispose();
         ItemMover.Dispose();
         MacroHandler.Dispose();
         PluginCommandManager.Dispose();

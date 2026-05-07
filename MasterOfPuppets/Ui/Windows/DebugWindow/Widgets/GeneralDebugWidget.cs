@@ -90,19 +90,21 @@ public sealed class GeneralDebugWidget : Widget {
             DalamudApi.ShowNotification($"UseItem", NotificationType.Info, 5000);
         }
 
-        if (ImGuiUtil.SuccessButton("Enable Game Settings Debug")) {
-            GameSettingsManager.EnableDebug();
-        }
+        using (ImGuiGroupPanel.BeginGroupPanel("Game Settings")) {
+            if (ImGuiUtil.SuccessButton("Enable Game Settings Debug")) {
+                GameSettingsManager.EnableDebug();
+            }
 
-        if (ImGuiUtil.DangerButton("Disable Game Settings Debug")) {
-            GameSettingsManager.DisableDebug();
-        }
+            if (ImGuiUtil.DangerButton("Disable Game Settings Debug")) {
+                GameSettingsManager.DisableDebug();
+            }
 
-        if (ImGuiUtil.SuccessButton("Enable Keep game pad enabled when client is inactive")) {
-            GameSettingsManager.SetAlwaysInput(1);
-        }
-        if (ImGuiUtil.DangerButton("Disable Keep game pad enabled when client is inactive")) {
-            GameSettingsManager.SetAlwaysInput(0);
+            if (ImGuiUtil.SuccessButton("Enable Keep game pad enabled when client is inactive")) {
+                GameSettingsManager.SetAlwaysInput(1);
+            }
+            if (ImGuiUtil.DangerButton("Disable Keep game pad enabled when client is inactive")) {
+                GameSettingsManager.SetAlwaysInput(0);
+            }
         }
 
         if (ImGui.Button("Print Hotbar")) {
@@ -145,4 +147,3 @@ public sealed class GeneralDebugWidget : Widget {
         }
     }
 }
-
