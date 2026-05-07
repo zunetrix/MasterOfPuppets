@@ -102,10 +102,23 @@ public class MountsWidget : Widget {
                 Search();
             }
         }
+
         ImGui.SameLine();
+        ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
         if (ImGui.InputTextWithHint("##MountSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
+
+        ImGui.SameLine();
+        ImGui.Text("Size:");
+        ImGui.SameLine();
+        int mountIconSize = (int)Context.Plugin.Config.ActionIconSize;
+        ImGui.SetNextItemWidth(70 * ImGuiHelpers.GlobalScale);
+        if (ImGui.DragInt("##MountIconSize", ref mountIconSize, 1, 20, 150)) {
+            Context.Plugin.Config.ActionIconSize = System.Math.Clamp(mountIconSize, 20, 150);
+            Context.Plugin.IpcProvider.SyncConfiguration();
+        }
+        ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
 
         ImGui.SameLine();
         var unmount = GeneralActionHelper.GetExecutableAction(23);

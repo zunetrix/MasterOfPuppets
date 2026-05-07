@@ -11,6 +11,7 @@ public class PluginUi : IDisposable {
 
     private WindowSystem WindowSystem { get; } = new();
     public MainWindow MainWindow { get; }
+    public MacroWindow MacroWindow { get; }
     public SettingsWindow SettingsWindow { get; }
     public ActionsBroadcastWindow ActionsBroadcastWindow { get; }
     public MacroEditorWindow MacroEditorWindow { get; }
@@ -29,6 +30,7 @@ public class PluginUi : IDisposable {
         Plugin = plugin;
 
         MainWindow = AddWindow(new MainWindow(Plugin, this));
+        MacroWindow = AddWindow(new MacroWindow(Plugin, this));
         SettingsWindow = AddWindow(new SettingsWindow(Plugin));
         MacroEditorWindow = AddWindow(new MacroEditorWindow(Plugin, this));
         MacroBatchEditorWindow = AddWindow(new MacroBatchEditorWindow(Plugin));

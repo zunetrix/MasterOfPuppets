@@ -96,10 +96,23 @@ public class GearSetWidget : Widget {
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##GearSetReloadDataBtn", "Reload")) {
             ReloadData();
         }
+
         ImGui.SameLine();
+        ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
         if (ImGui.InputTextWithHint("##GearSetSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
+
+        ImGui.SameLine();
+        ImGui.Text("Size:");
+        ImGui.SameLine();
+        int gearIconSize = (int)Context.Plugin.Config.ActionIconSize;
+        ImGui.SetNextItemWidth(70 * ImGuiHelpers.GlobalScale);
+        if (ImGui.DragInt("##GearSetIconSize", ref gearIconSize, 1, 20, 150)) {
+            Context.Plugin.Config.ActionIconSize = System.Math.Clamp(gearIconSize, 20, 150);
+            Context.Plugin.IpcProvider.SyncConfiguration();
+        }
+        ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
 
         ImGui.SameLine();
         using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showEmptyGearsets)

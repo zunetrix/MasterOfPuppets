@@ -1,11 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-
-using MasterOfPuppets.Util;
-
 namespace MasterOfPuppets.Ipc;
 
 internal partial class IpcProvider {

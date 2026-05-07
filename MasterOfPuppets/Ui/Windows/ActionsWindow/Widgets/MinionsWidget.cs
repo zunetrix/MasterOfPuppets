@@ -102,10 +102,23 @@ public class MinionsWidget : Widget {
                 Search();
             }
         }
+
         ImGui.SameLine();
+        ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
         if (ImGui.InputTextWithHint("##MinionSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
+
+        ImGui.SameLine();
+        ImGui.Text("Size:");
+        ImGui.SameLine();
+        int minionIconSize = (int)Context.Plugin.Config.ActionIconSize;
+        ImGui.SetNextItemWidth(70 * ImGuiHelpers.GlobalScale);
+        if (ImGui.DragInt("##MinionIconSize", ref minionIconSize, 1, 20, 150)) {
+            Context.Plugin.Config.ActionIconSize = System.Math.Clamp(minionIconSize, 20, 150);
+            Context.Plugin.IpcProvider.SyncConfiguration();
+        }
+        ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
 
         ImGui.SameLine();
         if (ImGui.Button(Language.DismissBtn)) {

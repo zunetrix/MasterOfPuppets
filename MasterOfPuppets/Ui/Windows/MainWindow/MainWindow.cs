@@ -1,17 +1,12 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
-using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
-using MasterOfPuppets.Extensions.Dalamud;
-using MasterOfPuppets.Resources;
+using MasterOfPuppets.Actions;
 using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -20,645 +15,108 @@ namespace MasterOfPuppets;
 public partial class MainWindow : Window {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
+
     private static readonly Version Version = typeof(MainWindow).Assembly.GetName().Version;
-    // private static readonly string VersionString = Version?.ToString();
 
-    private string _macroSearchString = string.Empty;
-    private readonly List<int> MacroListSearchedIndexes = new();
-    private readonly HashSet<string> _selectedTags = new(StringComparer.OrdinalIgnoreCase);
-    private bool _filterNoTags = false;
-    private float _leftPanelWidth = 200f;
-    private bool _isGlobalMacroCheckboxChecked = false;
+    internal enum NavSection {
+        Emotes,
+        Mounts,
+        Minions,
+        Facewear,
+        FashionAccessories,
+        Items,
+        GearSets,
+        Commands,
+        Teleport,
+    }
 
-    internal MainWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name}###MopMainWindow") {
+    private static readonly (NavSection Section, FontAwesomeIcon Icon, string Label, bool IsSeparatorBefore)[] NavItems = [
+        (NavSection.Emotes,             FontAwesomeIcon.SmileWink,         "Emotes",               false),
+        (NavSection.Mounts,             FontAwesomeIcon.Horse,             "Mounts",               false),
+        (NavSection.Minions,            FontAwesomeIcon.Cat,               "Minions",              false),
+        (NavSection.Facewear,           FontAwesomeIcon.Glasses,           "Facewear",             false),
+        (NavSection.FashionAccessories, FontAwesomeIcon.Umbrella,          "Fashion Accessories",  false),
+        (NavSection.Items,              FontAwesomeIcon.ShoppingBag,       "Items",                false),
+        (NavSection.GearSets,           FontAwesomeIcon.Briefcase,         "Gear Sets",            false),
+        (NavSection.Commands,           FontAwesomeIcon.Terminal,          "Commands",             true),
+        (NavSection.Teleport,           FontAwesomeIcon.MapMarkerAlt,      "Teleport",             false),
+
+    ];
+
+    private NavSection _selectedSection = NavSection.Commands;
+    private string _sidebarSearch = string.Empty;
+    private bool _sidebarCollapsed = false;
+    private float _sidebarWidth = 200f;
+
+    // Widget system for action sections
+    private readonly WidgetContext _widgetContext;
+    private readonly WidgetManager _widgetManager = new();
+
+    internal MainWindow(Plugin plugin, PluginUi ui) : base($"{Plugin.Name} {Version}###MopMainWindow") {
         Plugin = plugin;
         Ui = ui;
 
-        Size = ImGuiHelpers.ScaledVector2(600, 400);
+        Size = ImGuiHelpers.ScaledVector2(750, 500);
         SizeCondition = ImGuiCond.FirstUseEver;
+
+        _widgetContext = new WidgetContext(plugin);
+
+        // Register action widgets in sidebar order
+        _widgetManager.Add(() => new EmotesWidget(_widgetContext));              // idx 0 → Emotes
+        _widgetManager.Add(() => new MountsWidget(_widgetContext));              // idx 1 → Mounts
+        _widgetManager.Add(() => new MinionsWidget(_widgetContext));             // idx 2 → Minions
+        _widgetManager.Add(() => new FacewearWidget(_widgetContext));            // idx 3 → Facewear
+        _widgetManager.Add(() => new FashionAccessoriesWidget(_widgetContext));  // idx 4 → FashionAccessories
+        _widgetManager.Add(() => new ItemsWidget(_widgetContext));               // idx 5 → Items
+        _widgetManager.Add(() => new GearSetWidget(_widgetContext));             // idx 6 → GearSets
+
         UpdateWindowConfig();
     }
 
-    // public override void Update() {
-    //     IsVisible = false;
-    //     base.Update();
-    // }
-
     public override void PreDraw() {
-        // Flags = ImGuiWindowFlags.None;
-        Flags = ImGuiWindowFlags.MenuBar;
-        if (!Plugin.Config.AllowMovement) {
-            Flags |= ImGuiWindowFlags.NoMove;
-        }
-
-        if (!Plugin.Config.AllowResize) {
-            Flags |= ImGuiWindowFlags.NoResize;
-        }
-
+        Flags = ImGuiWindowFlags.None;
+        if (!Plugin.Config.AllowMovement) Flags |= ImGuiWindowFlags.NoMove;
+        if (!Plugin.Config.AllowResize) Flags |= ImGuiWindowFlags.NoResize;
         base.PreDraw();
     }
 
-    public override bool DrawConditions() {
-        // var inCombat = DalamudApi.Condition[ConditionFlag.InCombat];
-        // var inInstance = DalamudApi.Condition[ConditionFlag.BoundByDuty]
-        //                  || DalamudApi.Condition[ConditionFlag.BoundByDuty56]
-        //                  || DalamudApi.Condition[ConditionFlag.BoundByDuty95];
-        // var inCutscene = DalamudApi.Condition[ConditionFlag.WatchingCutscene]
-        //                  || DalamudApi.Condition[ConditionFlag.WatchingCutscene78]
-        //                  || DalamudApi.Condition[ConditionFlag.OccupiedInCutSceneEvent];
-
-        // if (inCombat && !Plugin.Config.ShowInCombat) return false;
-        // if (inInstance && !Plugin.Config.ShowInInstance) return false;
-        // if (inCutscene && !Plugin.Config.ShowInCutscenes) return false;
-
-        return true;
-    }
-
     public override void Draw() {
-        // prevent change macro index while editing
-        ImGui.BeginDisabled(Ui.MacroEditorWindow.IsOpen);
-        DrawMenuBar();
-
-        ImGui.BeginGroup();
-        DrawMacroHeader();
-        ImGui.EndGroup();
-
-        ImGui.BeginChild("##MopMacroListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawMacroPanels();
-        // DrawMacrosTable();
-        ImGui.EndChild();
-
-        ImGui.EndDisabled();
-    }
-
-    private void ImportMacroFromClipboard() {
-        try {
-            string macroImportString = ImGui.GetClipboardText();
-            Plugin.MacroManager.ImportMacroFromString(macroImportString);
-            Plugin.IpcProvider.SyncConfiguration();
-            DalamudApi.ShowNotification($"Macro imported", NotificationType.Success, 5000);
-        } catch {
-            DalamudApi.ShowNotification($"Unable to import invalid macro", NotificationType.Error, 5000);
-        }
-    }
-
-    private void DrawMacroHeader() {
-        DrawConflictingPluginAlert();
-
-        // align right
-        float spacing = ImGui.GetStyle().ItemSpacing.X;
-        float buttonWidth = ImGui.GetFrameHeight();
-        float marginRight = 15f * ImGuiHelpers.GlobalScale;
-
-        // ImGui.Text(Language.MacroListTitle);
-        // toggle left tags panel show/hide
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Tags, $"##ToggleMacroTagsPanelBtn", Language.TogglePanelBtn)) {
-            Plugin.Config.ShowPanelMacroTags = !Plugin.Config.ShowPanelMacroTags;
-            Plugin.IpcProvider.SyncConfiguration();
-        }
-
+        DrawSidebar();
         ImGui.SameLine();
-
-        if (ImGui.InputTextWithHint("##MacroSearchInput", Language.MacroSearchInputLabel, ref _macroSearchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
-            SearchMacro();
-        }
-
-        int buttonMacroCount = 4;
-        float totalButtonsMacroWidth = (buttonWidth * buttonMacroCount) + (spacing * (buttonMacroCount - 1)) + marginRight;
-        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
-
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Plus, $"##AddMacroBtn", Language.AddMacroBtn)) {
-            Ui.MacroEditorWindow.AddNewMacro();
-        }
-
-        // ImGui.SameLine();
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, $"##ImportMacroFromClipboardBtn", Language.ImportMacroBtn))
-        // {
-        //     ImportMacroFromClipboard();
-        // }
-
-        // ImGui.SameLine();
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn))
-        // {
-        //     Ui.CharactersWindow.Toggle();
-        // }
-
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
-                .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
-                .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
-            ImGui.SameLine();
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Ban, $"##StopMovementBtn", Language.StopMovementBtn)) {
-                Plugin.IpcProvider.StopMovement();
-                DalamudApi.ShowNotification($"Movement stoped", NotificationType.Info, 3000);
-            }
-
-            ImGui.SameLine();
-
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Stop, $"##StopMacroExecutionBtn", Language.StopMacroExecutionBtn)) {
-                Plugin.IpcProvider.StopMacroExecution();
-                DalamudApi.ShowNotification($"Macro execution queue stoped", NotificationType.Info, 3000);
-            }
-        }
-
+        DrawSidebarSplitter();
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.List, $"##ShowMacroQueueBtn", Language.ShowMacroQueueBtn)) {
-            Ui.MacroQueueWindow.Toggle();
-        }
-
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-        ImGui.Spacing();
+        DrawContent();
     }
 
-    private void SearchMacro() {
-        MacroListSearchedIndexes.Clear();
+    private void DrawContent() {
+        ImGui.BeginChild("##MopHubContent", new Vector2(0, -1), false);
 
-        MacroListSearchedIndexes.AddRange(
-            Plugin.Config.Macros
-            .Select((item, index) => new { item, index })
-            .Where(x => x.item.Name.Contains(_macroSearchString, StringComparison.OrdinalIgnoreCase))
-            .Select(x => x.index)
-            .ToList()
-        );
-    }
-
-    private void DrawMacroEntry(int macroIdx) {
-        var macro = Plugin.Config.Macros[macroIdx];
-        ImGui.PushID(macroIdx);
-        ImGui.TableNextRow();
-        ImGui.TableSetColumnIndex(0);
-        // ImGui.TableNextColumn();
-        bool isChecked = Plugin.MacroManager.SelectedMacrosIndexes.Contains(macroIdx);
-        if (ImGui.Checkbox($"##SelectedMacroCheckbox_{macroIdx}", ref isChecked)) {
-            if (isChecked)
-                Plugin.MacroManager.SelectedMacrosIndexes.Add(macroIdx);
-            else
-                Plugin.MacroManager.SelectedMacrosIndexes.Remove(macroIdx);
-        }
-
-        ImGui.TableNextColumn();
-        ImGui.Text($"{macroIdx + 1:000}");
-
-        ImGui.TableNextColumn();
-        DalamudApi.TextureProvider.DrawIcon(macro.IconId, ImGuiHelpers.ScaledVector2(30, 30));
-        if (macro.Tags.Count > 0) {
-            ImGuiUtil.ToolTip($"{string.Join("\n", macro.Tags)}");
-        }
-
-        ImGui.TableNextColumn();
-        using (ImRaii.PushColor(ImGuiCol.Text, macro.Color)) {
-            ImGui.Selectable($"{macro.Name}");
-        }
-
-        // context menu
-        ImGui.OpenPopupOnItemClick("ContextMenuMacro", ImGuiPopupFlags.MouseButtonRight);
-
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginPopup("ContextMenuMacro")) {
-            if (ImGui.MenuItem($"{Language.CloneMacroBtn}##CloneMacro_{macroIdx}")) {
-                Plugin.MacroManager.CloneMacro(macroIdx);
-                Plugin.IpcProvider.SyncConfiguration();
-                DalamudApi.ShowNotification("Macro cloned", NotificationType.Info, 5000);
-            }
-
-            if (ImGui.MenuItem($"{Language.ExportMacroBtn}##ExportMacro_{macroIdx}")) {
-                var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: false);
-                ImGui.SetClipboardText(macroExportData);
-                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-            }
-
-            if (ImGui.MenuItem($"{Language.ExportMacroBtn} (include CIDs)##ExportMacroCids_{macroIdx}")) {
-                var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: true);
-                ImGui.SetClipboardText(macroExportData);
-                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-            }
-
-            ImGui.EndPopup();
-        }
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
-
-        ImGuiUtil.ToolTip("""
-        Right click for more options
-        Drag to reorder
-        """);
-
-        if (ImGui.BeginDragDropSource()) {
-            unsafe {
-                ImGui.SetDragDropPayload("DND_MACROS_TABLE", new ReadOnlySpan<byte>(&macroIdx, sizeof(int)), ImGuiCond.None);
-                ImGui.PushStyleColor(ImGuiCol.Text, macro.Color);
-                ImGui.Button($"({macroIdx + 1}) {macro.Name}");
-                ImGui.PopStyleColor();
-            }
-            // PluginLog.Warning($"Drag start [{i}]");
-            ImGui.EndDragDropSource();
-        }
-
-        using (ImRaii.PushColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget)) {
-            if (ImGui.BeginDragDropTarget()) {
-                ImGuiPayloadPtr dragDropPayload = ImGui.AcceptDragDropPayload("DND_MACROS_TABLE");
-
-                bool isDropping = false;
-                unsafe {
-                    isDropping = !dragDropPayload.IsNull;
-                }
-
-                if (isDropping && dragDropPayload.IsDelivery()) {
-                    unsafe {
-                        int originalIndex = *(int*)dragDropPayload.Data;
-
-                        int offset = macroIdx - originalIndex;
-                        if (offset != 0 && originalIndex + offset >= 0) {
-                            int targetIndex = originalIndex + offset;
-                            // PluginLog.Warning($"Drag end [{i}]: [{originalIndex}, {targetIndex}] {offset}");
-                            Plugin.MacroManager.MoveMacroToIndex(originalIndex, targetIndex);
-                            Plugin.MacroManager.SelectedMacrosIndexes.Clear();
-                            Plugin.IpcProvider.SyncConfiguration();
-                        }
-                    }
-                }
-
-                ImGui.EndDragDropTarget();
-            }
-        }
-
-        ImGui.TableNextColumn();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteMacro_{macroIdx}", Language.DeleteInstructionTooltip)) {
-            if (ImGui.GetIO().KeyCtrl) {
-                Plugin.MacroManager.DeleteMacro(macroIdx);
-                Plugin.IpcProvider.SyncConfiguration();
-            }
-        }
-
-        // ImGui.SameLine();
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowUpRightFromSquare, $"##ExportMacro_{macroIdx}", Language.ExportMacroBtn)) {
-        //     var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: false);
-        //     ImGui.SetClipboardText(macroExportData);
-        //     DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-        // }
-        // ImGui.OpenPopupOnItemClick("ContextMenuExportMacro", ImGuiPopupFlags.MouseButtonRight);
-
-        // if (ImGui.BeginPopup("ContextMenuExportMacro")) {
-        //     if (ImGui.MenuItem("Export with characters")) {
-        //         var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: true);
-        //         ImGui.SetClipboardText(macroExportData);
-        //         DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-        //     }
-        //     ImGui.EndPopup();
-        // }
-
-        // ImGui.SameLine();
-        // if (ImGuiUtil.IconButton(FontAwesomeIcon.Copy, $"##CloneMacro_{macroIdx}", Language.CloneMacroBtn)) {
-        //     Plugin.MacroManager.CloneMacro(macroIdx);
-        //     Plugin.IpcProvider.SyncConfiguration();
-        // }
-
-
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Edit, $"##EditMacro_{macroIdx}", Language.EditMacroBtn)) {
-            Ui.MacroEditorWindow.EditMacro(macroIdx);
-        }
-
-        ImGui.SameLine();
-
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, $"##RunMacro_{macroIdx}", Language.RunMacroBtn)) {
-            Plugin.IpcProvider.RunMacro(macroIdx);
-        }
-        ImGui.OpenPopupOnItemClick("ContextMenuRunMacro", ImGuiPopupFlags.MouseButtonRight);
-
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginPopup("ContextMenuRunMacro")) {
-            if (ImGui.MenuItem("Copy Run Command")) {
-                ImGui.SetClipboardText($"/mop run \"{macro.Name}\"");
-                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-            }
-
-            if (ImGui.MenuItem("Copy Chat Sync Command")) {
-                var macroRunMessage = $"{Plugin.Config.DefaultChatSyncPrefix} moprun \"{macro.Name}\"";
-                ImGui.SetClipboardText(macroRunMessage);
-                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-            }
-
-            if (ImGui.MenuItem("Run Chat Sync Command")) {
-                var macroRunMessage = $"{Plugin.Config.DefaultChatSyncPrefix} moprun \"{macro.Name}\"";
-                Chat.SendMessage(macroRunMessage);
-            }
-            ImGui.EndPopup();
-        }
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
-
-        ImGui.PopID();
-    }
-
-    // private void DrawMacrosTable() {
-    //     var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
-    //     var noSearchResults = MacroListSearchedIndexes.Count == 0;
-    //     if (isFiltered && noSearchResults) {
-    //         ImGuiUtil.DrawColoredBanner("Your search did not match any result", Style.Colors.Red);
-    //     }
-
-    //     var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
-    //             ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV;
-    //     var tableColumnCount = 5;
-    //     var itemCount = isFiltered ? MacroListSearchedIndexes.Count : Plugin.Config.Macros.Count;
-
-    //     if (ImGui.BeginTable("##MacrosTable", tableColumnCount, tableFlags)) {
-    //         ImGui.TableSetupColumn("##CheckMacro", ImGuiTableColumnFlags.WidthFixed);
-    //         ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed);
-    //         ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
-    //         ImGui.TableSetupColumn("Macro", ImGuiTableColumnFlags.WidthStretch);
-    //         ImGui.TableSetupColumn("Options", ImGuiTableColumnFlags.WidthFixed);
-
-    //         ImGuiListClipperPtr clipper;
-    //         unsafe {
-    //             clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
-    //         }
-
-    //         clipper.Begin(itemCount);
-
-    //         while (clipper.Step()) {
-    //             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-    //                 if (i >= itemCount) break;
-    //                 int realIndex = isFiltered ? MacroListSearchedIndexes[i] : i;
-    //                 if (realIndex >= Plugin.Config.Macros.Count) continue;
-
-    //                 DrawMacroEntry(realIndex);
-    //             }
-    //         }
-    //         clipper.End();
-    //         ImGui.EndTable();
-    //     }
-
-    //     ImGui.Spacing();
-    //     ImGui.Spacing();
-    //     ImGui.Spacing();
-    // }
-
-    private void DrawMacrosTableFiltered() {
-        // Determine visible macro indexes based on search
-        var isFiltered = !string.IsNullOrEmpty(_macroSearchString);
-        var baseIndexes = isFiltered
-            ? MacroListSearchedIndexes.ToList()
-            : Enumerable.Range(0, Plugin.Config.Macros.Count).ToList();
-
-        List<int> visibleIndexes;
-        if (_filterNoTags) {
-            visibleIndexes = baseIndexes
-                .Where(idx => {
-                    var tags = Plugin.Config.Macros[idx].Tags;
-                    return tags == null || tags.Count == 0;
-                })
-                .ToList();
-        } else if (_selectedTags.Count == 0) {
-            visibleIndexes = baseIndexes;
+        int widgetIndex = GetWidgetIndex(_selectedSection);
+        if (widgetIndex >= 0) {
+            // Show/switch widget when section changes
+            _widgetManager.Show(widgetIndex);
+            _widgetManager.Draw();
         } else {
-            visibleIndexes = baseIndexes
-                .Where(idx => {
-                    var tags = Plugin.Config.Macros[idx].Tags ?? new List<string>();
-                    if (tags.Count == 0) return false;
-                    // compare normalized trimmed tags
-                    var normalized = tags.Select(t => (t ?? string.Empty).Trim()).ToList();
-                    return _selectedTags.All(sel => normalized.Any(t => string.Equals(t, sel, StringComparison.OrdinalIgnoreCase)));
-                })
-                .ToList();
-        }
-
-        var tableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
-                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV; // ImGuiTableFlags.Resizable;
-
-        var tableColumnCount = 5;
-        var itemCount = visibleIndexes.Count;
-
-        if (isFiltered && itemCount == 0) {
-            ImGuiUtil.DrawColoredBanner("Your search did not match any result", Style.Colors.Red);
-        }
-
-        if (ImGui.BeginTable("##MacrosTableFiltered", tableColumnCount, tableFlags)) {
-            ImGui.TableSetupColumn("##CheckMacro", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Icon", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Macro", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("Options", ImGuiTableColumnFlags.WidthFixed);
-
-            // header
-            // ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
-            ImGui.TableNextRow();
-
-            ImGui.TableSetColumnIndex(0);
-            if (ImGui.Checkbox($"##GlobalMacroCheckbox", ref _isGlobalMacroCheckboxChecked)) {
-                if (_isGlobalMacroCheckboxChecked)
-                    Plugin.MacroManager.SelectAllMacros();
-                else
-                    Plugin.MacroManager.ClearMacroSelection();
-            }
-            ImGuiUtil.ToolTip("Select / Unselect All");
-
-            // checkbox border
-            // var min = ImGui.GetItemRectMin();
-            // var max = ImGui.GetItemRectMax();
-            // var dl = ImGui.GetWindowDrawList();
-            // dl.AddRect(min, max, ImGui.ColorConvertFloat4ToU32(Style.Components.TooltipBorderColor), 0f, ImDrawFlags.None, 1.0f);
-
-            ImGui.TableSetColumnIndex(1);
-            ImGui.TableHeader("#");
-            // ImGui.Text("#");
-
-            ImGui.TableSetColumnIndex(2);
-            ImGui.TableHeader("Icon");
-            // ImGui.Text("Icon");
-
-            ImGui.TableSetColumnIndex(3);
-            ImGui.TableHeader(Language.MacroNameLabel);
-            // ImGui.Text(Language.MacroNameLabel);
-
-            ImGui.TableSetColumnIndex(4);
-            ImGui.TableHeader("Options");
-            // ImGui.Text("Options");
-
-            ImGuiListClipperPtr clipper;
-            unsafe {
-                clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper());
-            }
-
-            clipper.Begin(itemCount);
-
-            while (clipper.Step()) {
-                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-                    if (i >= itemCount) break;
-                    var realIndex = visibleIndexes[i];
-                    if (realIndex >= Plugin.Config.Macros.Count) continue;
-
-                    DrawMacroEntry(realIndex);
-                }
-            }
-            clipper.End();
-            ImGui.EndTable();
-        }
-
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Spacing();
-    }
-
-    private void DrawMacroPanels() {
-        if (Plugin.Config.ShowPanelMacroTags) {
-            DrawLeftPanel();
-        }
-
-        ImGui.SameLine();
-
-        DrawRightPanel();
-    }
-
-    private void DrawLeftPanel() {
-        var allTags = Plugin.MacroManager.GetAllTags();
-        // layout helpers
-        var totalAvail = ImGui.GetContentRegionAvail().X;
-        var minPanelPx = 120f * ImGuiHelpers.GlobalScale;
-        var maxPanelPx = Math.Max(minPanelPx, totalAvail - minPanelPx);
-        // clamp stored width to available range
-        _leftPanelWidth = MathF.Max(minPanelPx, MathF.Min(_leftPanelWidth, maxPanelPx));
-
-        // left panel fixed width tree
-        ImGui.BeginChild("##MacroTags", ImGuiHelpers.ScaledVector2(_leftPanelWidth, -1), true);
-        ImGui.Text(Language.MacroTagsLabel);
-
-        int buttonFilterCount = 2;
-        float buttonWidth = ImGui.GetFrameHeight();
-        float spacing = ImGui.GetStyle().ItemSpacing.X;
-        float marginRight = 10f * ImGuiHelpers.GlobalScale;
-        float totalButtonsMacroWidth = (buttonWidth * buttonFilterCount) + (spacing * (buttonFilterCount - 1)) + marginRight;
-        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - totalButtonsMacroWidth);
-
-        ImGui.BeginGroup();
-        {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, $"##SelectAllTagsBtn", "Filter all tags")) {
-                _filterNoTags = false;
-                _selectedTags.Clear();
-                foreach (var t in allTags) _selectedTags.Add(t);
-            }
-
-            // ImGui.SameLine();
-            // var pushedNoTags = false;
-            // if (_filterNoTags) {
-            //     ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-            //     ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-            //     ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-            //     pushedNoTags = true;
-            // }
-            // if (ImGuiUtil.IconButton(FontAwesomeIcon.FilterCircleXmark, $"##SelectNoTagsBtn", "Filter macros without tags")) {
-            //     _selectedTags.Clear();
-            //     _filterNoTags = !_filterNoTags;
-            // }
-            // if (pushedNoTags)
-            //     ImGui.PopStyleColor(3);
-
-            ImGui.SameLine();
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Eraser, $"##ClearAllTagsBtn", "Clear filter")) {
-                _selectedTags.Clear();
-                _filterNoTags = false;
-            }
-
-            // if (ImGui.Button("Select All##SelectAllTagsBtn")) {
-            //     _filterNoTags = false;
-            //     _selectedTags.Clear();
-            //     foreach (var t in allTags) _selectedTags.Add(t);
-            // }
-
-            // ImGui.SameLine();
-            // var pushedNoTags = false;
-            // if (_filterNoTags) {
-            //     ImGui.PushStyleColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal);
-            //     ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered);
-            //     ImGui.PushStyleColor(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
-            //     pushedNoTags = true;
-            // }
-            // if (ImGui.Button("No Tags##SelectNoTagsBtn")) {
-            //     _selectedTags.Clear();
-            //     _filterNoTags = true;
-            // }
-            // if (pushedNoTags)
-            //     ImGui.PopStyleColor(3);
-
-            // ImGui.SameLine();
-            // if (ImGui.Button("Clear##ClearAllTagsBtn")) {
-            //     _selectedTags.Clear();
-            //     _filterNoTags = false;
-            // }
-        }
-        ImGui.EndGroup();
-
-        ImGui.Separator();
-
-        ImGui.Spacing();
-        // tag list
-        using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered)
-            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
-            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered)) {
-            int noTagCount = Plugin.Config.Macros.Count(m => m.Tags == null || m.Tags.Count == 0);
-
-            bool isNoTagSelected = _filterNoTags;
-            if (ImGui.Selectable($"No Tags ({noTagCount})##tag_notag", isNoTagSelected)) {
-                _selectedTags.Clear();
-                _filterNoTags = !_filterNoTags;
-            }
-
-            ImGui.Separator();
-
-            for (int i = 0; i < allTags.Count; i++) {
-                var tag = allTags[i];
-                var isSelected = _selectedTags.Contains(tag);
-
-                var count = Plugin.Config.Macros
-                    .Count(m => (m.Tags ?? new List<string>())
-                        .Any(t => string.Equals(t, tag, StringComparison.OrdinalIgnoreCase)));
-
-                var label = $"{tag} ({count})##tag_{i}";
-
-                if (ImGui.Selectable(label, isSelected, ImGuiSelectableFlags.SpanAllColumns)) {
-                    _filterNoTags = false;
-
-                    if (isSelected)
-                        _selectedTags.Remove(tag);
-                    else
-                        _selectedTags.Add(tag);
-                }
+            switch (_selectedSection) {
+                case NavSection.Commands: DrawCommandsSection(); break;
+                case NavSection.Teleport: DrawTeleportSection(); break;
             }
         }
-        ImGui.EndChild();
 
-        // splitter resizable
-        ImGui.SameLine();
-
-        // thin invisible button
-        var splitterId = "##MacroTagsSplitter";
-        var splitterWidth = 6f * ImGuiHelpers.GlobalScale;
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
-        ImGui.InvisibleButton(splitterId, new Vector2(splitterWidth, -1));
-        if (ImGui.IsItemHovered())
-            ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
-
-        // dragging behavior: adjust _leftPanelWidth by mouse delta while dragging
-        if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
-            var io = ImGui.GetIO();
-            _leftPanelWidth += io.MouseDelta.X;
-            // clamp while dragging
-            _leftPanelWidth = MathF.Max(minPanelPx, MathF.Min(_leftPanelWidth, maxPanelPx));
-        }
-        ImGui.PopStyleVar();
-    }
-
-    private void DrawRightPanel() {
-        // right panel: filtered list
-        ImGui.BeginChild("##MacroList", new Vector2(0, -1), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawMacrosTableFiltered();
         ImGui.EndChild();
     }
+
+    /// <summary>Maps NavSection to widget index (0-based). Returns -1 for non-widget sections.</summary>
+    private static int GetWidgetIndex(NavSection section) => section switch {
+        NavSection.Emotes => 0,
+        NavSection.Mounts => 1,
+        NavSection.Minions => 2,
+        NavSection.Facewear => 3,
+        NavSection.FashionAccessories => 4,
+        NavSection.Items => 5,
+        NavSection.GearSets => 6,
+        _ => -1,
+    };
 
     internal void UpdateWindowConfig() {
         RespectCloseHotkey = Plugin.Config.AllowCloseWithEscape;
@@ -668,7 +126,7 @@ public partial class MainWindow : Window {
             TitleBarButtons.Add(new TitleBarButton() {
                 AvailableClickthrough = false,
                 Icon = FontAwesomeIcon.Cog,
-                ShowTooltip = () => ImGuiUtil.ToolTip(Language.SettingsTitle),
+                ShowTooltip = () => ImGuiUtil.ToolTip("Settings"),
                 Click = _ => Ui.SettingsWindow.Toggle()
             });
 
@@ -690,22 +148,5 @@ public partial class MainWindow : Window {
             });
 #endif
         }
-    }
-
-    public void DrawConflictingPluginAlert() {
-        var conflictPluginName = GetConflictingPluginName();
-        if (!string.IsNullOrEmpty(conflictPluginName))
-            ImGuiUtil.DrawColoredBanner($"Conflicting Plugin Detected: {conflictPluginName}", Style.Colors.Red);
-    }
-
-    public string? GetConflictingPluginName() {
-        var conflictingPluginNames = new[] { "WrathCombo", "RotationSolver", "BossMod" };
-
-        var plugin = DalamudApi.PluginInterface.InstalledPlugins
-            .FirstOrDefault(p =>
-                p.IsLoaded &&
-                conflictingPluginNames.Contains(p.InternalName, StringComparer.OrdinalIgnoreCase));
-
-        return plugin?.InternalName;
     }
 }

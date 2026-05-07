@@ -121,10 +121,23 @@ public sealed class EmotesWidget : Widget {
                 Search();
             }
         }
+
         ImGui.SameLine();
+        ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
         if (ImGui.InputTextWithHint("##EmoteSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
         }
+
+        ImGui.SameLine();
+        ImGui.Text("Size:");
+        ImGui.SameLine();
+        int emoteIconSize = (int)Context.Plugin.Config.ActionIconSize;
+        ImGui.SetNextItemWidth(70 * ImGuiHelpers.GlobalScale);
+        if (ImGui.DragInt("##EmoteIconSize", ref emoteIconSize, 1, 20, 150)) {
+            Context.Plugin.Config.ActionIconSize = Math.Clamp(emoteIconSize, 20, 150);
+            Context.Plugin.IpcProvider.SyncConfiguration();
+        }
+        ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
 
         ImGui.SameLine();
         using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showGeneralEmotes)
