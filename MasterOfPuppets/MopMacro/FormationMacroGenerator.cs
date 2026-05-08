@@ -159,10 +159,8 @@ public static class FormationMacroGenerator {
         var step = Math.Max(1, options.Step);
         var movementMode = SimpleInputMovement.FormatMode(options.FormationMoveMode);
         var anchorArg = options.FormationMoveAnchorMode == FormationMoveAnchorMode.Target
-            ? " anchor=target"
-            : string.IsNullOrWhiteSpace(options.OriginReference)
-                ? " anchor=self"
-                : $" anchor=\"{ArgumentParser.EscapeQuotedArgument(options.OriginReference)}\"";
+            ? " anchor=\"$mop_origin_target\""
+            : " anchor=\"$mop_origin\"";
 
         foreach (var start in destinations) {
             var assignment = BuildAssignment(start.Point, groups, options.UseMatchingGroups);

@@ -46,7 +46,8 @@ public partial class MacroEditorWindow {
     private static readonly string[] MacroGeneratorDirectionNames = ["Forward through point order", "Backward through point order"];
     private static readonly string[] MacroGeneratorExistingFormationCommandStyleNames = ["Broadcast formation move", "Local point commands"];
     private static readonly string[] MacroGeneratorMovementModeNames = ["Continuous", "Precise"];
-    private static readonly string[] MacroGeneratorAnchorModeNames = ["Self", "Current target"];
+    private static readonly string[] MacroGeneratorBroadcastAnchorModeNames = ["Controller", "Controller target"];
+    private static readonly string[] MacroGeneratorLocalPointAnchorModeNames = ["Point 1", "Point 1 target"];
 
     private void DrawMacroCommandGeneratorModal() {
         ImGui.SetNextWindowSize(new Vector2(520f, 0f), ImGuiCond.FirstUseEver);
@@ -64,7 +65,7 @@ public partial class MacroEditorWindow {
         _macroGenFormationIndex = Math.Clamp(_macroGenFormationIndex, 0, formations.Count - 1);
         var selectedFormation = formations[_macroGenFormationIndex];
 
-        ImGui.TextWrapped("This inserts commands for characters assigned to the selected formation. Offsets are measured from the point assigned to your current character.");
+        ImGui.TextWrapped("This inserts commands for characters assigned to the selected formation. Point 1 is the formation origin.");
         ImGui.Separator();
 
         var localCid = DalamudApi.PlayerState.ContentId;
@@ -146,12 +147,12 @@ public partial class MacroEditorWindow {
 
     private void DrawMacroGeneratorMovementControls() {
         var originName = GetLocalPlayerNameWorld();
-        DrawMacroGeneratorLabel("Movement origin", "Generated movement is anchored from the current character. Target anchoring for existing formations is configured under Advanced.");
+        DrawMacroGeneratorLabel("Current character", "Local point macros must be started by point 1.");
         ImGui.TextDisabled(string.IsNullOrWhiteSpace(originName) ? "Could not resolve current character." : originName);
 
         if (_macroGenSource == 0) {
             ImGui.TextDisabled("Existing formations can use broadcast steps or local point commands.");
-            ImGuiUtil.HelpMarker("Broadcast uses /mopformationmove over IPC. Local point commands use /mopformationgoto on each assigned client with point 1 as the anchor.");
+            ImGuiUtil.HelpMarker("Broadcast uses controller steps. Local point commands run on each assigned client.");
         }
 
         DrawMacroGenFloat("Seconds per unit", "Wait seconds per unit of path distance.", ref _macroGenTravelSecondsPerUnit, 0.01f, 0.01f, 10f, "%.2f");
@@ -293,7 +294,7 @@ public partial class MacroEditorWindow {
         }
 
         if (existingFormationMovement) {
-            DrawMacroGeneratorLabel("Command style", "Broadcast sends one IPC formation step from this client. Local point commands run independently on each assigned client using point 1 as the anchor.");
+            DrawMacroGeneratorLabel("Command style", "Broadcast sends controller steps. Local point commands run on each assigned client.");
             ImGui.SetNextItemWidth(220);
             ImGui.Combo("##macroGenExistingFormationCommandStyle", ref _macroGenExistingFormationCommandStyle, MacroGeneratorExistingFormationCommandStyleNames, MacroGeneratorExistingFormationCommandStyleNames.Length);
 
@@ -301,9 +302,17 @@ public partial class MacroEditorWindow {
             ImGui.SetNextItemWidth(160);
             ImGui.Combo("##macroGenFormationMoveMode", ref _macroGenFormationMoveMode, MacroGeneratorMovementModeNames, MacroGeneratorMovementModeNames.Length);
 
-            DrawMacroGeneratorLabel("Movement anchor", "Use self position or current target position as the live anchor.");
+            var localPointCommands = _macroGenExistingFormationCommandStyle == 1;
+            var anchorNames = localPointCommands
+                ? MacroGeneratorLocalPointAnchorModeNames
+                : MacroGeneratorBroadcastAnchorModeNames;
+            DrawMacroGeneratorLabel(
+                "Origin",
+                localPointCommands
+                    ? "Where point 1 is placed. Run local point macros from point 1."
+                    : "Where the controller places the formation.");
             ImGui.SetNextItemWidth(160);
-            ImGui.Combo("##macroGenFormationMoveAnchor", ref _macroGenFormationMoveAnchorMode, MacroGeneratorAnchorModeNames, MacroGeneratorAnchorModeNames.Length);
+            ImGui.Combo("##macroGenFormationMoveAnchor", ref _macroGenFormationMoveAnchorMode, anchorNames, anchorNames.Length);
         }
 
         if (petEnabled) {
@@ -362,8 +371,8 @@ public partial class MacroEditorWindow {
         var useLocalFormationPointCommand = _macroGenSource == 0
             && movementEnabled
             && _macroGenExistingFormationCommandStyle == 1;
-        if (useLocalFormationPointCommand && _macroGenFormationMoveAnchorMode == 0 && originPointIndex != FormationPointMovement.AnchorPointIndex)
-            return new MacroCommandGeneratorPreview(false, "Local point commands use point 1 as the anchor. Assign your current character to point 1, or use Current target as the movement anchor.", []);
+        if (useLocalFormationPointCommand && originPointIndex != FormationPointMovement.AnchorPointIndex)
+            return new MacroCommandGeneratorPreview(false, "Local point commands must be started by point 1.", []);
         if (_macroGenSource == 1 && movementEnabled && string.IsNullOrWhiteSpace(GetLocalPlayerNameWorld()))
             return new MacroCommandGeneratorPreview(false, "Current character name/world must be resolved before generated shape movement commands can be created.", []);
         if (_macroGenSource == 1 && movementEnabled && GetLocalPlayerRotation() == null)

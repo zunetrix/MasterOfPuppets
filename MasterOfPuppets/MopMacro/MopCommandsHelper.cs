@@ -1243,7 +1243,7 @@ public static class MopCommandsHelper {
             Broadcasts one saved-formation movement step from the current character.
             Stride is the skip amount through formation point order; sequenceIndex is the zero-based step to execute from each recipient's computed path.
             Default: precise. Use continuous for smoother loops.
-            Add target to anchor the movement at your current target.
+            Add target to anchor the movement at the controller's current target.
             Generated formation macros use continuous by default.
             """
         },
@@ -1262,6 +1262,7 @@ public static class MopCommandsHelper {
             Moves only this client to a specific saved formation point.
             Point numbers are 1-based; point 1 is always the live anchor/origin.
             Use anchor="Name@World" when each PC should place itself relative to the same visible anchor character.
+            anchor=target uses this client's current target.
             Default: precise. Use continuous for smoother loops.
             This is the precise local alternative to IPC-broadcast /mopformationmove.
             """

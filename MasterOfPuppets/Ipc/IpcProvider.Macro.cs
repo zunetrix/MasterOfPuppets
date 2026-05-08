@@ -10,13 +10,27 @@ internal partial class IpcProvider {
 
     public void RunMacro(int macroIndex, Dictionary<string, string>? inlineVars = null, bool includeSelf = true) {
         DalamudApi.PluginLog.Debug($"[Run Macro] {macroIndex + 1}");
-        if (inlineVars is { Count: > 0 }) {
-            var varsToken = "-var=" + string.Join(";", inlineVars.Select(kv => $"${kv.Key}={kv.Value}"));
+        var originVars = AddMacroOriginVariables(inlineVars);
+        if (originVars.Count > 0) {
+            var varsToken = "-var=" + string.Join(";", originVars.Select(kv => $"${kv.Key}={FormatInlineVarValue(kv.Value)}"));
             BroadCast(IpcMessage.Create(IpcMessageType.RunMacro, macroIndex.ToString(), varsToken).Serialize(), includeSelf);
         } else {
             BroadCast(IpcMessage.Create(IpcMessageType.RunMacro, macroIndex.ToString()).Serialize(), includeSelf);
         }
     }
+
+    private static Dictionary<string, string> AddMacroOriginVariables(Dictionary<string, string>? inlineVars) {
+        var result = inlineVars == null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(inlineVars, StringComparer.OrdinalIgnoreCase);
+        var runtime = MacroRuntimeVariables.FromCurrentGameState();
+        result["mop_origin"] = runtime.MopOrigin;
+        result["mop_origin_target"] = runtime.MopOriginTarget;
+        return result;
+    }
+
+    private static string FormatInlineVarValue(string value) =>
+        string.IsNullOrEmpty(value) ? "\"\"" : value;
 
     [IpcHandle(IpcMessageType.RunMacro)]
     private void HandleRunMacro(IpcMessage message) {
