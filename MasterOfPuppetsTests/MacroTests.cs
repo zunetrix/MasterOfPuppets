@@ -161,7 +161,7 @@ public class MacroTests
     }
 
     [Fact]
-    public void ParseFormationMoveCommandArgs_Defaults_To_Continuous()
+    public void ParseFormationMoveCommandArgs_Defaults_To_Precise()
     {
         var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0");
 
@@ -170,9 +170,18 @@ public class MacroTests
         Assert.False(result.Reverse);
         Assert.Equal(1, result.Step);
         Assert.Equal(0, result.SequenceIndex);
-        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
         Assert.Equal(FormationMoveAnchorMode.Self, result.AnchorMode);
         Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
+    }
+
+    [Fact]
+    public void ParseFormationMoveCommandArgs_Accepts_Explicit_Continuous()
+    {
+        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 continuous");
+
+        Assert.NotNull(result);
+        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
     }
 
     [Fact]
@@ -216,7 +225,7 @@ public class MacroTests
         var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 target");
 
         Assert.NotNull(result);
-        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
         Assert.Equal(FormationMoveAnchorMode.Target, result.AnchorMode);
         Assert.Equal(FormationAnchorKind.Target, result.Anchor.Kind);
     }
@@ -241,14 +250,14 @@ public class MacroTests
         var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 \"Anchor Character@World\"");
 
         Assert.NotNull(result);
-        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
         Assert.Equal(FormationAnchorKind.Named, result.Anchor.Kind);
         Assert.Equal("Anchor Character@World", result.Anchor.Name);
         Assert.Null(result.InvalidArgument);
     }
 
     [Fact]
-    public void ParseFormationGotoCommandArgs_Defaults_To_Self_Continuous()
+    public void ParseFormationGotoCommandArgs_Defaults_To_Self_Precise()
     {
         var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 2");
 
@@ -258,6 +267,15 @@ public class MacroTests
         Assert.Equal(MacroHandler.FormationGotoAnchorKind.Self, result.AnchorKind);
         Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
         Assert.Null(result.AnchorName);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Accepts_Explicit_Continuous()
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 2 continuous");
+
+        Assert.NotNull(result);
         Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
     }
 
@@ -339,7 +357,7 @@ public class MacroTests
     public void ParseFormationAnchorAndArrival_Defaults_To_PointOne_Anchor_For_Chat()
     {
         var result = FormationAnchorArgumentParser.ParseAnchorAndArrival(
-            ["precise"],
+            [],
             FormationAnchorReference.Default);
 
         Assert.Equal(FormationAnchorKind.Default, result.Anchor.Kind);
@@ -372,6 +390,17 @@ public class MacroTests
         Assert.Equal(SimpleMovementMode.Precise, targetLast.MovementMode);
         Assert.Equal(FormationAnchorKind.Target, targetFirst.Anchor.Kind);
         Assert.Equal(SimpleMovementMode.Precise, targetFirst.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationAnchorAndArrival_Accepts_Explicit_Continuous()
+    {
+        var result = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            ["continuous"],
+            FormationAnchorReference.Self);
+
+        Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
     }
 
     [Fact]

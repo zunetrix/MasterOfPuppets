@@ -297,7 +297,7 @@ public partial class MacroEditorWindow {
             ImGui.SetNextItemWidth(220);
             ImGui.Combo("##macroGenExistingFormationCommandStyle", ref _macroGenExistingFormationCommandStyle, MacroGeneratorExistingFormationCommandStyleNames, MacroGeneratorExistingFormationCommandStyleNames.Length);
 
-            DrawMacroGeneratorLabel("Movement mode", "Continuous runs without walk toggle. Precise walks near the destination for better placement.");
+            DrawMacroGeneratorLabel("Movement mode", "Precise is best for placement. Continuous is smoother for loops.");
             ImGui.SetNextItemWidth(160);
             ImGui.Combo("##macroGenFormationMoveMode", ref _macroGenFormationMoveMode, MacroGeneratorMovementModeNames, MacroGeneratorMovementModeNames.Length);
 
