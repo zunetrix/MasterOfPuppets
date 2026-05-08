@@ -383,7 +383,11 @@ public class SettingsWindow : Window {
                 moprun number
                 moprun macro_name
                 moprun "macro name with spaces"
+                mopformation "formation name"
                 mopstop
+
+            Formation chat sync uses point 1's assigned character as the default live anchor.
+            All clients need the same formation and the anchor character must be visible.
             """);
 
         ImGui.Spacing();

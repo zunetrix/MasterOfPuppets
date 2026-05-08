@@ -16,6 +16,7 @@ public sealed class FormationMacroGeneratorOptions {
     public int AnchorPointIndex { get; set; }
     public string OriginReference { get; set; } = string.Empty;
     public bool UseFormationMoveCommand { get; set; }
+    public bool UseLocalFormationPointCommand { get; set; }
     public string FormationMoveName { get; set; } = string.Empty;
     public ulong OriginContentId { get; set; }
     public float TravelSecondsPerUnit { get; set; } = 0.2f;
@@ -69,7 +70,9 @@ public static class FormationMacroGenerator {
         if (formation.Points.Count == 0)
             return new FormationMacroGenerationResult { Macro = new Macro { Name = options.MacroName } };
 
-        var anchorIndex = Math.Clamp(options.AnchorPointIndex, 0, formation.Points.Count - 1);
+        var anchorIndex = options.UseLocalFormationPointCommand
+            ? FormationPointMovement.AnchorPointIndex
+            : Math.Clamp(options.AnchorPointIndex, 0, formation.Points.Count - 1);
         var anchor = formation.Points[anchorIndex];
         var destinations = formation.Points
             .Select((point, index) => new IndexedPoint(index, point))
@@ -88,6 +91,8 @@ public static class FormationMacroGenerator {
         if (options.Mode is FormationMacroGeneratorMode.Movement or FormationMacroGeneratorMode.MovementAndPetPlacement) {
             if (options.UseFormationMoveCommand)
                 AddFormationMoveCommand(macro, destinations, anchor, formation, options, warnings);
+            else if (options.UseLocalFormationPointCommand)
+                AddLocalFormationPointCommands(macro, destinations, anchor, formation, options, groups);
             else
                 AddMovementCommands(macro, destinations, anchor, options, groups);
         }
@@ -136,6 +141,50 @@ public static class FormationMacroGenerator {
             GroupIds = [],
             Actions = string.Join("\n", lines),
         });
+    }
+
+    private static void AddLocalFormationPointCommands(
+        Macro macro,
+        IReadOnlyList<IndexedPoint> destinations,
+        FormationPoint anchor,
+        Formation formation,
+        FormationMacroGeneratorOptions options,
+        IReadOnlyList<CidGroup>? groups) {
+        var formationName = string.IsNullOrWhiteSpace(options.FormationMoveName)
+            ? formation.Name
+            : options.FormationMoveName.Trim();
+        if (string.IsNullOrWhiteSpace(formationName))
+            return;
+
+        var step = Math.Max(1, options.Step);
+        var arrivalMode = options.FormationMoveArrivalMode == MovementArrivalMode.Precise ? "precise" : "continuous";
+        var anchorArg = options.FormationMoveAnchorMode == FormationMoveAnchorMode.Target
+            ? " anchor=target"
+            : string.IsNullOrWhiteSpace(options.OriginReference)
+                ? " anchor=self"
+                : $" anchor=\"{ArgumentParser.EscapeQuotedArgument(options.OriginReference)}\"";
+
+        foreach (var start in destinations) {
+            var assignment = BuildAssignment(start.Point, groups, options.UseMatchingGroups);
+            if (assignment.IsEmpty)
+                continue;
+
+            var order = SequenceFrom(start.Index, destinations, step, options.Reverse);
+            var waits = SegmentDelays(order, anchor, options);
+            var lines = new List<string>();
+            for (int i = 0; i < order.Count; i++) {
+                lines.Add(
+                    $"/mopformationgoto \"{ArgumentParser.EscapeQuotedArgument(formationName)}\" {order[i].Index + 1}{anchorArg} {arrivalMode}");
+                lines.Add($"/mopwait {waits[i].ToString("F2", CultureInfo.InvariantCulture)}");
+            }
+
+            lines.Add("/moploop");
+            macro.Commands.Add(new Command {
+                Cids = assignment.Cids,
+                GroupIds = assignment.GroupIds,
+                Actions = string.Join("\n", lines),
+            });
+        }
     }
 
     private static void AddMovementCommands(

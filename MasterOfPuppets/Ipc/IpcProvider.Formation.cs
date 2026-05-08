@@ -19,10 +19,14 @@ internal partial class IpcProvider {
     /// client can place its assigned point relative to the anchor's saved point.
     /// </summary>
     public void ExecuteFormation(string name, bool useTargetAnchor = false) {
-        _ = DalamudApi.Framework.RunOnFrameworkThread(() => ExecuteFormationOnFrameworkThread(name, useTargetAnchor));
+        ExecuteFormation(name, useTargetAnchor ? FormationAnchorReference.Target : FormationAnchorReference.Self);
     }
 
-    private void ExecuteFormationOnFrameworkThread(string name, bool useTargetAnchor = false) {
+    public void ExecuteFormation(string name, FormationAnchorReference anchor) {
+        _ = DalamudApi.Framework.RunOnFrameworkThread(() => ExecuteFormationOnFrameworkThread(name, anchor));
+    }
+
+    private void ExecuteFormationOnFrameworkThread(string name, FormationAnchorReference anchor) {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
 
@@ -42,7 +46,7 @@ internal partial class IpcProvider {
             return;
         }
 
-        if (!TryGetFormationAnchor(useTargetAnchor, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid))
+        if (!TryGetFormationAnchor(formation, anchor, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid))
             return;
 
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteFormation,
@@ -89,13 +93,7 @@ internal partial class IpcProvider {
         // DalamudApi.PluginLog.Warning($"[ExecuteFormation] anchorPos: {anchorPos} worldPos: {worldPos} faceDirection: {facingRad}");
 
         // Plugin.MovementManager.MoveTo(worldPos, facingRad.Radians());
-        Plugin.SimpleInputMovement.MoveTo(
-            worldPos,
-            precision: Plugin.Config.FormationMovePrecision,
-            faceDirection: facingRad,
-            stopOnStuck: Plugin.Config.StopOnStuck,
-            stuckTolerance: Plugin.Config.StuckTolerance,
-            stuckTimeoutMs: Plugin.Config.StuckTimeoutMs);
+        FormationLocalMovementExecutor.MoveToComputed(Plugin, worldPos, facingRad);
 
         // Member faces the same direction as the anchor (north offset = 0)
         // Plugin.MovementManager.MoveTo(worldPos, anchorRot.Radians());
@@ -108,7 +106,28 @@ internal partial class IpcProvider {
         int sequenceIndex = 0,
         MovementArrivalMode arrivalMode = MovementArrivalMode.Continuous,
         FormationMoveAnchorMode anchorMode = FormationMoveAnchorMode.Self) =>
-        DalamudApi.Framework.RunOnFrameworkThread(() => ExecuteFormationMoveOnFrameworkThread(name, reverse, step, sequenceIndex, arrivalMode, anchorMode));
+        ExecuteFormationMove(
+            name,
+            reverse,
+            step,
+            sequenceIndex,
+            arrivalMode,
+            anchorMode == FormationMoveAnchorMode.Target ? FormationAnchorReference.Target : FormationAnchorReference.Self);
+
+    public Task ExecuteFormationMove(
+        string name,
+        bool reverse = false,
+        int step = 1,
+        int sequenceIndex = 0,
+        MovementArrivalMode arrivalMode = MovementArrivalMode.Continuous,
+        FormationAnchorReference? anchor = null) =>
+        DalamudApi.Framework.RunOnFrameworkThread(() => ExecuteFormationMoveOnFrameworkThread(
+            name,
+            reverse,
+            step,
+            sequenceIndex,
+            arrivalMode,
+            anchor ?? FormationAnchorReference.Self));
 
     private void ExecuteFormationMoveOnFrameworkThread(
         string name,
@@ -116,7 +135,7 @@ internal partial class IpcProvider {
         int step = 1,
         int sequenceIndex = 0,
         MovementArrivalMode arrivalMode = MovementArrivalMode.Continuous,
-        FormationMoveAnchorMode anchorMode = FormationMoveAnchorMode.Self) {
+        FormationAnchorReference? anchor = null) {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
 
@@ -136,7 +155,8 @@ internal partial class IpcProvider {
             return;
         }
 
-        if (!TryGetFormationAnchor(anchorMode == FormationMoveAnchorMode.Target, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid))
+        var effectiveAnchor = anchor ?? FormationAnchorReference.Self;
+        if (!TryGetFormationAnchor(formation, effectiveAnchor, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid))
             return;
 
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteFormationMove,
@@ -150,7 +170,7 @@ internal partial class IpcProvider {
             Math.Max(1, step).ToString(CultureInfo.InvariantCulture),
             sequenceIndex.ToString(CultureInfo.InvariantCulture),
             arrivalMode == MovementArrivalMode.Precise ? "precise" : "continuous",
-            anchorMode == FormationMoveAnchorMode.Target ? "target" : "self").Serialize(), includeSelf: true);
+            effectiveAnchor.Kind == FormationAnchorKind.Target ? "target" : "self").Serialize(), includeSelf: true);
     }
 
     [IpcHandle(IpcMessageType.ExecuteFormationMove)]
@@ -203,20 +223,19 @@ internal partial class IpcProvider {
         if (move == null)
             return;
 
-        Plugin.SimpleInputMovement.MoveTo(
-            move.Value.Position,
-            precision: Plugin.Config.FormationMovePrecision,
-            faceDirection: move.Value.Rotation,
-            arrivalMode: arrivalMode,
-            stopOnStuck: Plugin.Config.StopOnStuck,
-            stuckTolerance: Plugin.Config.StuckTolerance,
-            stuckTimeoutMs: Plugin.Config.StuckTimeoutMs);
+        FormationLocalMovementExecutor.MoveToComputed(Plugin, move.Value.Position, move.Value.Rotation, arrivalMode);
     }
 
     private FormationPoint? GetAssignedPoint(Formation formation, ulong playerCid) =>
         FormationExecution.GetAssignedPoint(formation, playerCid, Plugin.Config.CidsGroups);
 
-    private bool TryGetFormationAnchor(bool useTargetAnchor, ulong issuerCid, out Vector3 position, out float rotation, out ulong cid) {
+    private bool TryGetFormationAnchor(
+        Formation formation,
+        FormationAnchorReference anchor,
+        ulong issuerCid,
+        out Vector3 position,
+        out float rotation,
+        out ulong cid) {
         position = default;
         rotation = default;
         cid = default;
@@ -224,30 +243,17 @@ internal partial class IpcProvider {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return false;
 
-        if (!useTargetAnchor) {
-            position = player.Position;
-            rotation = player.Rotation;
-            cid = issuerCid;
-            return cid != 0;
-        }
+        if (anchor.Kind == FormationAnchorKind.Default)
+            anchor = FormationAnchorReference.Self;
 
-        var targetObjectId = player.TargetObjectId;
-        if (targetObjectId == 0) {
-            DalamudApi.ShowNotification("No target selected for formation anchor.", NotificationType.Error, 5000);
+        if (!FormationAnchorResolver.TryResolve(Plugin, formation, anchor, out var resolved, out var failureReason)) {
+            DalamudApi.ShowNotification(failureReason, NotificationType.Error, 5000);
             return false;
         }
 
-        var target = player.TargetObject?.GameObjectId == targetObjectId
-            ? player.TargetObject
-            : DalamudApi.ObjectTable.FirstOrDefault(o => o?.GameObjectId == targetObjectId);
-        if (target == null) {
-            DalamudApi.ShowNotification("Could not resolve formation target.", NotificationType.Error, 5000);
-            return false;
-        }
-
-        position = target.Position;
-        rotation = target.Rotation;
+        position = resolved.Position;
+        rotation = resolved.Rotation;
         cid = issuerCid;
-        return true;
+        return cid != 0;
     }
 }

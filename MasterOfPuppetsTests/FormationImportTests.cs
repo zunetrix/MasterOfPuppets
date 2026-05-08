@@ -208,6 +208,88 @@ public class FormationImportTests {
         });
     }
 
+    [Fact]
+    public void FormationShareCode_RoundTripsFormationWithAssignments() {
+        var source = new Formation {
+            Name = "Shared Circle",
+            Points = [
+                new FormationPoint {
+                    Offset = new Vector3(1f, 2f, 3f),
+                    Angle = 45f,
+                    Cids = [100, 101],
+                    GroupIds = ["Group A"],
+                },
+                new FormationPoint {
+                    Offset = new Vector3(-1f, 0f, 2f),
+                    Angle = -90f,
+                    Cids = [102],
+                },
+            ],
+        };
+
+        var code = FormationShareCode.Export(source, includeAssignments: true);
+        var imported = FormationShareCode.TryImport(code, out var formation, out var error);
+
+        Assert.True(imported, error);
+        Assert.Equal("Shared Circle", formation.Name);
+        Assert.Equal(2, formation.Points.Count);
+        AssertClose(1f, formation.Points[0].Offset.X);
+        AssertClose(2f, formation.Points[0].Offset.Y);
+        AssertClose(3f, formation.Points[0].Offset.Z);
+        AssertClose(45f, formation.Points[0].Angle);
+        Assert.Equal([100UL, 101UL], formation.Points[0].Cids);
+        Assert.Equal(["Group A"], formation.Points[0].GroupIds);
+        Assert.Equal([102UL], formation.Points[1].Cids);
+    }
+
+    [Fact]
+    public void FormationShareCode_ExportWithoutAssignments_ClearsCidsAndGroups() {
+        var source = new Formation {
+            Name = "Shared Circle",
+            Points = [
+                new FormationPoint {
+                    Offset = new Vector3(1f, 0f, 3f),
+                    Angle = 45f,
+                    Cids = [100],
+                    GroupIds = ["Group A"],
+                },
+            ],
+        };
+
+        var code = FormationShareCode.Export(source, includeAssignments: false);
+        var imported = FormationShareCode.TryImport(code, out var formation, out var error);
+
+        Assert.True(imported, error);
+        var point = Assert.Single(formation.Points);
+        Assert.Empty(point.Cids);
+        Assert.Empty(point.GroupIds);
+        AssertClose(1f, point.Offset.X);
+        AssertClose(3f, point.Offset.Z);
+        AssertClose(45f, point.Angle);
+    }
+
+    [Fact]
+    public void FormationShareCode_RejectsInvalidCodeWithoutMutatingOutput() {
+        var imported = FormationShareCode.TryImport("not-a-formation-code", out var formation, out var error);
+
+        Assert.False(imported);
+        Assert.Contains("MOPF1:", error);
+        Assert.Empty(formation.Name);
+        Assert.Empty(formation.Points);
+    }
+
+    [Fact]
+    public void FormationShareCode_GetUniqueName_AppendsSuffixForDuplicateNames() {
+        var formations = new[] {
+            new Formation { Name = "Circle" },
+            new Formation { Name = "Circle (2)" },
+        };
+
+        var name = FormationShareCode.GetUniqueName("Circle", formations);
+
+        Assert.Equal("Circle (3)", name);
+    }
+
     private static BardToolboxFormationImport ReadBardToolboxImport() =>
         BardToolboxFormationImporter.ParseConfigJson(BardToolboxConfigJson);
 

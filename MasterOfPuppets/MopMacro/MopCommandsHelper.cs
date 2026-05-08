@@ -759,6 +759,23 @@ public static class MopCommandsHelper {
                 /ac heal <t> => /ac heal [t]
             """
         },
+        new MopAction
+        {
+            Category = MopActionCategory.ChatSyncCommand,
+            TextCommand = "mopformation \"Formation Name\" [self|target|\"Character Name\"|\"Character Name@World\"] [continuous|precise]",
+            SuggestionCommand = "mopformation ",
+            Example = """
+            Move each chat-sync client to its assigned point in a shared formation:
+                mopformation "Tight Circle"
+                mopformation "Tight Circle" target precise
+                mopformation "Tight Circle" "Anchor Character@World"
+            """,
+            Notes = """
+            * This is a chat sync command - all clients reading the chat resolve and move only their local character.
+            * Without an explicit anchor, point 1's assigned character is used as the live anchor and must be visible.
+            * All clients need the same formation imported or configured.
+            """
+        },
         new MopAction {
             Category = MopActionCategory.ChatSyncCommand,
             TextCommand = "mopstop",
@@ -1215,6 +1232,24 @@ public static class MopCommandsHelper {
             Add precise to walk near the destination and hard-stop on arrival.
             Add target to anchor the movement at your current target.
             Generated formation macros use one line per movement so waits, pet actions, and other macro actions can run between moves.
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.MacroAction,
+            TextCommand = "/mopformationgoto \"Formation Name\" <pointNumber> [anchor=<self|target|\"Character Name@World\">] [continuous|precise]",
+            SuggestionCommand = "/mopformationgoto \"Formation Name\" 2 anchor=\"Character Name@World\"",
+            Example = """
+            /mopformationgoto "Circle" 2 anchor="Anchor Character@World"
+            /mopformationgoto "Circle" 3 anchor=target precise
+            /mopformationgoto "Circle" 4 anchor=self
+            """,
+            Notes = """
+            Moves only this client to a specific saved formation point.
+            Point numbers are 1-based; point 1 is always the live anchor/origin.
+            Use anchor="Name@World" when each PC should place itself relative to the same visible anchor character.
+            This is the precise local alternative to IPC-broadcast /mopformationmove.
             """
         },
 

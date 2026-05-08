@@ -128,6 +128,7 @@ public partial class MacroHandler : IDisposable {
             ["mopmove"] = new(HandleMopMove),
             ["mopmoverelativeto"] = new(HandleMopMoveRelativeTo),
             ["mopformationmove"] = new(HandleMopFormationMove),
+            ["mopformationgoto"] = new(HandleMopFormationGoto),
             ["mopmovetotarget"] = new(HandleMopMoveToTarget),
             ["mopmovetocharacter"] = new(HandleMopMoveToCharacter),
             ["mopstopmove"] = new(HandleMopStopMove),

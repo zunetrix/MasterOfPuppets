@@ -402,6 +402,73 @@ public class FormationMacroGeneratorTests {
     }
 
     [Fact]
+    public void GenerateLoopMacro_ExistingFormationLocalPointMovement_EmitsPerPointGotoCommands() {
+        var formation = BuildEightPointFormation();
+
+        var result = FormationMacroGenerator.GenerateLoopMacroWithDiagnostics(
+            formation,
+            new FormationMacroGeneratorOptions {
+                Mode = FormationMacroGeneratorMode.Movement,
+                AnchorPointIndex = 0,
+                UseLocalFormationPointCommand = true,
+                FormationMoveName = "Circle",
+                OriginReference = "Origin Character@World",
+                TravelSecondsPerUnit = 1f,
+                GlobalDelaySeconds = 0f,
+            });
+
+        Assert.Empty(result.Warnings);
+        Assert.Equal(7, result.Macro.Commands.Count);
+        Assert.Equal([101UL], result.Macro.Commands[0].Cids);
+        Assert.Empty(result.Macro.Commands[0].GroupIds);
+
+        var lines = result.Macro.Commands[0].Actions.Split('\n');
+        Assert.Equal("/mopformationgoto \"Circle\" 2 anchor=\"Origin Character@World\" continuous", lines[0]);
+        Assert.Equal("/mopwait 1.00", lines[1]);
+        Assert.Equal("/mopformationgoto \"Circle\" 3 anchor=\"Origin Character@World\" continuous", lines[2]);
+        Assert.DoesNotContain("/mopformationmove", result.Macro.Commands[0].Actions);
+        Assert.EndsWith("/moploop", result.Macro.Commands[0].Actions);
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_ExistingFormationLocalPointMovement_UsesPointOneAnchorEvenWhenConfiguredAnchorDiffers() {
+        var formation = BuildEightPointFormation();
+
+        var result = FormationMacroGenerator.GenerateLoopMacroWithDiagnostics(
+            formation,
+            new FormationMacroGeneratorOptions {
+                Mode = FormationMacroGeneratorMode.Movement,
+                AnchorPointIndex = 3,
+                UseLocalFormationPointCommand = true,
+                FormationMoveName = "Circle",
+                OriginReference = "Origin Character@World",
+            });
+
+        Assert.Equal(7, result.Macro.Commands.Count);
+        Assert.DoesNotContain(result.Macro.Commands, command => command.Cids.SequenceEqual([100UL]));
+        Assert.Contains(result.Macro.Commands, command => command.Cids.SequenceEqual([103UL]));
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_ExistingFormationLocalPointMovement_EmitsTargetAndPreciseOptions() {
+        var formation = BuildEightPointFormation();
+
+        var result = FormationMacroGenerator.GenerateLoopMacroWithDiagnostics(
+            formation,
+            new FormationMacroGeneratorOptions {
+                Mode = FormationMacroGeneratorMode.Movement,
+                UseLocalFormationPointCommand = true,
+                FormationMoveName = "Circle",
+                FormationMoveArrivalMode = MovementArrivalMode.Precise,
+                FormationMoveAnchorMode = FormationMoveAnchorMode.Target,
+            });
+
+        var command = Assert.Single(result.Macro.Commands, command => command.Cids.SequenceEqual([101UL]));
+        var firstLine = command.Actions.Split('\n')[0];
+        Assert.Equal("/mopformationgoto \"Circle\" 2 anchor=target precise", firstLine);
+    }
+
+    [Fact]
     public void GenerateLoopMacro_ExistingFormationMovement_UsesMopScriptsTimingDefaults() {
         var formation = new Formation {
             Name = "Circle",

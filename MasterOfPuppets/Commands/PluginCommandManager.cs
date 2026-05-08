@@ -8,6 +8,7 @@ using Dalamud.Game.Command;
 using Dalamud.Interface.ImGuiNotification;
 
 using MasterOfPuppets.Camera;
+using MasterOfPuppets.Formations;
 using MasterOfPuppets.Movement;
 using MasterOfPuppets.Util;
 
@@ -440,15 +441,14 @@ public class PluginCommandManager : IDisposable {
                             Plugin.Ui.FormationWindow.Toggle();
                             return;
                         }
-                        var useTargetAnchor = false;
-                        if (parsedArgs.Count >= 3) {
-                            if (!parsedArgs[2].Equals("target", StringComparison.OrdinalIgnoreCase)) {
-                                DalamudApi.ShowNotification("Invalid formation argument. Use: /mop formation \"Name\" [target]", NotificationType.Error, 5000);
-                                return;
-                            }
-                            useTargetAnchor = true;
+                        var anchor = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+                            parsedArgs.Skip(2),
+                            FormationAnchorReference.Self);
+                        if (anchor.InvalidArgument != null) {
+                            DalamudApi.ShowNotification($"Invalid formation argument: {anchor.InvalidArgument}", NotificationType.Error, 5000);
+                            return;
                         }
-                        Plugin.IpcProvider.ExecuteFormation(parsedArgs[1], useTargetAnchor);
+                        Plugin.IpcProvider.ExecuteFormation(parsedArgs[1], anchor.Anchor);
                     }
                     break;
                 case "layout": {

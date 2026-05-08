@@ -208,6 +208,119 @@ public class FormationExecutionTests
         AssertClose(1f, move.Value.Position.X);
     }
 
+    [Fact]
+    public void FormationPointMovement_UsesPointOneAsAnchor()
+    {
+        var formation = new Formation
+        {
+            Points = [
+                new FormationPoint { Offset = new Vector3(5f, 0f, 5f), Angle = 45f },
+                new FormationPoint { Offset = new Vector3(5f, 0f, 7f), Angle = -45f },
+            ],
+        };
+
+        var move = FormationPointMovement.BuildPointOneAnchoredWorldMove(
+            formation,
+            destinationPointIndex: 1,
+            anchorWorldPosition: new Vector3(10f, 0f, 20f),
+            anchorWorldRotation: MathF.PI / 2f);
+
+        Assert.NotNull(move);
+        AssertClose(12f, move.Value.Position.X);
+        AssertClose(20f, move.Value.Position.Z);
+        AssertClose(0f, move.Value.Rotation);
+    }
+
+    [Fact]
+    public void FormationPointMovement_MatchesExistingFormationMathForPointOneAnchor()
+    {
+        var formation = new Formation
+        {
+            Points = [
+                new FormationPoint { Offset = new Vector3(1f, 0f, 1f), Angle = 30f },
+                new FormationPoint { Offset = new Vector3(3f, 0f, -2f), Angle = -120f },
+            ],
+        };
+        var anchorPosition = new Vector3(-5f, 0f, 8f);
+        var anchorRotation = -MathF.PI / 3f;
+
+        var direct = FormationMath.GetMopRelativeWorld(
+            formation.Points[0],
+            formation.Points[1],
+            anchorPosition,
+            anchorRotation);
+        var helper = FormationPointMovement.BuildPointOneAnchoredWorldMove(
+            formation,
+            destinationPointIndex: 1,
+            anchorPosition,
+            anchorRotation);
+
+        Assert.NotNull(helper);
+        AssertClose(direct.Position.X, helper.Value.Position.X);
+        AssertClose(direct.Position.Z, helper.Value.Position.Z);
+        AssertClose(direct.Rotation, helper.Value.Rotation);
+    }
+
+    [Fact]
+    public void FormationPointMovement_Gets_Single_PointOne_Anchor_Cid()
+    {
+        var formation = new Formation
+        {
+            Points = [
+                new FormationPoint { Cids = [100] },
+                new FormationPoint { Cids = [101] },
+            ],
+        };
+
+        var resolved = FormationPointMovement.TryGetPointOneAnchorCid(formation, null, out var cid, out var failure);
+
+        Assert.True(resolved, failure);
+        Assert.Equal(100UL, cid);
+    }
+
+    [Fact]
+    public void FormationPointMovement_Rejects_Ambiguous_PointOne_Anchor_Cid()
+    {
+        var formation = new Formation
+        {
+            Points = [
+                new FormationPoint { Cids = [100, 101] },
+                new FormationPoint { Cids = [102] },
+            ],
+        };
+
+        var resolved = FormationPointMovement.TryGetPointOneAnchorCid(formation, null, out _, out var failure);
+
+        Assert.False(resolved);
+        Assert.Contains("exactly one", failure);
+    }
+
+    [Fact]
+    public void FormationPointMovement_Builds_Assigned_Move_From_PointOne_Anchor()
+    {
+        var formation = new Formation
+        {
+            Points = [
+                new FormationPoint { Offset = new Vector3(5f, 0f, 5f), Angle = 45f, Cids = [100] },
+                new FormationPoint { Offset = new Vector3(5f, 0f, 7f), Angle = -45f, Cids = [101] },
+            ],
+        };
+
+        var move = FormationPointMovement.BuildAssignedPointOneAnchoredWorldMove(
+            formation,
+            destinationContentId: 101,
+            groups: null,
+            anchorWorldPosition: new Vector3(10f, 0f, 20f),
+            anchorWorldRotation: MathF.PI / 2f,
+            out var destinationPointIndex);
+
+        Assert.NotNull(move);
+        Assert.Equal(1, destinationPointIndex);
+        AssertClose(12f, move.Value.Position.X);
+        AssertClose(20f, move.Value.Position.Z);
+        AssertClose(0f, move.Value.Rotation);
+    }
+
     private static void AssertClose(float expected, float actual, float tolerance = 0.0001f) =>
         Assert.InRange(MathF.Abs(expected - actual), 0f, tolerance);
 }
