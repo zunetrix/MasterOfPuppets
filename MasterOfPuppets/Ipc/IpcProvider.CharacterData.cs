@@ -17,13 +17,13 @@ public record PeerCharacterInfo(
 );
 
 internal partial class IpcProvider {
-    private static readonly TimeSpan CharacterDataBroadcastInterval = TimeSpan.FromSeconds(1);
-    public static readonly TimeSpan PeerCharacterDataMaxAge = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan CharacterDataBroadcastInterval = TimeSpan.FromSeconds(5);
+    public static readonly TimeSpan PeerCharacterDataMaxAge = TimeSpan.FromSeconds(15);
     private DateTime _nextCharacterDataBroadcast = DateTime.MinValue;
 
     /// <summary>
     /// Character info received from each peer. Key = ContentId.
-    /// Populated when peers respond to <see cref="RequestCharacterData"/>.
+    /// Populated when peers respond to <see cref="RequestCharacterData"/>
     /// </summary>
     public ConcurrentDictionary<long, PeerCharacterInfo> PeerCharacterData { get; } = new();
 
@@ -36,12 +36,12 @@ internal partial class IpcProvider {
 
     public void UpdateCharacterDataHeartbeat() {
         var now = DateTime.UtcNow;
-        PruneStaleCharacterData(now);
 
         if (now < _nextCharacterDataBroadcast)
             return;
 
         _nextCharacterDataBroadcast = now + CharacterDataBroadcastInterval;
+        PruneStaleCharacterData(now);
         BroadcastCharacterData(IpcMessageType.CharacterData);
     }
 

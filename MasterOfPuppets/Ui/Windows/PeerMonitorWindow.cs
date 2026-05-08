@@ -112,11 +112,13 @@ public class PeerMonitorWindow : Window {
 
             ImGui.TableNextColumn();
             var elapsed = DateTime.UtcNow - info.LastSeen;
-            var lastSeenText = elapsed.TotalSeconds < 60
-                ? $"{(int)elapsed.TotalSeconds}s ago"
-                : elapsed.TotalMinutes < 60
-                    ? $"{(int)elapsed.TotalMinutes}m ago"
-                    : info.LastSeen.ToLocalTime().ToString("HH:mm:ss");
+            var lastSeenText = elapsed.TotalSeconds <= 5
+                ? "Just now"
+                : elapsed.TotalSeconds < 60
+                    ? $"{(int)elapsed.TotalSeconds}s ago"
+                    : elapsed.TotalMinutes < 60
+                        ? $"{(int)elapsed.TotalMinutes}m ago"
+                        : info.LastSeen.ToLocalTime().ToString("HH:mm:ss");
             ImGui.Text(lastSeenText);
         }
     }
