@@ -7,8 +7,6 @@ namespace MasterOfPuppets.Ipc;
 
 internal partial class IpcProvider {
 
-    //  Invite
-
     /// <summary>
     /// Broadcasts a request asking all peers to send their character info,
     /// then invites each respondent to the party (master-initiated).
@@ -19,11 +17,12 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.RequestInviteAllToParty)]
     private void HandleRequestInviteAllToParty(IpcMessage message) {
-        DalamudApi.Framework.RunOnFrameworkThread(() => BroadcastCharacterData(IpcMessageType.InviteToParty));
+        var leaderCid = message.BroadcasterId;
+        DalamudApi.Framework.RunOnFrameworkThread(() => BroadcastTargetedCharacterData(IpcMessageType.InviteToParty, leaderCid));
     }
 
     /// <summary>
-    /// Sends our character info to all peers so they can invite us to their party (puppet-initiated).
+    /// Sends our character info to all peers so they can invite us to their party
     /// </summary>
     public void RequestInviteMe() {
         DalamudApi.Framework.RunOnFrameworkThread(() => BroadcastCharacterData(IpcMessageType.InviteToParty));
@@ -31,6 +30,10 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.InviteToParty)]
     private void HandleInviteToParty(IpcMessage message) {
+        if (message.StringData?.Length >= 4 && ulong.TryParse(message.StringData[3], out var targetCid)) {
+            if (targetCid != DalamudApi.PlayerState.ContentId) return;
+        }
+
         var info = ParseCharacterInfo(message);
         if (string.IsNullOrEmpty(info.CharacterName)) return;
 

@@ -90,6 +90,23 @@ internal partial class IpcProvider {
         ).Serialize(), includeSelf: true);
     }
 
+    internal void BroadcastTargetedCharacterData(IpcMessageType type, long targetId) {
+        if (!DalamudApi.PlayerState.IsLoaded) return;
+
+        BroadCast(IpcMessage.Create(
+            type,
+            new CharacterDataPayload {
+                ContentId = DalamudApi.PlayerState.ContentId,
+                HomeWorldId = DalamudApi.PlayerState.HomeWorld.RowId,
+                CurrentWorldId = DalamudApi.PlayerState.CurrentWorld.RowId,
+            },
+            DalamudApi.PlayerState.CharacterName,
+            DalamudApi.PlayerState.HomeWorld.ValueNullable?.Name.ToString() ?? "",
+            DalamudApi.PlayerState.CurrentWorld.ValueNullable?.Name.ToString() ?? "",
+            targetId.ToString()
+        ).Serialize(), includeSelf: true);
+    }
+
     internal static PeerCharacterInfo ParseCharacterInfo(IpcMessage message) {
         var p = message.DataStruct<CharacterDataPayload>();
         var name = message.StringData?.ElementAtOrDefault(0) ?? "";

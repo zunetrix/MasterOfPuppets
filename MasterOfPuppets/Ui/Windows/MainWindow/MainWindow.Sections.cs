@@ -20,18 +20,23 @@ public partial class MainWindow : Window {
                 DrawCmdRow(FontAwesomeIcon.UserPlus, "Invite All To Party", "/mop invite", () => Plugin.IpcProvider.RequestInviteAllToParty(), isSuccess: true);
                 DrawCmdRow(FontAwesomeIcon.UserMinus, "Disband Party", "/mop disband", () => Plugin.IpcProvider.RequestDisbandParty(), isDanger: true);
                 DrawCmdRow(FontAwesomeIcon.PersonRays, "Get Party Leader", "/mop getleader", () => Plugin.IpcProvider.RequestPartyLeader());
+                DrawCmdRow(FontAwesomeIcon.PersonWalkingArrowLoopLeft, "Abandon Duty", "/mop abandonduty", () => Plugin.IpcProvider.ExecuteAbandonDuty(), isDanger: true);
             }
 
             ImGui.Spacing();
 
-            using (ImGuiGroupPanel.BeginGroupPanel("Commands")) {
+            using (ImGuiGroupPanel.BeginGroupPanel("Target")) {
                 DrawCmdRow(FontAwesomeIcon.Crosshairs, "Target My Target", "/mop targetmytarget", () => Plugin.IpcProvider.ExecuteTargetMyTarget());
                 DrawCmdRow(FontAwesomeIcon.PersonChalkboard, "Interact With My Target", "/mop interactwithmytarget", () => Plugin.IpcProvider.ExecuteInteractWithMyTarget());
                 DrawCmdRow(FontAwesomeIcon.Times, "Target Clear", "/mop targetclear", () => Plugin.IpcProvider.ExecuteTargetClear(), isDanger: true);
+            }
+
+            ImGui.Spacing();
+
+            using (ImGuiGroupPanel.BeginGroupPanel("Movement")) {
                 DrawCmdRow(FontAwesomeIcon.PersonWalkingArrowRight, "Move To My Target", "/mop movetomytarget", () => Plugin.IpcProvider.ExecuteMoveToMyTarget());
                 DrawCmdRow(FontAwesomeIcon.PersonArrowDownToLine, "Stack On Me", "/mop stackonme", () => Plugin.IpcProvider.ExecuteStackOnMe());
                 DrawCmdRow(FontAwesomeIcon.PersonWalkingDashedLineArrowRight, "Toggle Walking", "/mop togglewalk", () => Plugin.IpcProvider.ExecuteToggleWalking());
-                DrawCmdRow(FontAwesomeIcon.PersonWalkingArrowLoopLeft, "Abandon Duty", "/mop ad", () => Plugin.IpcProvider.ExecuteAbandonDuty(), isDanger: true);
             }
 
             ImGui.Spacing();

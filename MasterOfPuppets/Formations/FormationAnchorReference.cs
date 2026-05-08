@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using MasterOfPuppets.Movement;
 
@@ -80,7 +79,7 @@ public static class FormationAnchorArgumentParser {
             FormationAnchorKind.Default => string.Empty,
             FormationAnchorKind.Self => "self",
             FormationAnchorKind.Target => "target",
-            FormationAnchorKind.Named => $"\"{MasterOfPuppets.Util.ArgumentParser.EscapeQuotedArgument(anchor.Name ?? string.Empty)}\"",
+            FormationAnchorKind.Named => $"\"{Util.ArgumentParser.EscapeQuotedArgument(anchor.Name ?? string.Empty)}\"",
             _ => string.Empty,
         };
 }

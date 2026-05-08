@@ -171,6 +171,43 @@ public static class MopCommandsHelper {
             Invites a character by Name@World to your party
             """
         },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop disband",
+            SuggestionCommand = "/mop disband",
+            Example = """
+            /mop disband
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Disbands the current party.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop getleader",
+            SuggestionCommand = "/mop getleader",
+            Example = """
+            /mop getleader
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Promotes the main client to party leader.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop abandonduty",
+            SuggestionCommand = "/mop abandonduty",
+            Example = """
+            /mop abandonduty
+            /mop ad
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Leave the current duty instance.
+            """
+        },
 
         // MOVEMENT
         new MopAction
@@ -401,30 +438,6 @@ public static class MopCommandsHelper {
             Notes = """
             * This is a plugin command (works only on local clients)
             Disables follow mode.
-            """
-        },
-        new MopAction {
-            Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop getleader",
-            SuggestionCommand = "/mop getleader",
-            Example = """
-            /mop getleader
-            """,
-            Notes = """
-            * This is a plugin command (works only on local clients)
-            Promotes the main client to party leader.
-            """
-        },
-        new MopAction {
-            Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop disband",
-            SuggestionCommand = "/mop disband",
-            Example = """
-            /mop disband
-            """,
-            Notes = """
-            * This is a plugin command (works only on local clients)
-            Disbands the current party.
             """
         },
 

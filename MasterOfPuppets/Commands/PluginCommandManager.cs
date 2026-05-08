@@ -514,6 +514,7 @@ public class PluginCommandManager : IDisposable {
                 case "settings":
                     Plugin.Ui.SettingsWindow.Toggle();
                     break;
+                case "abandonduty":
                 case "ad":
                     GameFunctions.AbandonDuty();
                     break;
