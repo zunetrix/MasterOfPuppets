@@ -12,7 +12,7 @@ public static class FormationLocalMovementExecutor {
         string formationName,
         int destinationPointIndex,
         FormationAnchorReference anchor,
-        MovementArrivalMode arrivalMode,
+        SimpleMovementMode movementMode,
         string logPrefix = "mopformationgoto") {
         if (!TryGetFormation(plugin, formationName, logPrefix, out var formation))
             return false;
@@ -28,7 +28,7 @@ public static class FormationLocalMovementExecutor {
             destinationPointIndex,
             resolvedAnchor.Position,
             resolvedAnchor.Rotation,
-            arrivalMode,
+            movementMode,
             logPrefix);
     }
 
@@ -36,7 +36,7 @@ public static class FormationLocalMovementExecutor {
         Plugin plugin,
         string formationName,
         FormationAnchorReference anchor,
-        MovementArrivalMode arrivalMode) {
+        SimpleMovementMode movementMode) {
         const string logPrefix = "mopformation";
         if (!TryGetFormation(plugin, formationName, logPrefix, out var formation))
             return false;
@@ -64,7 +64,7 @@ public static class FormationLocalMovementExecutor {
             destinationPointIndex,
             resolvedAnchor.Position,
             resolvedAnchor.Rotation,
-            arrivalMode,
+            movementMode,
             logPrefix);
     }
 
@@ -74,7 +74,7 @@ public static class FormationLocalMovementExecutor {
         int destinationPointIndex,
         Vector3 anchorWorldPosition,
         float anchorWorldRotation,
-        MovementArrivalMode arrivalMode,
+        SimpleMovementMode movementMode,
         string logPrefix) {
         var move = FormationPointMovement.BuildPointOneAnchoredWorldMove(
             formation,
@@ -86,8 +86,8 @@ public static class FormationLocalMovementExecutor {
             return false;
         }
 
-        MoveToComputed(plugin, move.Value.Position, move.Value.Rotation, arrivalMode);
-        DalamudApi.PluginLog.Debug($"[{logPrefix}] formation=\"{formation.Name}\" point={destinationPointIndex + 1} arrivalMode={arrivalMode}");
+        MoveToComputed(plugin, move.Value.Position, move.Value.Rotation, movementMode);
+        DalamudApi.PluginLog.Debug($"[{logPrefix}] formation=\"{formation.Name}\" point={destinationPointIndex + 1} movementMode={movementMode}");
         return true;
     }
 
@@ -95,12 +95,12 @@ public static class FormationLocalMovementExecutor {
         Plugin plugin,
         Vector3 position,
         float rotation,
-        MovementArrivalMode arrivalMode = MovementArrivalMode.Continuous) {
+        SimpleMovementMode movementMode = SimpleMovementMode.Continuous) {
         plugin.SimpleInputMovement.MoveTo(
             position,
             precision: plugin.Config.FormationMovePrecision,
             faceDirection: rotation,
-            arrivalMode: arrivalMode,
+            movementMode: movementMode,
             stopOnStuck: plugin.Config.StopOnStuck,
             stuckTolerance: plugin.Config.StuckTolerance,
             stuckTimeoutMs: plugin.Config.StuckTimeoutMs);

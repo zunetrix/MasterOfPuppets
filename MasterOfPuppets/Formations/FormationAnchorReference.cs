@@ -26,16 +26,16 @@ public sealed record FormationAnchorReference(FormationAnchorKind Kind, string? 
 
 public sealed record FormationAnchorParseResult(
     FormationAnchorReference Anchor,
-    MovementArrivalMode ArrivalMode,
+    SimpleMovementMode MovementMode,
     string? InvalidArgument);
 
 public static class FormationAnchorArgumentParser {
     public static FormationAnchorParseResult ParseAnchorAndArrival(
         IEnumerable<string> arguments,
         FormationAnchorReference? defaultAnchor = null,
-        MovementArrivalMode defaultArrivalMode = MovementArrivalMode.Continuous) {
+        SimpleMovementMode defaultMovementMode = SimpleMovementMode.Continuous) {
         var anchor = defaultAnchor ?? FormationAnchorReference.Default;
-        var arrivalMode = defaultArrivalMode;
+        var movementMode = defaultMovementMode;
         string? invalidArgument = null;
 
         foreach (var rawArgument in arguments) {
@@ -43,13 +43,13 @@ public static class FormationAnchorArgumentParser {
             if (argument.Length == 0)
                 continue;
 
-            if (argument.Equals("precise", StringComparison.OrdinalIgnoreCase)) {
-                arrivalMode = MovementArrivalMode.Precise;
+            if (SimpleInputMovement.TryParseMode(argument, out var parsedMovementMode)) {
+                movementMode = parsedMovementMode;
                 continue;
             }
 
-            if (argument.Equals("continuous", StringComparison.OrdinalIgnoreCase)) {
-                arrivalMode = MovementArrivalMode.Continuous;
+            if (argument.Equals("hybrid", StringComparison.OrdinalIgnoreCase)) {
+                invalidArgument ??= argument;
                 continue;
             }
 
@@ -72,7 +72,7 @@ public static class FormationAnchorArgumentParser {
             }
         }
 
-        return new FormationAnchorParseResult(anchor, arrivalMode, invalidArgument);
+        return new FormationAnchorParseResult(anchor, movementMode, invalidArgument);
     }
 
     public static string FormatForMacro(FormationAnchorReference anchor) =>

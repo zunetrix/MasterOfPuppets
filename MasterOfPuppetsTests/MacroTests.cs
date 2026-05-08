@@ -170,7 +170,7 @@ public class MacroTests
         Assert.False(result.Reverse);
         Assert.Equal(1, result.Step);
         Assert.Equal(0, result.SequenceIndex);
-        Assert.Equal(MovementArrivalMode.Continuous, result.ArrivalMode);
+        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
         Assert.Equal(FormationMoveAnchorMode.Self, result.AnchorMode);
         Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
     }
@@ -184,8 +184,30 @@ public class MacroTests
         Assert.True(result.Reverse);
         Assert.Equal(2, result.Step);
         Assert.Equal(3, result.SequenceIndex);
-        Assert.Equal(MovementArrivalMode.Precise, result.ArrivalMode);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
         Assert.Equal(FormationMoveAnchorMode.Self, result.AnchorMode);
+    }
+
+    [Theory]
+    [InlineData("continuous", SimpleMovementMode.Continuous)]
+    [InlineData("precise", SimpleMovementMode.Precise)]
+    [InlineData("forward", SimpleMovementMode.Forward)]
+    public void ParseFormationMoveCommandArgs_Accepts_All_Movement_Modes(string token, SimpleMovementMode expectedMode)
+    {
+        var result = MacroHandler.ParseFormationMoveCommandArgs($"\"Circle\" forward 1 0 {token}");
+
+        Assert.NotNull(result);
+        Assert.Equal(expectedMode, result.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationMoveCommandArgs_Rejects_Removed_Hybrid_Mode()
+    {
+        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 hybrid");
+
+        Assert.NotNull(result);
+        Assert.Equal("hybrid", result.InvalidArgument);
+        Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
     }
 
     [Fact]
@@ -194,7 +216,7 @@ public class MacroTests
         var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 target");
 
         Assert.NotNull(result);
-        Assert.Equal(MovementArrivalMode.Continuous, result.ArrivalMode);
+        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
         Assert.Equal(FormationMoveAnchorMode.Target, result.AnchorMode);
         Assert.Equal(FormationAnchorKind.Target, result.Anchor.Kind);
     }
@@ -207,9 +229,9 @@ public class MacroTests
 
         Assert.NotNull(targetLast);
         Assert.NotNull(targetFirst);
-        Assert.Equal(MovementArrivalMode.Precise, targetLast.ArrivalMode);
+        Assert.Equal(SimpleMovementMode.Precise, targetLast.MovementMode);
         Assert.Equal(FormationMoveAnchorMode.Target, targetLast.AnchorMode);
-        Assert.Equal(MovementArrivalMode.Precise, targetFirst.ArrivalMode);
+        Assert.Equal(SimpleMovementMode.Precise, targetFirst.MovementMode);
         Assert.Equal(FormationMoveAnchorMode.Target, targetFirst.AnchorMode);
     }
 
@@ -219,7 +241,7 @@ public class MacroTests
         var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 \"Anchor Character@World\"");
 
         Assert.NotNull(result);
-        Assert.Equal(MovementArrivalMode.Continuous, result.ArrivalMode);
+        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
         Assert.Equal(FormationAnchorKind.Named, result.Anchor.Kind);
         Assert.Equal("Anchor Character@World", result.Anchor.Name);
         Assert.Null(result.InvalidArgument);
@@ -236,7 +258,7 @@ public class MacroTests
         Assert.Equal(MacroHandler.FormationGotoAnchorKind.Self, result.AnchorKind);
         Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
         Assert.Null(result.AnchorName);
-        Assert.Equal(MovementArrivalMode.Continuous, result.ArrivalMode);
+        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
     }
 
     [Fact]
@@ -248,7 +270,7 @@ public class MacroTests
         Assert.Equal(2, result.PointIndex);
         Assert.Equal(MacroHandler.FormationGotoAnchorKind.Named, result.AnchorKind);
         Assert.Equal("Anchor Character@World", result.AnchorName);
-        Assert.Equal(MovementArrivalMode.Precise, result.ArrivalMode);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
     }
 
     [Fact]
@@ -271,7 +293,29 @@ public class MacroTests
         Assert.NotNull(result);
         Assert.Equal(FormationAnchorKind.Named, result.Anchor.Kind);
         Assert.Equal("Anchor Character@World", result.Anchor.Name);
-        Assert.Equal(MovementArrivalMode.Precise, result.ArrivalMode);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+    }
+
+    [Theory]
+    [InlineData("continuous", SimpleMovementMode.Continuous)]
+    [InlineData("precise", SimpleMovementMode.Precise)]
+    [InlineData("forward", SimpleMovementMode.Forward)]
+    public void ParseFormationGotoCommandArgs_Accepts_All_Movement_Modes(string token, SimpleMovementMode expectedMode)
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs($"\"Circle\" 4 target {token}");
+
+        Assert.NotNull(result);
+        Assert.Equal(expectedMode, result.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Rejects_Removed_Hybrid_Mode()
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 target hybrid");
+
+        Assert.NotNull(result);
+        Assert.Equal("hybrid", result.InvalidArgument);
+        Assert.Equal(MacroHandler.FormationGotoAnchorKind.Target, result.AnchorKind);
     }
 
     [Fact]
@@ -299,7 +343,35 @@ public class MacroTests
             FormationAnchorReference.Default);
 
         Assert.Equal(FormationAnchorKind.Default, result.Anchor.Kind);
-        Assert.Equal(MovementArrivalMode.Precise, result.ArrivalMode);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationAnchorAndArrival_Preserves_Self_Anchor_For_Local_MopFormation()
+    {
+        var result = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            ["precise"],
+            FormationAnchorReference.Self);
+
+        Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+        Assert.Null(result.InvalidArgument);
+    }
+
+    [Fact]
+    public void ParseFormationAnchorAndArrival_Accepts_Target_And_Precise_In_Either_Order()
+    {
+        var targetLast = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            ["precise", "target"],
+            FormationAnchorReference.Self);
+        var targetFirst = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            ["target", "precise"],
+            FormationAnchorReference.Self);
+
+        Assert.Equal(FormationAnchorKind.Target, targetLast.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Precise, targetLast.MovementMode);
+        Assert.Equal(FormationAnchorKind.Target, targetFirst.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Precise, targetFirst.MovementMode);
     }
 
     [Fact]

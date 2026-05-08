@@ -192,7 +192,7 @@ internal class ChatWatcher : IDisposable {
                 Plugin,
                 args[0],
                 anchor.Anchor,
-                anchor.ArrivalMode));
+                anchor.MovementMode));
     }
 
     private static string SanitizeSenderName(string raw) {

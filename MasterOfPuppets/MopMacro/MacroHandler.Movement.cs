@@ -22,7 +22,7 @@ public partial class MacroHandler {
         bool Reverse,
         int Step,
         int SequenceIndex,
-        MovementArrivalMode ArrivalMode,
+        SimpleMovementMode MovementMode,
         FormationAnchorReference Anchor,
         string? InvalidArgument) {
         public FormationMoveAnchorMode AnchorMode => Anchor.Kind == FormationAnchorKind.Target
@@ -34,7 +34,7 @@ public partial class MacroHandler {
         string FormationName,
         int PointIndex,
         FormationAnchorReference Anchor,
-        MovementArrivalMode ArrivalMode,
+        SimpleMovementMode MovementMode,
         string? InvalidArgument) {
         public FormationGotoAnchorKind AnchorKind => Anchor.Kind switch {
             FormationAnchorKind.Target => FormationGotoAnchorKind.Target,
@@ -70,7 +70,7 @@ public partial class MacroHandler {
             reverse,
             step,
             sequenceIndex,
-            anchorParse.ArrivalMode,
+            anchorParse.MovementMode,
             anchorParse.Anchor,
             anchorParse.InvalidArgument);
     }
@@ -85,7 +85,7 @@ public partial class MacroHandler {
                 parts[0],
                 -1,
                 FormationAnchorReference.Self,
-                MovementArrivalMode.Continuous,
+                SimpleMovementMode.Continuous,
                 parts[1]);
         }
 
@@ -97,7 +97,7 @@ public partial class MacroHandler {
             parts[0],
             pointNumber - 1,
             anchorParse.Anchor,
-            anchorParse.ArrivalMode,
+            anchorParse.MovementMode,
             anchorParse.InvalidArgument);
     }
 
@@ -175,10 +175,10 @@ public partial class MacroHandler {
             options.Reverse,
             options.Step,
             options.SequenceIndex,
-            options.ArrivalMode,
+            options.MovementMode,
             options.Anchor);
         DalamudApi.PluginLog.Debug(
-            $"[mopformationmove] formation=\"{options.FormationName}\" reverse={options.Reverse} stride={options.Step} sequenceIndex={options.SequenceIndex} arrivalMode={options.ArrivalMode} anchor={options.Anchor}");
+            $"[mopformationmove] formation=\"{options.FormationName}\" reverse={options.Reverse} stride={options.Step} sequenceIndex={options.SequenceIndex} movementMode={options.MovementMode} anchor={options.Anchor}");
     }
 
     /// <summary>
@@ -206,7 +206,7 @@ public partial class MacroHandler {
                 options.FormationName,
                 options.PointIndex,
                 options.Anchor,
-                options.ArrivalMode));
+                options.MovementMode));
     }
 
     private static string FormatFormationGotoAnchor(FormationGotoCommandOptions options) =>

@@ -773,6 +773,7 @@ public static class MopCommandsHelper {
             Notes = """
             * This is a chat sync command - all clients reading the chat resolve and move only their local character.
             * Without an explicit anchor, point 1's assigned character is used as the live anchor and must be visible.
+            * continuous does not toggle walk; precise walks near the destination for better placement.
             * All clients need the same formation imported or configured.
             """
         },
@@ -1229,7 +1230,7 @@ public static class MopCommandsHelper {
             Broadcasts one saved-formation movement step from the current character.
             Stride is the skip amount through formation point order; sequenceIndex is the zero-based step to execute from each recipient's computed path.
             By default, movement is continuous for smoother looping animations.
-            Add precise to walk near the destination and hard-stop on arrival.
+            continuous does not toggle walk; precise walks near the destination for better placement.
             Add target to anchor the movement at your current target.
             Generated formation macros use one line per movement so waits, pet actions, and other macro actions can run between moves.
             """
@@ -1249,6 +1250,7 @@ public static class MopCommandsHelper {
             Moves only this client to a specific saved formation point.
             Point numbers are 1-based; point 1 is always the live anchor/origin.
             Use anchor="Name@World" when each PC should place itself relative to the same visible anchor character.
+            continuous does not toggle walk; precise walks near the destination for better placement.
             This is the precise local alternative to IPC-broadcast /mopformationmove.
             """
         },
@@ -1473,17 +1475,20 @@ public static class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop formation \"Formation Name\"",
+            TextCommand = "/mop formation \"Formation Name\" [self|target] [continuous|precise]",
             SuggestionCommand = "/mop formation ",
             Example = """
             /mop formation "My Formation"
             /mop formation "My Formation" target
+            /mop formation "My Formation" precise
+            /mop formation "My Formation" target precise
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
             Broadcasts formation execution to all local clients.
             Each client moves to the formation point whose assigned CIDs/groups include it.
             Add target to place your assigned formation point at your current target.
+            continuous does not toggle walk; precise walks near the destination for better placement.
             """
         },
         new MopAction {

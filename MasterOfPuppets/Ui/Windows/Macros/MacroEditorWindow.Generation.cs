@@ -21,7 +21,7 @@ public partial class MacroEditorWindow {
     private int _macroGenStep = 1;
     private bool _macroGenReverse;
     private int _macroGenExistingFormationCommandStyle;
-    private int _macroGenFormationMoveArrivalMode;
+    private int _macroGenFormationMoveMode;
     private int _macroGenFormationMoveAnchorMode;
     private bool _macroGenLinkPetTraversalToMovement = true;
     private int _macroGenPetStep = 1;
@@ -45,7 +45,7 @@ public partial class MacroEditorWindow {
     private static readonly string[] MacroGeneratorSourceNames = ["Existing Formation", "Generated Shape"];
     private static readonly string[] MacroGeneratorDirectionNames = ["Forward through point order", "Backward through point order"];
     private static readonly string[] MacroGeneratorExistingFormationCommandStyleNames = ["Broadcast formation move", "Local point commands"];
-    private static readonly string[] MacroGeneratorArrivalModeNames = ["Continuous", "Precise"];
+    private static readonly string[] MacroGeneratorMovementModeNames = ["Continuous", "Precise"];
     private static readonly string[] MacroGeneratorAnchorModeNames = ["Self", "Current target"];
 
     private void DrawMacroCommandGeneratorModal() {
@@ -297,9 +297,9 @@ public partial class MacroEditorWindow {
             ImGui.SetNextItemWidth(220);
             ImGui.Combo("##macroGenExistingFormationCommandStyle", ref _macroGenExistingFormationCommandStyle, MacroGeneratorExistingFormationCommandStyleNames, MacroGeneratorExistingFormationCommandStyleNames.Length);
 
-            DrawMacroGeneratorLabel("Movement arrival", "Continuous keeps movement smooth; precise hard-stops near each point.");
+            DrawMacroGeneratorLabel("Movement mode", "Continuous runs without walk toggle. Precise walks near the destination for better placement.");
             ImGui.SetNextItemWidth(160);
-            ImGui.Combo("##macroGenFormationMoveArrival", ref _macroGenFormationMoveArrivalMode, MacroGeneratorArrivalModeNames, MacroGeneratorArrivalModeNames.Length);
+            ImGui.Combo("##macroGenFormationMoveMode", ref _macroGenFormationMoveMode, MacroGeneratorMovementModeNames, MacroGeneratorMovementModeNames.Length);
 
             DrawMacroGeneratorLabel("Movement anchor", "Use self position or current target position as the live anchor.");
             ImGui.SetNextItemWidth(160);
@@ -423,7 +423,10 @@ public partial class MacroEditorWindow {
                 GlobalDelaySeconds = Math.Max(0f, (float)Plugin.Config.DelayBetweenActions),
                 Step = _macroGenStep,
                 Reverse = _macroGenReverse,
-                FormationMoveArrivalMode = _macroGenFormationMoveArrivalMode == 1 ? MovementArrivalMode.Precise : MovementArrivalMode.Continuous,
+                FormationMoveMode = _macroGenFormationMoveMode switch {
+                    1 => SimpleMovementMode.Precise,
+                    _ => SimpleMovementMode.Continuous,
+                },
                 FormationMoveAnchorMode = _macroGenFormationMoveAnchorMode == 1 ? FormationMoveAnchorMode.Target : FormationMoveAnchorMode.Self,
                 ClosedLoop = true,
                 UseMatchingGroups = false,

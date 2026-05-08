@@ -24,7 +24,7 @@ public sealed class FormationMacroGeneratorOptions {
     public bool ClosedLoop { get; set; } = true;
     public int Step { get; set; } = 1;
     public bool Reverse { get; set; }
-    public MovementArrivalMode FormationMoveArrivalMode { get; set; } = MovementArrivalMode.Continuous;
+    public SimpleMovementMode FormationMoveMode { get; set; } = SimpleMovementMode.Continuous;
     public FormationMoveAnchorMode FormationMoveAnchorMode { get; set; } = FormationMoveAnchorMode.Self;
     public int Precision { get; set; } = 2;
     public bool UseMatchingGroups { get; set; }
@@ -127,11 +127,11 @@ public static class FormationMacroGenerator {
         var step = Math.Max(1, options.Step);
         var waitOrder = SequenceFrom(destinations[0].Index, destinations, step, options.Reverse);
         var waits = SegmentDelays(waitOrder, anchor, options);
-        var arrivalMode = options.FormationMoveArrivalMode == MovementArrivalMode.Precise ? "precise" : "continuous";
+        var movementMode = SimpleInputMovement.FormatMode(options.FormationMoveMode);
         var anchorMode = options.FormationMoveAnchorMode == FormationMoveAnchorMode.Target ? " target" : string.Empty;
         var lines = new List<string>();
         for (var i = 0; i < waits.Count; i++) {
-            lines.Add($"/mopformationmove \"{ArgumentParser.EscapeQuotedArgument(formationName)}\" {direction} {step} {i} {arrivalMode}{anchorMode}");
+            lines.Add($"/mopformationmove \"{ArgumentParser.EscapeQuotedArgument(formationName)}\" {direction} {step} {i} {movementMode}{anchorMode}");
             lines.Add($"/mopwait {waits[i].ToString("F2", CultureInfo.InvariantCulture)}");
         }
 
@@ -157,7 +157,7 @@ public static class FormationMacroGenerator {
             return;
 
         var step = Math.Max(1, options.Step);
-        var arrivalMode = options.FormationMoveArrivalMode == MovementArrivalMode.Precise ? "precise" : "continuous";
+        var movementMode = SimpleInputMovement.FormatMode(options.FormationMoveMode);
         var anchorArg = options.FormationMoveAnchorMode == FormationMoveAnchorMode.Target
             ? " anchor=target"
             : string.IsNullOrWhiteSpace(options.OriginReference)
@@ -174,7 +174,7 @@ public static class FormationMacroGenerator {
             var lines = new List<string>();
             for (int i = 0; i < order.Count; i++) {
                 lines.Add(
-                    $"/mopformationgoto \"{ArgumentParser.EscapeQuotedArgument(formationName)}\" {order[i].Index + 1}{anchorArg} {arrivalMode}");
+                    $"/mopformationgoto \"{ArgumentParser.EscapeQuotedArgument(formationName)}\" {order[i].Index + 1}{anchorArg} {movementMode}");
                 lines.Add($"/mopwait {waits[i].ToString("F2", CultureInfo.InvariantCulture)}");
             }
 

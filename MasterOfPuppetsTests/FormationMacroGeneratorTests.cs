@@ -388,7 +388,7 @@ public class FormationMacroGeneratorTests {
                 UseFormationMoveCommand = true,
                 FormationMoveName = "Circle",
                 OriginContentId = 100,
-                FormationMoveArrivalMode = MovementArrivalMode.Precise,
+                FormationMoveMode = SimpleMovementMode.Precise,
                 FormationMoveAnchorMode = FormationMoveAnchorMode.Target,
             });
 
@@ -459,7 +459,7 @@ public class FormationMacroGeneratorTests {
                 Mode = FormationMacroGeneratorMode.Movement,
                 UseLocalFormationPointCommand = true,
                 FormationMoveName = "Circle",
-                FormationMoveArrivalMode = MovementArrivalMode.Precise,
+                FormationMoveMode = SimpleMovementMode.Precise,
                 FormationMoveAnchorMode = FormationMoveAnchorMode.Target,
             });
 
