@@ -32,7 +32,7 @@ public static class FormationAnchorArgumentParser {
     public static FormationAnchorParseResult ParseAnchorAndArrival(
         IEnumerable<string> arguments,
         FormationAnchorReference? defaultAnchor = null,
-        SimpleMovementMode defaultMovementMode = SimpleMovementMode.Continuous) {
+        SimpleMovementMode defaultMovementMode = SimpleMovementMode.Precise) {
         var anchor = defaultAnchor ?? FormationAnchorReference.Default;
         var movementMode = defaultMovementMode;
         string? invalidArgument = null;

@@ -94,7 +94,7 @@ public static class FormationLocalMovementExecutor {
         Plugin plugin,
         Vector3 position,
         float rotation,
-        SimpleMovementMode movementMode = SimpleMovementMode.Continuous) {
+        SimpleMovementMode movementMode = SimpleMovementMode.Precise) {
         plugin.SimpleInputMovement.MoveTo(
             position,
             precision: plugin.Config.FormationMovePrecision,

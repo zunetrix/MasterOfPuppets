@@ -18,21 +18,21 @@ internal partial class IpcProvider {
     /// The anchor's world position, facing, and content ID are included so each
     /// client can place its assigned point relative to the anchor's saved point.
     /// </summary>
-    public void ExecuteFormation(string name, bool useTargetAnchor = false, SimpleMovementMode movementMode = SimpleMovementMode.Continuous) {
+    public void ExecuteFormation(string name, bool useTargetAnchor = false, SimpleMovementMode movementMode = SimpleMovementMode.Precise) {
         ExecuteFormation(name, useTargetAnchor ? FormationAnchorReference.Target : FormationAnchorReference.Self, movementMode);
     }
 
     public void ExecuteFormation(
         string name,
         FormationAnchorReference anchor,
-        SimpleMovementMode movementMode = SimpleMovementMode.Continuous) {
+        SimpleMovementMode movementMode = SimpleMovementMode.Precise) {
         _ = DalamudApi.Framework.RunOnFrameworkThread(() => ExecuteFormationOnFrameworkThread(name, anchor, movementMode));
     }
 
     private void ExecuteFormationOnFrameworkThread(
         string name,
         FormationAnchorReference anchor,
-        SimpleMovementMode movementMode = SimpleMovementMode.Continuous) {
+        SimpleMovementMode movementMode = SimpleMovementMode.Precise) {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
 
@@ -79,8 +79,8 @@ internal partial class IpcProvider {
         if (!float.TryParse(message.StringData[4], NumberStyles.Float, CultureInfo.InvariantCulture, out float anchorRot)) return;
         if (!ulong.TryParse(message.StringData[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong anchorCid)) return;
         var movementMode = message.StringData.Length >= 7
-            ? SimpleInputMovement.ParseModeOrDefault(message.StringData[6], SimpleMovementMode.Continuous)
-            : SimpleMovementMode.Continuous;
+            ? SimpleInputMovement.ParseModeOrDefault(message.StringData[6], SimpleMovementMode.Precise)
+            : SimpleMovementMode.Precise;
 
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
@@ -114,7 +114,7 @@ internal partial class IpcProvider {
         bool reverse = false,
         int step = 1,
         int sequenceIndex = 0,
-        SimpleMovementMode movementMode = SimpleMovementMode.Continuous,
+        SimpleMovementMode movementMode = SimpleMovementMode.Precise,
         FormationMoveAnchorMode anchorMode = FormationMoveAnchorMode.Self) =>
         ExecuteFormationMove(
             name,
@@ -129,7 +129,7 @@ internal partial class IpcProvider {
         bool reverse = false,
         int step = 1,
         int sequenceIndex = 0,
-        SimpleMovementMode movementMode = SimpleMovementMode.Continuous,
+        SimpleMovementMode movementMode = SimpleMovementMode.Precise,
         FormationAnchorReference? anchor = null) =>
         DalamudApi.Framework.RunOnFrameworkThread(() => ExecuteFormationMoveOnFrameworkThread(
             name,
@@ -144,7 +144,7 @@ internal partial class IpcProvider {
         bool reverse = false,
         int step = 1,
         int sequenceIndex = 0,
-        SimpleMovementMode movementMode = SimpleMovementMode.Continuous,
+        SimpleMovementMode movementMode = SimpleMovementMode.Precise,
         FormationAnchorReference? anchor = null) {
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return;
@@ -200,8 +200,8 @@ internal partial class IpcProvider {
         if (!int.TryParse(message.StringData[7], NumberStyles.Integer, CultureInfo.InvariantCulture, out var step)) return;
         if (!int.TryParse(message.StringData[8], NumberStyles.Integer, CultureInfo.InvariantCulture, out var sequenceIndex)) return;
         var movementMode = message.StringData.Length >= 10
-            ? SimpleInputMovement.ParseModeOrDefault(message.StringData[9], SimpleMovementMode.Continuous)
-            : SimpleMovementMode.Continuous;
+            ? SimpleInputMovement.ParseModeOrDefault(message.StringData[9], SimpleMovementMode.Precise)
+            : SimpleMovementMode.Precise;
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
         if (formation == null) {

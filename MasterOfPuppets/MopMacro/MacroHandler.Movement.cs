@@ -85,7 +85,7 @@ public partial class MacroHandler {
                 parts[0],
                 -1,
                 FormationAnchorReference.Self,
-                SimpleMovementMode.Continuous,
+                SimpleMovementMode.Precise,
                 parts[1]);
         }
 
