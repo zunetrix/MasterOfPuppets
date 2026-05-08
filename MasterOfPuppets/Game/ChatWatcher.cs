@@ -5,6 +5,7 @@ using System.Linq;
 using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
 
+using MasterOfPuppets.Formations;
 using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
@@ -48,6 +49,7 @@ internal class ChatWatcher : IDisposable {
             ["mopbr"] = HandleBroadcastCommandExecution,
             ["mopbrn"] = HandleBroadcastNotMeCommandExecution,
             ["mopbrc"] = HandleBroadcastCharacterCommandExecution,
+            ["mopformation"] = HandleFormationCommand,
         };
 
         DalamudApi.ChatGui.ChatMessage += OnChatMessage;
@@ -169,6 +171,28 @@ internal class ChatWatcher : IDisposable {
         if (!localPlayerName.Contains(characterName, StringComparison.InvariantCultureIgnoreCase)) return;
 
         Plugin.MacroHandler.EnqueueMacroActions("#mopbrc-inline-macro", actions: [textCommand], delayBetweenActions: 0);
+    }
+
+    private void HandleFormationCommand(string[] args, string senderName) {
+        if (args.Length < 1) {
+            DalamudApi.ChatGui.PrintError("Invalid command arguments expected 1 <formation name>");
+            return;
+        }
+
+        var anchor = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            args.Skip(1),
+            FormationAnchorReference.Default);
+        if (anchor.InvalidArgument != null) {
+            DalamudApi.ChatGui.PrintError($"Invalid command argument: {anchor.InvalidArgument}");
+            return;
+        }
+
+        _ = DalamudApi.Framework.RunOnFrameworkThread(() =>
+            FormationLocalMovementExecutor.ExecuteChatSyncedFormation(
+                Plugin,
+                args[0],
+                anchor.Anchor,
+                anchor.MovementMode));
     }
 
     private static string SanitizeSenderName(string raw) {

@@ -11,14 +11,39 @@ using MasterOfPuppets.Util;
 namespace MasterOfPuppets;
 
 public partial class MacroHandler {
+    public enum FormationGotoAnchorKind {
+        Self,
+        Target,
+        Named,
+    }
+
     public sealed record FormationMoveCommandOptions(
         string FormationName,
         bool Reverse,
         int Step,
         int SequenceIndex,
-        MovementArrivalMode ArrivalMode,
-        FormationMoveAnchorMode AnchorMode,
-        string? InvalidArgument);
+        SimpleMovementMode MovementMode,
+        FormationAnchorReference Anchor,
+        string? InvalidArgument) {
+        public FormationMoveAnchorMode AnchorMode => Anchor.Kind == FormationAnchorKind.Target
+            ? FormationMoveAnchorMode.Target
+            : FormationMoveAnchorMode.Self;
+    }
+
+    public sealed record FormationGotoCommandOptions(
+        string FormationName,
+        int PointIndex,
+        FormationAnchorReference Anchor,
+        SimpleMovementMode MovementMode,
+        string? InvalidArgument) {
+        public FormationGotoAnchorKind AnchorKind => Anchor.Kind switch {
+            FormationAnchorKind.Target => FormationGotoAnchorKind.Target,
+            FormationAnchorKind.Named => FormationGotoAnchorKind.Named,
+            _ => FormationGotoAnchorKind.Self,
+        };
+
+        public string? AnchorName => Anchor.Name;
+    }
 
     public static FormationMoveCommandOptions? ParseFormationMoveCommandArgs(string args) {
         var parts = ArgumentParser.ParseMacroArgs(args);
@@ -36,23 +61,44 @@ public partial class MacroHandler {
         if (parts.Count >= 4 && !int.TryParse(parts[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out sequenceIndex))
             sequenceIndex = 0;
 
-        var arrivalMode = MovementArrivalMode.Continuous;
-        var anchorMode = FormationMoveAnchorMode.Self;
-        string? invalidArgument = null;
-        foreach (var part in parts.Skip(4)) {
-            if (part.Equals("precise", System.StringComparison.OrdinalIgnoreCase))
-                arrivalMode = MovementArrivalMode.Precise;
-            else if (part.Equals("continuous", System.StringComparison.OrdinalIgnoreCase))
-                arrivalMode = MovementArrivalMode.Continuous;
-            else if (part.Equals("target", System.StringComparison.OrdinalIgnoreCase))
-                anchorMode = FormationMoveAnchorMode.Target;
-            else if (part.Equals("self", System.StringComparison.OrdinalIgnoreCase))
-                anchorMode = FormationMoveAnchorMode.Self;
-            else
-                invalidArgument ??= part;
+        var anchorParse = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            parts.Skip(4),
+            FormationAnchorReference.Self);
+
+        return new FormationMoveCommandOptions(
+            parts[0],
+            reverse,
+            step,
+            sequenceIndex,
+            anchorParse.MovementMode,
+            anchorParse.Anchor,
+            anchorParse.InvalidArgument);
+    }
+
+    public static FormationGotoCommandOptions? ParseFormationGotoCommandArgs(string args) {
+        var parts = ArgumentParser.ParseMacroArgs(args);
+        if (parts.Count < 2)
+            return null;
+
+        if (!int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var pointNumber) || pointNumber < 1) {
+            return new FormationGotoCommandOptions(
+                parts[0],
+                -1,
+                FormationAnchorReference.Self,
+                SimpleMovementMode.Continuous,
+                parts[1]);
         }
 
-        return new FormationMoveCommandOptions(parts[0], reverse, step, sequenceIndex, arrivalMode, anchorMode, invalidArgument);
+        var anchorParse = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            parts.Skip(2),
+            FormationAnchorReference.Self);
+
+        return new FormationGotoCommandOptions(
+            parts[0],
+            pointNumber - 1,
+            anchorParse.Anchor,
+            anchorParse.MovementMode,
+            anchorParse.InvalidArgument);
     }
 
     /// <summary>
@@ -129,11 +175,42 @@ public partial class MacroHandler {
             options.Reverse,
             options.Step,
             options.SequenceIndex,
-            options.ArrivalMode,
-            options.AnchorMode);
+            options.MovementMode,
+            options.Anchor);
         DalamudApi.PluginLog.Debug(
-            $"[mopformationmove] formation=\"{options.FormationName}\" reverse={options.Reverse} stride={options.Step} sequenceIndex={options.SequenceIndex} arrivalMode={options.ArrivalMode} anchorMode={options.AnchorMode}");
+            $"[mopformationmove] formation=\"{options.FormationName}\" reverse={options.Reverse} stride={options.Step} sequenceIndex={options.SequenceIndex} movementMode={options.MovementMode} anchor={options.Anchor}");
     }
+
+    /// <summary>
+    /// /mopformationgoto "Formation Name" pointNumber [anchor=self|target|"Character Name@World"] [continuous|precise]
+    /// Moves the local client to one saved formation point using point 1 as the live anchor.
+    /// </summary>
+    private async Task HandleMopFormationGoto(string macroId, string args, CancellationToken token) {
+        var options = ParseFormationGotoCommandArgs(args);
+        if (options == null) {
+            DalamudApi.PluginLog.Warning("[mopformationgoto] missing formation name or point number");
+            return;
+        }
+
+        if (options.InvalidArgument != null)
+            DalamudApi.PluginLog.Warning($"[mopformationgoto] invalid argument: \"{options.InvalidArgument}\"");
+
+        if (options.PointIndex < 0) {
+            DalamudApi.PluginLog.Warning($"[mopformationgoto] invalid point number: \"{options.InvalidArgument}\"");
+            return;
+        }
+
+        await DalamudApi.Framework.RunOnFrameworkThread(() =>
+            FormationLocalMovementExecutor.ExecuteFormationGoto(
+                Plugin,
+                options.FormationName,
+                options.PointIndex,
+                options.Anchor,
+                options.MovementMode));
+    }
+
+    private static string FormatFormationGotoAnchor(FormationGotoCommandOptions options) =>
+        options.Anchor.ToString();
 
     /// <summary>/mopmovetotarget - moves to the current target's world position.</summary>
     private Task HandleMopMoveToTarget(string macroId, string args, CancellationToken token) {

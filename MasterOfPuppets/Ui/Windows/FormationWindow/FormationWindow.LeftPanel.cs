@@ -9,6 +9,7 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 
+using MasterOfPuppets.Formations;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
@@ -247,6 +248,21 @@ public partial class FormationWindow {
                             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
                         }
 
+                        ImGui.Separator();
+                        if (ImGui.MenuItem("Copy Formation Code")) {
+                            ImGui.SetClipboardText(FormationShareCode.Export(f, includeAssignments: true));
+                            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                        }
+
+                        if (ImGui.MenuItem("Copy Formation Code Without Assignments")) {
+                            ImGui.SetClipboardText(FormationShareCode.Export(f, includeAssignments: false));
+                            DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                        }
+
+                        if (ImGui.MenuItem("Import Formation Code From Clipboard")) {
+                            ImportFormationCodeFromClipboard();
+                        }
+
                         ImGui.EndPopup();
                     }
                 }
@@ -269,6 +285,21 @@ public partial class FormationWindow {
         }
 
         ImGui.EndTable();
+    }
+
+    private void ImportFormationCodeFromClipboard() {
+        var code = ImGui.GetClipboardText();
+        if (!FormationShareCode.TryImport(code, out var formation, out var error)) {
+            DalamudApi.ShowNotification(error, NotificationType.Error, 5000);
+            return;
+        }
+
+        formation.Name = FormationShareCode.GetUniqueName(formation.Name, Plugin.Config.Formations);
+        Plugin.Config.Formations.Add(formation);
+        _selFormation = Plugin.Config.Formations.Count - 1;
+        Plugin.Config.Save();
+        Plugin.IpcProvider.SyncConfiguration();
+        DalamudApi.ShowNotification($"Imported formation \"{formation.Name}\"", NotificationType.Success, 5000);
     }
 
     private void CommitRename(int i) {

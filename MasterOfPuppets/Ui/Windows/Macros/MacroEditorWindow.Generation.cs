@@ -20,7 +20,8 @@ public partial class MacroEditorWindow {
     private float _macroGenTravelSecondsPerUnit = 0.2f;
     private int _macroGenStep = 1;
     private bool _macroGenReverse;
-    private int _macroGenFormationMoveArrivalMode;
+    private int _macroGenExistingFormationCommandStyle;
+    private int _macroGenFormationMoveMode;
     private int _macroGenFormationMoveAnchorMode;
     private bool _macroGenLinkPetTraversalToMovement = true;
     private int _macroGenPetStep = 1;
@@ -43,7 +44,8 @@ public partial class MacroEditorWindow {
     private static readonly string[] MacroGeneratorModeNames = ["Movement", "Pet Placement", "Movement + Pet Placement"];
     private static readonly string[] MacroGeneratorSourceNames = ["Existing Formation", "Generated Shape"];
     private static readonly string[] MacroGeneratorDirectionNames = ["Forward through point order", "Backward through point order"];
-    private static readonly string[] MacroGeneratorArrivalModeNames = ["Continuous", "Precise"];
+    private static readonly string[] MacroGeneratorExistingFormationCommandStyleNames = ["Broadcast formation move", "Local point commands"];
+    private static readonly string[] MacroGeneratorMovementModeNames = ["Continuous", "Precise"];
     private static readonly string[] MacroGeneratorAnchorModeNames = ["Self", "Current target"];
 
     private void DrawMacroCommandGeneratorModal() {
@@ -148,8 +150,8 @@ public partial class MacroEditorWindow {
         ImGui.TextDisabled(string.IsNullOrWhiteSpace(originName) ? "Could not resolve current character." : originName);
 
         if (_macroGenSource == 0) {
-            ImGui.TextDisabled("Existing formations insert one origin command with one movement line per step.");
-            ImGuiUtil.HelpMarker("Each line broadcasts one /mopformationmove step. Waits use saved point-to-point distance.");
+            ImGui.TextDisabled("Existing formations can use broadcast steps or local point commands.");
+            ImGuiUtil.HelpMarker("Broadcast uses /mopformationmove over IPC. Local point commands use /mopformationgoto on each assigned client with point 1 as the anchor.");
         }
 
         DrawMacroGenFloat("Seconds per unit", "Wait seconds per unit of path distance.", ref _macroGenTravelSecondsPerUnit, 0.01f, 0.01f, 10f, "%.2f");
@@ -291,9 +293,13 @@ public partial class MacroEditorWindow {
         }
 
         if (existingFormationMovement) {
-            DrawMacroGeneratorLabel("Movement arrival", "Continuous keeps movement smooth; precise hard-stops near each point.");
+            DrawMacroGeneratorLabel("Command style", "Broadcast sends one IPC formation step from this client. Local point commands run independently on each assigned client using point 1 as the anchor.");
+            ImGui.SetNextItemWidth(220);
+            ImGui.Combo("##macroGenExistingFormationCommandStyle", ref _macroGenExistingFormationCommandStyle, MacroGeneratorExistingFormationCommandStyleNames, MacroGeneratorExistingFormationCommandStyleNames.Length);
+
+            DrawMacroGeneratorLabel("Movement mode", "Continuous runs without walk toggle. Precise walks near the destination for better placement.");
             ImGui.SetNextItemWidth(160);
-            ImGui.Combo("##macroGenFormationMoveArrival", ref _macroGenFormationMoveArrivalMode, MacroGeneratorArrivalModeNames, MacroGeneratorArrivalModeNames.Length);
+            ImGui.Combo("##macroGenFormationMoveMode", ref _macroGenFormationMoveMode, MacroGeneratorMovementModeNames, MacroGeneratorMovementModeNames.Length);
 
             DrawMacroGeneratorLabel("Movement anchor", "Use self position or current target position as the live anchor.");
             ImGui.SetNextItemWidth(160);
@@ -353,6 +359,11 @@ public partial class MacroEditorWindow {
             return new MacroCommandGeneratorPreview(false, "The generated shape does not have the point assigned to your current character.", []);
 
         var movementEnabled = _macroGenMode != (int)FormationMacroGeneratorMode.PetPlacement;
+        var useLocalFormationPointCommand = _macroGenSource == 0
+            && movementEnabled
+            && _macroGenExistingFormationCommandStyle == 1;
+        if (useLocalFormationPointCommand && _macroGenFormationMoveAnchorMode == 0 && originPointIndex != FormationPointMovement.AnchorPointIndex)
+            return new MacroCommandGeneratorPreview(false, "Local point commands use point 1 as the anchor. Assign your current character to point 1, or use Current target as the movement anchor.", []);
         if (_macroGenSource == 1 && movementEnabled && string.IsNullOrWhiteSpace(GetLocalPlayerNameWorld()))
             return new MacroCommandGeneratorPreview(false, "Current character name/world must be resolved before generated shape movement commands can be created.", []);
         if (_macroGenSource == 1 && movementEnabled && GetLocalPlayerRotation() == null)
@@ -373,9 +384,15 @@ public partial class MacroEditorWindow {
         if (_macroGenSource == 0 && movementEnabled) {
             var petCommands = Math.Max(0, result.Macro.Commands.Count - 1);
             var movementSteps = Math.Max(0, sourceFormation.Points.Count - 1);
-            message = _macroGenMode == (int)FormationMacroGeneratorMode.Movement
-                ? $"Will insert 1 origin movement command containing {movementSteps} movement step(s) {insertionText}."
-                : $"Will insert 1 origin movement command containing {movementSteps} movement step(s) + {petCommands} pet command(s) {insertionText}.";
+            if (_macroGenExistingFormationCommandStyle == 0) {
+                message = _macroGenMode == (int)FormationMacroGeneratorMode.Movement
+                    ? $"Will insert 1 origin movement command containing {movementSteps} movement step(s) {insertionText}."
+                    : $"Will insert 1 origin movement command containing {movementSteps} movement step(s) + {petCommands} pet command(s) {insertionText}.";
+            } else {
+                message = _macroGenMode == (int)FormationMacroGeneratorMode.Movement
+                    ? $"Will insert {result.Macro.Commands.Count} local point movement command(s) {insertionText}."
+                    : $"Will insert local point movement commands + {petCommands} pet command(s) {insertionText}.";
+            }
         } else if (_macroGenSource == 1 && movementEnabled) {
             message = $"Will insert {result.Macro.Commands.Count} generated shape command(s) {insertionText}.";
         }
@@ -385,23 +402,31 @@ public partial class MacroEditorWindow {
 
     private FormationMacroGenerationResult GenerateMacroCommands(Formation sourceFormation, int originPointIndex) {
         var useFormationMove = _macroGenSource == 0
-            && _macroGenMode != (int)FormationMacroGeneratorMode.PetPlacement;
+            && _macroGenMode != (int)FormationMacroGeneratorMode.PetPlacement
+            && _macroGenExistingFormationCommandStyle == 0;
+        var useLocalFormationPointCommand = _macroGenSource == 0
+            && _macroGenMode != (int)FormationMacroGeneratorMode.PetPlacement
+            && _macroGenExistingFormationCommandStyle == 1;
         var originName = GetLocalPlayerNameWorld();
         var result = FormationMacroGenerator.GenerateLoopMacroWithDiagnostics(
             sourceFormation,
             new FormationMacroGeneratorOptions {
                 MacroName = MacroItem.Name,
                 Mode = (FormationMacroGeneratorMode)_macroGenMode,
-                AnchorPointIndex = originPointIndex,
+                AnchorPointIndex = useLocalFormationPointCommand ? FormationPointMovement.AnchorPointIndex : originPointIndex,
                 OriginReference = originName,
                 UseFormationMoveCommand = useFormationMove,
+                UseLocalFormationPointCommand = useLocalFormationPointCommand,
                 FormationMoveName = sourceFormation.Name,
                 OriginContentId = DalamudApi.PlayerState.ContentId,
                 TravelSecondsPerUnit = _macroGenTravelSecondsPerUnit,
                 GlobalDelaySeconds = Math.Max(0f, (float)Plugin.Config.DelayBetweenActions),
                 Step = _macroGenStep,
                 Reverse = _macroGenReverse,
-                FormationMoveArrivalMode = _macroGenFormationMoveArrivalMode == 1 ? MovementArrivalMode.Precise : MovementArrivalMode.Continuous,
+                FormationMoveMode = _macroGenFormationMoveMode switch {
+                    1 => SimpleMovementMode.Precise,
+                    _ => SimpleMovementMode.Continuous,
+                },
                 FormationMoveAnchorMode = _macroGenFormationMoveAnchorMode == 1 ? FormationMoveAnchorMode.Target : FormationMoveAnchorMode.Self,
                 ClosedLoop = true,
                 UseMatchingGroups = false,

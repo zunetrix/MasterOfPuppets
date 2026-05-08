@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 
 using MasterOfPuppets;
+using MasterOfPuppets.Formations;
+using MasterOfPuppets.Movement;
+using MasterOfPuppets.Util;
 
 public class MacroTests
 {
@@ -167,8 +170,9 @@ public class MacroTests
         Assert.False(result.Reverse);
         Assert.Equal(1, result.Step);
         Assert.Equal(0, result.SequenceIndex);
-        Assert.Equal(MasterOfPuppets.Movement.MovementArrivalMode.Continuous, result.ArrivalMode);
-        Assert.Equal(MasterOfPuppets.Formations.FormationMoveAnchorMode.Self, result.AnchorMode);
+        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
+        Assert.Equal(FormationMoveAnchorMode.Self, result.AnchorMode);
+        Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
     }
 
     [Fact]
@@ -180,8 +184,30 @@ public class MacroTests
         Assert.True(result.Reverse);
         Assert.Equal(2, result.Step);
         Assert.Equal(3, result.SequenceIndex);
-        Assert.Equal(MasterOfPuppets.Movement.MovementArrivalMode.Precise, result.ArrivalMode);
-        Assert.Equal(MasterOfPuppets.Formations.FormationMoveAnchorMode.Self, result.AnchorMode);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+        Assert.Equal(FormationMoveAnchorMode.Self, result.AnchorMode);
+    }
+
+    [Theory]
+    [InlineData("continuous", SimpleMovementMode.Continuous)]
+    [InlineData("precise", SimpleMovementMode.Precise)]
+    [InlineData("forward", SimpleMovementMode.Forward)]
+    public void ParseFormationMoveCommandArgs_Accepts_All_Movement_Modes(string token, SimpleMovementMode expectedMode)
+    {
+        var result = MacroHandler.ParseFormationMoveCommandArgs($"\"Circle\" forward 1 0 {token}");
+
+        Assert.NotNull(result);
+        Assert.Equal(expectedMode, result.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationMoveCommandArgs_Rejects_Removed_Hybrid_Mode()
+    {
+        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 hybrid");
+
+        Assert.NotNull(result);
+        Assert.Equal("hybrid", result.InvalidArgument);
+        Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
     }
 
     [Fact]
@@ -190,8 +216,9 @@ public class MacroTests
         var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 target");
 
         Assert.NotNull(result);
-        Assert.Equal(MasterOfPuppets.Movement.MovementArrivalMode.Continuous, result.ArrivalMode);
-        Assert.Equal(MasterOfPuppets.Formations.FormationMoveAnchorMode.Target, result.AnchorMode);
+        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
+        Assert.Equal(FormationMoveAnchorMode.Target, result.AnchorMode);
+        Assert.Equal(FormationAnchorKind.Target, result.Anchor.Kind);
     }
 
     [Fact]
@@ -202,20 +229,158 @@ public class MacroTests
 
         Assert.NotNull(targetLast);
         Assert.NotNull(targetFirst);
-        Assert.Equal(MasterOfPuppets.Movement.MovementArrivalMode.Precise, targetLast.ArrivalMode);
-        Assert.Equal(MasterOfPuppets.Formations.FormationMoveAnchorMode.Target, targetLast.AnchorMode);
-        Assert.Equal(MasterOfPuppets.Movement.MovementArrivalMode.Precise, targetFirst.ArrivalMode);
-        Assert.Equal(MasterOfPuppets.Formations.FormationMoveAnchorMode.Target, targetFirst.AnchorMode);
+        Assert.Equal(SimpleMovementMode.Precise, targetLast.MovementMode);
+        Assert.Equal(FormationMoveAnchorMode.Target, targetLast.AnchorMode);
+        Assert.Equal(SimpleMovementMode.Precise, targetFirst.MovementMode);
+        Assert.Equal(FormationMoveAnchorMode.Target, targetFirst.AnchorMode);
     }
 
     [Fact]
-    public void ParseFormationMoveCommandArgs_Invalid_Argument_Falls_Back_To_Defaults()
+    public void ParseFormationMoveCommandArgs_Accepts_Named_Anchor()
     {
-        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 careful");
+        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 \"Anchor Character@World\"");
 
         Assert.NotNull(result);
-        Assert.Equal(MasterOfPuppets.Movement.MovementArrivalMode.Continuous, result.ArrivalMode);
-        Assert.Equal(MasterOfPuppets.Formations.FormationMoveAnchorMode.Self, result.AnchorMode);
-        Assert.Equal("careful", result.InvalidArgument);
+        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
+        Assert.Equal(FormationAnchorKind.Named, result.Anchor.Kind);
+        Assert.Equal("Anchor Character@World", result.Anchor.Name);
+        Assert.Null(result.InvalidArgument);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Defaults_To_Self_Continuous()
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 2");
+
+        Assert.NotNull(result);
+        Assert.Equal("Circle", result.FormationName);
+        Assert.Equal(1, result.PointIndex);
+        Assert.Equal(MacroHandler.FormationGotoAnchorKind.Self, result.AnchorKind);
+        Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
+        Assert.Null(result.AnchorName);
+        Assert.Equal(SimpleMovementMode.Continuous, result.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Accepts_Quoted_Named_Anchor()
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 3 anchor=\"Anchor Character@World\" precise");
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.PointIndex);
+        Assert.Equal(MacroHandler.FormationGotoAnchorKind.Named, result.AnchorKind);
+        Assert.Equal("Anchor Character@World", result.AnchorName);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Accepts_Target_And_Self_Anchors()
+    {
+        var target = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 target");
+        var self = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 anchor=self");
+
+        Assert.NotNull(target);
+        Assert.NotNull(self);
+        Assert.Equal(MacroHandler.FormationGotoAnchorKind.Target, target.AnchorKind);
+        Assert.Equal(MacroHandler.FormationGotoAnchorKind.Self, self.AnchorKind);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Accepts_Bare_Named_Anchor()
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 \"Anchor Character@World\" precise");
+
+        Assert.NotNull(result);
+        Assert.Equal(FormationAnchorKind.Named, result.Anchor.Kind);
+        Assert.Equal("Anchor Character@World", result.Anchor.Name);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+    }
+
+    [Theory]
+    [InlineData("continuous", SimpleMovementMode.Continuous)]
+    [InlineData("precise", SimpleMovementMode.Precise)]
+    [InlineData("forward", SimpleMovementMode.Forward)]
+    public void ParseFormationGotoCommandArgs_Accepts_All_Movement_Modes(string token, SimpleMovementMode expectedMode)
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs($"\"Circle\" 4 target {token}");
+
+        Assert.NotNull(result);
+        Assert.Equal(expectedMode, result.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Rejects_Removed_Hybrid_Mode()
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 target hybrid");
+
+        Assert.NotNull(result);
+        Assert.Equal("hybrid", result.InvalidArgument);
+        Assert.Equal(MacroHandler.FormationGotoAnchorKind.Target, result.AnchorKind);
+    }
+
+    [Fact]
+    public void ParseChatArgs_Parses_Mopformation_Without_Slash()
+    {
+        var result = ArgumentParser.ParseChatArgs("mopformation \"Tight Circle\" target precise");
+
+        Assert.Equal(["mopformation", "Tight Circle", "target", "precise"], result);
+    }
+
+    [Fact]
+    public void ParseChatArgs_Does_Not_Treat_Slash_MopFormation_As_ChatSync_Command()
+    {
+        var result = ArgumentParser.ParseChatArgs("/mop formation \"Tight Circle\"");
+
+        Assert.Single(result);
+        Assert.NotEqual("mopformation", result[0]);
+    }
+
+    [Fact]
+    public void ParseFormationAnchorAndArrival_Defaults_To_PointOne_Anchor_For_Chat()
+    {
+        var result = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            ["precise"],
+            FormationAnchorReference.Default);
+
+        Assert.Equal(FormationAnchorKind.Default, result.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationAnchorAndArrival_Preserves_Self_Anchor_For_Local_MopFormation()
+    {
+        var result = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            ["precise"],
+            FormationAnchorReference.Self);
+
+        Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+        Assert.Null(result.InvalidArgument);
+    }
+
+    [Fact]
+    public void ParseFormationAnchorAndArrival_Accepts_Target_And_Precise_In_Either_Order()
+    {
+        var targetLast = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            ["precise", "target"],
+            FormationAnchorReference.Self);
+        var targetFirst = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            ["target", "precise"],
+            FormationAnchorReference.Self);
+
+        Assert.Equal(FormationAnchorKind.Target, targetLast.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Precise, targetLast.MovementMode);
+        Assert.Equal(FormationAnchorKind.Target, targetFirst.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Precise, targetFirst.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Rejects_Invalid_Point_Number()
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 0");
+
+        Assert.NotNull(result);
+        Assert.Equal(-1, result.PointIndex);
+        Assert.Equal("0", result.InvalidArgument);
     }
 }
