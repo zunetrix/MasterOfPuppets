@@ -6,6 +6,8 @@ namespace MasterOfPuppets.Movement;
 
 internal sealed class ContinuousForwardMovementStrategy : ISimpleMovementStrategy {
     private readonly ForwardInputMovementController _forwardInput;
+    private float? _previousDistance;
+    private bool _hasApproachedDestination;
 
     public ContinuousForwardMovementStrategy(ForwardInputMovementController forwardInput) {
         _forwardInput = forwardInput;
@@ -15,10 +17,22 @@ internal sealed class ContinuousForwardMovementStrategy : ISimpleMovementStrateg
     public bool UsesNativeStopOnCompletion => false;
 
     public void Start(SimpleMovementContext context) {
+        _previousDistance = null;
+        _hasApproachedDestination = false;
     }
 
     public SimpleMovementUpdateResult Update(SimpleMovementContext context, Vector3 playerPosition) {
-        if (playerPosition.Distance2D(context.Destination) <= context.Precision)
+        var distance = playerPosition.Distance2D(context.Destination);
+        var progress = SimpleInputMovement.UpdateContinuousProgress(
+            distance,
+            context.Precision,
+            _previousDistance,
+            _hasApproachedDestination);
+
+        _previousDistance = distance;
+        _hasApproachedDestination = progress.HasApproached;
+
+        if (progress.Complete)
             return SimpleMovementUpdateResult.Complete;
 
         GameFunctions.FaceDirection(context.Destination);
@@ -28,6 +42,8 @@ internal sealed class ContinuousForwardMovementStrategy : ISimpleMovementStrateg
     }
 
     public void Stop() {
+        _previousDistance = null;
+        _hasApproachedDestination = false;
         _forwardInput.Stop();
     }
 }

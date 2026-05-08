@@ -61,6 +61,64 @@ public class SimpleInputMovementTests {
     }
 
     [Fact]
+    public void UpdateContinuousProgress_Completes_Inside_Precision() {
+        var progress = SimpleInputMovement.UpdateContinuousProgress(
+            distance: 0.09f,
+            precision: 0.1f,
+            previousDistance: 0.2f,
+            hasApproached: true);
+
+        Assert.True(progress.Complete);
+    }
+
+    [Fact]
+    public void UpdateContinuousProgress_Keeps_Running_While_Approaching() {
+        var progress = SimpleInputMovement.UpdateContinuousProgress(
+            distance: 1.5f,
+            precision: 0.1f,
+            previousDistance: 2f,
+            hasApproached: false);
+
+        Assert.False(progress.Complete);
+        Assert.True(progress.HasApproached);
+    }
+
+    [Fact]
+    public void UpdateContinuousProgress_Completes_After_Passing_Closest_Approach() {
+        var progress = SimpleInputMovement.UpdateContinuousProgress(
+            distance: 1.61f,
+            precision: 0.1f,
+            previousDistance: 1.5f,
+            hasApproached: true);
+
+        Assert.True(progress.Complete);
+    }
+
+    [Fact]
+    public void UpdateContinuousProgress_Does_Not_Complete_On_First_Large_Sample() {
+        var progress = SimpleInputMovement.UpdateContinuousProgress(
+            distance: 5f,
+            precision: 0.1f,
+            previousDistance: null,
+            hasApproached: false);
+
+        Assert.False(progress.Complete);
+        Assert.False(progress.HasApproached);
+    }
+
+    [Fact]
+    public void UpdateContinuousProgress_Does_Not_Complete_On_Increase_Before_Approach() {
+        var progress = SimpleInputMovement.UpdateContinuousProgress(
+            distance: 6f,
+            precision: 0.1f,
+            previousDistance: 5f,
+            hasApproached: false);
+
+        Assert.False(progress.Complete);
+        Assert.False(progress.HasApproached);
+    }
+
+    [Fact]
     public void ProgressTracker_Does_Not_Report_Stuck_On_First_Sample() {
         var tracker = new SimpleMovementProgressTracker();
 

@@ -13,6 +13,7 @@ public sealed class SimpleInputMovement : IDisposable {
     public const float ArrivalWalkBuffer = 0.5f;
     public const float SettleHysteresis = 0.05f;
     public const int SettleFrameCount = 3;
+    public const float ContinuousPassEpsilon = 0.01f;
 
     private readonly NativeStop _nativeStop = new();
     private readonly ForwardInputMovementController _forwardInput = new();
@@ -158,6 +159,22 @@ public sealed class SimpleInputMovement : IDisposable {
         };
     }
 
+    public static ContinuousMovementProgress UpdateContinuousProgress(
+        float distance,
+        float precision,
+        float? previousDistance,
+        bool hasApproached) {
+        if (distance <= precision)
+            return new ContinuousMovementProgress(true, hasApproached);
+
+        if (previousDistance is not { } previous)
+            return new ContinuousMovementProgress(false, hasApproached);
+
+        var approached = hasApproached || distance < previous - ContinuousPassEpsilon;
+        var passedClosestApproach = approached && distance > previous + ContinuousPassEpsilon;
+        return new ContinuousMovementProgress(passedClosestApproach, approached);
+    }
+
     public static string FormatMode(SimpleMovementMode mode) =>
         mode.ToString().ToLowerInvariant();
 
@@ -232,6 +249,8 @@ public enum ArrivalMovementState {
     Walk,
     Stop,
 }
+
+public readonly record struct ContinuousMovementProgress(bool Complete, bool HasApproached);
 
 public sealed class SimpleMovementProgressTracker {
     private Vector3 _lastSignificantPosition;
