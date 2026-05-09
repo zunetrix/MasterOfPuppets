@@ -99,6 +99,10 @@ public class ComponentsPalette {
     public Vector4 ButtonPinkHovered = new Vector4(0.7f, 0.21f, 0.7f, 1f);        // #B335B3
     public Vector4 ButtonPinkActive = new Vector4(0.8f, 0.16f, 0.8f, 1f);         // #CC29CC
 
+    public Vector4 ButtonCmdNormal = new Vector4(0.19f, 0.19f, 0.20f, 1.00f);     // #303033
+    public Vector4 ButtonCmdHovered = new Vector4(0.22f, 0.27f, 0.42f, 1.00f);    // #38456B
+    public Vector4 ButtonCmdActive = new Vector4(0.26f, 0.32f, 0.50f, 1.00f);     // #425280
+
 
     public Vector4 ButtonDiscordNormal = new Vector4(0.34509805f, 0.39607847f, 0.9490197f, 1f);     // #5865F2
     public Vector4 ButtonDiscordActive = new Vector4(0.34509805f, 0.39607847f, 0.9490197f, 0.86666673f); // #5865F2DD
@@ -177,15 +181,5 @@ public static class ColorUtil {
         var b = int.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
 
         return new Vector4(r, g, b, alpha);
-    }
-
-    public static uint Vector4ToUint(Vector4 color) {
-        var r = (uint)(color.X * 255.0f);
-        var g = (uint)(color.Y * 255.0f);
-        var b = (uint)(color.Z * 255.0f);
-        var a = (uint)(color.W * 255.0f);
-
-        // ImGui usa formato ABGR
-        return (a << 24) | (b << 16) | (g << 8) | r;
     }
 }

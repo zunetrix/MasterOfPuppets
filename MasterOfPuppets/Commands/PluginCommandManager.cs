@@ -441,6 +441,7 @@ public class PluginCommandManager : IDisposable {
                             Plugin.Ui.FormationWindow.Toggle();
                             return;
                         }
+
                         var anchor = FormationAnchorArgumentParser.ParseAnchorAndArrival(
                             parsedArgs.Skip(2),
                             FormationAnchorReference.Self);
@@ -448,6 +449,7 @@ public class PluginCommandManager : IDisposable {
                             DalamudApi.ShowNotification($"Invalid formation argument: {anchor.InvalidArgument}", NotificationType.Error, 5000);
                             return;
                         }
+
                         Plugin.IpcProvider.ExecuteFormation(parsedArgs[1], anchor.Anchor, anchor.MovementMode);
                     }
                     break;

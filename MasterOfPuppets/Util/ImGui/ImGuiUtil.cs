@@ -9,6 +9,8 @@ using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 
+using MasterOfPuppets.Extensions;
+
 namespace MasterOfPuppets.Util.ImGuiExt;
 
 public static class ImGuiUtil {
@@ -107,15 +109,81 @@ public static class ImGuiUtil {
         ImGuiComponents.IconButtonWithText(icon, text, size);
     }
 
+    public static bool DrawCmdButton(FontAwesomeIcon icon, string label, string? tooltip = null, Vector4? iconColor = null, float width = 100) {
+        float iconBoxSize = 28f * ImGuiHelpers.GlobalScale;
+        float btnPadH = 8f * ImGuiHelpers.GlobalScale;
+        float btnPadV = 8f * ImGuiHelpers.GlobalScale;
+        float iconTextGap = 8f * ImGuiHelpers.GlobalScale;
+
+        float textMaxW = width - btnPadH - iconBoxSize - iconTextGap - btnPadH;
+
+        var labelSize = ImGui.CalcTextSize(label, false, textMaxW);
+        float contentH = Math.Max(iconBoxSize, labelSize.Y);
+        float height = contentH + btnPadV * 2f;
+
+        var drawList = ImGui.GetWindowDrawList();
+        var pos = ImGui.GetCursorScreenPos();
+        var size = new Vector2(width, height);
+
+        bool clicked;
+        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonCmdNormal)
+                   .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonCmdHovered)
+                   .Push(ImGuiCol.ButtonActive, Style.Components.ButtonCmdActive))
+        using (ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 6f * ImGuiHelpers.GlobalScale)
+                   .Push(ImGuiStyleVar.FramePadding, Vector2.Zero)) {
+            clicked = ImGui.Button($"##cmdBtn_{label}", size);
+        }
+
+        bool hovered = ImGui.IsItemHovered();
+        uint borderCol = ImGui.ColorConvertFloat4ToU32(hovered ? new Vector4(0.45f, 0.60f, 1.00f, 0.55f) : new Vector4(1f, 1f, 1f, 0.08f));
+
+        drawList.AddRect(pos, pos + size, borderCol, 6f * ImGuiHelpers.GlobalScale, ImDrawFlags.None, hovered ? 1.2f : 0.5f);
+
+        var iconBoxMin = new Vector2(
+            pos.X + btnPadH,
+            pos.Y + (height - iconBoxSize) * 0.5f);
+        var iconBoxMax = iconBoxMin + new Vector2(iconBoxSize, iconBoxSize);
+
+        ImFontPtr iconFont;
+        Vector2 iconGlyphSize;
+        string iconStr = icon.ToIconString();
+
+        using (ImRaii.PushFont(UiBuilder.IconFont)) {
+            iconGlyphSize = ImGui.CalcTextSize(iconStr);
+            iconFont = ImGui.GetFont();
+        }
+
+        var iconPos = new Vector2(
+            iconBoxMin.X + (iconBoxSize - iconGlyphSize.X) * 0.5f,
+            iconBoxMin.Y + (iconBoxSize - iconGlyphSize.Y) * 0.5f);
+
+        uint effectiveIconColor = iconColor.HasValue ? iconColor.Value.ToUintColor() : Vector4.One.ToUintColor();
+        drawList.AddText(iconFont, ImGui.GetFontSize(), iconPos, effectiveIconColor, iconStr);
+
+        float textX = iconBoxMax.X + iconTextGap;
+        var labelPos = new Vector2(textX, pos.Y + (height - labelSize.Y) * 0.5f);
+
+        drawList.AddText(
+            ImGui.GetFont(), ImGui.GetFontSize(),
+            labelPos, ImGui.GetColorU32(ImGuiCol.Text),
+            label, textMaxW);
+
+        if (tooltip != null) {
+            ToolTip(tooltip);
+        }
+
+        return clicked;
+    }
+
     public static bool EnumCombo<TEnum>(
-    string label,
-    ref TEnum @enum,
-    ImGuiComboFlags flags = ImGuiComboFlags.None,
-    bool showValue = false,
-    string[]? toolTips = null,
-    string[]? labelsOverride = null
+        string label,
+        ref TEnum @enum,
+        ImGuiComboFlags flags = ImGuiComboFlags.None,
+        bool showValue = false,
+        string[]? toolTips = null,
+        string[]? labelsOverride = null
     // Func<TEnum, object>? orderBy = null,
-) where TEnum : struct, Enum {
+    ) where TEnum : struct, Enum {
         var ret = false;
         var enumValues = Enum.GetValues<TEnum>();
         var enumIndex = Array.IndexOf(enumValues, @enum);
@@ -271,7 +339,7 @@ public static class ImGuiUtil {
             );
         }
 
-        ImGui.GetWindowDrawList().PathStroke(ColorUtil.Vector4ToUint(color), ImDrawFlags.None, thickness);
+        ImGui.GetWindowDrawList().PathStroke(color.ToUintColor(), ImDrawFlags.None, thickness);
 
         ImGui.PopID();
     }
