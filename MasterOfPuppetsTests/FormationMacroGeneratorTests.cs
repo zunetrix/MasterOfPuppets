@@ -423,9 +423,9 @@ public class FormationMacroGeneratorTests {
         Assert.Empty(result.Macro.Commands[0].GroupIds);
 
         var lines = result.Macro.Commands[0].Actions.Split('\n');
-        Assert.Equal("/mopformationgoto \"Circle\" 2 anchor=\"Origin Character@World\" continuous", lines[0]);
+        Assert.Equal("/mopformationgoto \"Circle\" 2 anchor=\"$mop_origin\" continuous", lines[0]);
         Assert.Equal("/mopwait 1.00", lines[1]);
-        Assert.Equal("/mopformationgoto \"Circle\" 3 anchor=\"Origin Character@World\" continuous", lines[2]);
+        Assert.Equal("/mopformationgoto \"Circle\" 3 anchor=\"$mop_origin\" continuous", lines[2]);
         Assert.DoesNotContain("/mopformationmove", result.Macro.Commands[0].Actions);
         Assert.EndsWith("/moploop", result.Macro.Commands[0].Actions);
     }
@@ -450,7 +450,7 @@ public class FormationMacroGeneratorTests {
     }
 
     [Fact]
-    public void GenerateLoopMacro_ExistingFormationLocalPointMovement_EmitsTargetAndPreciseOptions() {
+    public void GenerateLoopMacro_ExistingFormationLocalPointMovement_EmitsPointOneTargetAndPreciseOptions() {
         var formation = BuildEightPointFormation();
 
         var result = FormationMacroGenerator.GenerateLoopMacroWithDiagnostics(
@@ -465,7 +465,8 @@ public class FormationMacroGeneratorTests {
 
         var command = Assert.Single(result.Macro.Commands, command => command.Cids.SequenceEqual([101UL]));
         var firstLine = command.Actions.Split('\n')[0];
-        Assert.Equal("/mopformationgoto \"Circle\" 2 anchor=target precise", firstLine);
+        Assert.Equal("/mopformationgoto \"Circle\" 2 anchor=\"$mop_origin_target\" precise", firstLine);
+        Assert.DoesNotContain("anchor=target", command.Actions);
     }
 
     [Fact]

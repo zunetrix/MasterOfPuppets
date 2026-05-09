@@ -6,10 +6,14 @@ namespace MasterOfPuppets;
 public sealed class MacroRuntimeVariables {
     public string Me { get; init; } = string.Empty;
     public string Target { get; init; } = string.Empty;
+    public string MopOrigin { get; init; } = string.Empty;
+    public string MopOriginTarget { get; init; } = string.Empty;
 
     public Dictionary<string, string> ToDictionary() => new() {
         ["me"] = Me,
         ["target"] = Target,
+        ["mop_origin"] = MopOrigin,
+        ["mop_origin_target"] = MopOriginTarget,
     };
 
     public Dictionary<string, string> ResolveInlinePlaceholders(Dictionary<string, string>? inlineVars) {
@@ -49,6 +53,8 @@ public sealed class MacroRuntimeVariables {
         return new MacroRuntimeVariables {
             Me = me,
             Target = GameTargetManager.GetTargetName(),
+            MopOrigin = me,
+            MopOriginTarget = GameTargetManager.GetTargetName(),
         };
     }
 }

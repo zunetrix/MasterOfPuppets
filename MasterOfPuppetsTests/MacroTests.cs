@@ -63,7 +63,7 @@ public class MacroTests
             Commands = new List<Command> {
                 new Command {
                     Cids = new() { 1 },
-                    Actions = "/moptarget \"$target\"\n/echo $me"
+                    Actions = "/moptarget \"$target\"\n/echo $me\n/echo $mop_origin\n/echo $mop_origin_target"
                 }
             }
         };
@@ -74,10 +74,17 @@ public class MacroTests
             {
                 Me = "Current Character@World",
                 Target = "Target Character@World",
+                MopOrigin = "Origin Character@World",
+                MopOriginTarget = "Origin Target@World",
             });
 
         Assert.Equal(
-            new[] { "/moptarget \"Target Character@World\"", "/echo Current Character@World" },
+            new[] {
+                "/moptarget \"Target Character@World\"",
+                "/echo Current Character@World",
+                "/echo Origin Character@World",
+                "/echo Origin Target@World",
+            },
             result);
     }
 
@@ -158,6 +165,19 @@ public class MacroTests
     public void MopFormationMove_Uses_Normal_GlobalDelay()
     {
         Assert.False(MacroHandler.CommandSkipsGlobalDelay("mopformationmove"));
+    }
+
+    [Theory]
+    [InlineData(FormationAnchorFailureKind.NoTargetSelected, true)]
+    [InlineData(FormationAnchorFailureKind.AnchorNameEmpty, true)]
+    [InlineData(FormationAnchorFailureKind.AnchorNotVisible, true)]
+    [InlineData(FormationAnchorFailureKind.ConfigurationError, false)]
+    [InlineData(FormationAnchorFailureKind.Unsupported, false)]
+    public void FormationAnchorFailures_Classify_Transient_Runtime_Misses(
+        FormationAnchorFailureKind failureKind,
+        bool expectedTransient)
+    {
+        Assert.Equal(expectedTransient, FormationLocalMovementExecutor.IsTransientAnchorFailure(failureKind));
     }
 
     [Fact]

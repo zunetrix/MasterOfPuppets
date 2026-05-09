@@ -16,19 +16,22 @@ public static class FormationAnchorResolver {
         Formation formation,
         FormationAnchorReference anchor,
         out FormationResolvedAnchor resolved,
-        out string failureReason) {
+        out string failureReason,
+        out FormationAnchorFailureKind failureKind) {
         resolved = new FormationResolvedAnchor(default, default);
         failureReason = string.Empty;
+        failureKind = FormationAnchorFailureKind.None;
 
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) {
             failureReason = "local player is unavailable";
+            failureKind = FormationAnchorFailureKind.ConfigurationError;
             return false;
         }
 
         switch (anchor.Kind) {
             case FormationAnchorKind.Default:
-                return TryResolvePointOneAnchor(plugin, formation, out resolved, out failureReason);
+                return TryResolvePointOneAnchor(plugin, formation, out resolved, out failureReason, out failureKind);
             case FormationAnchorKind.Self:
                 resolved = new FormationResolvedAnchor(
                     player.Position,
@@ -39,6 +42,7 @@ public static class FormationAnchorResolver {
             case FormationAnchorKind.Target:
                 if (player.TargetObject == null) {
                     failureReason = "no target selected";
+                    failureKind = FormationAnchorFailureKind.NoTargetSelected;
                     return false;
                 }
 
@@ -49,9 +53,10 @@ public static class FormationAnchorResolver {
                     player.TargetObject.Name.TextValue);
                 return true;
             case FormationAnchorKind.Named:
-                return TryResolveNamed(anchor.Name ?? string.Empty, out resolved, out failureReason);
+                return TryResolveNamed(anchor.Name ?? string.Empty, out resolved, out failureReason, out failureKind);
             default:
                 failureReason = $"unsupported anchor kind {anchor.Kind}";
+                failureKind = FormationAnchorFailureKind.Unsupported;
                 return false;
         }
     }
@@ -59,12 +64,15 @@ public static class FormationAnchorResolver {
     public static bool TryResolveNamed(
         string objectName,
         out FormationResolvedAnchor resolved,
-        out string failureReason) {
+        out string failureReason,
+        out FormationAnchorFailureKind failureKind) {
         resolved = new FormationResolvedAnchor(default, default);
         failureReason = string.Empty;
+        failureKind = FormationAnchorFailureKind.None;
 
         if (string.IsNullOrWhiteSpace(objectName)) {
             failureReason = "anchor name is empty";
+            failureKind = FormationAnchorFailureKind.AnchorNameEmpty;
             return false;
         }
 
@@ -90,6 +98,7 @@ public static class FormationAnchorResolver {
 
         if (match == null) {
             failureReason = $"anchor not visible: \"{objectName}\"";
+            failureKind = FormationAnchorFailureKind.AnchorNotVisible;
             return false;
         }
 
@@ -105,15 +114,20 @@ public static class FormationAnchorResolver {
         Plugin plugin,
         Formation formation,
         out FormationResolvedAnchor resolved,
-        out string failureReason) {
+        out string failureReason,
+        out FormationAnchorFailureKind failureKind) {
         resolved = new FormationResolvedAnchor(default, default);
-        if (!FormationPointMovement.TryGetPointOneAnchorCid(formation, plugin.Config.CidsGroups, out var anchorCid, out failureReason))
+        failureKind = FormationAnchorFailureKind.None;
+        if (!FormationPointMovement.TryGetPointOneAnchorCid(formation, plugin.Config.CidsGroups, out var anchorCid, out failureReason)) {
+            failureKind = FormationAnchorFailureKind.ConfigurationError;
             return false;
+        }
 
         if (anchorCid == DalamudApi.PlayerState.ContentId) {
             var player = DalamudApi.ObjectTable.LocalPlayer;
             if (player == null) {
                 failureReason = "local point-1 anchor is unavailable";
+                failureKind = FormationAnchorFailureKind.ConfigurationError;
                 return false;
             }
 
@@ -124,10 +138,11 @@ public static class FormationAnchorResolver {
         var configuredName = plugin.Config.Characters.FirstOrDefault(character => character.Cid == anchorCid)?.Name;
         if (string.IsNullOrWhiteSpace(configuredName)) {
             failureReason = $"point 1 character {anchorCid} is not configured";
+            failureKind = FormationAnchorFailureKind.ConfigurationError;
             return false;
         }
 
-        if (TryResolveNamed(configuredName, out resolved, out failureReason)) {
+        if (TryResolveNamed(configuredName, out resolved, out failureReason, out failureKind)) {
             resolved = resolved with { ContentId = anchorCid };
             return true;
         }

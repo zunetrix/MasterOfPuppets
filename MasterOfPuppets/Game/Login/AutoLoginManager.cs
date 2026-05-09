@@ -39,6 +39,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
     private string _pendingCharacterName = string.Empty;
     private int _pendingCharacterIndex = -1;
     private bool _hasPendingCharacterSelection;
+    private AutoLoginCharacterMatch? _pendingCharacterMatch;
     private bool _loggedWorldSelectorSnapshot;
     private bool _loggedCharacterListSnapshot;
     private bool _loggedDirectCharacterListMismatch;
@@ -230,14 +231,13 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             return false;
 
         var lobbyEntries = ReadLobbyEntries();
-        LogCharacterListSnapshot(visibleCharacters, lobbyEntries);
+        LogCharacterListSnapshot(CurrentWorldLabel, visibleCharacters, lobbyEntries);
 
-        if (!AutoLoginPlanner.TryResolveDirectCharacterListTarget(
+        if (!AutoLoginPlanner.TryResolveDirectCharacterListMatch(
                 _candidates,
                 lobbyEntries,
                 visibleCharacters,
-                out var target,
-                out var characterIndex,
+                out var match,
                 out var reason)) {
             if (!_loggedDirectCharacterListMismatch) {
                 _loggedDirectCharacterListMismatch = true;
@@ -248,9 +248,9 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             return false;
         }
 
-        _target = target;
+        _target = match.Target;
         DalamudApi.PluginLog.Information(
-            $"[AutoLogin] Character list already open; checking resolved character {_target.Value.CharacterName} at index {characterIndex}. Resolution: {reason}.");
+            $"[AutoLogin] Character list already open; {FormatCharacterMatch(match)}.");
         SetState(LoginState.WaitingCharacterList);
         return true;
     }
@@ -275,29 +275,35 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         if (visibleCharacters.Count == 0)
             return;
 
-        LogCharacterListSnapshot(visibleCharacters, ReadLobbyEntries());
+        var lobbyEntries = ReadLobbyEntries();
+        LogCharacterListSnapshot(CurrentWorldLabel, visibleCharacters, lobbyEntries);
 
         if (!_hasPendingCharacterSelection ||
             _pendingCharacterIndex < 0 ||
             _pendingCharacterIndex >= visibleCharacters.Count ||
             !visibleCharacters[_pendingCharacterIndex].Equals(_pendingCharacterName, StringComparison.InvariantCultureIgnoreCase)) {
-            if (!AutoLoginPlanner.TryFindVisibleCandidate(
+            if (!AutoLoginPlanner.TryFindVisibleCandidateMatch(
                     _candidates,
+                    lobbyEntries,
                     visibleCharacters,
-                    out _pendingCharacterName,
-                    out _pendingCharacterIndex)) {
+                    CurrentWorldLabel,
+                    out var match,
+                    out var reason)) {
                 DalamudApi.PluginLog.Information(
-                    $"[AutoLogin] No whitelisted character visible on {CurrentWorldLabel}. Checked: {string.Join(", ", _candidates.Select(c => c.Name))}. Visible: {string.Join(", ", visibleCharacters)}.");
+                    $"[AutoLogin] No whitelisted character visible on {CurrentWorldLabel}. Reason: {reason}. Checked: {string.Join(", ", _candidates.Select(FormatCandidate))}. Visible: {string.Join(", ", visibleCharacters)}. Lobby: {FormatLobbySnapshot(lobbyEntries)}.");
                 SelectNextWorldCandidate();
                 return;
             }
 
-            _target = new AutoLoginTarget(_pendingCharacterName, _target?.WorldName ?? string.Empty);
+            _pendingCharacterName = match.Target.CharacterName;
+            _pendingCharacterIndex = match.Index;
+            _pendingCharacterMatch = match;
+            _target = match.Target;
             _hasPendingCharacterSelection = true;
             _stateDelayMs = Random.Shared.Next(CharacterSelectDelayMinMs, CharacterSelectDelayMaxMs + 1);
             _stateTimer.Restart();
             DalamudApi.PluginLog.Debug(
-                $"[AutoLogin] Found {_pendingCharacterName} at index {_pendingCharacterIndex}; waiting {_stateDelayMs}ms before character selection.");
+                $"[AutoLogin] Found {_pendingCharacterName}; {FormatCharacterMatch(match)}; waiting {_stateDelayMs}ms before character selection.");
             return;
         }
 
@@ -309,14 +315,14 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
 
         var selected = SendTitleAction("_CharaSelectListMenu", 3, 29, 3, 0, 3, _pendingCharacterIndex);
         DalamudApi.PluginLog.Debug(
-            $"[AutoLogin] Character callback success={selected}; checked={string.Join(", ", _candidates.Select(c => c.Name))}; visible={string.Join(", ", visibleCharacters)}; selected={_pendingCharacterName}; index={_pendingCharacterIndex}.");
+            $"[AutoLogin] Character callback success={selected}; checked={string.Join(", ", _candidates.Select(FormatCandidate))}; visible={string.Join(", ", visibleCharacters)}; selected={_pendingCharacterName}; index={_pendingCharacterIndex}; match={FormatPendingCharacterMatch()}.");
         if (selected) {
             DalamudApi.PluginLog.Information(
-                $"[AutoLogin] Selected character {_pendingCharacterName} at index {_pendingCharacterIndex} after {_stateTimer.ElapsedMilliseconds}ms.");
+                $"[AutoLogin] Selected character {_pendingCharacterName} at index {_pendingCharacterIndex} after {_stateTimer.ElapsedMilliseconds}ms. Match: {FormatPendingCharacterMatch()}.");
             SetState(LoginState.ConfirmingLogin);
         } else {
             DalamudApi.PluginLog.Warning(
-                $"[AutoLogin] No checked character was visible. Checked: {string.Join(", ", _candidates.Select(c => c.Name))}. Visible: {string.Join(", ", visibleCharacters)}.");
+                $"[AutoLogin] No checked character was visible. Checked: {string.Join(", ", _candidates.Select(FormatCandidate))}. Visible: {string.Join(", ", visibleCharacters)}. Match: {FormatPendingCharacterMatch()}.");
             Stop();
         }
     }
@@ -353,6 +359,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             }
 
             _target = new AutoLoginTarget(string.Empty, world);
+            _loggedCharacterListSnapshot = false;
             DalamudApi.PluginLog.Information(
                 $"[AutoLogin] Checking whitelisted characters on {world} at world index {selectedWorldIndex} ({_worldIndex}/{_worldQueue.Count}).");
             _waitingForWorldSelectionSettle = true;
@@ -412,13 +419,13 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             $"[AutoLogin] World selector snapshot: source={(snapshot.UsedAddonWorldEntries ? "WorldEntries" : "StringArrayFallback")}; selectedWorldIndex={snapshot.SelectedWorldIndex}; worlds={snapshot.Worlds.Count} [{FormatWorldSelectorSnapshot(snapshot.Worlds)}]; lobbyEntries={lobbyEntries.Count} [{FormatLobbySnapshot(lobbyEntries)}].");
     }
 
-    private void LogCharacterListSnapshot(IReadOnlyList<string> characterNames, IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
+    private void LogCharacterListSnapshot(string selectedWorldName, IReadOnlyList<string> characterNames, IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) {
         if (_loggedCharacterListSnapshot)
             return;
 
         _loggedCharacterListSnapshot = true;
         DalamudApi.PluginLog.Debug(
-            $"[AutoLogin] Character list snapshot: characters={characterNames.Count} [{Preview(characterNames)}]; lobbyEntries={lobbyEntries.Count} [{FormatLobbySnapshot(lobbyEntries)}].");
+            $"[AutoLogin] Character list decision input: selectedWorld=\"{LogValue(selectedWorldName)}\"; candidates=[{string.Join(", ", _candidates.Select(FormatCandidate))}]; characters={characterNames.Count} [{Preview(characterNames)}]; lobbyEntries={lobbyEntries.Count} [{FormatLobbySnapshot(lobbyEntries)}].");
     }
 
     private static string FormatAddonState(string addonName) {
@@ -487,6 +494,19 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             ? $"{candidate.Name}({candidate.ContentId})"
             : $"{candidate.Name}@{candidate.HomeWorldName}({candidate.ContentId})";
 
+    private string FormatPendingCharacterMatch() =>
+        _pendingCharacterMatch == null
+            ? $"method=<unknown>; selectedWorld=\"{LogValue(CurrentWorldLabel)}\""
+            : FormatCharacterMatch(_pendingCharacterMatch.Value);
+
+    private static string FormatCharacterMatch(AutoLoginCharacterMatch match) =>
+        $"method={match.Confidence}; candidate={FormatCandidate(match.Candidate)}; target={FormatTarget(match.Target)}; visibleIndex={match.Index}; reason=\"{LogValue(match.Reason)}\"";
+
+    private static string FormatTarget(AutoLoginTarget target) =>
+        string.IsNullOrWhiteSpace(target.WorldName)
+            ? $"\"{LogValue(target.CharacterName)}\""
+            : $"\"{LogValue(target.CharacterName)}@{LogValue(target.WorldName)}\"";
+
     private List<AutoLoginCandidate> GetLoginCandidates() {
         return AutoLoginPlanner.BuildCandidates(_plugin.Config.Characters);
     }
@@ -523,6 +543,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         _pendingCharacterName = string.Empty;
         _pendingCharacterIndex = -1;
         _hasPendingCharacterSelection = false;
+        _pendingCharacterMatch = null;
         _stateDelayMs = 0;
     }
 

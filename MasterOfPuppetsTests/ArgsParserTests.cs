@@ -117,6 +117,15 @@ public class ArgsParserTests
     }
 
     [Fact]
+    public void ParseInlineVars_QuotedEmptyValue_ReturnsEmptyString()
+    {
+        var result = ArgumentParser.ParseInlineVars("-var=$mop_origin_target=\"\"");
+
+        Assert.True(result.ContainsKey("mop_origin_target"));
+        Assert.Equal(string.Empty, result["mop_origin_target"]);
+    }
+
+    [Fact]
     public void ParseInlineVars_WrongPrefix_ReturnsEmpty()
     {
         var result = ArgumentParser.ParseInlineVars("--flags=$x=1;$y=2");

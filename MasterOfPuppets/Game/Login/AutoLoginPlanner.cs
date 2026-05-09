@@ -47,6 +47,20 @@ public readonly record struct AutoLoginWorldQueueResult(List<string> Worlds, Lis
 
 public readonly record struct AutoLoginTarget(string CharacterName, string WorldName);
 
+public enum AutoLoginMatchConfidence {
+    None,
+    ContentId,
+    NameAndHomeWorld,
+    NameOnConfiguredHomeWorld,
+}
+
+public readonly record struct AutoLoginCharacterMatch(
+    AutoLoginCandidate Candidate,
+    AutoLoginTarget Target,
+    int Index,
+    AutoLoginMatchConfidence Confidence,
+    string Reason);
+
 public static class AutoLoginPlanner {
     public static List<AutoLoginCandidate> BuildCandidates(IEnumerable<Character> characters) {
         return characters
@@ -88,7 +102,10 @@ public static class AutoLoginPlanner {
         foreach (var candidate in candidates) {
             var entry = FindCandidateEntry(candidate, lobbyEntries);
             if (entry == null) {
-                diagnostics.Add($"No lobby current-world entry for {FormatCandidate(candidate)}.");
+                var sameNameEntries = FindSameNameEntries(candidate, lobbyEntries);
+                diagnostics.Add(sameNameEntries.Count == 0
+                    ? $"No lobby current-world entry for {FormatCandidate(candidate)}."
+                    : $"Ignored same-name lobby entries for {FormatCandidate(candidate)}: no content ID or home-world confirmation. Entries: {FormatLobbyEntries(sameNameEntries)}.");
                 continue;
             }
 
@@ -133,58 +150,148 @@ public static class AutoLoginPlanner {
         out AutoLoginTarget target,
         out int index,
         out string reason) {
+        if (TryResolveDirectCharacterListMatch(candidates, lobbyEntries, visibleCharacters, out var match, out reason)) {
+            target = match.Target;
+            index = match.Index;
+            return true;
+        }
+
         target = default;
         index = -1;
+        return false;
+    }
+
+    public static bool TryResolveDirectCharacterListMatch(
+        IReadOnlyList<AutoLoginCandidate> candidates,
+        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
+        IReadOnlyList<string> visibleCharacters,
+        out AutoLoginCharacterMatch match,
+        out string reason) {
+        if (TryResolveVisibleCandidate(
+                candidates,
+                lobbyEntries,
+                visibleCharacters,
+                selectedWorldName: string.Empty,
+                allowConfiguredHomeWorldFallback: false,
+                out match,
+                out reason)) {
+            return true;
+        }
+
+        match = default;
+        return false;
+    }
+
+    public static bool TryFindVisibleCandidate(
+        IReadOnlyList<AutoLoginCandidate> candidates,
+        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
+        IReadOnlyList<string> visibleCharacters,
+        string selectedWorldName,
+        out string characterName,
+        out int index,
+        out string reason) {
+        if (TryFindVisibleCandidateMatch(
+                candidates,
+                lobbyEntries,
+                visibleCharacters,
+                selectedWorldName,
+                out var match,
+                out reason)) {
+            characterName = match.Target.CharacterName;
+            index = match.Index;
+            return true;
+        }
+
+        characterName = string.Empty;
+        index = -1;
+        return false;
+    }
+
+    public static bool TryFindVisibleCandidateMatch(
+        IReadOnlyList<AutoLoginCandidate> candidates,
+        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
+        IReadOnlyList<string> visibleCharacters,
+        string selectedWorldName,
+        out AutoLoginCharacterMatch match,
+        out string reason) {
+        if (TryResolveVisibleCandidate(
+                candidates,
+                lobbyEntries,
+                visibleCharacters,
+                selectedWorldName,
+                allowConfiguredHomeWorldFallback: true,
+                out match,
+                out reason)) {
+            return true;
+        }
+
+        match = default;
+        return false;
+    }
+
+    public static bool TryResolveVisibleCandidate(
+        IReadOnlyList<AutoLoginCandidate> candidates,
+        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
+        IReadOnlyList<string> visibleCharacters,
+        string selectedWorldName,
+        bool allowConfiguredHomeWorldFallback,
+        out AutoLoginCharacterMatch match,
+        out string reason) {
+        match = default;
 
         if (candidates.Count == 0) {
             reason = "no enabled auto-login candidates were configured";
             return false;
         }
 
+        var skipReasons = new List<string>();
         for (var i = 0; i < visibleCharacters.Count; i++) {
-            var candidate = FindCandidateByVisibleName(candidates, visibleCharacters[i]);
-            if (candidate == null)
-                continue;
+            var visibleName = visibleCharacters[i];
+            foreach (var candidate in candidates.Where(candidate =>
+                         candidate.Name.Equals(visibleName, StringComparison.InvariantCultureIgnoreCase))) {
+                var entry = FindCandidateEntry(candidate, lobbyEntries);
+                if (entry != null && IsConfirmedCandidate(candidate, entry.Value, out var confidence, out var confirmationReason)) {
+                    var worldName = !string.IsNullOrWhiteSpace(entry.Value.CurrentWorldName)
+                        ? entry.Value.CurrentWorldName
+                        : selectedWorldName;
+                    var target = new AutoLoginTarget(candidate.Name, worldName);
+                    match = new AutoLoginCharacterMatch(candidate, target, i, confidence, confirmationReason);
+                    reason = confirmationReason;
+                    return true;
+                }
 
-            var entry = FindCandidateEntry(candidate.Value, lobbyEntries);
-            var worldName = !string.IsNullOrWhiteSpace(entry?.CurrentWorldName)
-                ? entry.Value.CurrentWorldName
-                : string.Empty;
-            target = new AutoLoginTarget(candidate.Value.Name, worldName);
-            index = i;
-            reason = entry == null
-                ? lobbyEntries.Count == 0
-                    ? $"lobby data was unavailable; resolved visible whitelisted character '{candidate.Value.Name}'"
-                    : $"resolved visible whitelisted character '{candidate.Value.Name}' without lobby confirmation"
-                : string.IsNullOrWhiteSpace(entry.Value.CurrentWorldName)
-                    ? $"resolved visible whitelisted character '{candidate.Value.Name}' from lobby data without current world"
-                    : $"resolved visible whitelisted character '{candidate.Value.Name}' from lobby data";
-            return true;
+                if (entry != null) {
+                    skipReasons.Add($"skipped visible '{visibleName}': lobby entry did not match configured identity for {FormatCandidate(candidate)}. Entry: {FormatLobbyEntry(entry.Value)}");
+                    continue;
+                }
+
+                var sameNameEntries = FindSameNameEntries(candidate, lobbyEntries);
+                if (sameNameEntries.Count > 0) {
+                    skipReasons.Add($"skipped visible '{visibleName}': same-name lobby entries did not match configured identity for {FormatCandidate(candidate)}. Entries: {FormatLobbyEntries(sameNameEntries)}");
+                    continue;
+                }
+
+                if (allowConfiguredHomeWorldFallback &&
+                    !string.IsNullOrWhiteSpace(candidate.HomeWorldName) &&
+                    candidate.HomeWorldName.Equals(selectedWorldName, StringComparison.InvariantCultureIgnoreCase)) {
+                    var target = new AutoLoginTarget(candidate.Name, selectedWorldName);
+                    reason = $"resolved visible whitelisted character '{candidate.Name}' on configured home world '{selectedWorldName}' without lobby confirmation";
+                    match = new AutoLoginCharacterMatch(candidate, target, i, AutoLoginMatchConfidence.NameOnConfiguredHomeWorld, reason);
+                    return true;
+                }
+
+                skipReasons.Add(
+                    string.IsNullOrWhiteSpace(candidate.HomeWorldName)
+                        ? $"skipped visible '{visibleName}': no lobby confirmation and configured home world is unknown for {FormatCandidate(candidate)}"
+                        : $"skipped visible '{visibleName}': no lobby confirmation and selected world '{selectedWorldName}' is not configured home world '{candidate.HomeWorldName}'");
+            }
         }
 
-        reason = lobbyEntries.Count == 0
-            ? "lobby data was unavailable and no configured character was visible"
-            : "no visible whitelisted character matched the configured whitelist";
-        return false;
-    }
-
-    public static bool TryFindVisibleCandidate(
-        IReadOnlyList<AutoLoginCandidate> candidates,
-        IReadOnlyList<string> visibleCharacters,
-        out string characterName,
-        out int index) {
-        var candidateNames = candidates.Select(c => c.Name).ToHashSet(StringComparer.InvariantCultureIgnoreCase);
-        index = -1;
-        for (var i = 0; i < visibleCharacters.Count; i++) {
-            if (!candidateNames.Contains(visibleCharacters[i]))
-                continue;
-
-            characterName = visibleCharacters[i];
-            index = i;
-            return true;
-        }
-
-        characterName = string.Empty;
+        reason = skipReasons.Count == 0
+            ? lobbyEntries.Count == 0
+                ? "lobby data was unavailable and no configured character was visible"
+                : "no visible whitelisted character matched the configured whitelist"
+            : string.Join("; ", skipReasons.Distinct());
         return false;
     }
 
@@ -198,22 +305,47 @@ public static class AutoLoginPlanner {
         }
 
         foreach (var entry in lobbyEntries) {
-            if (entry.Name.Equals(candidate.Name, StringComparison.InvariantCultureIgnoreCase))
+            if (entry.Name.Equals(candidate.Name, StringComparison.InvariantCultureIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(candidate.HomeWorldName) &&
+                entry.HomeWorldName.Equals(candidate.HomeWorldName, StringComparison.InvariantCultureIgnoreCase))
                 return entry;
         }
 
         return null;
     }
 
-    private static AutoLoginCandidate? FindCandidateByVisibleName(
-        IReadOnlyList<AutoLoginCandidate> candidates,
-        string visibleCharacterName) {
-        foreach (var candidate in candidates) {
-            if (candidate.Name.Equals(visibleCharacterName, StringComparison.InvariantCultureIgnoreCase))
-                return candidate;
+    private static List<AutoLoginLobbyEntry> FindSameNameEntries(
+        AutoLoginCandidate candidate,
+        IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries) =>
+        lobbyEntries
+            .Where(entry => entry.Name.Equals(candidate.Name, StringComparison.InvariantCultureIgnoreCase))
+            .ToList();
+
+    private static bool IsConfirmedCandidate(
+        AutoLoginCandidate candidate,
+        AutoLoginLobbyEntry entry,
+        out AutoLoginMatchConfidence confidence,
+        out string reason) {
+        confidence = AutoLoginMatchConfidence.None;
+        reason = string.Empty;
+
+        if (!entry.Name.Equals(candidate.Name, StringComparison.InvariantCultureIgnoreCase))
+            return false;
+
+        if (candidate.ContentId != 0 && entry.ContentId == candidate.ContentId) {
+            confidence = AutoLoginMatchConfidence.ContentId;
+            reason = $"resolved visible whitelisted character '{candidate.Name}' by content ID";
+            return true;
         }
 
-        return null;
+        if (!string.IsNullOrWhiteSpace(candidate.HomeWorldName) &&
+            entry.HomeWorldName.Equals(candidate.HomeWorldName, StringComparison.InvariantCultureIgnoreCase)) {
+            confidence = AutoLoginMatchConfidence.NameAndHomeWorld;
+            reason = $"resolved visible whitelisted character '{candidate.Name}' by name and home world '{candidate.HomeWorldName}'";
+            return true;
+        }
+
+        return false;
     }
 
     private static Dictionary<string, AutoLoginWorldEntry> BuildVisibleWorldMap(IReadOnlyList<AutoLoginWorldEntry> visibleWorlds) {
@@ -276,4 +408,12 @@ public static class AutoLoginPlanner {
         string.IsNullOrWhiteSpace(candidate.HomeWorldName)
             ? $"{candidate.Name}({candidate.ContentId})"
             : $"{candidate.Name}@{candidate.HomeWorldName}({candidate.ContentId})";
+
+    private static string FormatLobbyEntries(IReadOnlyList<AutoLoginLobbyEntry> entries) =>
+        entries.Count == 0
+            ? "<empty>"
+            : string.Join("; ", entries.Select(FormatLobbyEntry));
+
+    private static string FormatLobbyEntry(AutoLoginLobbyEntry entry) =>
+        $"{entry.Name}@{entry.HomeWorldName}/{entry.CurrentWorldName}({entry.ContentId})";
 }

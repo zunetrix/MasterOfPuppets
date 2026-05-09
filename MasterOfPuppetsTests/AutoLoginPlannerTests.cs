@@ -62,13 +62,37 @@ public class AutoLoginPlannerTests {
     }
 
     [Fact]
-    public void BuildWorldQueue_MatchesByNameWhenContentIdIsMissing() {
+    public void BuildWorldQueue_DoesNotUseNameOnlyWhenContentIdIsMissing() {
         var queue = AutoLoginPlanner.BuildWorldQueue(
             [new AutoLoginCandidate(0, "Test Character")],
             [LobbyEntry(42, "Test Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos")],
             ["Diabolos", "Halicarnassus"]);
 
+        Assert.Equal(["Diabolos", "Halicarnassus"], queue);
+    }
+
+    [Fact]
+    public void BuildWorldQueue_UsesNameAndHomeWorldWhenContentIdIsMissing() {
+        var queue = AutoLoginPlanner.BuildWorldQueue(
+            [new AutoLoginCandidate(0, "Test Character", "Diabolos")],
+            [LobbyEntry(42, "Test Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos")],
+            ["Diabolos", "Halicarnassus"]);
+
         Assert.Equal(["Halicarnassus", "Diabolos"], queue);
+    }
+
+    [Fact]
+    public void BuildWorldQueue_DoesNotUseSameNameWrongHomeWorld() {
+        var result = AutoLoginPlanner.BuildWorldQueueWithDiagnostics(
+            [new AutoLoginCandidate(0, "Same Name", "Diabolos")],
+            [LobbyEntry(42, "Same Name", currentWorld: "Halicarnassus", homeWorld: "Golem")],
+            [
+                World("Diabolos", characterCount: null),
+                World("Halicarnassus", characterCount: null),
+            ]);
+
+        Assert.Equal(["Diabolos", "Halicarnassus"], result.Worlds);
+        Assert.Contains(result.Diagnostics, i => i.Contains("Ignored same-name lobby entries", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -204,16 +228,141 @@ public class AutoLoginPlannerTests {
     public void TryFindVisibleCandidate_MatchesByCandidateOrderInVisibleList() {
         var found = AutoLoginPlanner.TryFindVisibleCandidate(
             [
-                new AutoLoginCandidate(42, "Test Character"),
-                new AutoLoginCandidate(100, "Other Character"),
+                new AutoLoginCandidate(42, "Test Character", "Diabolos"),
+                new AutoLoginCandidate(100, "Other Character", "Diabolos"),
+            ],
+            [
+                LobbyEntry(42, "Test Character", currentWorld: "Diabolos", homeWorld: "Diabolos"),
+                LobbyEntry(100, "Other Character", currentWorld: "Diabolos", homeWorld: "Diabolos"),
             ],
             ["Not It", "Other Character", "Test Character"],
+            "Diabolos",
             out var characterName,
-            out var index);
+            out var index,
+            out var reason);
 
-        Assert.True(found);
+        Assert.True(found, reason);
         Assert.Equal("Other Character", characterName);
         Assert.Equal(1, index);
+    }
+
+    [Fact]
+    public void TryFindVisibleCandidate_RejectsSameNameWrongHomeWorld() {
+        var found = AutoLoginPlanner.TryFindVisibleCandidate(
+            [new AutoLoginCandidate(42, "Same Name", "Diabolos")],
+            [LobbyEntry(100, "Same Name", currentWorld: "Diabolos", homeWorld: "Golem")],
+            ["Same Name"],
+            "Diabolos",
+            out var characterName,
+            out var index,
+            out var reason);
+
+        Assert.False(found);
+        Assert.Equal(string.Empty, characterName);
+        Assert.Equal(-1, index);
+        Assert.Contains("did not match configured identity", reason);
+    }
+
+    [Fact]
+    public void TryFindVisibleCandidateMatch_ReturnsContentIdConfidence() {
+        var found = AutoLoginPlanner.TryFindVisibleCandidateMatch(
+            [new AutoLoginCandidate(42, "Test Character", "Diabolos")],
+            [LobbyEntry(42, "Test Character", currentWorld: "Diabolos", homeWorld: "Diabolos")],
+            ["Test Character"],
+            "Diabolos",
+            out var match,
+            out var reason);
+
+        Assert.True(found, reason);
+        Assert.Equal(AutoLoginMatchConfidence.ContentId, match.Confidence);
+        Assert.Equal("Test Character", match.Target.CharacterName);
+        Assert.Equal("Diabolos", match.Target.WorldName);
+        Assert.Equal(0, match.Index);
+    }
+
+    [Fact]
+    public void TryFindVisibleCandidateMatch_ReturnsNameAndHomeWorldConfidence() {
+        var found = AutoLoginPlanner.TryFindVisibleCandidateMatch(
+            [new AutoLoginCandidate(0, "Test Character", "Diabolos")],
+            [LobbyEntry(42, "Test Character", currentWorld: "Halicarnassus", homeWorld: "Diabolos")],
+            ["Test Character"],
+            "Halicarnassus",
+            out var match,
+            out var reason);
+
+        Assert.True(found, reason);
+        Assert.Equal(AutoLoginMatchConfidence.NameAndHomeWorld, match.Confidence);
+        Assert.Equal("Test Character", match.Target.CharacterName);
+        Assert.Equal("Halicarnassus", match.Target.WorldName);
+        Assert.Equal(0, match.Index);
+    }
+
+    [Fact]
+    public void TryFindVisibleCandidateMatch_ReturnsConfiguredHomeWorldFallbackConfidence() {
+        var found = AutoLoginPlanner.TryFindVisibleCandidateMatch(
+            [new AutoLoginCandidate(42, "Test Character", "Diabolos")],
+            [],
+            ["Test Character"],
+            "Diabolos",
+            out var match,
+            out var reason);
+
+        Assert.True(found, reason);
+        Assert.Equal(AutoLoginMatchConfidence.NameOnConfiguredHomeWorld, match.Confidence);
+        Assert.Equal("Test Character", match.Target.CharacterName);
+        Assert.Equal("Diabolos", match.Target.WorldName);
+        Assert.Equal(0, match.Index);
+    }
+
+    [Fact]
+    public void TryFindVisibleCandidate_AcceptsNameOnConfiguredHomeWorldWhenLobbyUnavailable() {
+        var found = AutoLoginPlanner.TryFindVisibleCandidate(
+            [new AutoLoginCandidate(42, "Test Character", "Diabolos")],
+            [],
+            ["Test Character"],
+            "Diabolos",
+            out var characterName,
+            out var index,
+            out var reason);
+
+        Assert.True(found, reason);
+        Assert.Equal("Test Character", characterName);
+        Assert.Equal(0, index);
+        Assert.Contains("configured home world", reason);
+    }
+
+    [Fact]
+    public void TryFindVisibleCandidate_RejectsNameOnlyOnWrongWorldWhenLobbyUnavailable() {
+        var found = AutoLoginPlanner.TryFindVisibleCandidate(
+            [new AutoLoginCandidate(42, "Test Character", "Diabolos")],
+            [],
+            ["Test Character"],
+            "Golem",
+            out var characterName,
+            out var index,
+            out var reason);
+
+        Assert.False(found);
+        Assert.Equal(string.Empty, characterName);
+        Assert.Equal(-1, index);
+        Assert.Contains("is not configured home world", reason);
+    }
+
+    [Fact]
+    public void TryFindVisibleCandidate_AcceptsTraveledCharacterWhenLobbyHomeWorldMatches() {
+        var found = AutoLoginPlanner.TryFindVisibleCandidate(
+            [new AutoLoginCandidate(42, "Test Character", "Golem")],
+            [LobbyEntry(42, "Test Character", currentWorld: "Diabolos", homeWorld: "Golem")],
+            ["Test Character"],
+            "Diabolos",
+            out var characterName,
+            out var index,
+            out var reason);
+
+        Assert.True(found, reason);
+        Assert.Equal("Test Character", characterName);
+        Assert.Equal(0, index);
+        Assert.Contains("content ID", reason);
     }
 
     [Fact]
@@ -236,6 +385,22 @@ public class AutoLoginPlannerTests {
         Assert.Equal("Other Character", target.CharacterName);
         Assert.Equal("Diabolos", target.WorldName);
         Assert.Equal(0, index);
+    }
+
+    [Fact]
+    public void TryResolveDirectCharacterListMatch_ReturnsMatchConfidence() {
+        var found = AutoLoginPlanner.TryResolveDirectCharacterListMatch(
+            [new AutoLoginCandidate(0, "Other Character", "Diabolos")],
+            [LobbyEntry(100, "Other Character", currentWorld: "Diabolos", homeWorld: "Diabolos")],
+            ["Other Character"],
+            out var match,
+            out var reason);
+
+        Assert.True(found, reason);
+        Assert.Equal(AutoLoginMatchConfidence.NameAndHomeWorld, match.Confidence);
+        Assert.Equal("Other Character", match.Target.CharacterName);
+        Assert.Equal("Diabolos", match.Target.WorldName);
+        Assert.Equal(0, match.Index);
     }
 
     [Fact]
@@ -277,7 +442,7 @@ public class AutoLoginPlannerTests {
     }
 
     [Fact]
-    public void TryResolveDirectCharacterListTarget_SelectsVisibleWhitelistedCharacterMissingFromLobby() {
+    public void TryResolveDirectCharacterListTarget_RejectsVisibleWhitelistedCharacterMissingFromLobby() {
         var found = AutoLoginPlanner.TryResolveDirectCharacterListTarget(
             [new AutoLoginCandidate(42, "Test Character", "Diabolos")],
             [LobbyEntry(999, "Not Configured", currentWorld: "Diabolos", homeWorld: "Diabolos")],
@@ -286,15 +451,14 @@ public class AutoLoginPlannerTests {
             out var index,
             out var reason);
 
-        Assert.True(found, reason);
-        Assert.Equal("Test Character", target.CharacterName);
-        Assert.Equal(string.Empty, target.WorldName);
-        Assert.Equal(0, index);
-        Assert.Contains("without lobby confirmation", reason);
+        Assert.False(found);
+        Assert.Equal(default, target);
+        Assert.Equal(-1, index);
+        Assert.Contains("no lobby confirmation", reason);
     }
 
     [Fact]
-    public void TryResolveDirectCharacterListTarget_FallsBackToVisibleCandidateWhenLobbyUnavailable() {
+    public void TryResolveDirectCharacterListTarget_RejectsVisibleCandidateWhenLobbyUnavailable() {
         var found = AutoLoginPlanner.TryResolveDirectCharacterListTarget(
             [
                 new AutoLoginCandidate(42, "Test Character"),
@@ -306,11 +470,10 @@ public class AutoLoginPlannerTests {
             out var index,
             out var reason);
 
-        Assert.True(found, reason);
-        Assert.Equal("Other Character", target.CharacterName);
-        Assert.Equal(string.Empty, target.WorldName);
-        Assert.Equal(0, index);
-        Assert.Contains("lobby data was unavailable", reason);
+        Assert.False(found);
+        Assert.Equal(default, target);
+        Assert.Equal(-1, index);
+        Assert.Contains("configured home world is unknown", reason);
     }
 
     private static AutoLoginLobbyEntry LobbyEntry(
