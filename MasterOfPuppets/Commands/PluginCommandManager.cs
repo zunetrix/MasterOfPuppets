@@ -144,7 +144,6 @@ public class PluginCommandManager : IDisposable {
                         }
                     }
                     break;
-
                 case "stop":
                     Plugin.MacroHandler.StopMacroQueueExecution();
                     break;
@@ -170,6 +169,9 @@ public class PluginCommandManager : IDisposable {
                 case "targetclear":
                 case "tc":
                     Plugin.IpcProvider.ExecuteTargetClear();
+                    break;
+                case "macro":
+                    Plugin.Ui.MacroWindow.Toggle();
                     break;
                 case "queue":
                     Plugin.Ui.MacroQueueWindow.Toggle();
