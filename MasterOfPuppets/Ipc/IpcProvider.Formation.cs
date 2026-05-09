@@ -256,8 +256,12 @@ internal partial class IpcProvider {
         if (anchor.Kind == FormationAnchorKind.Default)
             anchor = FormationAnchorReference.Self;
 
-        if (!FormationAnchorResolver.TryResolve(Plugin, formation, anchor, out var resolved, out var failureReason)) {
-            DalamudApi.ShowNotification(failureReason, NotificationType.Error, 5000);
+        if (!FormationAnchorResolver.TryResolve(Plugin, formation, anchor, out var resolved, out var failureReason, out var failureKind)) {
+            if (FormationLocalMovementExecutor.IsTransientAnchorFailure(failureKind)) {
+                DalamudApi.PluginLog.Debug($"[FormationAnchor] {failureReason}");
+            } else {
+                DalamudApi.ShowNotification(failureReason, NotificationType.Error, 5000);
+            }
             return false;
         }
 

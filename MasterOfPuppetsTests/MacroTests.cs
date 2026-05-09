@@ -167,6 +167,19 @@ public class MacroTests
         Assert.False(MacroHandler.CommandSkipsGlobalDelay("mopformationmove"));
     }
 
+    [Theory]
+    [InlineData(FormationAnchorFailureKind.NoTargetSelected, true)]
+    [InlineData(FormationAnchorFailureKind.AnchorNameEmpty, true)]
+    [InlineData(FormationAnchorFailureKind.AnchorNotVisible, true)]
+    [InlineData(FormationAnchorFailureKind.ConfigurationError, false)]
+    [InlineData(FormationAnchorFailureKind.Unsupported, false)]
+    public void FormationAnchorFailures_Classify_Transient_Runtime_Misses(
+        FormationAnchorFailureKind failureKind,
+        bool expectedTransient)
+    {
+        Assert.Equal(expectedTransient, FormationLocalMovementExecutor.IsTransientAnchorFailure(failureKind));
+    }
+
     [Fact]
     public void ParseFormationMoveCommandArgs_Defaults_To_Precise()
     {

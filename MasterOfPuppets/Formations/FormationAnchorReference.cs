@@ -12,6 +12,15 @@ public enum FormationAnchorKind {
     Named,
 }
 
+public enum FormationAnchorFailureKind {
+    None,
+    NoTargetSelected,
+    AnchorNameEmpty,
+    AnchorNotVisible,
+    ConfigurationError,
+    Unsupported,
+}
+
 public sealed record FormationAnchorReference(FormationAnchorKind Kind, string? Name = null) {
     public static readonly FormationAnchorReference Default = new(FormationAnchorKind.Default);
     public static readonly FormationAnchorReference Self = new(FormationAnchorKind.Self);

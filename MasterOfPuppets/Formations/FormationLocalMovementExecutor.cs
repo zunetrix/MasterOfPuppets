@@ -16,8 +16,8 @@ public static class FormationLocalMovementExecutor {
         if (!TryGetFormation(plugin, formationName, logPrefix, out var formation))
             return false;
 
-        if (!FormationAnchorResolver.TryResolve(plugin, formation, anchor, out var resolvedAnchor, out var anchorFailure)) {
-            DalamudApi.PluginLog.Warning($"[{logPrefix}] {anchorFailure}");
+        if (!FormationAnchorResolver.TryResolve(plugin, formation, anchor, out var resolvedAnchor, out var anchorFailure, out var failureKind)) {
+            LogAnchorFailure(logPrefix, anchorFailure, failureKind);
             return false;
         }
 
@@ -52,8 +52,8 @@ public static class FormationLocalMovementExecutor {
             return true;
         }
 
-        if (!FormationAnchorResolver.TryResolve(plugin, formation, anchor, out var resolvedAnchor, out var anchorFailure)) {
-            DalamudApi.PluginLog.Warning($"[{logPrefix}] {anchorFailure}");
+        if (!FormationAnchorResolver.TryResolve(plugin, formation, anchor, out var resolvedAnchor, out var anchorFailure, out var failureKind)) {
+            LogAnchorFailure(logPrefix, anchorFailure, failureKind);
             return false;
         }
 
@@ -118,4 +118,21 @@ public static class FormationLocalMovementExecutor {
         DalamudApi.PluginLog.Warning($"[{logPrefix}] formation not found: \"{formationName}\"");
         return false;
     }
+
+    private static void LogAnchorFailure(
+        string logPrefix,
+        string anchorFailure,
+        FormationAnchorFailureKind failureKind) {
+        var message = $"[{logPrefix}] {anchorFailure}";
+        if (IsTransientAnchorFailure(failureKind)) {
+            DalamudApi.PluginLog.Debug(message);
+        } else {
+            DalamudApi.PluginLog.Warning(message);
+        }
+    }
+
+    public static bool IsTransientAnchorFailure(FormationAnchorFailureKind failureKind) =>
+        failureKind is FormationAnchorFailureKind.NoTargetSelected
+            or FormationAnchorFailureKind.AnchorNameEmpty
+            or FormationAnchorFailureKind.AnchorNotVisible;
 }
