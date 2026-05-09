@@ -23,8 +23,11 @@ public enum IpcMessageType {
     ExecuteToggleWalking,
     ExecuteTargetClear,
     ExecuteAbandonDuty,
+
+    // broadcast
     EnqueueMacroActions,
     EnqueueCharacterMacroActions,
+    EnqueueGroupMacroActions,
 
     // gearset
     ChangeGearset,

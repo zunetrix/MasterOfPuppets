@@ -67,6 +67,26 @@ internal partial class IpcProvider {
         });
     }
 
+    public void EnqueueGroupMacroActions(string textCommand, string groupName) {
+        BroadCast(IpcMessage.Create(IpcMessageType.EnqueueGroupMacroActions, textCommand, groupName).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.EnqueueGroupMacroActions)]
+    private void HandleEnqueueGroupMacroActions(IpcMessage message) {
+        if (message.StringData.Length < 2) return;
+        var textCommand = message.StringData[0];
+        var groupName = message.StringData[1];
+
+        DalamudApi.Framework.RunOnTick(() => {
+            bool groupHasCid = Plugin.Config.CidsGroups.Any(group =>
+                group.Name.Equals(groupName, StringComparison.InvariantCultureIgnoreCase) &&
+                group.Cids.Contains(DalamudApi.PlayerState.ContentId)
+            );
+            if (!groupHasCid) return;
+            Plugin.MacroHandler.EnqueueMacroActions("#mop-inline-macro-group", actions: [textCommand], delayBetweenActions: 0);
+        });
+    }
+
     public void StopMacroExecution() {
         BroadCast(IpcMessage.Create(IpcMessageType.StopMacroExecution).Serialize(), includeSelf: true);
     }

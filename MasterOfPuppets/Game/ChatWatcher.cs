@@ -49,6 +49,7 @@ internal class ChatWatcher : IDisposable {
             ["mopbr"] = HandleBroadcastCommandExecution,
             ["mopbrn"] = HandleBroadcastNotMeCommandExecution,
             ["mopbrc"] = HandleBroadcastCharacterCommandExecution,
+            ["mopbrg"] = HandleBroadcastGroupCommandExecution,
             ["mopformation"] = HandleFormationCommand,
         };
 
@@ -171,6 +172,22 @@ internal class ChatWatcher : IDisposable {
         if (!localPlayerName.Contains(characterName, StringComparison.InvariantCultureIgnoreCase)) return;
 
         Plugin.MacroHandler.EnqueueMacroActions("#mopbrc-inline-macro", actions: [textCommand], delayBetweenActions: 0);
+    }
+
+    private void HandleBroadcastGroupCommandExecution(string[] args, string senderName) {
+        if (args.Length < 2) {
+            DalamudApi.ChatGui.PrintError($"Invalid command arguments expected 2 \"Group Name\" <command>");
+            return;
+        }
+
+        var groupName = args[0];
+        var textCommand = args[1];
+        bool groupHasCid = Plugin.Config.CidsGroups.Any(group =>
+            group.Name.Equals(groupName, StringComparison.InvariantCultureIgnoreCase) &&
+            group.Cids.Contains(DalamudApi.PlayerState.ContentId)
+        );
+        if (!groupHasCid) return;
+        Plugin.MacroHandler.EnqueueMacroActions("#mop-inline-macro-group", actions: [textCommand], delayBetweenActions: 0);
     }
 
     private void HandleFormationCommand(string[] args, string senderName) {

@@ -29,6 +29,7 @@ public class PluginCommandManager : IDisposable {
         new("mopbr",  "/mopbr",  ["/br"],  "Broadcast a command to all local clients"),
         new("mopbrn", "/mopbrn", ["/brn"], "Broadcast a command to all local clients except yourself"),
         new("mopbrc", "/mopbrc", ["/brc"], "Broadcast a command to a specific character"),
+        new("mopbrg", "/mopbrg", ["/brg"], "Broadcast a command to a specific group"),
     ];
 
     public static IReadOnlyList<MopCommandDef> Definitions => CommandDefs;
@@ -99,6 +100,7 @@ public class PluginCommandManager : IDisposable {
         "mopbr" => OnBroadcastCommand,
         "mopbrn" => OnBroadcastNotMeCommand,
         "mopbrc" => OnBroadcastCharacterCommand,
+        "mopbrg" => OnBroadcastGroupCommand,
         _ => OnMainCommand,
     };
 
@@ -570,4 +572,9 @@ public class PluginCommandManager : IDisposable {
             Plugin.IpcProvider.EnqueueCharacterMacroActions(parsedArgs[1], parsedArgs[0]);
     }
 
+    private void OnBroadcastGroupCommand(string command, string arguments) {
+        var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
+        if (parsedArgs.Count >= 2)
+            Plugin.IpcProvider.EnqueueGroupMacroActions(parsedArgs[1], parsedArgs[0]);
+    }
 }

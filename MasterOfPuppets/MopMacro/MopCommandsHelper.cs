@@ -681,6 +681,19 @@ public static class MopCommandsHelper {
             Broadcast a command to a specific local client by character name
             """
         },
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mopbrg \"Group Name\" <command>",
+            SuggestionCommand = "/mopbrg ",
+            Example = """
+            /mopbrg "Group Name" /clap
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Broadcast a command to a specific group
+            """
+        },
 
         // ---------------------------
 
