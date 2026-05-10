@@ -36,13 +36,13 @@ internal static class EstateTeleportManager {
             if ((friend->ExtraFlags & 32) != 0) continue;
 
             if (useContentId && contentId == friend->ContentId) {
-                agent->OpenFriendEstateTeleportation(friend->ContentId);
+                AgentFriendlist.Instance()->OpenFriendEstateTeleportation(friend->ContentId);
                 return;
             }
 
-            var name = friend->NameString;
-            if (name.StartsWith(contentIdOrFriendName, StringComparison.InvariantCultureIgnoreCase)) {
-                agent->OpenFriendEstateTeleportation(friend->ContentId);
+            var friendName = friend->NameString;
+            if (friendName.StartsWith(contentIdOrFriendName, StringComparison.InvariantCultureIgnoreCase)) {
+                AgentFriendlist.Instance()->OpenFriendEstateTeleportation(friend->ContentId);
                 return;
             }
         }

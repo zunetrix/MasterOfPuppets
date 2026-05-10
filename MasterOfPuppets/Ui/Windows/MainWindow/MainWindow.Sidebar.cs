@@ -27,7 +27,8 @@ public partial class MainWindow : Window {
             (FontAwesomeIcon.QuestionCircle, "Help", () => Ui.HelpWindow.Toggle()),
         };
 
-        using (ImRaii.Child("##MopNavSidebar", new Vector2(width, -1), true)) {
+        var childFlags = _sidebarCollapsed ? ImGuiWindowFlags.NoScrollbar : ImGuiWindowFlags.None;
+        using (ImRaii.Child("##MopNavSidebar", new Vector2(width, -1), true, childFlags)) {
 
             //  Toggle collapse button
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Bars, "##SidebarToggleBtn", _sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar")) {
