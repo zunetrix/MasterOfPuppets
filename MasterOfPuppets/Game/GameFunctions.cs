@@ -41,7 +41,8 @@ public static unsafe class GameFunctions {
         var am = ActionManager.Instance();
         if (am == null) return;
 
-        //need auto face target on action execution setting enabled
+        // /autofacetarget on
+        // need auto face target on action execution setting enabled
         uint savedAutoFaceTargetOnAction = DalamudApi.GameConfig.UiControl.GetUInt("AutoFaceTargetOnAction");
         DalamudApi.GameConfig.UiControl.Set("AutoFaceTargetOnAction", 1u);
         am->AutoFaceTargetPosition(&targetPos);

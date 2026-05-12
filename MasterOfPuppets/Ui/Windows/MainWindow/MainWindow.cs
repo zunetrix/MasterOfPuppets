@@ -31,15 +31,15 @@ public partial class MainWindow : Window {
     }
 
     private static readonly (NavSection Section, FontAwesomeIcon Icon, string Label, bool IsSeparatorBefore)[] NavItems = [
-        (NavSection.Emotes,             FontAwesomeIcon.SmileWink,         "Emotes",               false),
+        (NavSection.Commands,           FontAwesomeIcon.Terminal,          "Commands",             false),
+        (NavSection.Teleport,           FontAwesomeIcon.MapMarkerAlt,      "Teleport",             false),
+        (NavSection.Emotes,             FontAwesomeIcon.SmileWink,         "Emotes",               true),
         (NavSection.Mounts,             FontAwesomeIcon.Horse,             "Mounts",               false),
         (NavSection.Minions,            FontAwesomeIcon.Cat,               "Minions",              false),
         (NavSection.Facewear,           FontAwesomeIcon.Glasses,           "Facewear",             false),
         (NavSection.FashionAccessories, FontAwesomeIcon.Umbrella,          "Fashion Accessories",  false),
         (NavSection.Items,              FontAwesomeIcon.ShoppingBag,       "Items",                false),
         (NavSection.GearSets,           FontAwesomeIcon.Briefcase,         "Gear Sets",            false),
-        (NavSection.Commands,           FontAwesomeIcon.Terminal,          "Commands",             true),
-        (NavSection.Teleport,           FontAwesomeIcon.MapMarkerAlt,      "Teleport",             false),
 
     ];
 
