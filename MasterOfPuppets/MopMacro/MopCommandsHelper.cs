@@ -769,14 +769,36 @@ public static class MopCommandsHelper {
             TextCommand = "mopbrc \"Character Name\" <command>",
             SuggestionCommand = "mopbrc ",
             Example = """
-            Broadcast a command to a specific local client via chat:
+            Broadcast a command to a specific character via chat:
                 mopbrc "Character Name" /clap
                 mopbrc "Character Name" /cheer
                 mopbrc "Character Name" /mopaction "Action Name"
                 mopbrc "Character Name" /moptargetof "Warrior of Light@World"
             """,
             Notes = """
-            * This is a chat sync command - broadcast a command to a specific local client via chat
+            * This is a chat sync command - broadcast a command to a specific character via chat
+
+            Some special game characters need to be replaced to work correctly,
+            for example, <me> will be translated to the current character's name instead of being printed in the chat,
+            for the correct functioning of inline chat actions replace <> with []
+                /ac heal <me> => /ac heal [me]
+                /ac heal <t> => /ac heal [t]
+            """
+        },
+        new MopAction
+        {
+            Category = MopActionCategory.ChatSyncCommand,
+            TextCommand = "mopbrg \"Group Name\" <command>",
+            SuggestionCommand = "mopbrg ",
+            Example = """
+            Broadcast a command to a specific group via chat:
+                mopbrg "Group Name" /clap
+                mopbrg "Group Name" /cheer
+                mopbrg "Group Name" /mopaction "Action Name"
+                mopbrg "Group Name" /moptargetof "Warrior of Light@World"
+            """,
+            Notes = """
+            * This is a chat sync command - broadcast a command to a specific group via chat
 
             Some special game characters need to be replaced to work correctly,
             for example, <me> will be translated to the current character's name instead of being printed in the chat,
