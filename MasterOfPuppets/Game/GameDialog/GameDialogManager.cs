@@ -108,6 +108,20 @@ internal static unsafe partial class GameDialogManager {
     public static bool ClickNo() => FireCallback(AddonName.SelectYesno, 1);
     // public static bool ClickNo() => ClickAddonButton<AddonSelectYesno>(AddonName.SelectYesno, a => a->NoButton);
     public static bool ClickOk() => ClickAddonButton<AddonSelectOk>(AddonName.SelectOk, a => a->OkButton);
+    public static bool TryGetSelectOkText(out string text) {
+        text = string.Empty;
+        var addon = (AddonSelectOk*)GetAddonByName(AddonName.SelectOk);
+        if (addon == null || addon->PromptText == null)
+            return false;
+
+        var rawText = addon->PromptText->NodeText.ToString();
+        text = new ReadOnlySeStringSpan(addon->PromptText->NodeText.AsSpan()).ExtractText();
+        if (string.IsNullOrWhiteSpace(text))
+            text = rawText;
+
+        return !string.IsNullOrWhiteSpace(text);
+    }
+
     public static bool ClickRepairAll() => ClickAddonButton<AddonRepair>(AddonName.Repair, a => a->RepairAllButton);
     public static bool ClickContentsFinderConfirm() => ClickAddonButton<AddonContentsFinderConfirm>(AddonName.ContentsFinderConfirm, a => a->CommenceButton);
     // ContentsFinderConfirm // addon->ReceiveEvent(AtkEventType.ButtonClick, 8, &eventData, &inputData);

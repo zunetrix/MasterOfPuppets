@@ -51,7 +51,6 @@ public enum AutoLoginMatchConfidence {
     None,
     ContentId,
     NameAndHomeWorld,
-    NameOnConfiguredHomeWorld,
 }
 
 public readonly record struct AutoLoginCharacterMatch(
@@ -172,7 +171,6 @@ public static class AutoLoginPlanner {
                 lobbyEntries,
                 visibleCharacters,
                 selectedWorldName: string.Empty,
-                allowConfiguredHomeWorldFallback: false,
                 out match,
                 out reason)) {
             return true;
@@ -219,7 +217,6 @@ public static class AutoLoginPlanner {
                 lobbyEntries,
                 visibleCharacters,
                 selectedWorldName,
-                allowConfiguredHomeWorldFallback: true,
                 out match,
                 out reason)) {
             return true;
@@ -234,7 +231,6 @@ public static class AutoLoginPlanner {
         IReadOnlyList<AutoLoginLobbyEntry> lobbyEntries,
         IReadOnlyList<string> visibleCharacters,
         string selectedWorldName,
-        bool allowConfiguredHomeWorldFallback,
         out AutoLoginCharacterMatch match,
         out string reason) {
         match = default;
@@ -271,19 +267,10 @@ public static class AutoLoginPlanner {
                     continue;
                 }
 
-                if (allowConfiguredHomeWorldFallback &&
-                    !string.IsNullOrWhiteSpace(candidate.HomeWorldName) &&
-                    candidate.HomeWorldName.Equals(selectedWorldName, StringComparison.InvariantCultureIgnoreCase)) {
-                    var target = new AutoLoginTarget(candidate.Name, selectedWorldName);
-                    reason = $"resolved visible whitelisted character '{candidate.Name}' on configured home world '{selectedWorldName}' without lobby confirmation";
-                    match = new AutoLoginCharacterMatch(candidate, target, i, AutoLoginMatchConfidence.NameOnConfiguredHomeWorld, reason);
-                    return true;
-                }
-
                 skipReasons.Add(
                     string.IsNullOrWhiteSpace(candidate.HomeWorldName)
                         ? $"skipped visible '{visibleName}': no lobby confirmation and configured home world is unknown for {FormatCandidate(candidate)}"
-                        : $"skipped visible '{visibleName}': no lobby confirmation and selected world '{selectedWorldName}' is not configured home world '{candidate.HomeWorldName}'");
+                        : $"skipped visible '{visibleName}': no lobby confirmation for configured identity {FormatCandidate(candidate)} on selected world '{selectedWorldName}'");
             }
         }
 
