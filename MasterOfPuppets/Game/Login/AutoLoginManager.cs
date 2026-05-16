@@ -44,6 +44,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
     private bool _loggedCharacterListSnapshot;
     private bool _loggedDirectCharacterListMismatch;
     private bool _loginConfirmationSubmitted;
+    private bool _preLoginSelectOkSubmitted;
     private bool _loggedWaitingLoginConfirmation;
     private bool _loggedWaitingWorldListAfterTitleAction;
     private bool _waitingForWorldSelectionSettle;
@@ -85,6 +86,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         _loggedCharacterListSnapshot = false;
         _loggedDirectCharacterListMismatch = false;
         _loginConfirmationSubmitted = false;
+        _preLoginSelectOkSubmitted = false;
         _loggedWaitingLoginConfirmation = false;
         _loggedWaitingWorldListAfterTitleAction = false;
         _waitingForWorldSelectionSettle = false;
@@ -115,6 +117,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
         _loggedCharacterListSnapshot = false;
         _loggedDirectCharacterListMismatch = false;
         _loginConfirmationSubmitted = false;
+        _preLoginSelectOkSubmitted = false;
         _loggedWaitingLoginConfirmation = false;
         _loggedWaitingWorldListAfterTitleAction = false;
         _waitingForWorldSelectionSettle = false;
@@ -149,6 +152,9 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
                 return;
             }
 
+            if (!_loginConfirmationSubmitted && TryClearPreLoginSelectOk())
+                return;
+
             switch (_state) {
                 case LoginState.WaitingTitleMenu:
                     HandleWaitingTitleMenu();
@@ -167,6 +173,27 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             DalamudApi.PluginLog.Warning(ex, "[AutoLogin] Failed.");
             Stop();
         }
+    }
+
+    private bool TryClearPreLoginSelectOk() {
+        if (_preLoginSelectOkSubmitted)
+            return false;
+
+        if (!GameDialogManager.TryGetSelectOkText(out var text))
+            return false;
+
+        if (!AutoLoginDialogMatcher.IsMissingLastLoggedOutCharacterSelectOk(text))
+            return false;
+
+        if (!GameDialogManager.ClickOk())
+            return true;
+
+        _preLoginSelectOkSubmitted = true;
+        _loggedWaitingLoginConfirmation = false;
+        _stateTimer.Restart();
+        DalamudApi.PluginLog.Debug(
+            $"[AutoLogin] Cleared pre-login SelectOk before login confirmation: \"{LogValue(text)}\".");
+        return true;
     }
 
     private void HandleWaitingTitleMenu() {
@@ -400,6 +427,7 @@ internal sealed unsafe class AutoLoginManager : IDisposable {
             $"{FormatAddonState("_CharaSelectWorldServer")}; " +
             $"{FormatAddonState("_CharaSelectListMenu")}; " +
             $"{FormatAddonState(GameDialogManager.AddonName.SelectYesno)}; " +
+            $"{FormatAddonState(GameDialogManager.AddonName.SelectOk)}; " +
             $"worldSelectorSource={(worldSelectorSnapshot.UsedAddonWorldEntries ? "WorldEntries" : "StringArrayFallback")}; " +
             $"selectedWorldIndex={worldSelectorSnapshot.SelectedWorldIndex}; " +
             $"worlds={worldSelectorWorlds.Count} [{FormatWorldSelectorSnapshot(worldSelectorWorlds)}]; " +

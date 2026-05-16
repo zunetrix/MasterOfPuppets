@@ -298,7 +298,7 @@ public class AutoLoginPlannerTests {
     }
 
     [Fact]
-    public void TryFindVisibleCandidateMatch_ReturnsConfiguredHomeWorldFallbackConfidence() {
+    public void TryFindVisibleCandidateMatch_RejectsConfiguredHomeWorldWithoutLobbyConfirmation() {
         var found = AutoLoginPlanner.TryFindVisibleCandidateMatch(
             [new AutoLoginCandidate(42, "Test Character", "Diabolos")],
             [],
@@ -307,15 +307,13 @@ public class AutoLoginPlannerTests {
             out var match,
             out var reason);
 
-        Assert.True(found, reason);
-        Assert.Equal(AutoLoginMatchConfidence.NameOnConfiguredHomeWorld, match.Confidence);
-        Assert.Equal("Test Character", match.Target.CharacterName);
-        Assert.Equal("Diabolos", match.Target.WorldName);
-        Assert.Equal(0, match.Index);
+        Assert.False(found);
+        Assert.Equal(default, match);
+        Assert.Contains("no lobby confirmation", reason);
     }
 
     [Fact]
-    public void TryFindVisibleCandidate_AcceptsNameOnConfiguredHomeWorldWhenLobbyUnavailable() {
+    public void TryFindVisibleCandidate_RejectsNameOnConfiguredHomeWorldWhenLobbyUnavailable() {
         var found = AutoLoginPlanner.TryFindVisibleCandidate(
             [new AutoLoginCandidate(42, "Test Character", "Diabolos")],
             [],
@@ -325,10 +323,10 @@ public class AutoLoginPlannerTests {
             out var index,
             out var reason);
 
-        Assert.True(found, reason);
-        Assert.Equal("Test Character", characterName);
-        Assert.Equal(0, index);
-        Assert.Contains("configured home world", reason);
+        Assert.False(found);
+        Assert.Equal(string.Empty, characterName);
+        Assert.Equal(-1, index);
+        Assert.Contains("no lobby confirmation", reason);
     }
 
     [Fact]
@@ -345,7 +343,7 @@ public class AutoLoginPlannerTests {
         Assert.False(found);
         Assert.Equal(string.Empty, characterName);
         Assert.Equal(-1, index);
-        Assert.Contains("is not configured home world", reason);
+        Assert.Contains("no lobby confirmation", reason);
     }
 
     [Fact]
