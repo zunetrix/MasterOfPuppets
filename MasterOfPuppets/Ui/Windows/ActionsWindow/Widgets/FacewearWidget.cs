@@ -89,20 +89,18 @@ public class FacewearWidget : Widget {
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##FacewearReloadDataBtn", "Reload")) {
             ReloadData();
         }
+
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserFriends, "##FacewearSyncPeersBtn", "Request unlocked facewear from all peers")) {
+        if (ImGuiUtil.IconButtonStyled(
+            FontAwesomeIcon.SatelliteDish,
+            Context.Plugin.IpcProvider.CommonFaceWear.Count > 0 ? ImGuiUtil.IconButtonStyle.Success : ImGuiUtil.IconButtonStyle.Danger,
+            "##FacewearSyncPeersBtn",
+            "Request peers unlocked data (emotes, facewear, fashion, items, minions, mounts)")) {
             Context.Plugin.IpcProvider.RequestUnlockedState();
         }
+
         ImGui.SameLine();
-        var filterCommon = _filterCommonItems;
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, filterCommon)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, filterCommon)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, filterCommon)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##FilterCommonFacewearBtn", "Show only facewear all peers have in common")) {
-                _filterCommonItems = !filterCommon;
-                Search();
-            }
-        }
+        DrawFilterButton();
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
@@ -116,7 +114,11 @@ public class FacewearWidget : Widget {
         int facewearIconSize = (int)Context.Plugin.Config.ActionIconSize;
         ImGui.SetNextItemWidth(70 * ImGuiHelpers.GlobalScale);
         if (ImGui.DragInt("##FacewearIconSize", ref facewearIconSize, 1, 20, 150)) {
-            Context.Plugin.Config.ActionIconSize = System.Math.Clamp(facewearIconSize, 20, 150);
+            Context.Plugin.Config.ActionIconSize = Math.Clamp(facewearIconSize, 20, 150);
+            Context.Plugin.IpcProvider.SyncConfiguration();
+        }
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+            Context.Plugin.Config.ActionIconSize = 48;
             Context.Plugin.IpcProvider.SyncConfiguration();
         }
         ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
@@ -124,6 +126,24 @@ public class FacewearWidget : Widget {
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+    }
+
+    private void DrawFilterButton() {
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##btnShowFacewearFilter", "Filter")) {
+            ImGui.OpenPopup("FacewearFilterPopup");
+        }
+
+        using var borderColor = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
+        using var popUp = ImRaii.Popup("FacewearFilterPopup");
+        if (!popUp) return;
+
+        ImGui.Text("Filter Facewear");
+        ImGui.Separator();
+        if (ImGui.Checkbox("Show only facewear all peers have in common", ref _filterCommonItems)) {
+            Search();
+        }
     }
 
     public void DrawFacewearGird() {

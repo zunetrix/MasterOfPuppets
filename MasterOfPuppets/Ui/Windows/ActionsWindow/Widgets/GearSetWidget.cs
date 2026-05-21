@@ -104,17 +104,6 @@ public class GearSetWidget : Widget {
         }
 
         ImGui.SameLine();
-        ImGui.Text("Size:");
-        ImGui.SameLine();
-        int gearIconSize = (int)Context.Plugin.Config.ActionIconSize;
-        ImGui.SetNextItemWidth(70 * ImGuiHelpers.GlobalScale);
-        if (ImGui.DragInt("##GearSetIconSize", ref gearIconSize, 1, 20, 150)) {
-            Context.Plugin.Config.ActionIconSize = System.Math.Clamp(gearIconSize, 20, 150);
-            Context.Plugin.IpcProvider.SyncConfiguration();
-        }
-        ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
-
-        ImGui.SameLine();
         using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showEmptyGearsets)
         .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, _showEmptyGearsets)
         .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, _showEmptyGearsets)) {
@@ -216,14 +205,14 @@ public class GearSetWidget : Widget {
         ImGui.Text("Rename Gearset");
         ImGui.InputTextWithHint("##RenameGearsetInput", "Gearset Name", ref _gersetName, 15);
 
-        if (ImGuiUtil.SuccessButton("Save##SaveGearsetName")) {
+        if (ImGuiUtil.ButtonStyled("Save##SaveGearsetName", ImGuiUtil.ButtonStyle.Success)) {
             if (_selectedGersetId < 0) return;
             RenameGearset(_selectedGersetId, _gersetName);
             ImGui.CloseCurrentPopup();
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.DangerButton("Cancel##CancelRenameGearset"))
+        if (ImGuiUtil.ButtonStyled("Cancel##CancelRenameGearset", ImGuiUtil.ButtonStyle.Danger))
             ImGui.CloseCurrentPopup();
     }
 

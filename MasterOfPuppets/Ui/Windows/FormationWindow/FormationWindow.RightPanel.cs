@@ -160,7 +160,7 @@ public partial class FormationWindow {
 
                         // Column 5: delete
                         ImGui.TableNextColumn();
-                        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fidp{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidp{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
 
                         ImGui.PopID();
@@ -176,7 +176,7 @@ public partial class FormationWindow {
                 }
             }
             ImGui.Spacing();
-            if (ImGuiUtil.DangerButton("Clear All##ficlear", new Vector2(-1, 0)) && ImGui.GetIO().KeyCtrl) {
+            if (ImGuiUtil.ButtonStyled("Clear All##ficlear", ImGuiUtil.ButtonStyle.Danger, new Vector2(-1, 0)) && ImGui.GetIO().KeyCtrl) {
                 formation.Points.Clear();
                 _selPoint = -1;
                 Plugin.Config.Save();
@@ -230,7 +230,7 @@ public partial class FormationWindow {
                         ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
                         ImGui.TableNextColumn(); ImGui.Text(cn);
                         ImGui.TableNextColumn();
-                        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fidc{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidc{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
                     }
                     ImGui.EndTable();
@@ -274,7 +274,7 @@ public partial class FormationWindow {
                 ImGui.EndDisabled();
 
                 ImGui.SameLine();
-                if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Users, $"##CharactersMenu", "Characters/Groups")) {
+                if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Users, ImGuiUtil.IconButtonStyle.Primary, $"##CharactersMenu", "Characters/Groups")) {
                     Plugin.Ui.CharactersWindow.Toggle();
                 }
 
@@ -295,7 +295,7 @@ public partial class FormationWindow {
                         ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
                         ImGui.TableNextColumn(); ImGui.Text(gn);
                         ImGui.TableNextColumn();
-                        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fidg{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidg{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
                     }
                     ImGui.EndTable();

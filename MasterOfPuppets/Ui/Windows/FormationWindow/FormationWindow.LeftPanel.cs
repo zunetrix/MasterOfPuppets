@@ -19,7 +19,7 @@ namespace MasterOfPuppets;
 public partial class FormationWindow {
     private void DrawLeftPanel() {
         using (ImRaii.Group()) {
-            if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Plus, "##fiadd_s", "New formation"))
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Plus, ImGuiUtil.IconButtonStyle.Primary, "##fiadd_s", "New formation"))
                 ImGui.OpenPopup("##finew");
 
             using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor)) {
@@ -206,7 +206,7 @@ public partial class FormationWindow {
 
             // Col 2: actions
             ImGui.TableNextColumn();
-            if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##fidel{i}", Language.DeleteInstructionTooltip)
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidel{i}", Language.DeleteInstructionTooltip)
                 && ImGui.GetIO().KeyCtrl) {
                 Plugin.Config.Formations.RemoveAt(i);
                 if (_selFormation == i)
@@ -230,7 +230,7 @@ public partial class FormationWindow {
             }
 
             ImGui.SameLine();
-            if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Play, $"##fiexec{i}", Language.ExecuteFormationBtn))
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Play, ImGuiUtil.IconButtonStyle.Success, $"##fiexec{i}", Language.ExecuteFormationBtn))
                 Plugin.IpcProvider.ExecuteFormation(f.Name);
             ImGui.OpenPopupOnItemClick($"##fiexecmenu{i}", ImGuiPopupFlags.MouseButtonRight);
 

@@ -335,7 +335,7 @@ public class CharactersWindow : Window {
         ImGui.InputText("##GroupRenameInput", ref _editGroupName, 255);
 
         ImGui.SameLine();
-        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Check, "##RenameGroupBtn", "Rename group")) {
+        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Check, ImGuiUtil.IconButtonStyle.Primary, "##RenameGroupBtn", "Rename group")) {
             ApplyGroupRename(cidGroup, _editGroupName);
         }
 
@@ -505,7 +505,7 @@ public class CharactersWindow : Window {
 
             // col 2: delete button
             ImGui.TableNextColumn();
-            if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##del_{i}", Language.DeleteInstructionTooltip))
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##del_{i}", Language.DeleteInstructionTooltip))
                 deleteIndex = i;
 
             ImGui.PopID();

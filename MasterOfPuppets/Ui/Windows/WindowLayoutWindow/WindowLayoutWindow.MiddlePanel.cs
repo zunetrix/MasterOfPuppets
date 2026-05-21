@@ -19,7 +19,7 @@ public partial class WindowLayoutWindow {
         //  Toolbar
         ImGui.BeginDisabled(layout == null);
 
-        if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Plus, "##wladdslot", "Add slot")) {
+        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Plus, ImGuiUtil.IconButtonStyle.Primary, "##wladdslot", "Add slot")) {
             var slot = new WindowLayoutSlot { X = 0, Y = 0, Width = 960, Height = 540 };
             layout.Slots.Add(slot);
             _selSlot = layout.Slots.Count - 1;

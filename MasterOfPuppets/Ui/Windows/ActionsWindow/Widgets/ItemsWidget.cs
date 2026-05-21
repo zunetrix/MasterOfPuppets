@@ -88,20 +88,18 @@ public class ItemsWidget : Widget {
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##ItemReloadDataBtn", "Reload")) {
             ReloadData();
         }
+
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserFriends, "##ItemSyncPeersBtn", "Request unlocked items from all peers")) {
+        if (ImGuiUtil.IconButtonStyled(
+            FontAwesomeIcon.SatelliteDish,
+            Context.Plugin.IpcProvider.CommonItems.Count > 0 ? ImGuiUtil.IconButtonStyle.Success : ImGuiUtil.IconButtonStyle.Danger,
+            "##ItemSyncPeersBtn",
+            "Request peers unlocked data (emotes, facewear, fashion, items, minions, mounts)")) {
             Context.Plugin.IpcProvider.RequestUnlockedState();
         }
+
         ImGui.SameLine();
-        var filterCommon = _filterCommonItems;
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, filterCommon)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, filterCommon)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, filterCommon)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##FilterCommonItemsBtn", "Show only items all peers have in common")) {
-                _filterCommonItems = !filterCommon;
-                Search();
-            }
-        }
+        DrawFilterButton();
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
@@ -115,7 +113,11 @@ public class ItemsWidget : Widget {
         int itemIconSize = (int)Context.Plugin.Config.ActionIconSize;
         ImGui.SetNextItemWidth(70 * ImGuiHelpers.GlobalScale);
         if (ImGui.DragInt("##ItemIconSize", ref itemIconSize, 1, 20, 150)) {
-            Context.Plugin.Config.ActionIconSize = System.Math.Clamp(itemIconSize, 20, 150);
+            Context.Plugin.Config.ActionIconSize = Math.Clamp(itemIconSize, 20, 150);
+            Context.Plugin.IpcProvider.SyncConfiguration();
+        }
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+            Context.Plugin.Config.ActionIconSize = 48;
             Context.Plugin.IpcProvider.SyncConfiguration();
         }
         ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
@@ -123,6 +125,24 @@ public class ItemsWidget : Widget {
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+    }
+
+    private void DrawFilterButton() {
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##btnShowItemsFilter", "Filter")) {
+            ImGui.OpenPopup("ItemsFilterPopup");
+        }
+
+        using var borderColor = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
+        using var popUp = ImRaii.Popup("ItemsFilterPopup");
+        if (!popUp) return;
+
+        ImGui.Text("Filter Items");
+        ImGui.Separator();
+        if (ImGui.Checkbox("Show only items all peers have in common", ref _filterCommonItems)) {
+            Search();
+        }
     }
 
     public void DrawItemGird() {

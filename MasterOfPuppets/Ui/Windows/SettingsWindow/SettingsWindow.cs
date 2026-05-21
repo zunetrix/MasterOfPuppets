@@ -575,7 +575,7 @@ public class SettingsWindow : Window {
 
         ImGui.Text("Game Settings Profiles");
         using (ImRaii.Group()) {
-            if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Plus, "##gspadd", "New profile"))
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Plus, ImGuiUtil.IconButtonStyle.Primary, "##gspadd", "New profile"))
                 ImGui.OpenPopup("##gspnew");
 
             using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor))
@@ -682,7 +682,7 @@ public class SettingsWindow : Window {
 
                 ImGui.TableNextColumn();
 
-                if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##gspdel", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl) {
+                if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##gspdel", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl) {
                     Plugin.Config.GameSettingsProfiles.RemoveAt(i);
                     if (_renamingProfileIdx == i) _renamingProfileIdx = -1;
                     else if (_renamingProfileIdx > i) _renamingProfileIdx--;
@@ -710,12 +710,12 @@ public class SettingsWindow : Window {
                 }
 
                 ImGui.SameLine();
-                if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Play, $"##gspapp", "Apply locally")) {
+                if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Play, ImGuiUtil.IconButtonStyle.Success, $"##gspapp", "Apply locally")) {
                     GameSettingsManager.ApplyProfile(profile, Plugin.Config.GameSettingsProfileKeys);
                 }
 
                 ImGui.SameLine();
-                if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.BroadcastTower, $"##gspbr", "Broadcast apply to all clients")) {
+                if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.BroadcastTower, ImGuiUtil.IconButtonStyle.Success, $"##gspbr", "Broadcast apply to all clients")) {
                     Plugin.IpcProvider.BroadcastApplyGameSettingsProfile(profile.Name);
                 }
 
@@ -798,11 +798,11 @@ public class SettingsWindow : Window {
         ImGui.Spacing();
 
         ImGui.Text("Keep game pad enabled when client is inactive");
-        if (ImGuiUtil.SuccessButton("Enable")) {
+        if (ImGuiUtil.ButtonStyled("Enable", ImGuiUtil.ButtonStyle.Success)) {
             Plugin.IpcProvider.SetGameSettingsAlwaysInput(1);
         }
         ImGui.SameLine();
-        if (ImGuiUtil.DangerButton("Disable")) {
+        if (ImGuiUtil.ButtonStyled("Disable", ImGuiUtil.ButtonStyle.Danger)) {
             Plugin.IpcProvider.SetGameSettingsAlwaysInput(0);
         }
     }

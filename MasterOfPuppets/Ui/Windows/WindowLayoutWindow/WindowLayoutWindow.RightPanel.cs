@@ -150,7 +150,7 @@ public partial class WindowLayoutWindow {
 
                         // Col 5: Delete
                         ImGui.TableNextColumn();
-                        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##wldslt{i}", Language.DeleteInstructionTooltip)
+                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldslt{i}", Language.DeleteInstructionTooltip)
                             && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
 
@@ -169,7 +169,7 @@ public partial class WindowLayoutWindow {
             }
 
             ImGui.Spacing();
-            if (ImGuiUtil.DangerButton("Clear All##wlclearslots", new Vector2(-1, 0)) && ImGui.GetIO().KeyCtrl) {
+            if (ImGuiUtil.ButtonStyled("Clear All##wlclearslots", ImGuiUtil.ButtonStyle.Danger, new Vector2(-1, 0)) && ImGui.GetIO().KeyCtrl) {
                 layout.Slots.Clear();
                 _selSlot = -1;
                 Plugin.Config.Save();
@@ -225,7 +225,7 @@ public partial class WindowLayoutWindow {
                     ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
                     ImGui.TableNextColumn(); ImGui.Text(cn);
                     ImGui.TableNextColumn();
-                    if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##wldc{i}", Language.DeleteInstructionTooltip)
+                    if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldc{i}", Language.DeleteInstructionTooltip)
                         && ImGui.GetIO().KeyCtrl)
                         delIdx = i;
                 }
@@ -274,7 +274,7 @@ public partial class WindowLayoutWindow {
                     ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
                     ImGui.TableNextColumn(); ImGui.Text(gn);
                     ImGui.TableNextColumn();
-                    if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##wldg{i}", Language.DeleteInstructionTooltip)
+                    if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldg{i}", Language.DeleteInstructionTooltip)
                         && ImGui.GetIO().KeyCtrl)
                         delIdx = i;
                 }

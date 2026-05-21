@@ -30,7 +30,7 @@ public partial class WindowLayoutWindow {
             ImGuiUtil.ToolTip("Automatically apply tiled layout (maintaining 16:9 aspect ratio) to all connected clients without saving.");
             ImGui.Separator();
 
-            if (ImGuiUtil.PrimaryIconButton(FontAwesomeIcon.Plus, "##wladd", "New layout"))
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Plus, ImGuiUtil.IconButtonStyle.Primary, "##wladd", "New layout"))
                 ImGui.OpenPopup("##wlnew");
 
             using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor)) {
@@ -164,7 +164,7 @@ public partial class WindowLayoutWindow {
 
             // Col 2: actions - Delete | Rename | Apply
             ImGui.TableNextColumn();
-            if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##wldel{i}", Language.DeleteInstructionTooltip)
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldel{i}", Language.DeleteInstructionTooltip)
                 && ImGui.GetIO().KeyCtrl) {
                 Plugin.Config.WindowLayouts.RemoveAt(i);
                 if (_selLayout == i)
@@ -188,7 +188,7 @@ public partial class WindowLayoutWindow {
             }
 
             ImGui.SameLine();
-            if (ImGuiUtil.SuccessIconButton(FontAwesomeIcon.Play, $"##wlexec{i}", "Apply layout to all clients"))
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Play, ImGuiUtil.IconButtonStyle.Success, $"##wlexec{i}", "Apply layout to all clients"))
                 Plugin.IpcProvider.ApplyWindowLayout(layout.Name);
 
             ImGui.PopID();

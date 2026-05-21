@@ -91,18 +91,18 @@ public sealed class GeneralDebugWidget : Widget {
         }
 
         using (ImGuiGroupPanel.BeginGroupPanel("Game Settings")) {
-            if (ImGuiUtil.SuccessButton("Enable Game Settings Debug")) {
+            if (ImGuiUtil.ButtonStyled("Enable Game Settings Debug", ImGuiUtil.ButtonStyle.Success)) {
                 GameSettingsManager.EnableDebug();
             }
 
-            if (ImGuiUtil.DangerButton("Disable Game Settings Debug")) {
+            if (ImGuiUtil.ButtonStyled("Disable Game Settings Debug", ImGuiUtil.ButtonStyle.Danger)) {
                 GameSettingsManager.DisableDebug();
             }
 
-            if (ImGuiUtil.SuccessButton("Enable Keep game pad enabled when client is inactive")) {
+            if (ImGuiUtil.ButtonStyled("Enable Keep game pad enabled when client is inactive", ImGuiUtil.ButtonStyle.Success)) {
                 GameSettingsManager.SetAlwaysInput(1);
             }
-            if (ImGuiUtil.DangerButton("Disable Keep game pad enabled when client is inactive")) {
+            if (ImGuiUtil.ButtonStyled("Disable Keep game pad enabled when client is inactive", ImGuiUtil.ButtonStyle.Danger)) {
                 GameSettingsManager.SetAlwaysInput(0);
             }
         }

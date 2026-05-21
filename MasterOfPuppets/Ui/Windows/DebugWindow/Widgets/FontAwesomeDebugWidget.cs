@@ -5,6 +5,7 @@ using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.Utility.Raii;
 
 using MasterOfPuppets.Extensions;
 
@@ -54,42 +55,42 @@ public sealed class FontAwesomeDebugWidget : Widget {
         ImGui.Spacing();
         ImGui.Spacing();
 
-        ImGui.PushFont(UiBuilder.IconFont);
-        var itemSpacing = iconSize * ImGui.GetIO().FontGlobalScale;
-        var windowWidth = ImGui.GetContentRegionMax().X - itemSpacing;
-        var lineLength = 0f;
+        using (ImRaii.PushFont(UiBuilder.IconFont)) {
+            var itemSpacing = iconSize * ImGui.GetIO().FontGlobalScale;
+            var windowWidth = ImGui.GetContentRegionMax().X - itemSpacing;
+            var lineLength = 0f;
 
-        foreach (var icon in searchedGlyphs) {
-            var iconScale = iconSize / 30f;
-            ImGui.SetWindowFontScale(iconScale);
-            ImGui.Text(icon.icon.ToIconString());
-            ImGui.SetWindowFontScale(1);
-
-            if (ImGui.IsItemHovered()) {
-                ImGui.BeginTooltip();
-                ImGui.SetWindowFontScale(iconSize / 10f + 0.5f);
+            foreach (var icon in searchedGlyphs) {
+                var iconScale = iconSize / 30f;
+                ImGui.SetWindowFontScale(iconScale);
                 ImGui.Text(icon.icon.ToIconString());
                 ImGui.SetWindowFontScale(1);
-                ImGui.PushFont(UiBuilder.DefaultFont);
-                ImGui.Text($"{icon.name}\n{(int)icon.icon}\n0x{(int)icon.icon:X}");
-                ImGui.EndTooltip();
-                ImGui.PopFont();
+
+                if (ImGui.IsItemHovered()) {
+                    using (ImRaii.Tooltip()) {
+                        ImGui.SetWindowFontScale(iconSize / 10f + 0.5f);
+                        ImGui.Text(icon.icon.ToIconString());
+                        ImGui.SetWindowFontScale(1);
+                        using (ImRaii.PushFont(UiBuilder.DefaultFont)) {
+                            ImGui.Text($"{icon.name}\n{(int)icon.icon}\n0x{(int)icon.icon:X}");
+                        }
+                    }
+                }
+
+                if (ImGui.IsItemClicked()) {
+                    ImGui.SetClipboardText($"(FontAwesomeIcon){(int)icon.Item1}");
+                }
+
+                if (lineLength + itemSpacing < windowWidth) {
+                    lineLength += itemSpacing;
+                    ImGui.SameLine(lineLength);
+                } else {
+                    lineLength = 0;
+                    ImGui.Dummy(new Vector2(0, iconSize * ImGui.GetIO().FontGlobalScale));
+                }
             }
 
-            if (ImGui.IsItemClicked()) {
-                ImGui.SetClipboardText($"(FontAwesomeIcon){(int)icon.Item1}");
-            }
-
-            if (lineLength + itemSpacing < windowWidth) {
-                lineLength += itemSpacing;
-                ImGui.SameLine(lineLength);
-            } else {
-                lineLength = 0;
-                ImGui.Dummy(new Vector2(0, iconSize * ImGui.GetIO().FontGlobalScale));
-            }
         }
-
-        ImGui.PopFont();
     }
 }
 

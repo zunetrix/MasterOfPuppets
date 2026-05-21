@@ -18,6 +18,7 @@ public sealed class GameUiDebugWidget : Widget {
     private bool _enableCamHack = false;
     private bool _showWorldMark = false;
     private float _cameraYOffset = 10000;
+    private bool _disableRendering = false;
 
     public GameUiDebugWidget(WidgetContext ctx) : base(ctx) {
     }
@@ -56,32 +57,8 @@ public sealed class GameUiDebugWidget : Widget {
         ImGui.Separator();
 
         using (ImGuiGroupPanel.BeginGroupPanel("Render")) {
-            // bool disableModels = Context.Plugin.Config.DisableModels;
-            // if (ImGui.Checkbox("Disable Models", ref disableModels)) {
-            //     var rm = Context.Plugin.GameRenderManager;
-            //     Context.Plugin.Config.DisableModels = disableModels;
-
-            //     rm.RenderModels.ApplyHook(disableModels);
-            //     rm.RenderModel5.ApplyHook(disableModels);
-            //     rm.ModelRenderer.ApplyHook(disableModels);
-            //     rm.RenderHuman.ApplyHook(disableModels);
-            //     rm.RenderCharaBase.ApplyHook(disableModels);
-            //     rm.RenderCharaBaseMat.ApplyHook(disableModels);
-
-            //     Context.Plugin.Config.Save();
-            // }
-
-            // HookCheckbox("Disable VFX", Context.Plugin.GameRenderManager.RenderVfxObject);
-            // HookCheckbox("Disable Character Animations", Context.Plugin.GameRenderManager.CharaAnimations);
-            // HookCheckbox("Disable Terrain", Context.Plugin.GameRenderManager.RenderTerrain);
-            // HookCheckbox("Disable Water", Context.Plugin.GameRenderManager.RenderWater);
-            // HookCheckbox("Disable Lights", Context.Plugin.GameRenderManager.RenderLights);
-            // HookCheckbox("Disable Camera Matrices", Context.Plugin.GameRenderManager.CameraMatrices);
-
-            bool disableRendering = Context.Plugin.Config.DisableRendering;
-            if (ImGui.Checkbox("Disable Rendering", ref disableRendering)) {
-                Context.Plugin.GameRenderManager.DisableRendering(disableRendering);
-                Context.Plugin.Config.Save();
+            if (ImGui.Checkbox("Disable Rendering", ref _disableRendering)) {
+                Context.Plugin.GameRenderManager.DisableRendering(_disableRendering);
             }
         }
     }
@@ -95,10 +72,4 @@ public sealed class GameUiDebugWidget : Widget {
         ImGui.GetWindowDrawList().AddText(screenPos + new Vector2(10, -8), color,
             $"{position.ToString("G", CultureInfo.InvariantCulture)} [{(position - DalamudApi.ObjectTable[0].Position).Length():N2}]");
     }
-
-    // private static void HookCheckbox<T>(string label, HookEntry<T> entry) where T : Delegate {
-    //     var value = entry.IsEnabled;
-    //     if (ImGui.Checkbox(label, ref value))
-    //         entry.Toggle();
-    // }
 }

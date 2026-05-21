@@ -107,20 +107,18 @@ public sealed class EmotesWidget : Widget {
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##EmotesReloadDataBtn", "Reload")) {
             ReloadData();
         }
+
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserFriends, "##EmotesSyncPeersBtn", "Request emote list from all peers")) {
+        if (ImGuiUtil.IconButtonStyled(
+            FontAwesomeIcon.SatelliteDish,
+            Context.Plugin.IpcProvider.CommonEmotes.Count > 0 ? ImGuiUtil.IconButtonStyle.Success : ImGuiUtil.IconButtonStyle.Danger,
+            "##EmotesSyncPeersBtn",
+            "Request peers unlocked data (emotes, facewear, fashion, items, minions, mounts)")) {
             Context.Plugin.IpcProvider.RequestUnlockedState();
         }
+
         ImGui.SameLine();
-        var filterCommon = _filterCommonItems;
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, filterCommon)
-        .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, filterCommon)
-        .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, filterCommon)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##FilterCommonEmotesBtn", "Show only emotes all peers have in common")) {
-                _filterCommonItems = !filterCommon;
-                Search();
-            }
-        }
+        DrawFilterButton();
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
@@ -137,41 +135,45 @@ public sealed class EmotesWidget : Widget {
             Context.Plugin.Config.ActionIconSize = Math.Clamp(emoteIconSize, 20, 150);
             Context.Plugin.IpcProvider.SyncConfiguration();
         }
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+            Context.Plugin.Config.ActionIconSize = 48;
+            Context.Plugin.IpcProvider.SyncConfiguration();
+        }
         ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
-
-        ImGui.SameLine();
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showGeneralEmotes)
-        .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, _showGeneralEmotes)
-        .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, _showGeneralEmotes)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Smile, $"##ShowGeneralEmotesBtn", "Show General Emotes")) {
-                _showGeneralEmotes = !_showGeneralEmotes;
-                Search();
-            }
-        }
-
-        ImGui.SameLine();
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showExpressionsEmotes)
-        .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, _showExpressionsEmotes)
-        .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, _showExpressionsEmotes)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.SmileWink, $"##ShowExpressionsEmotesBtn", "Show Expressions Emotes")) {
-                _showExpressionsEmotes = !_showExpressionsEmotes;
-                Search();
-            }
-        }
-
-        ImGui.SameLine();
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showInternalEmotes)
-        .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, _showInternalEmotes)
-        .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, _showInternalEmotes)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Bed, $"##ShowInternalEmotesBtn", "Show Internal Emotes (sleep/sit anywhere etc)")) {
-                _showInternalEmotes = !_showInternalEmotes;
-                Search();
-            }
-        }
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+    }
+
+    private void DrawFilterButton() {
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##btnShowEmotesFilter", "Filter")) {
+            ImGui.OpenPopup("EmotesFilterPopup");
+        }
+
+        using var borderColor = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
+        using var popUp = ImRaii.Popup("EmotesFilterPopup");
+        if (!popUp) return;
+
+        ImGui.Text("Filter Emotes");
+        ImGui.Separator();
+
+        if (ImGui.Checkbox("Show General Emotes", ref _showGeneralEmotes)) {
+            Search();
+        }
+        if (ImGui.Checkbox("Show Expressions Emotes", ref _showExpressionsEmotes)) {
+            Search();
+        }
+        if (ImGui.Checkbox("Show Internal Emotes (sleep/sit anywhere etc)", ref _showInternalEmotes)) {
+            Search();
+        }
+
+        ImGui.Separator();
+        if (ImGui.Checkbox("Show only emotes all peers have in common", ref _filterCommonItems)) {
+            Search();
+        }
     }
 
     public void DrawEmoteGird() {

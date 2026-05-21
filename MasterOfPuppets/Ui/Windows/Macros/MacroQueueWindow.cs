@@ -39,7 +39,7 @@ public class MacroQueueWindow : Window {
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Stop, "##StopMacroExecutionQueueBtn", Language.StopMacroExecutionBtn)) {
+        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Stop, ImGuiUtil.IconButtonStyle.Danger, "##StopMacroExecutionQueueBtn", Language.StopMacroExecutionBtn)) {
             Plugin.IpcProvider.StopMacroExecution();
             DalamudApi.ShowNotification("Macro execution queue stopped", NotificationType.Info, 3000);
         }
@@ -104,7 +104,7 @@ public class MacroQueueWindow : Window {
                 controls.OnPause();
         }
         ImGui.SameLine();
-        if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Stop, $"##Stop{childId}", "Stop"))
+        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Stop, ImGuiUtil.IconButtonStyle.Danger, $"##Stop{childId}", "Stop"))
             controls.OnStop();
         ImGui.SameLine();
         ImGui.Text(label);

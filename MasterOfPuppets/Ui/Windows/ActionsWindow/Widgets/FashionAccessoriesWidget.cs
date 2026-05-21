@@ -88,20 +88,18 @@ public class FashionAccessoriesWidget : Widget {
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##FashionAccessoriesReloadDataBtn", "Reload")) {
             ReloadData();
         }
+
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserFriends, "##FashionAccessoriesSyncPeersBtn", "Request unlocked fashion accessories from all peers")) {
+        if (ImGuiUtil.IconButtonStyled(
+            FontAwesomeIcon.SatelliteDish,
+            Context.Plugin.IpcProvider.CommonFashionAccessories.Count > 0 ? ImGuiUtil.IconButtonStyle.Success : ImGuiUtil.IconButtonStyle.Danger,
+            "##FashionAccessoriesSyncPeersBtn",
+            "Request peers unlocked data (emotes, facewear, fashion, items, minions, mounts)")) {
             Context.Plugin.IpcProvider.RequestUnlockedState();
         }
+
         ImGui.SameLine();
-        var filterCommon = _filterCommonItems;
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, filterCommon)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, filterCommon)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, filterCommon)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##FilterCommonFashionBtn", "Show only fashion accessories all peers have in common")) {
-                _filterCommonItems = !filterCommon;
-                Search();
-            }
-        }
+        DrawFilterButton();
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
@@ -115,7 +113,11 @@ public class FashionAccessoriesWidget : Widget {
         int fashionIconSize = (int)Context.Plugin.Config.ActionIconSize;
         ImGui.SetNextItemWidth(70 * ImGuiHelpers.GlobalScale);
         if (ImGui.DragInt("##FashionIconSize", ref fashionIconSize, 1, 20, 150)) {
-            Context.Plugin.Config.ActionIconSize = System.Math.Clamp(fashionIconSize, 20, 150);
+            Context.Plugin.Config.ActionIconSize = Math.Clamp(fashionIconSize, 20, 150);
+            Context.Plugin.IpcProvider.SyncConfiguration();
+        }
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+            Context.Plugin.Config.ActionIconSize = 48;
             Context.Plugin.IpcProvider.SyncConfiguration();
         }
         ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
@@ -157,6 +159,24 @@ public class FashionAccessoriesWidget : Widget {
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+    }
+
+    private void DrawFilterButton() {
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##btnShowFashionFilter", "Filter")) {
+            ImGui.OpenPopup("FashionFilterPopup");
+        }
+
+        using var borderColor = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
+        using var popUp = ImRaii.Popup("FashionFilterPopup");
+        if (!popUp) return;
+
+        ImGui.Text("Filter Fashion");
+        ImGui.Separator();
+        if (ImGui.Checkbox("Show only fashion accessories all peers have in common", ref _filterCommonItems)) {
+            Search();
+        }
     }
 
     public void DrawFashionGird() {

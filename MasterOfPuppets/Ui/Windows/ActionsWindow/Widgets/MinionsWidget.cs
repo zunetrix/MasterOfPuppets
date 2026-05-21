@@ -88,20 +88,18 @@ public class MinionsWidget : Widget {
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##MinionReloadDataBtn", "Reload")) {
             ReloadData();
         }
+
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserFriends, "##MinionSyncPeersBtn", "Request unlocked minions from all peers")) {
+        if (ImGuiUtil.IconButtonStyled(
+            FontAwesomeIcon.SatelliteDish,
+            Context.Plugin.IpcProvider.CommonMinions.Count > 0 ? ImGuiUtil.IconButtonStyle.Success : ImGuiUtil.IconButtonStyle.Danger,
+            "##MinionSyncPeersBtn",
+            "Request peers unlocked data (emotes, facewear, fashion, items, minions, mounts)")) {
             Context.Plugin.IpcProvider.RequestUnlockedState();
         }
+
         ImGui.SameLine();
-        var filterCommon = _filterCommonItems;
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, filterCommon)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, filterCommon)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, filterCommon)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##FilterCommonMinionsBtn", "Show only minions all peers have in common")) {
-                _filterCommonItems = !filterCommon;
-                Search();
-            }
-        }
+        DrawFilterButton();
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
@@ -115,7 +113,11 @@ public class MinionsWidget : Widget {
         int minionIconSize = (int)Context.Plugin.Config.ActionIconSize;
         ImGui.SetNextItemWidth(70 * ImGuiHelpers.GlobalScale);
         if (ImGui.DragInt("##MinionIconSize", ref minionIconSize, 1, 20, 150)) {
-            Context.Plugin.Config.ActionIconSize = System.Math.Clamp(minionIconSize, 20, 150);
+            Context.Plugin.Config.ActionIconSize = Math.Clamp(minionIconSize, 20, 150);
+            Context.Plugin.IpcProvider.SyncConfiguration();
+        }
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+            Context.Plugin.Config.ActionIconSize = 48;
             Context.Plugin.IpcProvider.SyncConfiguration();
         }
         ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
@@ -128,6 +130,24 @@ public class MinionsWidget : Widget {
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
+    }
+
+    private void DrawFilterButton() {
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##btnShowMinionsFilter", "Filter")) {
+            ImGui.OpenPopup("MinionsFilterPopup");
+        }
+
+        using var borderColor = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
+        using var popUp = ImRaii.Popup("MinionsFilterPopup");
+        if (!popUp) return;
+
+        ImGui.Text("Filter Minions");
+        ImGui.Separator();
+        if (ImGui.Checkbox("Show only minions all peers have in common", ref _filterCommonItems)) {
+            Search();
+        }
     }
 
     public void DrawMinionGird() {

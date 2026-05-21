@@ -246,9 +246,6 @@ internal class Configuration : IPluginConfiguration {
     [Newtonsoft.Json.JsonIgnore]
     public bool CancelMoveOnUserInput { get; set; } = false;
 
-    // Render
-    public bool DisableRendering { get; set; } = false;
-
     public void Initialize(IDalamudPluginInterface pluginInterface) {
         PluginInterface = pluginInterface;
     }

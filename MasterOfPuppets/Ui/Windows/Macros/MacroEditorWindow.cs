@@ -301,7 +301,7 @@ public partial class MacroEditorWindow : Window {
                     ImGui.TableNextColumn();
                     ImGui.Text(MacroItem.Tags[i]);
                     ImGui.TableNextColumn();
-                    if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##DeleteTag_{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                    if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##DeleteTag_{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                         deleteTagIndex = i;
                 }
 
@@ -333,7 +333,7 @@ public partial class MacroEditorWindow : Window {
         }
 
         ImGui.SameLine();
-        if (ImGuiUtil.DangerButton("Cancel##CancelSaveBtn")) {
+        if (ImGuiUtil.ButtonStyled("Cancel##CancelSaveBtn", ImGuiUtil.ButtonStyle.Danger)) {
             _cancelRequested = true;
             this.IsOpen = false;
         }
@@ -513,7 +513,11 @@ public partial class MacroEditorWindow : Window {
                 ImGui.Text(character.Name);
 
                 ImGui.TableNextColumn();
-                if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##DeleteChar_{commandIndex}_{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                if (ImGuiUtil.IconButtonStyled(
+                    FontAwesomeIcon.Trash,
+                    ImGuiUtil.IconButtonStyle.Danger,
+                    $"##DeleteChar_{commandIndex}_{i}",
+                    Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                     deleteIndex = i;
             }
 
@@ -581,7 +585,7 @@ public partial class MacroEditorWindow : Window {
                 ImGui.Text(displayName);
 
                 ImGui.TableNextColumn();
-                if (ImGuiUtil.DangerIconButton(FontAwesomeIcon.Trash, $"##DeleteGroup_{commandIndex}_{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##DeleteGroup_{commandIndex}_{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                     deleteIndex = i;
             }
 

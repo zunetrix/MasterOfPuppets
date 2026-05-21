@@ -88,20 +88,18 @@ public class MountsWidget : Widget {
         if (ImGuiUtil.IconButton(FontAwesomeIcon.Sync, $"##MountReloadDataBtn", "Reload")) {
             ReloadData();
         }
+
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.UserFriends, "##MountSyncPeersBtn", "Request unlocked mounts from all peers")) {
+        if (ImGuiUtil.IconButtonStyled(
+            FontAwesomeIcon.SatelliteDish,
+            Context.Plugin.IpcProvider.CommonMounts.Count > 0 ? ImGuiUtil.IconButtonStyle.Success : ImGuiUtil.IconButtonStyle.Danger,
+            "##MountSyncPeersBtn",
+            "Request peers unlocked data (emotes, facewear, fashion, items, minions, mounts)")) {
             Context.Plugin.IpcProvider.RequestUnlockedState();
         }
+
         ImGui.SameLine();
-        var filterCommon = _filterCommonItems;
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, filterCommon)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, filterCommon)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, filterCommon)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##FilterCommonMountsBtn", "Show only mounts all peers have in common")) {
-                _filterCommonItems = !filterCommon;
-                Search();
-            }
-        }
+        DrawFilterButton();
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
@@ -115,7 +113,11 @@ public class MountsWidget : Widget {
         int mountIconSize = (int)Context.Plugin.Config.ActionIconSize;
         ImGui.SetNextItemWidth(70 * ImGuiHelpers.GlobalScale);
         if (ImGui.DragInt("##MountIconSize", ref mountIconSize, 1, 20, 150)) {
-            Context.Plugin.Config.ActionIconSize = System.Math.Clamp(mountIconSize, 20, 150);
+            Context.Plugin.Config.ActionIconSize = Math.Clamp(mountIconSize, 20, 150);
+            Context.Plugin.IpcProvider.SyncConfiguration();
+        }
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+            Context.Plugin.Config.ActionIconSize = 48;
             Context.Plugin.IpcProvider.SyncConfiguration();
         }
         ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
@@ -132,6 +134,25 @@ public class MountsWidget : Widget {
         ImGui.Separator();
         ImGui.Spacing();
     }
+
+    private void DrawFilterButton() {
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Filter, "##btnShowMountFilter", "Filter")) {
+            ImGui.OpenPopup("MountsFilterPopup");
+        }
+
+        using var borderColor = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
+        using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);
+        using var popUp = ImRaii.Popup("MountsFilterPopup");
+        if (!popUp) return;
+
+        ImGui.Text("Filter Mounts");
+        ImGui.Separator();
+        if (ImGui.Checkbox("Show only mounts all peers have in common", ref _filterCommonItems)) {
+            Search();
+        }
+    }
+
 
     public void DrawMountGird() {
         float iconSize = Context.Plugin.Config.ActionIconSize * ImGuiHelpers.GlobalScale;

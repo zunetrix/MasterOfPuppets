@@ -39,68 +39,106 @@ public static class ImGuiUtil {
     }
 
     // --- Colored button components -------------------------------------------------
-    // Each variant pushes the three button color slots (normal/hovered/active) from
-    // Style.Components so that color changes only need to be made in one place.
+    public enum IconButtonStyle {
+        Default,
+        Success,
+        Danger,
+        Warning,
+        Info,
+        Primary
+    }
 
-    public static bool DangerIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+    public static bool IconButtonStyled(
+        FontAwesomeIcon icon,
+        IconButtonStyle style = IconButtonStyle.Default,
+        string? id = null,
+        string? tooltip = null) {
+        if (style == IconButtonStyle.Default)
+            return IconButton(icon, id, tooltip);
+
+        var (normal, hovered, active) = style switch {
+            IconButtonStyle.Success => (
+                Style.Components.ButtonSuccessNormal,
+                Style.Components.ButtonSuccessHovered,
+                Style.Components.ButtonSuccessActive
+            ),
+            IconButtonStyle.Danger => (
+                Style.Components.ButtonDangerNormal,
+                Style.Components.ButtonDangerHovered,
+                Style.Components.ButtonDangerActive
+            ),
+            IconButtonStyle.Warning => (
+                Style.Components.ButtonWarningNormal,
+                Style.Components.ButtonWarningHovered,
+                Style.Components.ButtonWarningActive
+            ),
+            IconButtonStyle.Info => (
+                Style.Components.ButtonInfoNormal,
+                Style.Components.ButtonInfoHovered,
+                Style.Components.ButtonInfoActive
+            ),
+            IconButtonStyle.Primary => (
+                Style.Components.ButtonBlueNormal,
+                Style.Components.ButtonBlueHovered,
+                Style.Components.ButtonBlueActive
+            ),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(style))
+        };
+
+        using (ImRaii.PushColor(ImGuiCol.Button, normal)
+            .Push(ImGuiCol.ButtonHovered, hovered)
+            .Push(ImGuiCol.ButtonActive, active)) {
             return IconButton(icon, id, tooltip);
         }
     }
 
-    public static bool SuccessIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonSuccessNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonSuccessHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonSuccessActive)) {
-            return IconButton(icon, id, tooltip);
-        }
-    }
-    public static bool WarningIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonWarningNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonWarningHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonWarningActive)) {
-            return IconButton(icon, id, tooltip);
-        }
+    public enum ButtonStyle {
+        Default,
+        Success,
+        Danger,
+        Warning,
+        Info,
+        Primary
     }
 
-    public static bool PrimaryIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive)) {
-            return IconButton(icon, id, tooltip);
-        }
-    }
-
-    public static bool InfoIconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null) {
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonInfoNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonInfoHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonInfoActive)) {
-            return IconButton(icon, id, tooltip);
-        }
-    }
-
-    public static bool DangerButton(string label, Vector2? size = null) {
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonDangerHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonDangerActive)) {
+    public static bool ButtonStyled(string label, ButtonStyle style = ButtonStyle.Default, Vector2? size = null) {
+        if (style == ButtonStyle.Default)
             return ImGui.Button(label, size ?? Vector2.Zero);
-        }
-    }
 
-    public static bool SuccessButton(string label, Vector2? size = null) {
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonSuccessNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonSuccessHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonSuccessActive)) {
-            return ImGui.Button(label, size ?? Vector2.Zero);
-        }
-    }
+        var (normal, hovered, active) = style switch {
+            ButtonStyle.Success => (
+                Style.Components.ButtonSuccessNormal,
+                Style.Components.ButtonSuccessHovered,
+                Style.Components.ButtonSuccessActive
+            ),
+            ButtonStyle.Danger => (
+                Style.Components.ButtonDangerNormal,
+                Style.Components.ButtonDangerHovered,
+                Style.Components.ButtonDangerActive
+            ),
+            ButtonStyle.Warning => (
+                Style.Components.ButtonWarningNormal,
+                Style.Components.ButtonWarningHovered,
+                Style.Components.ButtonWarningActive
+            ),
+            ButtonStyle.Info => (
+                Style.Components.ButtonInfoNormal,
+                Style.Components.ButtonInfoHovered,
+                Style.Components.ButtonInfoActive
+            ),
+            ButtonStyle.Primary => (
+                Style.Components.ButtonBlueNormal,
+                Style.Components.ButtonBlueHovered,
+                Style.Components.ButtonBlueActive
+            ),
 
-    public static bool PrimaryButton(string label, Vector2? size = null) {
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive)) {
+            _ => throw new ArgumentOutOfRangeException(nameof(style))
+        };
+
+        using (ImRaii.PushColor(ImGuiCol.Button, normal)
+            .Push(ImGuiCol.ButtonHovered, hovered)
+            .Push(ImGuiCol.ButtonActive, active)) {
             return ImGui.Button(label, size ?? Vector2.Zero);
         }
     }
