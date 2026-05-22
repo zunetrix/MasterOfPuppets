@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -43,8 +44,14 @@ public class Plugin : IDalamudPlugin {
         GameCameraManager.Initialize();
 
         Ui = new PluginUi(this);
-        // Dalamud.Utility.Util.GetHostPlatform();
-        IpcProvider = new IpcProvider(this, Dalamud.Utility.Util.IsWine() ? new LinuxIpcTransport() : new TinyIpcTransport());
+        // Dalamud.Utility.Util.IsWine()
+        var platform = Dalamud.Utility.Util.GetHostPlatform();
+        IIpcTransport ipcTransport =
+            platform == OSPlatform.Linux || platform == OSPlatform.FreeBSD
+                ? new LinuxIpcTransport()
+                : new TinyIpcTransport();
+
+        IpcProvider = new IpcProvider(this, ipcTransport);
         ChatWatcher = new ChatWatcher(this);
         // ChatLogMessageWatcher = new ChatLogMessageWatcher(this);
         ItemMover = new ItemMover(this);
