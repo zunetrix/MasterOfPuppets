@@ -433,7 +433,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "sound": {
                         if (parsedArgs.Count < 2) {
-                            DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
+                            DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off|toggle\"", NotificationType.Error, 5000);
                             return;
                         }
 
@@ -441,6 +441,8 @@ public class PluginCommandManager : IDisposable {
                             GameSettingsManager.SetSoundMaster(0);
                         else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
                             GameSettingsManager.SetSoundMaster(1);
+                        else if (parsedArgs[1].Equals("toggle", StringComparison.OrdinalIgnoreCase))
+                            GameSettingsManager.SetSoundMaster(DalamudApi.GameConfig.System.GetUInt("IsSndMaster") == 1u ? 0u : 1u);
                     }
                     break;
                 case "formation": {
@@ -495,8 +497,9 @@ public class PluginCommandManager : IDisposable {
                         Plugin.GameRenderManager.DisableRendering(!Plugin.GameRenderManager.Enabled);
                     break;
                 case "keybroadcast":
+                case "kb":
                     if (parsedArgs.Count < 2) {
-                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
+                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off|toggle\"", NotificationType.Error, 5000);
                         return;
                     }
 
@@ -504,15 +507,14 @@ public class PluginCommandManager : IDisposable {
                         Plugin.IpcProvider.EnableKeyboardBroadcast();
                     else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
                         Plugin.IpcProvider.DisableKeyboardBroadcast();
+                    else if (parsedArgs[1].Equals("toggle", StringComparison.OrdinalIgnoreCase))
+                        Plugin.IpcProvider.ToggleKeyboardBroadcast();
                     break;
                 case "logout":
                     GameExitManager.Logout();
                     break;
                 case "shutdown":
                     GameExitManager.Shutdown();
-                    break;
-                case "addon":
-                    GameDialogManager.ShowMoogleCollection();
                     break;
                 case "settingsprofile": {
                         if (parsedArgs.Count < 2) {
@@ -531,7 +533,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "event":
                     if (parsedArgs.Count < 2) {
-                        DalamudApi.ChatGui.PrintError("Usage: event <name> | event stop");
+                        DalamudApi.ChatGui.PrintError("Usage: /mop event <name> | event stop");
                         return;
                     }
                     if (parsedArgs[1].Equals("stop", StringComparison.OrdinalIgnoreCase)) {

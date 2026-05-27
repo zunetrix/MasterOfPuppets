@@ -368,11 +368,12 @@ public static class MopCommandsHelper {
         new MopAction
         {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop keybroadcast on|off",
+            TextCommand = "/mop keybroadcast on|off|toggle",
             SuggestionCommand = "/mop keybroadcast ",
             Example = """
             /mop keybroadcast on
             /mop keybroadcast off
+            /mop keybroadcast toggle
 
             Broadcast:
             /mopbr /mop keybroadcast on
@@ -380,6 +381,25 @@ public static class MopCommandsHelper {
             Notes = """
             * This is a plugin command (works only on local clients)
             Enable or disable keyboard broadcast on this client. Use /mopbr to toggle all clients at once.
+            """
+        },
+
+        new MopAction
+        {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop sound on|off|toggle",
+            SuggestionCommand = "/mop sound ",
+            Example = """
+            /mop sound on
+            /mop sound off
+            /mop sound toggle
+
+            Broadcast:
+            /mopbr /mop sound on
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Enable or disable sound. Use /mopbr to toggle all clients at once.
             """
         },
 
