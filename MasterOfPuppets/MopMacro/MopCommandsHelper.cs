@@ -574,11 +574,12 @@ public static class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop camhack on|off",
+            TextCommand = "/mop camhack on|off|toggle",
             SuggestionCommand = "/mop camhack ",
             Example = """
             /mop camhack on
             /mop camhack off
+            /mop camhack toggle
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
@@ -587,11 +588,12 @@ public static class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop renderhack on|off",
+            TextCommand = "/mop renderhack on|off|toggle",
             SuggestionCommand = "/mop renderhack ",
             Example = """
             /mop renderhack on
             /mop renderhack off
+            /mop renderhack toggle
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
@@ -1544,6 +1546,7 @@ public static class MopCommandsHelper {
             TextCommand = "/mop layout \"Layout Name\"",
             SuggestionCommand = "/mop layout \"Tiled\"",
             Example = """
+            /mop layout "my layout"
             /mop layout minimal
             """,
             Notes = """

@@ -48,6 +48,14 @@ internal static unsafe class GameCameraManager {
         DalamudApi.ChatGui.Print("", "MOP: Camhack OFF", Style.Colors.SeRed);
     }
 
+    public static void Toggle() {
+        if (!_enabled) {
+            EnableCamHighHeight();
+        } else {
+            Disable();
+        }
+    }
+
     public static void EnableCamHighHeight() {
         Enable(MaxYOffset);
     }

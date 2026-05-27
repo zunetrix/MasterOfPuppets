@@ -468,13 +468,15 @@ public class PluginCommandManager : IDisposable {
                 case "camhack":
                 case "ch":
                     if (parsedArgs.Count < 2) {
-                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off\"", NotificationType.Error, 5000);
+                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off|toggle\"", NotificationType.Error, 5000);
                         return;
                     }
                     if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
                         GameCameraManager.EnableCamHighHeight();
                     else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
                         GameCameraManager.Disable();
+                    else if (parsedArgs[1].Equals("toggle", StringComparison.OrdinalIgnoreCase))
+                        GameCameraManager.Toggle();
                     break;
                 case "renderhack":
                 case "rh":
