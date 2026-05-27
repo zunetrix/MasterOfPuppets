@@ -99,9 +99,9 @@ public partial class MacroHandler : IDisposable {
             "moptargetof" or
             "moptargetclear" or
             "moptargetmyminion" or
-            "mopenablewalk" or
-            "mopdisablewalk" or
-            "moptogglewalk" or
+            "mopwalkon" or
+            "mopwalkoff" or
+            "mopwalktoggle" or
             "mopface" or
             "mopfaceabs" or
             "swapgearsets" or
@@ -132,9 +132,9 @@ public partial class MacroHandler : IDisposable {
             ["mopmovetotarget"] = new(HandleMopMoveToTarget),
             ["mopmovetocharacter"] = new(HandleMopMoveToCharacter),
             ["mopstopmove"] = new(HandleMopStopMove),
-            ["mopenablewalk"] = new(HandleMopEnableWalk, SkipGlobalDelay: CommandSkipsGlobalDelay("mopenablewalk")),
-            ["mopdisablewalk"] = new(HandleMopDisableWalk, SkipGlobalDelay: CommandSkipsGlobalDelay("mopdisablewalk")),
-            ["moptogglewalk"] = new(HandleMopToggleWalk, SkipGlobalDelay: CommandSkipsGlobalDelay("moptogglewalk")),
+            ["mopwalkon"] = new(HandleMopEnableWalk, SkipGlobalDelay: CommandSkipsGlobalDelay("mopwalkon")),
+            ["mopwalkoff"] = new(HandleMopDisableWalk, SkipGlobalDelay: CommandSkipsGlobalDelay("mopwalkoff")),
+            ["mopwalktoggle"] = new(HandleMopToggleWalk, SkipGlobalDelay: CommandSkipsGlobalDelay("mopwalktoggle")),
             ["mopface"] = new(HandleMopFace, SkipGlobalDelay: CommandSkipsGlobalDelay("mopface")),
             ["mopfaceabs"] = new(HandleMopFaceAbs, SkipGlobalDelay: CommandSkipsGlobalDelay("mopfaceabs")),
             ["mopmovegearsets"] = new(HandleMopMoveGearsets, SkipGlobalDelay: CommandSkipsGlobalDelay("mopmovegearsets")),

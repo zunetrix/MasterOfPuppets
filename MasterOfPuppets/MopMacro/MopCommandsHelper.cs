@@ -314,51 +314,19 @@ public static class MopCommandsHelper {
         new MopAction
         {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop enablewalk",
-            SuggestionCommand = "/mop enablewalk",
+            TextCommand = "/mop walk <on|off|toggle>",
+            SuggestionCommand = "/mop walk",
             Example = """
-            /mop enablewalk
+            /mop walk on
+            /mop walk off
+            /mop walk toggle
 
             Broadcast:
-            /mopbr /mop enablewalk
+            /mopbr /mop walk on
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Enable walking
-            """
-        },
-
-        new MopAction
-        {
-            Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop disablewalk",
-            SuggestionCommand = "/mop disablewalk",
-            Example = """
-            /mop disablewalk
-
-            Broadcast:
-            /mopbr /mop disablewalk
-            """,
-            Notes = """
-            * This is a plugin command (works only on local clients)
-            Disable walking
-            """
-        },
-
-        new MopAction
-        {
-            Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop togglewalk",
-            SuggestionCommand = "/mop togglewalk",
-            Example = """
-            /mop togglewalk
-
-            Broadcast:
-            /mopbr /mop togglewalk
-            """,
-            Notes = """
-            * This is a plugin command (works only on local clients)
-            Toggle walking
+            Switch walking mode
             """
         },
 
@@ -1405,10 +1373,10 @@ public static class MopCommandsHelper {
         new MopAction
         {
             Category = MopActionCategory.MacroAction,
-            TextCommand = "/mopenablewalk",
-            SuggestionCommand = "/mopenablewalk",
+            TextCommand = "/mopwalkon",
+            SuggestionCommand = "/mopwalkon",
             Example = """
-            /mopenablewalk
+            /mopwalkon
             """,
             Notes = """
             Enable walking
@@ -1418,10 +1386,10 @@ public static class MopCommandsHelper {
         new MopAction
         {
             Category = MopActionCategory.MacroAction,
-            TextCommand = "/mopdisablewalk",
-            SuggestionCommand = "/mopdisablewalk",
+            TextCommand = "/mopwalkoff",
+            SuggestionCommand = "/mopwalkoff",
             Example = """
-            /mopdisablewalk
+            /mopwalkoff
             """,
             Notes = """
             Disable walking
@@ -1431,10 +1399,10 @@ public static class MopCommandsHelper {
         new MopAction
         {
             Category = MopActionCategory.MacroAction,
-            TextCommand = "/moptogglewalk",
-            SuggestionCommand = "/moptogglewalk",
+            TextCommand = "/mopwalktoggle",
+            SuggestionCommand = "/mopwalktoggle",
             Example = """
-            /moptogglewalk
+            /mopwalktoggle
             """,
             Notes = """
             Toggle walking

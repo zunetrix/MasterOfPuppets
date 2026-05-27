@@ -295,14 +295,17 @@ public class PluginCommandManager : IDisposable {
                 case "mtmt":
                     Plugin.IpcProvider.ExecuteMoveToMyTarget();
                     break;
-                case "enablewalk":
-                    MovementManager.SetWalking(true);
-                    break;
-                case "disablewalk":
-                    MovementManager.SetWalking(false);
-                    break;
-                case "togglewalk":
-                    MovementManager.ToggleWalking();
+                case "walk":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off|toggle\"", NotificationType.Error, 5000);
+                        return;
+                    }
+                    if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
+                        MovementManager.SetWalking(true);
+                    else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
+                        MovementManager.SetWalking(false);
+                    else if (parsedArgs[1].Equals("toggle", StringComparison.OrdinalIgnoreCase))
+                        MovementManager.ToggleWalking();
                     break;
                 case "gs": {
                         if (parsedArgs.Count < 2 ||
