@@ -36,6 +36,8 @@ internal static class WorldTravelManager {
     /// </summary>
     public static void TravelToWorld(string world, Plugin plugin) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
+            if (world.Equals(DalamudApi.PlayerState.CurrentWorld.Value.Name.ToString(), StringComparison.OrdinalIgnoreCase)) return;
+
             // leave party before travel
             if (DalamudApi.PartyList.IsInParty()) {
                 Chat.SendMessage("/leave");
