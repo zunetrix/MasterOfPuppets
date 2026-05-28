@@ -68,7 +68,8 @@ internal static class ResidentialTeleportManager {
             },
             callback: () => {
                 if (!ok) {
-                    DalamudApi.PluginLog.Warning("[TeleportToWard] move timeout: Aetheryte distance still > 30");
+                    DalamudApi.PluginLog.Warning("[TeleportToWard] move timeout: Aetheryte distance still > 10");
+                    plugin.MovementManager.StopMove();
                     return;
                 }
                 plugin.MovementManager.StopMove();

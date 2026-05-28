@@ -40,7 +40,7 @@ internal static class WorldTravelManager {
             if (DalamudApi.PartyList.IsInParty()) {
                 Chat.SendMessage("/leave");
             }
-            
+
             var player = DalamudApi.ObjectTable.LocalPlayer;
             if (player == null) return;
 
@@ -72,6 +72,7 @@ internal static class WorldTravelManager {
             callback: () => {
                 if (!ok) {
                     DalamudApi.PluginLog.Warning("[TravelToWorld] move timeout: Aetheryte distance still > 10");
+                    plugin.MovementManager.StopMove();
                     return;
                 }
                 plugin.MovementManager.StopMove();
