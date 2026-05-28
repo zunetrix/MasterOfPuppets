@@ -405,7 +405,7 @@ public class PluginCommandManager : IDisposable {
                             DalamudApi.ShowNotification("Invalid arguments. Expected ward number (1-30)", NotificationType.Error, 5000);
                             return;
                         }
-                        ResidentialTeleportManager.TeleportToWard(wardNumber);
+                        ResidentialTeleportManager.TeleportToWard(wardNumber, Plugin);
                     }
                     break;
                 case "world":
@@ -415,7 +415,7 @@ public class PluginCommandManager : IDisposable {
                             DalamudApi.ShowNotification("Invalid arguments. Expected world name", NotificationType.Error, 5000);
                             return;
                         }
-                        WorldTravelManager.TravelToWorld(parsedArgs[1]);
+                        WorldTravelManager.TravelToWorld(parsedArgs[1], Plugin);
                     }
                     break;
                 case "objectquantity": {

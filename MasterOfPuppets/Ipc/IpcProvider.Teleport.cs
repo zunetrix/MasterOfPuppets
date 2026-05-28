@@ -35,7 +35,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.TeleportToWard)]
     private void HandleExecuteTeleportToWard(IpcMessage message) {
-        ResidentialTeleportManager.TeleportToWard(message.DataStruct<int>());
+        ResidentialTeleportManager.TeleportToWard(message.DataStruct<int>(), Plugin);
     }
 
     public void ExecuteTravelToWorld(string world) {
@@ -44,7 +44,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.TravelToWorld)]
     private void HandleExecuteTravelToWorld(IpcMessage message) {
-        WorldTravelManager.TravelToWorld(message.StringData[0]);
+        WorldTravelManager.TravelToWorld(message.StringData[0], Plugin);
     }
 
     public void ExecuteTeleportToEstate(string contentIdOrFriendName, string teleportOptionIndex) {

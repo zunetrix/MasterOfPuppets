@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 
+using System.Linq;
+using System.Numerics;
+
 using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Game.ClientState.Objects.Types;
 
 using Lumina.Excel.Sheets;
 
@@ -30,15 +34,51 @@ internal static class WorldTravelManager {
     /// Initiates the aetheryte-menu flow to travel to the given world.
     /// Requires the player to be near a main-city aetheryte.
     /// </summary>
-    public static void TravelToWorld(string world) {
+    public static void TravelToWorld(string world, Plugin plugin) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             // leave party before travel
             if (DalamudApi.PartyList.IsInParty()) {
                 Chat.SendMessage("/leave");
             }
-            GameTargetManager.TargetNearestAetheryte();
-            Step_WaitForAetheryteTarget(world);
+            
+            var player = DalamudApi.ObjectTable.LocalPlayer;
+            if (player == null) return;
+
+            var aetheryte = DalamudApi.ObjectTable
+                .Where(x => x != null && x.ObjectKind == ObjectKind.Aetheryte)
+                .OrderBy(x => Vector3.DistanceSquared(player.Position, x.Position))
+                .FirstOrDefault();
+
+            if (aetheryte != null && Vector3.Distance(aetheryte.Position, player.Position) > 10f) {
+                plugin.MovementManager.MoveTo(aetheryte.GameObjectId);
+                Step_WaitUntilCloseAndTargetAetheryte(world, aetheryte, plugin);
+            } else {
+                GameTargetManager.TargetNearestAetheryte();
+                Step_WaitForAetheryteTarget(world);
+            }
         });
+    }
+
+    private static void Step_WaitUntilCloseAndTargetAetheryte(string world, IGameObject aetheryte, Plugin plugin) {
+        var ok = false;
+        Coroutine.StartRunOnFramework(
+            runFunction: () => { },
+            stopWhen: () => {
+                var player = DalamudApi.ObjectTable.LocalPlayer;
+                if (player == null || aetheryte == null) return false;
+                ok = Vector3.Distance(aetheryte.Position, player.Position) <= 10f;
+                return ok;
+            },
+            callback: () => {
+                if (!ok) {
+                    DalamudApi.PluginLog.Warning("[TravelToWorld] move timeout: Aetheryte distance still > 10");
+                    return;
+                }
+                plugin.MovementManager.StopMove();
+                GameTargetManager.TargetNearestAetheryte();
+                Step_WaitForAetheryteTarget(world);
+            },
+            timeoutMs: 30000);
     }
 
     //  Step 1

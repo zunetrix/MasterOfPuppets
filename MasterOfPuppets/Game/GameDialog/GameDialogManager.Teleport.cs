@@ -34,12 +34,12 @@ internal static unsafe partial class GameDialogManager {
     /// </summary>
     public static bool ClickHousingBlockConfirm() {
         var addon = GetAddonByName(AddonName.HousingSelectBlock);
-        if (addon == null) { DalamudApi.PluginLog.Debug("[Confirm] addon null"); return false; }
+        if (addon == null) { return false; }
         for (var i = 0; i < addon->UldManager.NodeListCount; i++) {
             var node = addon->UldManager.NodeList[i];
             if (node == null || node->NodeId != 34 || (int)node->Type < 1000) continue;
             var evt = (AtkEvent*)((AtkComponentNode*)node)->AtkResNode.AtkEventManager.Event;
-            if (evt == null) { DalamudApi.PluginLog.Debug("[Confirm] evt null"); return false; }
+            if (evt == null) { return false; }
             addon->ReceiveEvent(evt->State.EventType, (int)evt->Param, ((AtkComponentNode*)node)->AtkResNode.AtkEventManager.Event);
             return true;
         }
