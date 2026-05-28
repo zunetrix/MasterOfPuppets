@@ -120,7 +120,7 @@ public class PluginCommandManager : IDisposable {
             switch (subcommand) {
                 case "run": {
                         if (parsedArgs.Count <= 1) {
-                            DalamudApi.ShowNotification($"Invalid arguments to run macro", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop run <index|name>");
                             return;
                         }
 
@@ -136,7 +136,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "gamemacro": {
                         if (parsedArgs.Count <= 1) {
-                            DalamudApi.ShowNotification("Usage: /mop gamemacro <index|name> [individual|i|shared|share|s]", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop gamemacro <index|name> [individual|i|shared|share|s]");
                             return;
                         }
 
@@ -151,7 +151,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "target":
                     if (parsedArgs.Count <= 1) {
-                        DalamudApi.ShowNotification($"Invalid arguments, expected target name", NotificationType.Error, 5000);
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop target <name>");
                         return;
                     }
                     GameTargetManager.TargetObject(parsedArgs[1]);
@@ -181,22 +181,35 @@ public class PluginCommandManager : IDisposable {
                 case "actions":
                     Plugin.Ui.ActionsBroadcastWindow.Toggle();
                     break;
+                case "item": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop item <id|name>");
+                            return;
+                        }
+                        var itemIdOrName = parsedArgs[1];
+                        if (uint.TryParse(itemIdOrName, out uint itemId)) {
+                            GameActionManager.UseItem(itemId);
+                        } else {
+                            GameActionManager.UseItem(itemIdOrName);
+                        }
+                    }
+                    break;
                 case "moveinput": {
                         if (parsedArgs.Count < 2) {
-                            DalamudApi.ShowNotification($"Invalid arguments to move", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop moveinput x y z");
                             return;
                         }
 
                         var argParts = parsedArgs[1].Split(" ");
                         if (argParts.Length != 3) {
-                            DalamudApi.PluginLog.Debug($"Invalid coord amount expected x y z {parsedArgs[1]}");
+                            DalamudApi.ChatGui.PrintError($"Invalid arguments. Usage: /mop moveinput x y z | {parsedArgs[1]}");
                             return;
                         }
 
                         if (!float.TryParse(argParts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
                         || !float.TryParse(argParts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
                         || !float.TryParse(argParts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
-                            DalamudApi.PluginLog.Warning($"[mop move] invalid argument float parse: \"{parsedArgs[1]}\"");
+                            DalamudApi.PluginLog.Warning($"[mop moveinput] invalid argument float parse: \"{parsedArgs[1]}\"");
                             return;
                         }
 
@@ -209,13 +222,13 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "move": {
                         if (parsedArgs.Count < 2) {
-                            DalamudApi.ShowNotification($"Invalid arguments to move", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop move x y z");
                             return;
                         }
 
                         var argParts = parsedArgs[1].Split(" ");
                         if (argParts.Length != 3) {
-                            DalamudApi.PluginLog.Debug($"Invalid coord amount expected x y z {parsedArgs[1]}");
+                            DalamudApi.ChatGui.PrintError($"Invalid arguments. Usage: /mop move x y z | {parsedArgs[1]}");
                             return;
                         }
 
@@ -238,7 +251,7 @@ public class PluginCommandManager : IDisposable {
                         // relative sum to current rotation
                         if (parsedArgs.Count < 2 ||
                             !float.TryParse(parsedArgs[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float faceAngle)) {
-                            DalamudApi.ShowNotification("Invalid arguments. Expected angle in degrees", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop face <degrees>");
                             return;
                         }
                         var player = DalamudApi.ObjectTable.LocalPlayer;
@@ -254,7 +267,7 @@ public class PluginCommandManager : IDisposable {
                         // absolute
                         if (parsedArgs.Count < 2 ||
                             !float.TryParse(parsedArgs[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float faceAngle)) {
-                            DalamudApi.ShowNotification("Invalid arguments. Expected angle in degrees", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop faceabs <degrees>");
                             return;
                         }
                         // (180f - angle)  (north=0, cw)
@@ -285,7 +298,7 @@ public class PluginCommandManager : IDisposable {
                 case "movetocharacter":
                 case "mtc": {
                         if (parsedArgs.Count <= 1) {
-                            DalamudApi.ShowNotification($"Invalid arguments expected character name", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop movetocharacter <name>");
                             return;
                         }
                         Plugin.MovementManager.MoveTo(parsedArgs[1]);
@@ -297,7 +310,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "walk":
                     if (parsedArgs.Count < 2) {
-                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off|toggle\"", NotificationType.Error, 5000);
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop walk <on|off|toggle>");
                         return;
                     }
                     if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
@@ -311,7 +324,7 @@ public class PluginCommandManager : IDisposable {
                         if (parsedArgs.Count < 2 ||
                             !int.TryParse(parsedArgs[1], out var gearsetIndex) ||
                             gearsetIndex is <= 0 or > 100) {
-                            DalamudApi.ShowNotification("Invalid arguments. Expected gearset number (1-100)", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop gs <1-100>");
                             return;
                         }
                         GearsetManager.ChangeGearset(Plugin, gearsetIndex - 1);
@@ -319,7 +332,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "movegearsets": {
                         if (parsedArgs.Count < 2) {
-                            DalamudApi.ShowNotification("Invalid arguments. Expected gearset numbers (e.g. 1,2,3)", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop movegearsets 1,2,3");
                             return;
                         }
                         var indices = new List<int>();
@@ -328,7 +341,7 @@ public class PluginCommandManager : IDisposable {
                                 indices.Add(n - 1);
                         }
                         if (indices.Count == 0) {
-                            DalamudApi.ShowNotification("No valid gearset numbers provided (1-100)", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid gearset numbers (1-100)");
                             return;
                         }
                         GearsetManager.MoveGearsetsToArmoury(Plugin, indices);
@@ -336,28 +349,20 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "swapgearsets": {
                         if (parsedArgs.Count < 2) {
-                            DalamudApi.ShowNotification(
-                                "Invalid arguments. Expected gearset numbers (e.g. 1,2)",
-                                NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop swapgearsets 1,2");
                             return;
                         }
 
                         var parts = parsedArgs[1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
                         if (parts.Length != 2) {
-                            DalamudApi.ShowNotification(
-                                "You must provide exactly 2 gearset numbers (e.g. 1,2)",
-                                NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop swapgearsets 1,2 expected 2 gearset numbers");
                             return;
                         }
 
-                        if (!int.TryParse(parts[0], out var gearset1) ||
-                            !int.TryParse(parts[1], out var gearset2) ||
-                            gearset1 is < 1 or > 100 ||
-                            gearset2 is < 1 or > 100) {
-                            DalamudApi.ShowNotification(
-                                "Invalid gearset numbers. Use values between 1 and 100",
-                                NotificationType.Error, 5000);
+                        if (!int.TryParse(parts[0], out var gearset1) || !int.TryParse(parts[1], out var gearset2) ||
+                            gearset1 is < 1 or > 100 || gearset2 is < 1 or > 100) {
+                            DalamudApi.ChatGui.PrintError("Invalid gearset numbers. Expected values between 1 and 100");
                             return;
                         }
 
@@ -367,7 +372,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "invite": {
                         if (parsedArgs.Count == 2) {
-                            // with characterFullname arg name@world
+                            // character full name name@world
                             PartyManager.Invite(parsedArgs[1]);
                             return;
                         }
@@ -388,7 +393,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "estate":
                     if (parsedArgs.Count < 3) {
-                        DalamudApi.ShowNotification("Usage: estate \"Friend Name\" <fc|pe|ap>", NotificationType.Error, 5000);
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop estate \"Friend Name\" <fc|pe|ap>");
                         return;
                     }
                     EstateTeleportManager.TeleportToEstate(parsedArgs[1], parsedArgs[2]);
@@ -402,7 +407,7 @@ public class PluginCommandManager : IDisposable {
                         if (parsedArgs.Count < 2 ||
                             !int.TryParse(parsedArgs[1], out var wardNumber) ||
                             wardNumber is < 1 or > 30) {
-                            DalamudApi.ShowNotification("Invalid arguments. Expected ward number (1-30)", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop ward <1-30>");
                             return;
                         }
                         ResidentialTeleportManager.TeleportToWard(wardNumber, Plugin);
@@ -412,7 +417,7 @@ public class PluginCommandManager : IDisposable {
                 case "worldtravel":
                 case "wt": {
                         if (parsedArgs.Count < 2 || string.IsNullOrWhiteSpace(parsedArgs[1])) {
-                            DalamudApi.ShowNotification("Invalid arguments. Expected world name", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop world <name>");
                             return;
                         }
                         WorldTravelManager.TravelToWorld(parsedArgs[1], Plugin);
@@ -420,12 +425,12 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "objectquantity": {
                         if (parsedArgs.Count <= 1) {
-                            DalamudApi.ShowNotification($"Invalid arguments to setobjectquantity", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop objectquantity <0-5>");
                             return;
                         }
                         if (!Enum.TryParse<SettingsDisplayObjectLimitType>(parsedArgs[1], ignoreCase: true, out var displayObjectLimitType)
                             || !Enum.IsDefined(typeof(SettingsDisplayObjectLimitType), displayObjectLimitType)) {
-                            DalamudApi.PluginLog.Warning($"Invalid object quantity value (0-5): {displayObjectLimitType}");
+                            DalamudApi.ChatGui.PrintError($"Invalid arguments. Usage: /mop objectquantity <0-5> {displayObjectLimitType}");
                             return;
                         }
                         GameSettingsManager.SetDisplayObjectLimit(displayObjectLimitType);
@@ -433,7 +438,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "sound": {
                         if (parsedArgs.Count < 2) {
-                            DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off|toggle\"", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop sound <on|off|toggle>");
                             return;
                         }
 
@@ -455,7 +460,7 @@ public class PluginCommandManager : IDisposable {
                             parsedArgs.Skip(2),
                             FormationAnchorReference.Self);
                         if (anchor.InvalidArgument != null) {
-                            DalamudApi.ShowNotification($"Invalid formation argument: {anchor.InvalidArgument}", NotificationType.Error, 5000);
+                            DalamudApi.ChatGui.PrintError($"Invalid formation argument: {anchor.InvalidArgument}");
                             return;
                         }
 
@@ -473,7 +478,7 @@ public class PluginCommandManager : IDisposable {
                 case "camhack":
                 case "ch":
                     if (parsedArgs.Count < 2) {
-                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off|toggle\"", NotificationType.Error, 5000);
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop camhack <on|off|toggle>");
                         return;
                     }
                     if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
@@ -486,7 +491,7 @@ public class PluginCommandManager : IDisposable {
                 case "renderhack":
                 case "rh":
                     if (parsedArgs.Count < 2) {
-                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off|toggle\"", NotificationType.Error, 5000);
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop renderhack <on|off|toggle>");
                         return;
                     }
                     if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
@@ -499,7 +504,7 @@ public class PluginCommandManager : IDisposable {
                 case "keybroadcast":
                 case "kb":
                     if (parsedArgs.Count < 2) {
-                        DalamudApi.ShowNotification("Invalid arguments. Expected \"on|off|toggle\"", NotificationType.Error, 5000);
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop keybroadcast <on|off|toggle>");
                         return;
                     }
 
@@ -518,7 +523,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "settingsprofile": {
                         if (parsedArgs.Count < 2) {
-                            DalamudApi.ChatGui.PrintError("Usage: /mop settingsprofile \"profile name\"");
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop settingsprofile \"profile name\"");
                             return;
                         }
                         Plugin.IpcProvider.BroadcastApplyGameSettingsProfile(parsedArgs[1]);
@@ -533,7 +538,7 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "event":
                     if (parsedArgs.Count < 2) {
-                        DalamudApi.ChatGui.PrintError("Usage: /mop event <name> | event stop");
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop event <name> /mop event stop");
                         return;
                     }
                     if (parsedArgs[1].Equals("stop", StringComparison.OrdinalIgnoreCase)) {

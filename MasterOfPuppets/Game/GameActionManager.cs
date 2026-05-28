@@ -77,8 +77,6 @@ public static class GameActionManager {
         DalamudApi.Framework.RunOnTick(() => {
             ActionManager.Instance()->UseAction(ActionType.Item, actionId, extraParam: 65535);
         }, delayTicks: 3);
-
-        // DalamudApi.PluginLog.Debug($"[USE ITEM] {actionId}");
     }
 
     public static unsafe void UseItem(string itemName) {
@@ -96,8 +94,6 @@ public static class GameActionManager {
         DalamudApi.Framework.RunOnTick(() => {
             ActionManager.Instance()->UseAction(ActionType.Item, item.ActionId, extraParam: 65535);
         }, delayTicks: 3);
-
-        // DalamudApi.PluginLog.Debug($"[USE ITEM NAME] {itemName}");
     }
 
     public static unsafe void UseInventoryItem(uint itemId) {

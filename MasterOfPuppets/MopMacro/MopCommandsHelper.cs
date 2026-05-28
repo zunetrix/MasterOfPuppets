@@ -208,6 +208,25 @@ public static class MopCommandsHelper {
             Leave the current duty instance.
             """
         },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop item <item id> | \"Item Name\"",
+            SuggestionCommand = "/mop item ",
+            Example = """
+            /mop item "Heavenscracker"
+
+            /mop item 12042
+
+            /mop item "Realm Reborn Red"
+
+            /mop item 8214
+            /mopbr /mop item "Heavenscracker"
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Use items like fireworks, prisms etc
+            """
+        },
 
         // MOVEMENT
         new MopAction
