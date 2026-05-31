@@ -536,6 +536,10 @@ public class PluginCommandManager : IDisposable {
                 case "ad":
                     GameFunctions.AbandonDuty();
                     break;
+                case "monitor":
+                case "peer":
+                    Plugin.Ui.PeerMonitorWindow.Toggle();
+                    break;
                 case "event":
                     if (parsedArgs.Count < 2) {
                         DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop event <name> /mop event stop");

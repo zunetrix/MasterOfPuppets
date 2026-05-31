@@ -86,6 +86,18 @@ public static class MopCommandsHelper {
             Opens the Actions Broadcast window to manually trigger broadcast commands
             """
         },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop monitor",
+            SuggestionCommand = "/mop monitor",
+            Example = """
+            /mop monitor
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Opens the Peer Monitor window
+            """
+        },
 
         new MopAction {
             Category = MopActionCategory.PluginCommand,
