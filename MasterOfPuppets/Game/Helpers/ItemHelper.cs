@@ -17,60 +17,60 @@ public static class ItemHelper {
             TextCommand = $"/mopitem \"{item.Name}\"",
             // item.ItemSearchCategory.Value.Category // category ID
             Category = $"{item.ItemUICategory.Value.Name} ({item.ItemUICategory.Value.RowId})",
-            // SortOrder = emote.Order
+            // SortOrder = item.
         };
     }
 
+    private static readonly HashSet<uint> _allowedItemUICategoriesCd = [
+        (uint)ItemUICategoryEnum.Miscellany,
+        (uint)ItemUICategoryEnum.SeasonalMiscellany
+    ];
+
+    private static readonly HashSet<uint> _allowedItemUICategories = [
+        (uint)ItemUICategoryEnum.Minion
+    ];
+
+    private static readonly HashSet<uint> _allowedItemIds = [
+        4868, // Gysahl Greens
+    ];
+
+    private static readonly HashSet<string> _allowedItemStrings = new(
+    [
+        "Ballroom",
+        "Eyeglasses"
+    ],
+    StringComparer.InvariantCultureIgnoreCase);
+
+    private static bool IsAllowedItem(Item item) {
+        if (!item.IsUnlocked())
+            return false;
+
+        var categoryId = item.ItemUICategory.Value.RowId;
+        var itemName = item.Name.ToString();
+
+        return
+            (_allowedItemUICategoriesCd.Contains(categoryId) && item.Cooldowns > 0)
+            || _allowedItemUICategories.Contains(categoryId)
+            || _allowedItemIds.Contains(item.RowId)
+            || _allowedItemStrings.Contains(itemName);
+    }
+
+    private static IEnumerable<Item> GetAllowedItemsQuery() {
+        return DalamudApi.DataManager
+            .GetExcelSheet<Item>()
+            .Where(IsAllowedItem);
+    }
+
     public static List<ExecutableAction> GetAllowedItems() {
-        List<uint> allowedCategories = [
-            (uint)ItemUICategoryEnum.Miscellany,
-            (uint)ItemUICategoryEnum.SeasonalMiscellany
-        ];
-
-        List<uint> allowedItems = [
-            4868, // Gysahl Greens
-        ];
-
-        return DalamudApi.DataManager.GetExcelSheet<Item>()
-        .Where(i => i.IsUnlocked() &&
-          (
-            (
-                allowedCategories.Contains(i.ItemUICategory.Value.RowId)
-                && (i.Cooldowns > 0 || i.Name.ToString().StartsWith("Ballroom") || i.Name.ToString().Contains("Eyeglasses", StringComparison.InvariantCultureIgnoreCase))
-            )
-            ||
-            allowedItems.Contains(i.RowId)
-          )
-        )
-        .Select(GetExecutableAction)
-        .ToList();
+        return GetAllowedItemsQuery()
+            .Select(GetExecutableAction)
+            .ToList();
     }
 
     public static uint[] GetUnlockedItemsIds() {
-        List<uint> allowedCategories = [
-            (uint)ItemUICategoryEnum.Miscellany,
-            (uint)ItemUICategoryEnum.SeasonalMiscellany
-        ];
-
-        List<uint> allowedItems = [
-            4868, // Gysahl Greens
-        ];
-
-        var ids = DalamudApi.DataManager.GetExcelSheet<Item>()
-        .Where(i => i.IsUnlocked() &&
-          (
-            (
-                allowedCategories.Contains(i.ItemUICategory.Value.RowId)
-                && (i.Cooldowns > 0 || i.Name.ToString().StartsWith("Ballroom") || i.Name.ToString().Contains("Eyeglasses", StringComparison.InvariantCultureIgnoreCase))
-            )
-            ||
-            allowedItems.Contains(i.RowId)
-          )
-        )
-        .Select(e => e.RowId)
-        .ToArray();
-
-        return ids;
+        return GetAllowedItemsQuery()
+            .Select(i => i.RowId)
+            .ToArray();
     }
 
     public static Item? GetItem(string itemName) {
@@ -97,10 +97,12 @@ public static class ItemHelper {
     }
 
     public static uint GetIconId(uint item) {
+
         uint undefinedIcon = 60042;
         return GetItem(item)?.Icon ?? undefinedIcon;
     }
 
+    // DalamudApi.DataManager.GetExcelSheet<ItemUICategory>();
     public enum ItemUICategoryEnum {
         None = 0,
         PugilistsArm = 1,
