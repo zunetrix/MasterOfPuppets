@@ -8,8 +8,9 @@ using Dalamud.Utility;
 using Lumina.Excel;
 using Lumina.Extensions;
 
-namespace MasterOfPuppets.Debug;
+namespace MasterOfPuppets.Util;
 
+// https://github.com/Haselnussbomber/HaselTweaks/
 public static class ExcelService {
     public static bool HasSheet(string name)
         => DalamudApi.DataManager.Excel.SheetNames.Contains(name);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 using Dalamud.Game;
 using Dalamud.Utility;
@@ -12,8 +13,9 @@ using Lumina.Text.ReadOnly;
 
 using DObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
-namespace MasterOfPuppets.Debug;
+namespace MasterOfPuppets.Util;
 
+// https://github.com/Haselnussbomber/HaselTweaks/
 public static class TextService {
     private static readonly Dictionary<(Type, uint, ClientLanguage), string> _rowNameCache = [];
 
