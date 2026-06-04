@@ -115,10 +115,10 @@ Right-click to copy formation command</value>
         <value>Stop All Movement</value>
     </data>
     <data name="MacroSearchInputLabel" xml:space="preserve">
-        <value>Seach Macro</value>
+        <value>Search Macro</value>
     </data>
     <data name="SearchInputLabel" xml:space="preserve">
-        <value>Seach</value>
+        <value>Search</value>
     </data>
     <data name="ShowMacroQueueBtn" xml:space="preserve">
         <value>Macro Queue</value>
