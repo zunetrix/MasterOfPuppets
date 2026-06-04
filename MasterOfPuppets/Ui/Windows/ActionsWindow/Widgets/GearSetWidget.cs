@@ -142,7 +142,7 @@ public class GearSetWidget : Widget {
 
         ImGui.TableNextColumn();
         ImGui.Selectable($"{gearset.ActionName}");
-        ImGuiUtil.ToolTip("Drag to reorder");
+        ImGuiUtil.ToolTip("Drag to broadcast reorder");
 
         if (ImGui.BeginDragDropSource()) {
             unsafe {

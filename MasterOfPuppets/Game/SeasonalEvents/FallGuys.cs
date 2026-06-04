@@ -17,7 +17,6 @@ internal class FallGuys : SeasonalEventRunner {
     private static readonly Regex MgfRegex =
         new(@"^You obtain \d+ MGF\.$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-
     protected override HashSet<uint> ValidTerritories { get; } = [1165];
 
     private volatile bool _mgfObtained;

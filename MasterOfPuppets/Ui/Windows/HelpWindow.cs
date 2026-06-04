@@ -33,51 +33,78 @@ public class HelpWindow : Window {
     }
 
     public override void Draw() {
-        ImGui.BeginGroup();
-        DrawHeader();
-        ImGui.EndGroup();
+        using (ImRaii.Group()) {
+            DrawHeader();
+        }
 
-        ImGui.BeginChild("##MacroHelpListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        using var child = ImRaii.Child("##MacroHelpListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+        if (!child) return;
         DrawMacroHelpList();
         ImGui.SameLine();
         DrawMacroHelpContent(SelectedItemIndex);
-        ImGui.EndChild();
     }
 
     private void DrawMacroHelpList() {
         var isFiltered = !string.IsNullOrEmpty(_searchString);
-        // var itemCount = isFiltered ? ListSearchedIndexes.Count : MopMacroActionsHelper.Actions.Count;
 
         var helpData = isFiltered
             ? ListSearchedIndexes.Select(i => MopCommandsHelper.Actions[i])
             : MopCommandsHelper.Actions;
 
-        var macroActionGroups = helpData
-        .GroupBy(a => a.Category);
-        // .OrderBy(g => g.Key);
+        var macroActionGroups = helpData.GroupBy(a => a.Category);
 
         // left pane
-        ImGui.BeginChild("##MacroHelpCommandList", ImGuiHelpers.ScaledVector2(250, 0), true);
-        foreach (var macroActionGroup in macroActionGroups) {
-            if (ImGui.CollapsingHeader($"{macroActionGroup.Key}##MacroHelpCategory{macroActionGroup.Key}")) {
-                foreach (var action in macroActionGroup) {
-                    int realIndex = MopCommandsHelper.Actions.IndexOf(action);
-                    bool isSelected = SelectedItemIndex == realIndex;
+        using var child = ImRaii.Child("##MacroHelpCommandList", ImGuiHelpers.ScaledVector2(250, 0), true);
+        if (!child) return;
 
-                    using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
-                    .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, isSelected)
-                    .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, isSelected)) {
-                        if (ImGui.Selectable(action.SuggestionCommand, isSelected)) {
-                            SelectedItemIndex = realIndex;
+        foreach (var catGroup in macroActionGroups) {
+            if (ImGui.CollapsingHeader($"{catGroup.Key}##MacroHelpCategory{catGroup.Key}")) {
+
+                if (isFiltered) {
+                    // In search mode: flatten — render all commands directly without sub-grouping
+                    foreach (var action in catGroup) {
+                        DrawActionSelectable(action);
+                    }
+                } else {
+                    // Normal mode: group by SubCategory and render two-level tree
+                    var subGroups = catGroup.GroupBy(a => a.SubCategory);
+
+                    foreach (var subGroup in subGroups) {
+                        if (subGroup.Key == MopActionSubCategory.None) {
+                            // No subcategory — render items directly under the category
+                            foreach (var action in subGroup) {
+                                DrawActionSelectable(action);
+                            }
+                        } else {
+                            // Render a collapsible TreeNode for the subcategory
+                            using var treeNode = ImRaii.TreeNode($"  {subGroup.Key}##MacroHelpSub{catGroup.Key}{subGroup.Key}");
+                            if (treeNode.Success) {
+                                foreach (var action in subGroup) {
+                                    DrawActionSelectable(action);
+                                }
+                            }
                         }
                     }
                 }
             }
+
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
         }
-        ImGui.EndChild();
+    }
+
+    private void DrawActionSelectable(MopAction action) {
+        int realIndex = MopCommandsHelper.Actions.IndexOf(action);
+        bool isSelected = SelectedItemIndex == realIndex;
+
+        using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
+        .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, isSelected)
+        .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, isSelected)) {
+            if (ImGui.Selectable(action.SuggestionCommand, isSelected)) {
+                SelectedItemIndex = realIndex;
+            }
+        }
     }
 
     private void DrawMacroHelpContent(int itemIndex) {
