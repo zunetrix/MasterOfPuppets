@@ -540,6 +540,27 @@ public class PluginCommandManager : IDisposable {
                 case "peer":
                     Plugin.Ui.PeerMonitorWindow.Toggle();
                     break;
+                case "globaldelay":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop globaldelay <0.00 - 60.00>");
+                        return;
+                    }
+
+                    if (!double.TryParse(
+                            parsedArgs[1],
+                            NumberStyles.Float,
+                            CultureInfo.InvariantCulture,
+                            out var globalDelay)) {
+                        DalamudApi.ChatGui.PrintError("Invalid delay value.");
+                        return;
+                    }
+
+                    globalDelay = Math.Round(globalDelay, 2, MidpointRounding.AwayFromZero);
+                    globalDelay = Math.Clamp(globalDelay, 0.0, 60.0);
+
+                    Plugin.Config.DelayBetweenActions = globalDelay;
+                    Plugin.Config.Save();
+                    break;
                 case "event":
                     if (parsedArgs.Count < 2) {
                         DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop event <name> /mop event stop");

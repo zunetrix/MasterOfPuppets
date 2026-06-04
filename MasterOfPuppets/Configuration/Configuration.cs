@@ -181,7 +181,7 @@ internal class Configuration : IPluginConfiguration {
         // "AutoFaceTargetOnAction",
     };
 
-    public double DelayBetweenActions { get; set; } = 1.00;
+    public double DelayBetweenActions { get; set; } = 0.5;
     public bool AutoSaveMacro { get; set; } = false;
     public string MacroExportPath { get; set; } = DalamudApi.PluginInterface.ConfigDirectory.FullName ?? string.Empty;
     public MacroImportMode MacroImportMode { get; set; } = MacroImportMode.AppendAll;
