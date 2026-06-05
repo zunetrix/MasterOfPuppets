@@ -25,14 +25,14 @@ public class DalamudApi {
     [PluginService] public static IObjectTable ObjectTable { get; private set; }
     [PluginService] public static ITargetManager TargetManager { get; private set; }
     [PluginService] public static ICondition Condition { get; private set; } = null;
+    [PluginService] public static IDtrBar DtrBar { get; set; } = null;
     // [PluginService] public static IUnlockState UnlockState { get; private set; } = null;
-    // hook
-    [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null;
-    [PluginService] public static IAddonLifecycle AddonLifecycle { get; private set; } = null;
+    // [PluginService] public static IAddonLifecycle AddonLifecycle { get; private set; } = null;
     // [PluginService] public static IKeyState KeyState { get; private set; }
     // [PluginService] public static IGameGui GameGui { get; private set; } = null;
     // [PluginService] public static IToastGui ToastGui { get; private set; } = null;
-    // Chat
+    // hook
+    [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null;
     [PluginService] public static ISigScanner SigScanner { get; private set; } = null;
     [PluginService] public static ISeStringEvaluator SeStringEvaluator { get; private set; } = null;
 

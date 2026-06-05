@@ -1,10 +1,8 @@
 using System;
 using System.Linq;
-
 namespace MasterOfPuppets.Ipc;
 
 internal partial class IpcProvider {
-
     public void EnableKeyboardBroadcast() => SetKeyboardBroadcast(true);
     public void DisableKeyboardBroadcast() => SetKeyboardBroadcast(false);
 
@@ -24,6 +22,8 @@ internal partial class IpcProvider {
             Plugin.KeyboardBroadcastManager.StopCapture();
             DalamudApi.ChatGui.Print("", "MOP: Key Broadcast OFF", Style.Colors.SeRed);
         }
+
+        Plugin.DtrBarProvider.Update();
 
         var payload = new byte[] { enable ? (byte)1 : (byte)0 };
         BroadCast(IpcMessage.Create(IpcMessageType.KeyboardBroadcastToggle, payload).Serialize());

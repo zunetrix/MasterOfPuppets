@@ -36,6 +36,7 @@ public class Plugin : IDalamudPlugin {
     internal GameWindowManager GameWindowManager { get; }
     internal KeyboardBroadcastManager KeyboardBroadcastManager { get; }
     internal AutoLoginManager AutoLoginManager { get; }
+    internal DtrBarProvider DtrBarProvider { get; }
 
     public Plugin(IDalamudPluginInterface pluginInterface) {
         pluginInterface.Create<DalamudApi>();
@@ -69,6 +70,8 @@ public class Plugin : IDalamudPlugin {
         GameWindowManager = new GameWindowManager(this);
         KeyboardBroadcastManager = new KeyboardBroadcastManager(this);
         AutoLoginManager = new AutoLoginManager(this);
+        // load last
+        DtrBarProvider = new DtrBarProvider(this);
 
         OnLanguageChange(DalamudApi.PluginInterface.UiLanguage);
         DalamudApi.PluginInterface.LanguageChanged += OnLanguageChange;
@@ -168,6 +171,7 @@ public class Plugin : IDalamudPlugin {
         AutoLoginManager.Dispose();
         GameWindowManager.Dispose();
         GameRenderManager.Dispose();
+        DtrBarProvider.Dispose();
         Ui.Dispose();
     }
 }

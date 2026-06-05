@@ -1,5 +1,6 @@
 using System;
 
+using Dalamud.Game.Gui.Dtr;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Debug;

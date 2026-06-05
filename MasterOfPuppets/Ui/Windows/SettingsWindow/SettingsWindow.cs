@@ -297,6 +297,14 @@ public class SettingsWindow : Window {
             if (ImGui.Button("Key Filter##KbFilterBtn"))
                 ImGui.OpenPopup(KbFilterPopupId);
 
+            var showKeyBroadcastBarInfo = Plugin.Config.ShowKeyBroadcastBarInfo;
+            if (ImGui.Checkbox("Show key broadcast in server bar", ref showKeyBroadcastBarInfo)) {
+                Plugin.Config.ShowKeyBroadcastBarInfo = showKeyBroadcastBarInfo;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+                Plugin.DtrBarProvider.Update();
+            }
+
             DrawKeyboardFilterPopup();
         }
 
