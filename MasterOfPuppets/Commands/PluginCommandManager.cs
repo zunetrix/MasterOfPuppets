@@ -584,6 +584,9 @@ public class PluginCommandManager : IDisposable {
                         runner.Start(Plugin);
                     }
                     break;
+                case "mapflag":
+                    Plugin.IpcProvider.BroadcastMyFlagMapMarker();
+                    break;
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");
                     break;

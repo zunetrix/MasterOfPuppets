@@ -94,4 +94,5 @@ public enum IpcMessageType {
     SetGameSettingsObjectQuantity,
     SetGameSettingsAlwaysInput,
     ApplyGameSettingsProfile,
+    SetFlagMapMarker,
 }
