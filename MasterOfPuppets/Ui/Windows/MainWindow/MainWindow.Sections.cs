@@ -31,9 +31,9 @@ public partial class MainWindow : Window {
         float btnW = (availW - (cols - 1) * ImGui.GetStyle().ItemSpacing.X) / cols;
 
         DrawCmdSection("PARTY ACTIONS", cols, btnW, [
-            new(FontAwesomeIcon.UserPlus,                      "Invite To Party", "/mop invite",            Style.Components.ButtonSuccessNormal, () => Plugin.IpcProvider.RequestInviteAllToParty()),
+            new(FontAwesomeIcon.UserPlus,                      "Invite To Party",     "/mop invite",            Style.Components.ButtonSuccessNormal, () => Plugin.IpcProvider.RequestInviteAllToParty()),
             new(FontAwesomeIcon.UserMinus,                     "Disband Party",       "/mop disband",           Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.RequestDisbandParty()),
-            new(FontAwesomeIcon.PersonRays,                    "Get Party Leader",    "/mop getleader",         Style.Components.ButtonBlueNormal, () => Plugin.IpcProvider.RequestPartyLeader()),
+            new(FontAwesomeIcon.PersonRays,                    "Get Party Leader",    "/mop getleader",         Style.Components.ButtonBlueNormal,    () => Plugin.IpcProvider.RequestPartyLeader()),
             new(FontAwesomeIcon.PersonWalkingArrowLoopLeft,    "Abandon Duty",        "/mop abandonduty",       Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.ExecuteAbandonDuty()),
         ]);
 
@@ -47,18 +47,18 @@ public partial class MainWindow : Window {
         ImGui.Spacing();
 
         DrawCmdSection("MOVEMENT", cols, btnW, [
-            new(FontAwesomeIcon.Ban,                               "Stop Movement",     "/mop movetomytarget", Style.Components.ButtonDangerNormal, () => Plugin.IpcProvider.StopMovement()),
-            new(FontAwesomeIcon.PersonWalkingArrowRight,           "Move To My Target", "/mop movetomytarget", Style.Components.ButtonBlueNormal, () => Plugin.IpcProvider.ExecuteMoveToMyTarget()),
-            new(FontAwesomeIcon.PersonArrowDownToLine,             "Stack On Me",       "/mop stackonme",      Style.Components.ButtonBlueNormal, () => Plugin.IpcProvider.ExecuteStackOnMe()),
-            new(FontAwesomeIcon.PersonWalkingDashedLineArrowRight, "Toggle Walking",    "/mop togglewalk",     Style.Components.ButtonBlueNormal, () => Plugin.IpcProvider.ExecuteToggleWalking()),
+            new(FontAwesomeIcon.Ban,                               "Stop Movement",     "/mop stopmove",       Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.StopMovement()),
+            new(FontAwesomeIcon.PersonWalkingArrowRight,           "Move To My Target", "/mop movetomytarget", Style.Components.ButtonBlueNormal,    () => Plugin.IpcProvider.ExecuteMoveToMyTarget()),
+            new(FontAwesomeIcon.PersonArrowDownToLine,             "Stack On Me",       "/mop stackonme",      Style.Components.ButtonBlueNormal,    () => Plugin.IpcProvider.ExecuteStackOnMe()),
+            new(FontAwesomeIcon.PersonWalkingDashedLineArrowRight, "Toggle Walking",    "/mop togglewalk",     Style.Components.ButtonBlueNormal,    () => Plugin.IpcProvider.ExecuteToggleWalking()),
         ]);
 
         ImGui.Spacing();
 
         DrawCmdSection("TARGET", cols, btnW, [
-            new(FontAwesomeIcon.Crosshairs,       "Target My Target",     "/mop targetmytarget",        Style.Components.ButtonBlueNormal, () => Plugin.IpcProvider.ExecuteTargetMyTarget()),
-            new(FontAwesomeIcon.PersonChalkboard, "Interact With My Target", "/mop interactwithmytarget",  Style.Components.ButtonBlueNormal, () => Plugin.IpcProvider.ExecuteInteractWithMyTarget()),
-            new(FontAwesomeIcon.Times,            "Clear Target",         "/mop targetclear",           Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.ExecuteTargetClear()),
+            new(FontAwesomeIcon.Crosshairs,       "Target My Target",        "/mop targetmytarget",        Style.Components.ButtonBlueNormal,    () => Plugin.IpcProvider.ExecuteTargetMyTarget()),
+            new(FontAwesomeIcon.PersonChalkboard, "Interact With My Target", "/mop interactwithmytarget",  Style.Components.ButtonBlueNormal,    () => Plugin.IpcProvider.ExecuteInteractWithMyTarget()),
+            new(FontAwesomeIcon.Times,            "Clear Target",            "/mop targetclear",           Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.ExecuteTargetClear()),
         ]);
 
         ImGui.Spacing();

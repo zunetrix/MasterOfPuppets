@@ -54,6 +54,17 @@ public static unsafe class GameFunctions {
         pm->Move.Interpolation.DesiredRotation = angle.Rad;
     }
 
+    // TODO: find why this simply use wont work with move/formation
+    public static void FaceDirectionCS(Angle angle) {
+        var player = DalamudApi.ObjectTable.LocalPlayer;
+        if (player == null) return;
+
+        var csPlayer = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)player.Address;
+        if (csPlayer == null) return;
+        csPlayer->SetRotation(angle.Rad);
+    }
+
+
     public static void FaceDirectionDeferred(Angle angle) {
         DalamudApi.Framework.RunOnTick(() => {
             if (DalamudApi.ObjectTable.LocalPlayer == null) return;
