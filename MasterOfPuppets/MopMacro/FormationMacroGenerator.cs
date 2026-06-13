@@ -128,7 +128,11 @@ public static class FormationMacroGenerator {
         var waitOrder = SequenceFrom(destinations[0].Index, destinations, step, options.Reverse);
         var waits = SegmentDelays(waitOrder, anchor, options);
         var movementMode = SimpleInputMovement.FormatMode(options.FormationMoveMode);
-        var anchorMode = options.FormationMoveAnchorMode == FormationMoveAnchorMode.Target ? " target" : string.Empty;
+        var anchorMode = options.FormationMoveAnchorMode switch {
+            FormationMoveAnchorMode.FocusTarget => " ftarget",
+            FormationMoveAnchorMode.Target => " target",
+            _ => string.Empty,
+        };
         var lines = new List<string>();
         for (var i = 0; i < waits.Count; i++) {
             lines.Add($"/mopformationmove \"{ArgumentParser.EscapeQuotedArgument(formationName)}\" {direction} {step} {i} {movementMode}{anchorMode}");

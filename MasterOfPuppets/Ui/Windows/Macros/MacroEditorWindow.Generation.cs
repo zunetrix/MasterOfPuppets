@@ -46,7 +46,7 @@ public partial class MacroEditorWindow {
     private static readonly string[] MacroGeneratorDirectionNames = ["Forward through point order", "Backward through point order"];
     private static readonly string[] MacroGeneratorExistingFormationCommandStyleNames = ["Broadcast formation move", "Local point commands"];
     private static readonly string[] MacroGeneratorMovementModeNames = ["Continuous", "Precise"];
-    private static readonly string[] MacroGeneratorBroadcastAnchorModeNames = ["Controller", "Controller target"];
+    private static readonly string[] MacroGeneratorBroadcastAnchorModeNames = ["Controller", "Controller target", "Controller focus target"];
     private static readonly string[] MacroGeneratorLocalPointAnchorModeNames = ["Point 1", "Point 1 target"];
 
     private void DrawMacroCommandGeneratorModal() {
@@ -306,11 +306,12 @@ public partial class MacroEditorWindow {
             var anchorNames = localPointCommands
                 ? MacroGeneratorLocalPointAnchorModeNames
                 : MacroGeneratorBroadcastAnchorModeNames;
+            _macroGenFormationMoveAnchorMode = Math.Clamp(_macroGenFormationMoveAnchorMode, 0, anchorNames.Length - 1);
             DrawMacroGeneratorLabel(
                 "Origin",
                 localPointCommands
                     ? "Where point 1 is placed. Run local point macros from point 1."
-                    : "Where the controller places the formation.");
+                    : "Where the controller places the formation. Focus target only works for broadcast commands.");
             ImGui.SetNextItemWidth(160);
             ImGui.Combo("##macroGenFormationMoveAnchor", ref _macroGenFormationMoveAnchorMode, anchorNames, anchorNames.Length);
         }
@@ -436,7 +437,11 @@ public partial class MacroEditorWindow {
                     1 => SimpleMovementMode.Precise,
                     _ => SimpleMovementMode.Continuous,
                 },
-                FormationMoveAnchorMode = _macroGenFormationMoveAnchorMode == 1 ? FormationMoveAnchorMode.Target : FormationMoveAnchorMode.Self,
+                FormationMoveAnchorMode = _macroGenFormationMoveAnchorMode switch {
+                    2 => FormationMoveAnchorMode.FocusTarget,
+                    1 => FormationMoveAnchorMode.Target,
+                    _ => FormationMoveAnchorMode.Self,
+                },
                 ClosedLoop = true,
                 UseMatchingGroups = false,
                 PetActionCommand = string.IsNullOrWhiteSpace(_macroGenPetActionCommand) ? "/pac \"Place\" <t>" : _macroGenPetActionCommand.Trim(),

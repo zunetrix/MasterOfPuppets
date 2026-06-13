@@ -169,6 +169,7 @@ public class MacroTests
 
     [Theory]
     [InlineData(FormationAnchorFailureKind.NoTargetSelected, true)]
+    [InlineData(FormationAnchorFailureKind.NoFocusTargetSelected, true)]
     [InlineData(FormationAnchorFailureKind.AnchorNameEmpty, true)]
     [InlineData(FormationAnchorFailureKind.AnchorNotVisible, true)]
     [InlineData(FormationAnchorFailureKind.ConfigurationError, false)]
@@ -251,6 +252,42 @@ public class MacroTests
     }
 
     [Fact]
+    public void ParseFormationMoveCommandArgs_Accepts_Ftarget_Anchor()
+    {
+        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 ftarget");
+
+        Assert.NotNull(result);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+        Assert.Equal(FormationMoveAnchorMode.FocusTarget, result.AnchorMode);
+        Assert.Equal(FormationAnchorKind.FocusTarget, result.Anchor.Kind);
+    }
+
+    [Fact]
+    public void ParseFormationMoveCommandArgs_Accepts_Focustarget_Anchor()
+    {
+        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 focustarget");
+
+        Assert.NotNull(result);
+        Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
+        Assert.Equal(FormationMoveAnchorMode.FocusTarget, result.AnchorMode);
+        Assert.Equal(FormationAnchorKind.FocusTarget, result.Anchor.Kind);
+    }
+
+    [Fact]
+    public void ParseFormationMoveCommandArgs_Accepts_Precise_Ftarget_In_Either_Order()
+    {
+        var ftargetLast = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 precise ftarget");
+        var ftargetFirst = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 ftarget precise");
+
+        Assert.NotNull(ftargetLast);
+        Assert.NotNull(ftargetFirst);
+        Assert.Equal(SimpleMovementMode.Precise, ftargetLast.MovementMode);
+        Assert.Equal(FormationMoveAnchorMode.FocusTarget, ftargetLast.AnchorMode);
+        Assert.Equal(SimpleMovementMode.Precise, ftargetFirst.MovementMode);
+        Assert.Equal(FormationMoveAnchorMode.FocusTarget, ftargetFirst.AnchorMode);
+    }
+
+    [Fact]
     public void ParseFormationMoveCommandArgs_Accepts_Precise_Target_In_Either_Order()
     {
         var targetLast = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 precise target");
@@ -321,6 +358,26 @@ public class MacroTests
         Assert.NotNull(self);
         Assert.Equal(MacroHandler.FormationGotoAnchorKind.Target, target.AnchorKind);
         Assert.Equal(MacroHandler.FormationGotoAnchorKind.Self, self.AnchorKind);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Accepts_Ftarget_Anchor()
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 ftarget");
+
+        Assert.NotNull(result);
+        Assert.Equal(MacroHandler.FormationGotoAnchorKind.FocusTarget, result.AnchorKind);
+        Assert.Equal(FormationAnchorKind.FocusTarget, result.Anchor.Kind);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Accepts_Focustarget_Anchor()
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 focustarget");
+
+        Assert.NotNull(result);
+        Assert.Equal(MacroHandler.FormationGotoAnchorKind.FocusTarget, result.AnchorKind);
+        Assert.Equal(FormationAnchorKind.FocusTarget, result.Anchor.Kind);
     }
 
     [Fact]

@@ -14,6 +14,7 @@ public partial class MacroHandler {
     public enum FormationGotoAnchorKind {
         Self,
         Target,
+        FocusTarget,
         Named,
     }
 
@@ -25,9 +26,11 @@ public partial class MacroHandler {
         SimpleMovementMode MovementMode,
         FormationAnchorReference Anchor,
         string? InvalidArgument) {
-        public FormationMoveAnchorMode AnchorMode => Anchor.Kind == FormationAnchorKind.Target
-            ? FormationMoveAnchorMode.Target
-            : FormationMoveAnchorMode.Self;
+        public FormationMoveAnchorMode AnchorMode => Anchor.Kind switch {
+            FormationAnchorKind.FocusTarget => FormationMoveAnchorMode.FocusTarget,
+            FormationAnchorKind.Target => FormationMoveAnchorMode.Target,
+            _ => FormationMoveAnchorMode.Self,
+        };
     }
 
     public sealed record FormationGotoCommandOptions(
@@ -37,6 +40,7 @@ public partial class MacroHandler {
         SimpleMovementMode MovementMode,
         string? InvalidArgument) {
         public FormationGotoAnchorKind AnchorKind => Anchor.Kind switch {
+            FormationAnchorKind.FocusTarget => FormationGotoAnchorKind.FocusTarget,
             FormationAnchorKind.Target => FormationGotoAnchorKind.Target,
             FormationAnchorKind.Named => FormationGotoAnchorKind.Named,
             _ => FormationGotoAnchorKind.Self,
@@ -197,6 +201,11 @@ public partial class MacroHandler {
 
         if (options.PointIndex < 0) {
             DalamudApi.PluginLog.Warning($"[mopformationgoto] invalid point number: \"{options.InvalidArgument}\"");
+            return;
+        }
+
+        if (options.Anchor.Kind == FormationAnchorKind.FocusTarget) {
+            DalamudApi.PluginLog.Warning("[mopformationgoto] focus target anchor is not supported for local point commands");
             return;
         }
 

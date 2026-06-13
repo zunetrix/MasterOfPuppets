@@ -133,6 +133,7 @@ public static class FormationLocalMovementExecutor {
 
     public static bool IsTransientAnchorFailure(FormationAnchorFailureKind failureKind) =>
         failureKind is FormationAnchorFailureKind.NoTargetSelected
+            or FormationAnchorFailureKind.NoFocusTargetSelected
             or FormationAnchorFailureKind.AnchorNameEmpty
             or FormationAnchorFailureKind.AnchorNotVisible;
 }
