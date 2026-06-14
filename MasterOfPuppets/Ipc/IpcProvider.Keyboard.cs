@@ -23,7 +23,7 @@ internal partial class IpcProvider {
             DalamudApi.ChatGui.Print("", "MOP: Key Broadcast OFF", Style.Colors.SeRed);
         }
 
-        Plugin.DtrBarProvider.Update();
+        Plugin.ServerBarProvider.Update();
 
         var payload = new byte[] { enable ? (byte)1 : (byte)0 };
         BroadCast(IpcMessage.Create(IpcMessageType.KeyboardBroadcastToggle, payload).Serialize());

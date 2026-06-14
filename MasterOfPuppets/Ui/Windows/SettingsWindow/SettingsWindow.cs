@@ -302,7 +302,7 @@ public class SettingsWindow : Window {
                 Plugin.Config.ShowKeyBroadcastBarInfo = showKeyBroadcastBarInfo;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
-                Plugin.DtrBarProvider.Update();
+                Plugin.ServerBarProvider.Update();
             }
 
             DrawKeyboardFilterPopup();
