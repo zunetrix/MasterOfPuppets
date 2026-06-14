@@ -9,12 +9,14 @@ public enum FormationAnchorKind {
     Default,
     Self,
     Target,
+    FocusTarget,
     Named,
 }
 
 public enum FormationAnchorFailureKind {
     None,
     NoTargetSelected,
+    NoFocusTargetSelected,
     AnchorNameEmpty,
     AnchorNotVisible,
     ConfigurationError,
@@ -25,6 +27,7 @@ public sealed record FormationAnchorReference(FormationAnchorKind Kind, string? 
     public static readonly FormationAnchorReference Default = new(FormationAnchorKind.Default);
     public static readonly FormationAnchorReference Self = new(FormationAnchorKind.Self);
     public static readonly FormationAnchorReference Target = new(FormationAnchorKind.Target);
+    public static readonly FormationAnchorReference FocusTarget = new(FormationAnchorKind.FocusTarget);
 
     public static FormationAnchorReference Named(string name) => new(FormationAnchorKind.Named, name);
 
@@ -75,6 +78,9 @@ public static class FormationAnchorArgumentParser {
                 anchor = FormationAnchorReference.Self;
             } else if (candidate.Equals("target", StringComparison.OrdinalIgnoreCase)) {
                 anchor = FormationAnchorReference.Target;
+            } else if (candidate.Equals("ftarget", StringComparison.OrdinalIgnoreCase)
+                || candidate.Equals("focustarget", StringComparison.OrdinalIgnoreCase)) {
+                anchor = FormationAnchorReference.FocusTarget;
             } else {
                 anchor = FormationAnchorReference.Named(candidate);
             }
@@ -88,6 +94,7 @@ public static class FormationAnchorArgumentParser {
             FormationAnchorKind.Default => string.Empty,
             FormationAnchorKind.Self => "self",
             FormationAnchorKind.Target => "target",
+            FormationAnchorKind.FocusTarget => "ftarget",
             FormationAnchorKind.Named => $"\"{Util.ArgumentParser.EscapeQuotedArgument(anchor.Name ?? string.Empty)}\"",
             _ => string.Empty,
         };

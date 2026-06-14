@@ -180,7 +180,9 @@ internal partial class IpcProvider {
             Math.Max(1, step).ToString(CultureInfo.InvariantCulture),
             sequenceIndex.ToString(CultureInfo.InvariantCulture),
             SimpleInputMovement.FormatMode(movementMode),
-            effectiveAnchor.Kind == FormationAnchorKind.Target ? "target" : "self").Serialize(), includeSelf: true);
+            effectiveAnchor.Kind == FormationAnchorKind.FocusTarget ? "ftarget"
+                : effectiveAnchor.Kind == FormationAnchorKind.Target ? "target"
+                : "self").Serialize(), includeSelf: true);
     }
 
     [IpcHandle(IpcMessageType.ExecuteFormationMove)]

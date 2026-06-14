@@ -204,6 +204,12 @@ internal class ChatWatcher : IDisposable {
             return;
         }
 
+        if (anchor.Anchor.Kind == FormationAnchorKind.FocusTarget) {
+            DalamudApi.ChatGui.PrintError(
+                "Focus target anchor is not supported for chat-sync formation commands. Use /mopformationmove or /mop formation instead.");
+            return;
+        }
+
         _ = DalamudApi.Framework.RunOnFrameworkThread(() =>
             FormationLocalMovementExecutor.ExecuteChatSyncedFormation(
                 Plugin,

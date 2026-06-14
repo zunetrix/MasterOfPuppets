@@ -450,6 +450,31 @@ public class FormationMacroGeneratorTests {
     }
 
     [Fact]
+    public void GenerateLoopMacro_ExistingFormationMovement_EmitsFtargetAnchor() {
+        var formation = BuildEightPointFormation();
+
+        var result = FormationMacroGenerator.GenerateLoopMacroWithDiagnostics(
+            formation,
+            new FormationMacroGeneratorOptions {
+                Mode = FormationMacroGeneratorMode.Movement,
+                AnchorPointIndex = 0,
+                UseFormationMoveCommand = true,
+                FormationMoveName = "Circle",
+                OriginContentId = 100,
+                FormationMoveMode = SimpleMovementMode.Precise,
+                FormationMoveAnchorMode = FormationMoveAnchorMode.FocusTarget,
+            });
+
+        var command = Assert.Single(result.Macro.Commands);
+        var moves = command.Actions
+            .Split('\n')
+            .Where(line => line.StartsWith("/mopformationmove"))
+            .ToArray();
+
+        Assert.Equal("/mopformationmove \"Circle\" forward 1 0 precise ftarget", moves[0]);
+    }
+
+    [Fact]
     public void GenerateLoopMacro_ExistingFormationLocalPointMovement_EmitsPointOneTargetAndPreciseOptions() {
         var formation = BuildEightPointFormation();
 

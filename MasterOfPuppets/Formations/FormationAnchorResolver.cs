@@ -52,6 +52,20 @@ public static class FormationAnchorResolver {
                     null,
                     player.TargetObject.Name.TextValue);
                 return true;
+            case FormationAnchorKind.FocusTarget:
+                var focusTarget = DalamudApi.TargetManager.FocusTarget;
+                if (focusTarget == null) {
+                    failureReason = "no focus target selected";
+                    failureKind = FormationAnchorFailureKind.NoFocusTargetSelected;
+                    return false;
+                }
+
+                resolved = new FormationResolvedAnchor(
+                    focusTarget.Position,
+                    focusTarget.Rotation,
+                    null,
+                    focusTarget.Name.TextValue);
+                return true;
             case FormationAnchorKind.Named:
                 return TryResolveNamed(anchor.Name ?? string.Empty, out resolved, out failureReason, out failureKind);
             default:
