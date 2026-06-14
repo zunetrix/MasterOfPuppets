@@ -266,7 +266,7 @@ public static partial class MopCommandsHelper {
         new MopAction {
             Category = MopActionCategory.MacroAction,
             SubCategory = MopActionSubCategory.Movement,
-            TextCommand = "/mopformationmove \"Formation Name\" [forward|backward] [stride] [sequenceIndex] [continuous|precise] [self|target]",
+            TextCommand = "/mopformationmove \"Formation Name\" [forward|backward] [stride] [sequenceIndex] [continuous|precise] [self|target|ftarget]",
             SuggestionCommand = "/mopformationmove \"Formation Name\" forward 1 0",
             Example = """
             /mopformationmove "Circle" forward 1 0

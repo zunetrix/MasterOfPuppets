@@ -98,11 +98,12 @@ public static partial class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop formation \"Formation Name\" [self|target] [continuous|precise]",
+            TextCommand = "/mop formation \"Formation Name\" [self|target|ftarget] [continuous|precise]",
             SuggestionCommand = "/mop formation ",
             Example = """
             /mop formation "My Formation"
             /mop formation "My Formation" target
+            /mop formation "My Formation" ftarget
             /mop formation "My Formation" precise
             /mop formation "My Formation" target precise
             """,
