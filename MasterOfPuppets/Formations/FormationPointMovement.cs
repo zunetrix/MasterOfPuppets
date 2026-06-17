@@ -9,16 +9,17 @@ namespace MasterOfPuppets.Formations;
 public static class FormationPointMovement {
     public const int AnchorPointIndex = 0;
 
-    public static (Vector3 Position, float Rotation)? BuildPointOneAnchoredWorldMove(
+    public static (Vector3 Position, float Rotation)? BuildAnchoredWorldMove(
         Formation formation,
         int destinationPointIndex,
+        int anchorPointIndex,
         Vector3 anchorWorldPosition,
         float anchorWorldRotation) {
-        if (!formation.Points.IndexExists(AnchorPointIndex) || !formation.Points.IndexExists(destinationPointIndex))
+        if (!formation.Points.IndexExists(anchorPointIndex) || !formation.Points.IndexExists(destinationPointIndex))
             return null;
 
         return FormationMath.GetMopRelativeWorld(
-            formation.Points[AnchorPointIndex],
+            formation.Points[anchorPointIndex],
             formation.Points[destinationPointIndex],
             anchorWorldPosition,
             anchorWorldRotation);
@@ -57,6 +58,6 @@ public static class FormationPointMovement {
         destinationPointIndex = FormationExecution.GetAssignedPointIndex(formation, destinationContentId, groups);
         return destinationPointIndex < 0
             ? null
-            : BuildPointOneAnchoredWorldMove(formation, destinationPointIndex, anchorWorldPosition, anchorWorldRotation);
+            : BuildAnchoredWorldMove(formation, destinationPointIndex, AnchorPointIndex, anchorWorldPosition, anchorWorldRotation);
     }
 }

@@ -39,6 +39,18 @@ public static class FormationAnchorResolver {
                     DalamudApi.PlayerState.ContentId,
                     GetLocalPlayerNameWorld());
                 return true;
+            case FormationAnchorKind.Sender:
+                if (string.IsNullOrWhiteSpace(anchor.Name)) {
+                    failureReason = "sender name is empty";
+                    failureKind = FormationAnchorFailureKind.AnchorNameEmpty;
+                    return false;
+                }
+
+                if (!TryResolveNamed(anchor.Name, out resolved, out failureReason, out failureKind))
+                    return false;
+
+                resolved = resolved with { ContentId = ResolveContentIdFromName(plugin, resolved.Name) };
+                return true;
             case FormationAnchorKind.Target:
                 if (player.TargetObject == null) {
                     failureReason = "no target selected";
@@ -67,7 +79,11 @@ public static class FormationAnchorResolver {
                     focusTarget.Name.TextValue);
                 return true;
             case FormationAnchorKind.Named:
-                return TryResolveNamed(anchor.Name ?? string.Empty, out resolved, out failureReason, out failureKind);
+                if (!TryResolveNamed(anchor.Name ?? string.Empty, out resolved, out failureReason, out failureKind))
+                    return false;
+
+                resolved = resolved with { ContentId = ResolveContentIdFromName(plugin, resolved.Name) };
+                return true;
             default:
                 failureReason = $"unsupported anchor kind {anchor.Kind}";
                 failureKind = FormationAnchorFailureKind.Unsupported;
@@ -171,6 +187,54 @@ public static class FormationAnchorResolver {
 
         var world = DalamudApi.PlayerState.HomeWorld.Value.Name.ToString();
         return string.IsNullOrWhiteSpace(world) ? name : $"{name}@{world}";
+    }
+
+    private static ulong? ResolveContentIdFromName(Plugin plugin, string actorFullName) {
+        if (string.IsNullOrWhiteSpace(actorFullName))
+            return null;
+
+        ulong? bestMatch = null;
+        var bestScore = -1;
+
+        foreach (var character in plugin.Config.Characters) {
+            if (string.IsNullOrWhiteSpace(character.Name))
+                continue;
+
+            var score = CharacterNameMatchScore(character.Name, actorFullName);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = character.Cid;
+            }
+        }
+
+        return bestScore >= 0 ? bestMatch : null;
+    }
+
+    private static int CharacterNameMatchScore(string configName, string actorName) {
+        if (string.Equals(configName, actorName, StringComparison.OrdinalIgnoreCase))
+            return int.MaxValue;
+
+        var configBaseName = GetBaseCharacterName(configName);
+        var actorBaseName = GetBaseCharacterName(actorName);
+
+        if (string.Equals(configBaseName, actorBaseName, StringComparison.OrdinalIgnoreCase))
+            return int.MaxValue - 1;
+
+        if (actorBaseName.Contains(configBaseName, StringComparison.OrdinalIgnoreCase))
+            return configBaseName.Length;
+
+        if (configBaseName.Contains(actorBaseName, StringComparison.OrdinalIgnoreCase))
+            return actorBaseName.Length;
+
+        return -1;
+    }
+
+    private static string GetBaseCharacterName(string fullName) {
+        if (string.IsNullOrWhiteSpace(fullName))
+            return string.Empty;
+
+        var atIndex = fullName.LastIndexOf('@');
+        return atIndex >= 0 ? fullName[..atIndex].Trim() : fullName.Trim();
     }
 
     private sealed record AnchorCandidate(IGameObject Actor, string Name, string FullName);

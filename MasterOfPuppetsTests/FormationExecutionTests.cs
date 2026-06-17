@@ -219,9 +219,10 @@ public class FormationExecutionTests
             ],
         };
 
-        var move = FormationPointMovement.BuildPointOneAnchoredWorldMove(
+        var move = FormationPointMovement.BuildAnchoredWorldMove(
             formation,
             destinationPointIndex: 1,
+            anchorPointIndex: FormationPointMovement.AnchorPointIndex,
             anchorWorldPosition: new Vector3(10f, 0f, 20f),
             anchorWorldRotation: MathF.PI / 2f);
 
@@ -249,9 +250,10 @@ public class FormationExecutionTests
             formation.Points[1],
             anchorPosition,
             anchorRotation);
-        var helper = FormationPointMovement.BuildPointOneAnchoredWorldMove(
+        var helper = FormationPointMovement.BuildAnchoredWorldMove(
             formation,
             destinationPointIndex: 1,
+            anchorPointIndex: FormationPointMovement.AnchorPointIndex,
             anchorPosition,
             anchorRotation);
 
@@ -319,6 +321,78 @@ public class FormationExecutionTests
         AssertClose(12f, move.Value.Position.X);
         AssertClose(20f, move.Value.Position.Z);
         AssertClose(0f, move.Value.Rotation);
+    }
+
+    [Fact]
+    public void FormationPointMovement_UsesFlexibleAnchorPoint() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = new Vector3(0f, 0f, 0f), Angle = 0f },
+                new FormationPoint { Offset = new Vector3(0f, 0f, 2f), Angle = 180f },
+                new FormationPoint { Offset = new Vector3(2f, 0f, 0f), Angle = 90f },
+            ],
+        };
+
+        var move = FormationPointMovement.BuildAnchoredWorldMove(
+            formation,
+            destinationPointIndex: 1,
+            anchorPointIndex: 2,
+            anchorWorldPosition: new Vector3(10f, 0f, 20f),
+            anchorWorldRotation: 0f);
+
+        Assert.NotNull(move);
+        AssertClose(8f, move.Value.Position.X);
+        AssertClose(22f, move.Value.Position.Z);
+        AssertClose(MathF.PI / 2f, move.Value.Rotation);
+    }
+
+    [Fact]
+    public void FormationPointMovement_FlexibleAnchor_KeepsAnchorAtItsOwnPosition() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = new Vector3(0f, 0f, 0f), Angle = 0f },
+                new FormationPoint { Offset = new Vector3(0f, 0f, 2f), Angle = 180f },
+                new FormationPoint { Offset = new Vector3(2f, 0f, 0f), Angle = 90f },
+            ],
+        };
+
+        var anchorPosition = new Vector3(10f, 0f, 20f);
+        var anchorRotation = MathF.PI / 4f;
+
+        var move = FormationPointMovement.BuildAnchoredWorldMove(
+            formation,
+            destinationPointIndex: 2,
+            anchorPointIndex: 2,
+            anchorWorldPosition: anchorPosition,
+            anchorWorldRotation: anchorRotation);
+
+        Assert.NotNull(move);
+        AssertClose(anchorPosition.X, move.Value.Position.X);
+        AssertClose(anchorPosition.Z, move.Value.Position.Z);
+        AssertClose(anchorRotation, move.Value.Rotation);
+    }
+
+    [Fact]
+    public void FormationAnchorArgumentParser_ParsesSender() {
+        var result = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            ["sender"],
+            FormationAnchorReference.Self);
+
+        Assert.Equal(FormationAnchorKind.Sender, result.Anchor.Kind);
+    }
+
+    [Fact]
+    public void FormationAnchorArgumentParser_DefaultsToSender() {
+        var result = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            [],
+            FormationAnchorReference.Sender);
+
+        Assert.Equal(FormationAnchorKind.Sender, result.Anchor.Kind);
+    }
+
+    [Fact]
+    public void FormationAnchorArgumentParser_FormatsSenderForMacro() {
+        Assert.Equal("sender", FormationAnchorArgumentParser.FormatForMacro(FormationAnchorReference.Sender));
     }
 
     private static void AssertClose(float expected, float actual, float tolerance = 0.0001f) =>

@@ -8,6 +8,7 @@ namespace MasterOfPuppets.Formations;
 public enum FormationAnchorKind {
     Default,
     Self,
+    Sender,
     Target,
     FocusTarget,
     Named,
@@ -26,6 +27,7 @@ public enum FormationAnchorFailureKind {
 public sealed record FormationAnchorReference(FormationAnchorKind Kind, string? Name = null) {
     public static readonly FormationAnchorReference Default = new(FormationAnchorKind.Default);
     public static readonly FormationAnchorReference Self = new(FormationAnchorKind.Self);
+    public static readonly FormationAnchorReference Sender = new(FormationAnchorKind.Sender);
     public static readonly FormationAnchorReference Target = new(FormationAnchorKind.Target);
     public static readonly FormationAnchorReference FocusTarget = new(FormationAnchorKind.FocusTarget);
 
@@ -76,6 +78,8 @@ public static class FormationAnchorArgumentParser {
                 anchor = FormationAnchorReference.Default;
             } else if (candidate.Equals("self", StringComparison.OrdinalIgnoreCase)) {
                 anchor = FormationAnchorReference.Self;
+            } else if (candidate.Equals("sender", StringComparison.OrdinalIgnoreCase)) {
+                anchor = FormationAnchorReference.Sender;
             } else if (candidate.Equals("target", StringComparison.OrdinalIgnoreCase)) {
                 anchor = FormationAnchorReference.Target;
             } else if (candidate.Equals("ftarget", StringComparison.OrdinalIgnoreCase)
@@ -93,6 +97,7 @@ public static class FormationAnchorArgumentParser {
         anchor.Kind switch {
             FormationAnchorKind.Default => string.Empty,
             FormationAnchorKind.Self => "self",
+            FormationAnchorKind.Sender => "sender",
             FormationAnchorKind.Target => "target",
             FormationAnchorKind.FocusTarget => "ftarget",
             FormationAnchorKind.Named => $"\"{Util.ArgumentParser.EscapeQuotedArgument(anchor.Name ?? string.Empty)}\"",

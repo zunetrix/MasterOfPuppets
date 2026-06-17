@@ -198,10 +198,14 @@ internal class ChatWatcher : IDisposable {
 
         var anchor = FormationAnchorArgumentParser.ParseAnchorAndArrival(
             args.Skip(1),
-            FormationAnchorReference.Default);
+            FormationAnchorReference.Sender);
         if (anchor.InvalidArgument != null) {
             DalamudApi.ChatGui.PrintError($"Invalid command argument: {anchor.InvalidArgument}");
             return;
+        }
+
+        if (anchor.Anchor.Kind == FormationAnchorKind.Sender && string.IsNullOrWhiteSpace(anchor.Anchor.Name)) {
+            anchor = anchor with { Anchor = anchor.Anchor with { Name = senderName } };
         }
 
         if (anchor.Anchor.Kind == FormationAnchorKind.FocusTarget) {
