@@ -20,17 +20,39 @@ public partial class FormationWindow {
             ? formation.Points[_selPoint] : null;
 
         var precision = Plugin.Config.FormationMovePrecision;
-        ImGui.Text("Precision");
-        ImGui.SetNextItemWidth(-1);
-        if (ImGui.DragFloat("##FormationPrecisionInput", ref precision, 0.01f, 0.01f, 5f, "%.2f")) {
-            Plugin.Config.FormationMovePrecision = precision;
-            Plugin.Config.Save();
-            Plugin.IpcProvider.SyncConfiguration();
+        using (ImRaii.Group()) {
+            ImGui.Text("Precision");
+            // ImGui.SetNextItemWidth(-1);
+            if (ImGui.DragFloat("##FormationPrecisionInput", ref precision, 0.01f, 0.01f, 5f, "%.2f")) {
+                Plugin.Config.FormationMovePrecision = precision;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+                Plugin.Config.FormationMovePrecision = 0.1f;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.ToolTip("Drag to change, right-click to reset");
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowCircleLeft, "##rotateAssignedPointsBackward", "Rotate Assigned Characters/Groups Backward")) {
+                formation.RotateAssignments(forward: false);
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowCircleRight, "##rotateAssignedPointsForward", "Rotate Assigned Characters/Groups Forward")) {
+                formation.RotateAssignments(forward: true);
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
         }
 
         ImGui.Separator();
 
-        //  Points list
+        // Points list
         ImGui.SetNextItemOpen(true, ImGuiCond.Appearing);
         if (ImGui.CollapsingHeader($"Points ({formation.Points.Count})##fipts")) {
             if (formation.Points.Count == 0) {
@@ -185,7 +207,7 @@ public partial class FormationWindow {
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("Ctrl+Click to clear all points");
         }
 
-        //  Characters
+        // Characters
         if (ImGui.CollapsingHeader("Characters##fichars")) {
             if (pt2 == null) {
                 ImGui.TextDisabled("Select a point");
@@ -243,7 +265,7 @@ public partial class FormationWindow {
             }
         }
 
-        //  Groups
+        // Groups
         if (ImGui.CollapsingHeader("Groups##figrps")) {
             if (pt2 == null) {
                 ImGui.TextDisabled("Select a point");
