@@ -398,27 +398,27 @@ public class FormationExecutionTests
     [Fact]
     public void FormationCharacterName_Normalizes_CrossWorld_Separator() {
         Assert.Equal(
-            "Punching Baggins@Diabolos",
-            FormationCharacterName.NormalizeWorldSeparator("Punching Baggins\uE0B2Diabolos"));
+            "Alpha One@ServerA",
+            FormationCharacterName.NormalizeWorldSeparator("Alpha One\uE0B2ServerA"));
     }
 
     [Fact]
     public void FormationCharacterName_Normalizes_CrossWorld_Prefix() {
         Assert.Equal(
-            "Punching Baggins@Diabolos",
-            FormationCharacterName.NormalizeWorldSeparator("Punching Baggins\uE0B1Diabolos"));
+            "Alpha One@ServerA",
+            FormationCharacterName.NormalizeWorldSeparator("Alpha One\uE0B1ServerA"));
     }
 
     [Fact]
     public void FormationCharacterName_Collapses_Repeated_World_Separators() {
         Assert.Equal(
-            "Punching Baggins@Diabolos",
-            FormationCharacterName.NormalizeWorldSeparator("Punching Baggins \uE0B1\uE0B2 Diabolos"));
+            "Alpha One@ServerA",
+            FormationCharacterName.NormalizeWorldSeparator("Alpha One \uE0B1\uE0B2 ServerA"));
     }
 
     [Theory]
-    [InlineData("Kicking Sackins", "Kicking Sackins")]
-    [InlineData("Kicking Sackins@Golem", "Kicking Sackins@Golem")]
+    [InlineData("Bravo Two", "Bravo Two")]
+    [InlineData("Bravo Two@ServerB", "Bravo Two@ServerB")]
     public void FormationCharacterName_Keeps_Normal_Names(string input, string expected) {
         Assert.Equal(expected, FormationCharacterName.NormalizeWorldSeparator(input));
     }
@@ -426,8 +426,8 @@ public class FormationExecutionTests
     [Fact]
     public void FormationCharacterName_Matches_CrossWorld_Sender_To_Configured_Name() {
         var score = FormationCharacterName.MatchScore(
-            "Punching Baggins@Diabolos",
-            "Punching Baggins\uE0B2Diabolos");
+            "Alpha One@ServerA",
+            "Alpha One\uE0B2ServerA");
 
         Assert.Equal(int.MaxValue, score);
     }
@@ -435,8 +435,8 @@ public class FormationExecutionTests
     [Fact]
     public void FormationCharacterName_Matches_SameWorld_Sender_By_Base_Name() {
         var score = FormationCharacterName.MatchScore(
-            "Kicking Sackins@Golem",
-            "Kicking Sackins");
+            "Bravo Two@ServerB",
+            "Bravo Two");
 
         Assert.Equal(int.MaxValue - 1, score);
     }
@@ -444,15 +444,15 @@ public class FormationExecutionTests
     [Fact]
     public void FormationCharacterName_Formats_PlayerPayload_Name_And_World() {
         Assert.Equal(
-            "Punching Baggins@Diabolos",
-            FormationCharacterName.FormatPlayerNameWorld("Punching Baggins", "Diabolos", "ignored"));
+            "Alpha One@ServerA",
+            FormationCharacterName.FormatPlayerNameWorld("Alpha One", "ServerA", "ignored"));
     }
 
     [Fact]
     public void FormationCharacterName_Formats_PlayerPayload_Fallback_When_World_Missing() {
         Assert.Equal(
-            "Punching Baggins@Diabolos",
-            FormationCharacterName.FormatPlayerNameWorld("Punching Baggins", null, "Punching Baggins\uE0B2Diabolos"));
+            "Alpha One@ServerA",
+            FormationCharacterName.FormatPlayerNameWorld("Alpha One", null, "Alpha One\uE0B2ServerA"));
     }
 
     [Fact]
@@ -467,7 +467,7 @@ public class FormationExecutionTests
         var anchorPointIndex = FormationLocalMovementExecutor.ResolveAnchorPointIndex(
             formation,
             groups: null,
-            FormationAnchorReference.Sender with { Name = "Kicking Sackins@Golem" },
+            FormationAnchorReference.Sender with { Name = "Bravo Two@ServerB" },
             anchorCid: 101,
             localCid: 100);
 
