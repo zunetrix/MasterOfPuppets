@@ -5,6 +5,9 @@ using Xunit;
 namespace MasterOfPuppetsTests;
 
 public class AutoLoginDialogMatcherTests {
+    private const string MissingLastLoggedOutReference =
+        "The character you last logged out with in this play environment could not be found on the current data center.Please connect to another data center from the Data Center Selection screen.";
+
     [Fact]
     public void IsMissingLastLoggedOutCharacterSelectOk_MatchesKnownPreLoginDialog() {
         var text = """
@@ -12,7 +15,7 @@ public class AutoLoginDialogMatcherTests {
                    current data center.Please connect to another data center from the Data Center Selection screen.
                    """;
 
-        Assert.True(AutoLoginDialogMatcher.IsMissingLastLoggedOutCharacterSelectOk(text));
+        Assert.True(AutoLoginDialogMatcher.MatchesDialog(text, MissingLastLoggedOutReference));
     }
 
     [Fact]
@@ -22,6 +25,6 @@ public class AutoLoginDialogMatcherTests {
                    Players in queue: 15.
                    """;
 
-        Assert.False(AutoLoginDialogMatcher.IsMissingLastLoggedOutCharacterSelectOk(text));
+        Assert.False(AutoLoginDialogMatcher.MatchesDialog(text, MissingLastLoggedOutReference));
     }
 }
