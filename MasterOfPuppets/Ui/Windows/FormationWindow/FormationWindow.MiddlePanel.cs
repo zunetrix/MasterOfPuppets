@@ -387,7 +387,7 @@ public partial class FormationWindow {
         ImGui.Text(label);
         ImGui.SameLine(150);
         ImGui.SetNextItemWidth(140);
-        ImGui.DragFloat($"##shape_{label}", ref value, 0.1f, 0f, 100f, "%.1f");
+        ImGui.DragFloat($"##shape_{label}", ref value, 0.1f, 0f, 100f, "%.2f");
     }
 
     private static void ShowModalInt(string label, ref int value, int min, int max) {
