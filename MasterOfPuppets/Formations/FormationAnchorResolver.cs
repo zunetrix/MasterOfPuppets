@@ -100,6 +100,7 @@ public static class FormationAnchorResolver {
         failureReason = string.Empty;
         failureKind = FormationAnchorFailureKind.None;
 
+        objectName = FormationCharacterName.NormalizeWorldSeparator(objectName);
         if (string.IsNullOrWhiteSpace(objectName)) {
             failureReason = "anchor name is empty";
             failureKind = FormationAnchorFailureKind.AnchorNameEmpty;
@@ -116,7 +117,10 @@ public static class FormationAnchorResolver {
                     player.HomeWorld.ValueNullable is { } world)
                     fullName = $"{name}@{world.Name}";
 
-                return new AnchorCandidate(actor, name, fullName);
+                return new AnchorCandidate(
+                    actor,
+                    FormationCharacterName.NormalizeWorldSeparator(name),
+                    FormationCharacterName.NormalizeWorldSeparator(fullName));
             })
             .ToList();
 
@@ -181,15 +185,16 @@ public static class FormationAnchorResolver {
     }
 
     private static string GetLocalPlayerNameWorld() {
-        var name = DalamudApi.PlayerState.CharacterName;
+        var name = FormationCharacterName.NormalizeWorldSeparator(DalamudApi.PlayerState.CharacterName);
         if (string.IsNullOrWhiteSpace(name))
             return string.Empty;
 
-        var world = DalamudApi.PlayerState.HomeWorld.Value.Name.ToString();
+        var world = FormationCharacterName.NormalizeWorldSeparator(DalamudApi.PlayerState.HomeWorld.Value.Name.ToString());
         return string.IsNullOrWhiteSpace(world) ? name : $"{name}@{world}";
     }
 
     private static ulong? ResolveContentIdFromName(Plugin plugin, string actorFullName) {
+        actorFullName = FormationCharacterName.NormalizeWorldSeparator(actorFullName);
         if (string.IsNullOrWhiteSpace(actorFullName))
             return null;
 
@@ -200,7 +205,7 @@ public static class FormationAnchorResolver {
             if (string.IsNullOrWhiteSpace(character.Name))
                 continue;
 
-            var score = CharacterNameMatchScore(character.Name, actorFullName);
+            var score = FormationCharacterName.MatchScore(character.Name, actorFullName);
             if (score > bestScore) {
                 bestScore = score;
                 bestMatch = character.Cid;
@@ -208,33 +213,6 @@ public static class FormationAnchorResolver {
         }
 
         return bestScore >= 0 ? bestMatch : null;
-    }
-
-    private static int CharacterNameMatchScore(string configName, string actorName) {
-        if (string.Equals(configName, actorName, StringComparison.OrdinalIgnoreCase))
-            return int.MaxValue;
-
-        var configBaseName = GetBaseCharacterName(configName);
-        var actorBaseName = GetBaseCharacterName(actorName);
-
-        if (string.Equals(configBaseName, actorBaseName, StringComparison.OrdinalIgnoreCase))
-            return int.MaxValue - 1;
-
-        if (actorBaseName.Contains(configBaseName, StringComparison.OrdinalIgnoreCase))
-            return configBaseName.Length;
-
-        if (configBaseName.Contains(actorBaseName, StringComparison.OrdinalIgnoreCase))
-            return actorBaseName.Length;
-
-        return -1;
-    }
-
-    private static string GetBaseCharacterName(string fullName) {
-        if (string.IsNullOrWhiteSpace(fullName))
-            return string.Empty;
-
-        var atIndex = fullName.LastIndexOf('@');
-        return atIndex >= 0 ? fullName[..atIndex].Trim() : fullName.Trim();
     }
 
     private sealed record AnchorCandidate(IGameObject Actor, string Name, string FullName);

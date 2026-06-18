@@ -395,6 +395,104 @@ public class FormationExecutionTests
         Assert.Equal("sender", FormationAnchorArgumentParser.FormatForMacro(FormationAnchorReference.Sender));
     }
 
+    [Fact]
+    public void FormationCharacterName_Normalizes_CrossWorld_Separator() {
+        Assert.Equal(
+            "Punching Baggins@Diabolos",
+            FormationCharacterName.NormalizeWorldSeparator("Punching Baggins\uE0B2Diabolos"));
+    }
+
+    [Fact]
+    public void FormationCharacterName_Normalizes_CrossWorld_Prefix() {
+        Assert.Equal(
+            "Punching Baggins@Diabolos",
+            FormationCharacterName.NormalizeWorldSeparator("Punching Baggins\uE0B1Diabolos"));
+    }
+
+    [Fact]
+    public void FormationCharacterName_Collapses_Repeated_World_Separators() {
+        Assert.Equal(
+            "Punching Baggins@Diabolos",
+            FormationCharacterName.NormalizeWorldSeparator("Punching Baggins \uE0B1\uE0B2 Diabolos"));
+    }
+
+    [Theory]
+    [InlineData("Kicking Sackins", "Kicking Sackins")]
+    [InlineData("Kicking Sackins@Golem", "Kicking Sackins@Golem")]
+    public void FormationCharacterName_Keeps_Normal_Names(string input, string expected) {
+        Assert.Equal(expected, FormationCharacterName.NormalizeWorldSeparator(input));
+    }
+
+    [Fact]
+    public void FormationCharacterName_Matches_CrossWorld_Sender_To_Configured_Name() {
+        var score = FormationCharacterName.MatchScore(
+            "Punching Baggins@Diabolos",
+            "Punching Baggins\uE0B2Diabolos");
+
+        Assert.Equal(int.MaxValue, score);
+    }
+
+    [Fact]
+    public void FormationCharacterName_Matches_SameWorld_Sender_By_Base_Name() {
+        var score = FormationCharacterName.MatchScore(
+            "Kicking Sackins@Golem",
+            "Kicking Sackins");
+
+        Assert.Equal(int.MaxValue - 1, score);
+    }
+
+    [Fact]
+    public void FormationCharacterName_Formats_PlayerPayload_Name_And_World() {
+        Assert.Equal(
+            "Punching Baggins@Diabolos",
+            FormationCharacterName.FormatPlayerNameWorld("Punching Baggins", "Diabolos", "ignored"));
+    }
+
+    [Fact]
+    public void FormationCharacterName_Formats_PlayerPayload_Fallback_When_World_Missing() {
+        Assert.Equal(
+            "Punching Baggins@Diabolos",
+            FormationCharacterName.FormatPlayerNameWorld("Punching Baggins", null, "Punching Baggins\uE0B2Diabolos"));
+    }
+
+    [Fact]
+    public void FormationLocalMovementExecutor_Resolves_Sender_Anchor_Point_From_Cid() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Cids = [100] },
+                new FormationPoint { Cids = [101] },
+            ],
+        };
+
+        var anchorPointIndex = FormationLocalMovementExecutor.ResolveAnchorPointIndex(
+            formation,
+            groups: null,
+            FormationAnchorReference.Sender with { Name = "Kicking Sackins@Golem" },
+            anchorCid: 101,
+            localCid: 100);
+
+        Assert.Equal(1, anchorPointIndex);
+    }
+
+    [Fact]
+    public void FormationLocalMovementExecutor_Falls_Back_To_Point_One_When_Sender_Cid_Is_Unassigned() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Cids = [100] },
+                new FormationPoint { Cids = [101] },
+            ],
+        };
+
+        var anchorPointIndex = FormationLocalMovementExecutor.ResolveAnchorPointIndex(
+            formation,
+            groups: null,
+            FormationAnchorReference.Sender,
+            anchorCid: 999,
+            localCid: 100);
+
+        Assert.Equal(FormationPointMovement.AnchorPointIndex, anchorPointIndex);
+    }
+
     private static void AssertClose(float expected, float actual, float tolerance = 0.0001f) =>
         Assert.InRange(MathF.Abs(expected - actual), 0f, tolerance);
 }

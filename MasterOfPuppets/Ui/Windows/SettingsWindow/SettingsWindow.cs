@@ -394,7 +394,8 @@ public class SettingsWindow : Window {
                 mopformation "formation name"
                 mopstop
 
-            Formation chat sync uses point 1's assigned character as the default live anchor.
+            Formation chat sync uses the chat sender as the default live anchor.
+            Use the default anchor argument to use point 1's assigned character instead.
             All clients need the same formation and the anchor character must be visible.
             """);
 

@@ -53,18 +53,12 @@ public static class FormationLocalMovementExecutor {
             return false;
         }
 
-        var anchorPointIndex = FormationPointMovement.AnchorPointIndex;
+        var anchorPointIndex = ResolveAnchorPointIndex(formation, plugin.Config.CidsGroups, anchor, resolvedAnchor.ContentId, localCid);
         if (anchor.Kind != FormationAnchorKind.Self) {
             var anchorCid = resolvedAnchor.ContentId;
             if (anchorCid == localCid) {
                 DalamudApi.PluginLog.Debug($"[{logPrefix}] local character is the formation anchor for \"{formationName}\"; no movement needed");
                 return true;
-            }
-
-            if (anchorCid.HasValue) {
-                var assignedAnchorPointIndex = FormationExecution.GetAssignedPointIndex(formation, anchorCid.Value, plugin.Config.CidsGroups);
-                if (assignedAnchorPointIndex >= 0)
-                    anchorPointIndex = assignedAnchorPointIndex;
             }
         }
 
@@ -77,6 +71,25 @@ public static class FormationLocalMovementExecutor {
             resolvedAnchor.Rotation,
             movementMode,
             logPrefix);
+    }
+
+    public static int ResolveAnchorPointIndex(
+        Formation formation,
+        System.Collections.Generic.IReadOnlyList<CidGroup>? groups,
+        FormationAnchorReference anchor,
+        ulong? anchorCid,
+        ulong localCid) {
+        if (anchor.Kind == FormationAnchorKind.Self)
+            return FormationPointMovement.AnchorPointIndex;
+
+        if (anchorCid == localCid)
+            return FormationPointMovement.AnchorPointIndex;
+
+        if (!anchorCid.HasValue)
+            return FormationPointMovement.AnchorPointIndex;
+
+        var assignedAnchorPointIndex = FormationExecution.GetAssignedPointIndex(formation, anchorCid.Value, groups);
+        return assignedAnchorPointIndex >= 0 ? assignedAnchorPointIndex : FormationPointMovement.AnchorPointIndex;
     }
 
     public static bool ExecuteAnchoredMove(
