@@ -18,7 +18,14 @@ public static class AutoLoginDialogMatcher {
         if (string.IsNullOrWhiteSpace(text))
             return false;
 
-        return Normalize(text).Contains(Normalize(TextLastLoggedOut.ToString()), StringComparison.OrdinalIgnoreCase);
+        return MatchesDialog(text, TextLastLoggedOut.ToString());
+    }
+
+    public static bool MatchesDialog(string text, string reference) {
+        if (string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(reference))
+            return false;
+
+        return Normalize(text).Contains(Normalize(reference), StringComparison.OrdinalIgnoreCase);
     }
 
     private static string Normalize(string text) =>

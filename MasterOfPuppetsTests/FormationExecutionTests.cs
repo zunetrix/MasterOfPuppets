@@ -219,9 +219,10 @@ public class FormationExecutionTests
             ],
         };
 
-        var move = FormationPointMovement.BuildPointOneAnchoredWorldMove(
+        var move = FormationPointMovement.BuildAnchoredWorldMove(
             formation,
             destinationPointIndex: 1,
+            anchorPointIndex: FormationPointMovement.AnchorPointIndex,
             anchorWorldPosition: new Vector3(10f, 0f, 20f),
             anchorWorldRotation: MathF.PI / 2f);
 
@@ -249,9 +250,10 @@ public class FormationExecutionTests
             formation.Points[1],
             anchorPosition,
             anchorRotation);
-        var helper = FormationPointMovement.BuildPointOneAnchoredWorldMove(
+        var helper = FormationPointMovement.BuildAnchoredWorldMove(
             formation,
             destinationPointIndex: 1,
+            anchorPointIndex: FormationPointMovement.AnchorPointIndex,
             anchorPosition,
             anchorRotation);
 
@@ -319,6 +321,176 @@ public class FormationExecutionTests
         AssertClose(12f, move.Value.Position.X);
         AssertClose(20f, move.Value.Position.Z);
         AssertClose(0f, move.Value.Rotation);
+    }
+
+    [Fact]
+    public void FormationPointMovement_UsesFlexibleAnchorPoint() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = new Vector3(0f, 0f, 0f), Angle = 0f },
+                new FormationPoint { Offset = new Vector3(0f, 0f, 2f), Angle = 180f },
+                new FormationPoint { Offset = new Vector3(2f, 0f, 0f), Angle = 90f },
+            ],
+        };
+
+        var move = FormationPointMovement.BuildAnchoredWorldMove(
+            formation,
+            destinationPointIndex: 1,
+            anchorPointIndex: 2,
+            anchorWorldPosition: new Vector3(10f, 0f, 20f),
+            anchorWorldRotation: 0f);
+
+        Assert.NotNull(move);
+        AssertClose(8f, move.Value.Position.X);
+        AssertClose(22f, move.Value.Position.Z);
+        AssertClose(MathF.PI / 2f, move.Value.Rotation);
+    }
+
+    [Fact]
+    public void FormationPointMovement_FlexibleAnchor_KeepsAnchorAtItsOwnPosition() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = new Vector3(0f, 0f, 0f), Angle = 0f },
+                new FormationPoint { Offset = new Vector3(0f, 0f, 2f), Angle = 180f },
+                new FormationPoint { Offset = new Vector3(2f, 0f, 0f), Angle = 90f },
+            ],
+        };
+
+        var anchorPosition = new Vector3(10f, 0f, 20f);
+        var anchorRotation = MathF.PI / 4f;
+
+        var move = FormationPointMovement.BuildAnchoredWorldMove(
+            formation,
+            destinationPointIndex: 2,
+            anchorPointIndex: 2,
+            anchorWorldPosition: anchorPosition,
+            anchorWorldRotation: anchorRotation);
+
+        Assert.NotNull(move);
+        AssertClose(anchorPosition.X, move.Value.Position.X);
+        AssertClose(anchorPosition.Z, move.Value.Position.Z);
+        AssertClose(anchorRotation, move.Value.Rotation);
+    }
+
+    [Fact]
+    public void FormationAnchorArgumentParser_ParsesSender() {
+        var result = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            ["sender"],
+            FormationAnchorReference.Self);
+
+        Assert.Equal(FormationAnchorKind.Sender, result.Anchor.Kind);
+    }
+
+    [Fact]
+    public void FormationAnchorArgumentParser_DefaultsToSender() {
+        var result = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+            [],
+            FormationAnchorReference.Sender);
+
+        Assert.Equal(FormationAnchorKind.Sender, result.Anchor.Kind);
+    }
+
+    [Fact]
+    public void FormationAnchorArgumentParser_FormatsSenderForMacro() {
+        Assert.Equal("sender", FormationAnchorArgumentParser.FormatForMacro(FormationAnchorReference.Sender));
+    }
+
+    [Fact]
+    public void FormationCharacterName_Normalizes_CrossWorld_Separator() {
+        Assert.Equal(
+            "Alpha One@ServerA",
+            FormationCharacterName.NormalizeWorldSeparator("Alpha One\uE0B2ServerA"));
+    }
+
+    [Fact]
+    public void FormationCharacterName_Normalizes_CrossWorld_Prefix() {
+        Assert.Equal(
+            "Alpha One@ServerA",
+            FormationCharacterName.NormalizeWorldSeparator("Alpha One\uE0B1ServerA"));
+    }
+
+    [Fact]
+    public void FormationCharacterName_Collapses_Repeated_World_Separators() {
+        Assert.Equal(
+            "Alpha One@ServerA",
+            FormationCharacterName.NormalizeWorldSeparator("Alpha One \uE0B1\uE0B2 ServerA"));
+    }
+
+    [Theory]
+    [InlineData("Bravo Two", "Bravo Two")]
+    [InlineData("Bravo Two@ServerB", "Bravo Two@ServerB")]
+    public void FormationCharacterName_Keeps_Normal_Names(string input, string expected) {
+        Assert.Equal(expected, FormationCharacterName.NormalizeWorldSeparator(input));
+    }
+
+    [Fact]
+    public void FormationCharacterName_Matches_CrossWorld_Sender_To_Configured_Name() {
+        var score = FormationCharacterName.MatchScore(
+            "Alpha One@ServerA",
+            "Alpha One\uE0B2ServerA");
+
+        Assert.Equal(int.MaxValue, score);
+    }
+
+    [Fact]
+    public void FormationCharacterName_Matches_SameWorld_Sender_By_Base_Name() {
+        var score = FormationCharacterName.MatchScore(
+            "Bravo Two@ServerB",
+            "Bravo Two");
+
+        Assert.Equal(int.MaxValue - 1, score);
+    }
+
+    [Fact]
+    public void FormationCharacterName_Formats_PlayerPayload_Name_And_World() {
+        Assert.Equal(
+            "Alpha One@ServerA",
+            FormationCharacterName.FormatPlayerNameWorld("Alpha One", "ServerA", "ignored"));
+    }
+
+    [Fact]
+    public void FormationCharacterName_Formats_PlayerPayload_Fallback_When_World_Missing() {
+        Assert.Equal(
+            "Alpha One@ServerA",
+            FormationCharacterName.FormatPlayerNameWorld("Alpha One", null, "Alpha One\uE0B2ServerA"));
+    }
+
+    [Fact]
+    public void FormationLocalMovementExecutor_Resolves_Sender_Anchor_Point_From_Cid() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Cids = [100] },
+                new FormationPoint { Cids = [101] },
+            ],
+        };
+
+        var anchorPointIndex = FormationLocalMovementExecutor.ResolveAnchorPointIndex(
+            formation,
+            groups: null,
+            FormationAnchorReference.Sender with { Name = "Bravo Two@ServerB" },
+            anchorCid: 101,
+            localCid: 100);
+
+        Assert.Equal(1, anchorPointIndex);
+    }
+
+    [Fact]
+    public void FormationLocalMovementExecutor_Falls_Back_To_Point_One_When_Sender_Cid_Is_Unassigned() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Cids = [100] },
+                new FormationPoint { Cids = [101] },
+            ],
+        };
+
+        var anchorPointIndex = FormationLocalMovementExecutor.ResolveAnchorPointIndex(
+            formation,
+            groups: null,
+            FormationAnchorReference.Sender,
+            anchorCid: 999,
+            localCid: 100);
+
+        Assert.Equal(FormationPointMovement.AnchorPointIndex, anchorPointIndex);
     }
 
     private static void AssertClose(float expected, float actual, float tolerance = 0.0001f) =>

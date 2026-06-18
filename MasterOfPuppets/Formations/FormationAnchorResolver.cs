@@ -39,6 +39,18 @@ public static class FormationAnchorResolver {
                     DalamudApi.PlayerState.ContentId,
                     GetLocalPlayerNameWorld());
                 return true;
+            case FormationAnchorKind.Sender:
+                if (string.IsNullOrWhiteSpace(anchor.Name)) {
+                    failureReason = "sender name is empty";
+                    failureKind = FormationAnchorFailureKind.AnchorNameEmpty;
+                    return false;
+                }
+
+                if (!TryResolveNamed(anchor.Name, out resolved, out failureReason, out failureKind))
+                    return false;
+
+                resolved = resolved with { ContentId = ResolveContentIdFromName(plugin, resolved.Name) };
+                return true;
             case FormationAnchorKind.Target:
                 if (player.TargetObject == null) {
                     failureReason = "no target selected";
@@ -67,7 +79,11 @@ public static class FormationAnchorResolver {
                     focusTarget.Name.TextValue);
                 return true;
             case FormationAnchorKind.Named:
-                return TryResolveNamed(anchor.Name ?? string.Empty, out resolved, out failureReason, out failureKind);
+                if (!TryResolveNamed(anchor.Name ?? string.Empty, out resolved, out failureReason, out failureKind))
+                    return false;
+
+                resolved = resolved with { ContentId = ResolveContentIdFromName(plugin, resolved.Name) };
+                return true;
             default:
                 failureReason = $"unsupported anchor kind {anchor.Kind}";
                 failureKind = FormationAnchorFailureKind.Unsupported;
@@ -84,6 +100,7 @@ public static class FormationAnchorResolver {
         failureReason = string.Empty;
         failureKind = FormationAnchorFailureKind.None;
 
+        objectName = FormationCharacterName.NormalizeWorldSeparator(objectName);
         if (string.IsNullOrWhiteSpace(objectName)) {
             failureReason = "anchor name is empty";
             failureKind = FormationAnchorFailureKind.AnchorNameEmpty;
@@ -100,7 +117,10 @@ public static class FormationAnchorResolver {
                     player.HomeWorld.ValueNullable is { } world)
                     fullName = $"{name}@{world.Name}";
 
-                return new AnchorCandidate(actor, name, fullName);
+                return new AnchorCandidate(
+                    actor,
+                    FormationCharacterName.NormalizeWorldSeparator(name),
+                    FormationCharacterName.NormalizeWorldSeparator(fullName));
             })
             .ToList();
 
@@ -165,12 +185,34 @@ public static class FormationAnchorResolver {
     }
 
     private static string GetLocalPlayerNameWorld() {
-        var name = DalamudApi.PlayerState.CharacterName;
+        var name = FormationCharacterName.NormalizeWorldSeparator(DalamudApi.PlayerState.CharacterName);
         if (string.IsNullOrWhiteSpace(name))
             return string.Empty;
 
-        var world = DalamudApi.PlayerState.HomeWorld.Value.Name.ToString();
+        var world = FormationCharacterName.NormalizeWorldSeparator(DalamudApi.PlayerState.HomeWorld.Value.Name.ToString());
         return string.IsNullOrWhiteSpace(world) ? name : $"{name}@{world}";
+    }
+
+    private static ulong? ResolveContentIdFromName(Plugin plugin, string actorFullName) {
+        actorFullName = FormationCharacterName.NormalizeWorldSeparator(actorFullName);
+        if (string.IsNullOrWhiteSpace(actorFullName))
+            return null;
+
+        ulong? bestMatch = null;
+        var bestScore = -1;
+
+        foreach (var character in plugin.Config.Characters) {
+            if (string.IsNullOrWhiteSpace(character.Name))
+                continue;
+
+            var score = FormationCharacterName.MatchScore(character.Name, actorFullName);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = character.Cid;
+            }
+        }
+
+        return bestScore >= 0 ? bestMatch : null;
     }
 
     private sealed record AnchorCandidate(IGameObject Actor, string Name, string FullName);

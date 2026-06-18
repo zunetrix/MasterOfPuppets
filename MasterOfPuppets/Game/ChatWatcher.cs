@@ -4,9 +4,12 @@ using System.Linq;
 
 using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 
 using MasterOfPuppets.Formations;
 using MasterOfPuppets.Util;
+using Lumina.Text.ReadOnly;
 
 namespace MasterOfPuppets;
 
@@ -83,11 +86,11 @@ internal class ChatWatcher : IDisposable {
         if (message.IsHandled)
             return;
 
-        var senderName = SanitizeSenderName(message.Sender.ToString());
+        var senderName = GetSenderName(message);
 
         if (!AllowedChatTypes.Contains(message.LogKind)
             || !Plugin.Config.ListenedChatTypes.Contains(message.LogKind)
-            || (Plugin.Config.UseChatCommandSenderWhitelist && !Plugin.Config.ChatCommandSenderWhitelist.Contains(senderName))
+            || !IsAllowedSender(senderName)
         ) {
             return;
         }
@@ -198,10 +201,14 @@ internal class ChatWatcher : IDisposable {
 
         var anchor = FormationAnchorArgumentParser.ParseAnchorAndArrival(
             args.Skip(1),
-            FormationAnchorReference.Default);
+            FormationAnchorReference.Sender);
         if (anchor.InvalidArgument != null) {
             DalamudApi.ChatGui.PrintError($"Invalid command argument: {anchor.InvalidArgument}");
             return;
+        }
+
+        if (anchor.Anchor.Kind == FormationAnchorKind.Sender && string.IsNullOrWhiteSpace(anchor.Anchor.Name)) {
+            anchor = anchor with { Anchor = anchor.Anchor with { Name = senderName } };
         }
 
         if (anchor.Anchor.Kind == FormationAnchorKind.FocusTarget) {
@@ -222,5 +229,52 @@ internal class ChatWatcher : IDisposable {
         var i = 0;
         while (i < raw.Length && !char.IsLetter(raw[i])) i++;
         return i > 0 ? raw[i..] : raw;
+    }
+
+    private bool IsAllowedSender(string senderName) {
+        if (!Plugin.Config.UseChatCommandSenderWhitelist)
+            return true;
+
+        return Plugin.Config.ChatCommandSenderWhitelist.Any(allowed =>
+            string.Equals(
+                FormationCharacterName.NormalizeWorldSeparator(allowed),
+                senderName,
+                StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string GetSenderName(IChatMessage message) {
+        var senderName = GetPlayerPayloadSenderName(message.Sender);
+        if (!string.IsNullOrWhiteSpace(senderName))
+            return senderName;
+
+        senderName = GetExtractedSenderName(message.OriginalSender);
+        if (!string.IsNullOrWhiteSpace(senderName))
+            return senderName;
+
+        return GetSenderTextName(message.Sender);
+    }
+
+    private static string GetPlayerPayloadSenderName(SeString sender) {
+        foreach (var payload in sender.Payloads.OfType<PlayerPayload>()) {
+            var formattedName = FormationCharacterName.FormatPlayerNameWorld(
+                payload.PlayerName,
+                payload.World.ValueNullable?.Name.ToString(),
+                payload.DisplayedName);
+
+            if (!string.IsNullOrWhiteSpace(formattedName))
+                return formattedName;
+        }
+
+        return string.Empty;
+    }
+
+    private static string GetExtractedSenderName(ReadOnlySeString sender) =>
+        FormationCharacterName.NormalizeWorldSeparator(SanitizeSenderName(sender.ExtractText()));
+
+    private static string GetSenderTextName(SeString sender) {
+        var senderName = FormationCharacterName.NormalizeWorldSeparator(SanitizeSenderName(sender.TextValue));
+        return !string.IsNullOrWhiteSpace(senderName)
+            ? senderName
+            : FormationCharacterName.NormalizeWorldSeparator(SanitizeSenderName(sender.ToString()));
     }
 }
