@@ -46,12 +46,27 @@ public partial class FormationWindow {
             }
 
             ImGui.SameLine();
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, "##fiimport", "Import BardToolbox JSON"))
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.FileImport, "##fiimport", "Import"))
                 ImGui.OpenPopup("##fiimportpopup");
 
             using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor)) {
                 using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
                     if (ImGui.BeginPopup("##fiimportpopup")) {
+                        ImGui.TextDisabled("Formation Code");
+                        ImGui.Separator();
+
+                        if (ImGui.Button("Import from Clipboard")) {
+                            ImportFormationCodeFromClipboard();
+                            ImGui.CloseCurrentPopup();
+                        }
+
+                        ImGui.Spacing();
+                        ImGui.Separator();
+                        ImGui.Spacing();
+
+                        ImGui.TextDisabled("BardToolbox JSON");
+                        ImGui.Separator();
+
                         ImGui.Text("Import Mode:");
                         var importMode = Plugin.Config.FormationImportMode;
                         if (ImGuiUtil.EnumCombo("##FormationImportMode", ref importMode)) {
@@ -173,6 +188,7 @@ public partial class FormationWindow {
                     ImGui.Text(f.Name.Length > 0 ? f.Name : "(unnamed)");
                     ImGui.EndDragDropSource();
                 }
+                ImGuiUtil.ToolTip("Drag to reorder");
 
                 // Drop target
                 using (ImRaii.PushColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget)) {
@@ -257,10 +273,6 @@ public partial class FormationWindow {
                         if (ImGui.MenuItem("Copy Formation Code Without Assignments")) {
                             ImGui.SetClipboardText(FormationShareCode.Export(f, includeAssignments: false));
                             DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-                        }
-
-                        if (ImGui.MenuItem("Import Formation Code From Clipboard")) {
-                            ImportFormationCodeFromClipboard();
                         }
 
                         ImGui.EndPopup();
