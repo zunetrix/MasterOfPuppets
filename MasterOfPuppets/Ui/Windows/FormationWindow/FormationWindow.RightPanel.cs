@@ -58,12 +58,11 @@ public partial class FormationWindow {
             if (formation.Points.Count == 0) {
                 ImGui.TextDisabled("Shift+Click plot to add");
             } else {
-                float btnW = ImGui.GetFrameHeight();
                 float rowH = ImGui.GetFrameHeightWithSpacing();
                 float headerH = ImGui.GetFrameHeightWithSpacing();
                 float maxH = 8 * rowH + headerH;
                 float tableH = Math.Min(formation.Points.Count * rowH + headerH, maxH);
-                if (ImGui.BeginTable("##fipttbl", 6,
+                if (ImGui.BeginTable("##fipttbl", 5,
                     ImGuiTableFlags.RowBg | ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV |
                     ImGuiTableFlags.ScrollY,
                     new Vector2(-1, tableH))) {
@@ -72,8 +71,7 @@ public partial class FormationWindow {
                     ImGui.TableSetupColumn("X", ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableSetupColumn("Z", ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableSetupColumn("A°", ImGuiTableColumnFlags.WidthFixed, 60f);
-                    ImGui.TableSetupColumn("##sel", ImGuiTableColumnFlags.WidthFixed, btnW);
-                    ImGui.TableSetupColumn("##del", ImGuiTableColumnFlags.WidthFixed, btnW);
+                    ImGui.TableSetupColumn("##pointOptions", ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableHeadersRow();
                     int delIdx = -1;
                     for (int i = 0; i < formation.Points.Count; i++) {
@@ -175,13 +173,12 @@ public partial class FormationWindow {
                             Plugin.IpcProvider.SyncConfiguration();
                         }
 
-                        // Column 4: select
+                        // Column 4: options
                         ImGui.TableNextColumn();
                         if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##fisel{i}", "Select point"))
                             _selPoint = i;
 
-                        // Column 5: delete
-                        ImGui.TableNextColumn();
+                        ImGui.SameLine();
                         if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidp{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
 
