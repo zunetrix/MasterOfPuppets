@@ -268,17 +268,17 @@ public partial class MacroEditorWindow : Window {
             ImGui.Spacing();
             ImGui.Spacing();
 
-            ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-            ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-            ImGui.SetNextItemWidth(-1);
-            var availableTags = MacrosTags.Except(MacroItem.Tags).ToList();
-            if (_tagCombo.Draw("##MacroTagsSelectList", availableTags, ref TagSelected)) {
-                MacroItem.Tags.AddUnique(TagSelected);
-                TagSelected = string.Empty;
-                RefreshMacrosTags();
+            using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor)) {
+                using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
+                    ImGui.SetNextItemWidth(-1);
+                    var availableTags = MacrosTags.Except(MacroItem.Tags).ToList();
+                    if (_tagCombo.Draw("##MacroTagsSelectList", availableTags, ref TagSelected)) {
+                        MacroItem.Tags.AddUnique(TagSelected);
+                        TagSelected = string.Empty;
+                        RefreshMacrosTags();
+                    }
+                }
             }
-            ImGui.PopStyleVar();
-            ImGui.PopStyleColor();
         }
         ImGui.EndGroup();
 
