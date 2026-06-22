@@ -112,11 +112,11 @@ public class FormationExecutionTests
 
         AssertClose(targetPosition.X, issuerWorldPosition.X);
         AssertClose(targetPosition.Z, issuerWorldPosition.Z);
-        AssertClose(targetRotation, issuerWorldRotation);
+        AssertClose(targetRotation + 45f * Angle.DegToRad, issuerWorldRotation);
 
         AssertClose(12f, memberWorldPosition.X);
         AssertClose(20f, memberWorldPosition.Z);
-        AssertClose(0f, memberWorldRotation);
+        AssertClose(MathF.PI / 4f, memberWorldRotation);
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public class FormationExecutionTests
         Assert.NotNull(move);
         AssertClose(12f, move.Value.Position.X);
         AssertClose(20f, move.Value.Position.Z);
-        AssertClose(0f, move.Value.Rotation);
+        AssertClose(MathF.PI / 4f, move.Value.Rotation);
     }
 
     [Fact]
@@ -320,7 +320,7 @@ public class FormationExecutionTests
         Assert.Equal(1, destinationPointIndex);
         AssertClose(12f, move.Value.Position.X);
         AssertClose(20f, move.Value.Position.Z);
-        AssertClose(0f, move.Value.Rotation);
+        AssertClose(MathF.PI / 4f, move.Value.Rotation);
     }
 
     [Fact]
@@ -343,7 +343,7 @@ public class FormationExecutionTests
         Assert.NotNull(move);
         AssertClose(8f, move.Value.Position.X);
         AssertClose(22f, move.Value.Position.Z);
-        AssertClose(MathF.PI / 2f, move.Value.Rotation);
+        AssertClose(MathF.PI, move.Value.Rotation);
     }
 
     [Fact]
@@ -369,7 +369,52 @@ public class FormationExecutionTests
         Assert.NotNull(move);
         AssertClose(anchorPosition.X, move.Value.Position.X);
         AssertClose(anchorPosition.Z, move.Value.Position.Z);
-        AssertClose(anchorRotation, move.Value.Rotation);
+        AssertClose(anchorRotation + MathF.PI / 2f, move.Value.Rotation);
+    }
+
+    [Fact]
+    public void FormationPointMovement_FlexibleAnchor_PreservesPositionAndUsesMemberFacing() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = new Vector3(0f, 0f, 0f), Angle = 0f },
+                new FormationPoint { Offset = new Vector3(0f, 0f, 2f), Angle = 180f },
+                new FormationPoint { Offset = new Vector3(2f, 0f, 0f), Angle = 90f },
+            ],
+        };
+        var anchorPosition = new Vector3(10f, 0f, 20f);
+        var anchorRotation = 0.25f;
+
+        var centerMove = FormationPointMovement.BuildAnchoredWorldMove(
+            formation,
+            destinationPointIndex: 0,
+            anchorPointIndex: 2,
+            anchorWorldPosition: anchorPosition,
+            anchorWorldRotation: anchorRotation);
+        var rearMove = FormationPointMovement.BuildAnchoredWorldMove(
+            formation,
+            destinationPointIndex: 1,
+            anchorPointIndex: 2,
+            anchorWorldPosition: anchorPosition,
+            anchorWorldRotation: anchorRotation);
+
+        var expectedCenterPosition = ApplyLeaderRotation(
+            formation.Points[0].Offset - formation.Points[2].Offset,
+            anchorRotation,
+            anchorPosition);
+        var expectedRearPosition = ApplyLeaderRotation(
+            formation.Points[1].Offset - formation.Points[2].Offset,
+            anchorRotation,
+            anchorPosition);
+
+        Assert.NotNull(centerMove);
+        AssertClose(expectedCenterPosition.X, centerMove.Value.Position.X);
+        AssertClose(expectedCenterPosition.Z, centerMove.Value.Position.Z);
+        AssertClose(anchorRotation, centerMove.Value.Rotation);
+
+        Assert.NotNull(rearMove);
+        AssertClose(expectedRearPosition.X, rearMove.Value.Position.X);
+        AssertClose(expectedRearPosition.Z, rearMove.Value.Position.Z);
+        AssertClose(anchorRotation + MathF.PI, rearMove.Value.Rotation);
     }
 
     [Fact]
@@ -495,4 +540,13 @@ public class FormationExecutionTests
 
     private static void AssertClose(float expected, float actual, float tolerance = 0.0001f) =>
         Assert.InRange(MathF.Abs(expected - actual), 0f, tolerance);
+
+    private static Vector3 ApplyLeaderRotation(Vector3 offset, float leaderRotRad, Vector3 leaderPos) {
+        float cos = MathF.Cos(leaderRotRad);
+        float sin = MathF.Sin(leaderRotRad);
+        return new Vector3(
+            offset.X * cos + offset.Z * sin,
+            offset.Y,
+            -offset.X * sin + offset.Z * cos) + leaderPos;
+    }
 }
