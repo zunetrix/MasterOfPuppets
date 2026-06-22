@@ -29,12 +29,14 @@ public static class FormationMath {
         Vector3 anchorWorldPosition,
         float anchorWorldRotation) {
         var memberRelativeToAnchor = memberPoint.Offset - anchorPoint.Offset;
-        var memberRotationRelativeToAnchor = NormalizeDegrees(memberPoint.Angle - anchorPoint.Angle);
         var worldPosition = memberRelativeToAnchor.ApplyLeaderRotation(anchorWorldRotation, anchorWorldPosition);
-        var worldRotation = anchorWorldRotation + memberRotationRelativeToAnchor * Angle.DegToRad;
+        var worldRotation = anchorWorldRotation + memberPoint.Angle * Angle.DegToRad;
 
         return (worldPosition, worldRotation);
     }
+
+    public static float GetFormationFrameRotation(FormationPoint anchorPoint, float anchorActorRotation) =>
+        anchorActorRotation - anchorPoint.Angle * Angle.DegToRad;
 
     public static float NormalizeDegrees(float degrees) {
         while (degrees < -180f)

@@ -101,7 +101,7 @@ public class FormationImportTests {
             anchorWorldRotation);
         AssertClose(anchorWorldPosition.X, anchorPosition.X);
         AssertClose(anchorWorldPosition.Z, anchorPosition.Z);
-        AssertClose(anchorWorldRotation, anchorRotation);
+        AssertClose(anchorWorldRotation + 45f * Angle.DegToRad, anchorRotation);
 
         var (memberPosition, memberRotation) = FormationMath.GetMopRelativeWorld(
             anchor,
@@ -111,7 +111,7 @@ public class FormationImportTests {
         var expectedMemberPosition = ApplyLeaderRotation(member.Offset - anchor.Offset, anchorWorldRotation, anchorWorldPosition);
         AssertClose(expectedMemberPosition.X, memberPosition.X);
         AssertClose(expectedMemberPosition.Z, memberPosition.Z);
-        AssertClose(anchorWorldRotation - 90f * Angle.DegToRad, memberRotation);
+        AssertClose(anchorWorldRotation - 45f * Angle.DegToRad, memberRotation);
     }
 
     [Fact]

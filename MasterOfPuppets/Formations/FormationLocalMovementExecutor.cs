@@ -53,6 +53,9 @@ public static class FormationLocalMovementExecutor {
             return false;
         }
 
+        var assignedAnchorPointIndex = resolvedAnchor.ContentId.HasValue
+            ? FormationExecution.GetAssignedPointIndex(formation, resolvedAnchor.ContentId.Value, plugin.Config.CidsGroups)
+            : -1;
         var anchorPointIndex = ResolveAnchorPointIndex(formation, plugin.Config.CidsGroups, anchor, resolvedAnchor.ContentId, localCid);
         if (anchor.Kind != FormationAnchorKind.Self) {
             var anchorCid = resolvedAnchor.ContentId;
@@ -62,13 +65,18 @@ public static class FormationLocalMovementExecutor {
             }
         }
 
+        var anchorRotation = ResolveAnchorFrameRotation(
+            formation,
+            anchorPointIndex,
+            resolvedAnchor.Rotation,
+            ShouldNormalizeAssignedAnchorRotation(anchor, resolvedAnchor.ContentId, localCid, assignedAnchorPointIndex));
         return ExecuteAnchoredMove(
             plugin,
             formation,
             destinationPointIndex,
             anchorPointIndex,
             resolvedAnchor.Position,
-            resolvedAnchor.Rotation,
+            anchorRotation,
             movementMode,
             logPrefix);
     }
@@ -91,6 +99,27 @@ public static class FormationLocalMovementExecutor {
         var assignedAnchorPointIndex = FormationExecution.GetAssignedPointIndex(formation, anchorCid.Value, groups);
         return assignedAnchorPointIndex >= 0 ? assignedAnchorPointIndex : FormationPointMovement.AnchorPointIndex;
     }
+
+    public static float ResolveAnchorFrameRotation(
+        Formation formation,
+        int anchorPointIndex,
+        float anchorActorRotation,
+        bool normalizeAssignedAnchorRotation) {
+        if (!normalizeAssignedAnchorRotation || anchorPointIndex < 0 || anchorPointIndex >= formation.Points.Count)
+            return anchorActorRotation;
+
+        return FormationMath.GetFormationFrameRotation(formation.Points[anchorPointIndex], anchorActorRotation);
+    }
+
+    private static bool ShouldNormalizeAssignedAnchorRotation(
+        FormationAnchorReference anchor,
+        ulong? anchorCid,
+        ulong localCid,
+        int assignedAnchorPointIndex) =>
+        anchor.Kind != FormationAnchorKind.Self
+        && anchorCid.HasValue
+        && anchorCid.Value != localCid
+        && assignedAnchorPointIndex >= 0;
 
     public static bool ExecuteAnchoredMove(
         Plugin plugin,

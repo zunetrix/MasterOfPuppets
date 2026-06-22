@@ -267,9 +267,18 @@ internal partial class IpcProvider {
             return false;
         }
 
+        cid = resolved.ContentId ?? issuerCid;
         position = resolved.Position;
         rotation = resolved.Rotation;
-        cid = issuerCid;
+
+        if (ShouldNormalizeAssignedAnchorRotation(anchor) && GetAssignedPoint(formation, cid) is { } anchorPoint)
+            rotation = FormationMath.GetFormationFrameRotation(anchorPoint, resolved.Rotation);
+
         return cid != 0;
     }
+
+    private static bool ShouldNormalizeAssignedAnchorRotation(FormationAnchorReference anchor) =>
+        anchor.Kind is FormationAnchorKind.Self
+            or FormationAnchorKind.Sender
+            or FormationAnchorKind.Named;
 }
