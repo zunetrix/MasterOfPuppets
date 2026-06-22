@@ -418,6 +418,87 @@ public class FormationExecutionTests
     }
 
     [Fact]
+    public void FormationMath_GetFormationFrameRotation_SubtractsAnchorPointAngle() {
+        var pointOne = new FormationPoint { Angle = 0f };
+        var pointFour = new FormationPoint { Angle = -135f };
+        var formationFrameRotation = 0.25f;
+        var pointFourActorRotation = formationFrameRotation + pointFour.Angle * Angle.DegToRad;
+
+        AssertClose(formationFrameRotation, FormationMath.GetFormationFrameRotation(pointOne, formationFrameRotation));
+        AssertClose(formationFrameRotation, FormationMath.GetFormationFrameRotation(pointFour, pointFourActorRotation));
+    }
+
+    [Fact]
+    public void FormationMath_ReanchoringCircleFromPointFour_PreservesWorldPlacement() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = new Vector3(-2.1855695E-07f, 0f, 0f), Angle = 1.5258789E-05f },
+                new FormationPoint { Offset = new Vector3(3.535534f, 0f, 1.4644661f), Angle = -45f },
+                new FormationPoint { Offset = new Vector3(5f, 0f, 5f), Angle = -90f },
+                new FormationPoint { Offset = new Vector3(3.5355341f, 0f, 8.535534f), Angle = -135f },
+                new FormationPoint { Offset = new Vector3(-2.1855695E-07f, 0f, 10f), Angle = 180f },
+                new FormationPoint { Offset = new Vector3(-3.535534f, 0f, 8.535534f), Angle = 135f },
+                new FormationPoint { Offset = new Vector3(-5f, 0f, 5.000001f), Angle = 90.000015f },
+                new FormationPoint { Offset = new Vector3(-3.5355332f, 0f, 1.4644656f), Angle = 45f },
+            ],
+        };
+        var originalAnchor = formation.Points[0];
+        var pointFourAnchor = formation.Points[3];
+        var originPosition = new Vector3(10f, 0f, 20f);
+        var formationFrameRotation = 0f;
+
+        var originalWorld = formation.Points
+            .Select(point => FormationMath.GetMopRelativeWorld(
+                originalAnchor,
+                point,
+                originPosition,
+                formationFrameRotation))
+            .ToArray();
+        var pointFourFrameRotation = FormationMath.GetFormationFrameRotation(
+            pointFourAnchor,
+            originalWorld[3].Rotation);
+
+        for (var i = 0; i < formation.Points.Count; i++) {
+            var actual = FormationMath.GetMopRelativeWorld(
+                pointFourAnchor,
+                formation.Points[i],
+                originalWorld[3].Position,
+                pointFourFrameRotation);
+
+            AssertClose(originalWorld[i].Position.X, actual.Position.X, 0.00001f);
+            AssertClose(originalWorld[i].Position.Z, actual.Position.Z, 0.00001f);
+            AssertClose(originalWorld[i].Rotation, actual.Rotation, 0.00001f);
+        }
+    }
+
+    [Fact]
+    public void FormationLocalMovementExecutor_ResolveAnchorFrameRotation_NormalizesOnlyAssignedActorAnchors() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Angle = 0f },
+                new FormationPoint { Angle = -135f },
+            ],
+        };
+        var formationFrameRotation = 0.25f;
+        var actorRotation = formationFrameRotation + formation.Points[1].Angle * Angle.DegToRad;
+
+        AssertClose(
+            formationFrameRotation,
+            FormationLocalMovementExecutor.ResolveAnchorFrameRotation(
+                formation,
+                anchorPointIndex: 1,
+                anchorActorRotation: actorRotation,
+                normalizeAssignedAnchorRotation: true));
+        AssertClose(
+            actorRotation,
+            FormationLocalMovementExecutor.ResolveAnchorFrameRotation(
+                formation,
+                anchorPointIndex: 1,
+                anchorActorRotation: actorRotation,
+                normalizeAssignedAnchorRotation: false));
+    }
+
+    [Fact]
     public void FormationAnchorArgumentParser_ParsesSender() {
         var result = FormationAnchorArgumentParser.ParseAnchorAndArrival(
             ["sender"],

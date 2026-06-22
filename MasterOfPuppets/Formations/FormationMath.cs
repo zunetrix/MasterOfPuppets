@@ -35,6 +35,9 @@ public static class FormationMath {
         return (worldPosition, worldRotation);
     }
 
+    public static float GetFormationFrameRotation(FormationPoint anchorPoint, float anchorActorRotation) =>
+        anchorActorRotation - anchorPoint.Angle * Angle.DegToRad;
+
     public static float NormalizeDegrees(float degrees) {
         while (degrees < -180f)
             degrees += 360f;
