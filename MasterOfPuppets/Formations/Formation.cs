@@ -16,10 +16,10 @@ public class Formation {
     };
 
     /// <summary>
-    /// Rotates the Cids and GroupIds assignments across all points
+    /// Shift the Cids and GroupIds assignments across all points
     /// forward=true shifts assignments to the next point, false shifts to the previous point
     /// </summary>
-    public void RotateAssignments(bool forward) {
+    public void ShiftAssignments(bool forward) {
         if (Points.Count < 2) return;
 
         if (forward) {

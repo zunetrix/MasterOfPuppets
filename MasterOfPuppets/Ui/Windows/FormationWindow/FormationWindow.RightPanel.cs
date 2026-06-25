@@ -36,15 +36,15 @@ public partial class FormationWindow {
             ImGuiUtil.ToolTip("Drag to change, right-click to reset");
 
             ImGui.SameLine();
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowCircleLeft, "##rotateAssignedPointsBackward", "Rotate Assigned Characters/Groups Backward")) {
-                formation.RotateAssignments(forward: false);
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowCircleLeft, "##ShiftAssignedPointsBackward", "Shift Assigned Characters/Groups Backward")) {
+                formation.ShiftAssignments(forward: false);
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
 
             ImGui.SameLine();
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowCircleRight, "##rotateAssignedPointsForward", "Rotate Assigned Characters/Groups Forward")) {
-                formation.RotateAssignments(forward: true);
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.ArrowCircleRight, "##ShiftAssignedPointsForward", "Shift Assigned Characters/Groups Forward")) {
+                formation.ShiftAssignments(forward: true);
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
