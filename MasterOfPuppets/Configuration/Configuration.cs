@@ -231,6 +231,11 @@ internal class Configuration : IPluginConfiguration {
     public bool ShowPanelMacroTags { get; set; } = true;
     public float ActionIconSize { get; set; } = 48;
 
+    // Client Launcher
+    public string XivLauncherPath { get; set; } = XivLauncherManager.GetDefaultLauncherPath();
+    public int XivLaunchDelaySeconds { get; set; } = 20;
+    public List<XivLaunchEntry> XivLaunchEntries { get; set; } = new();
+
     // Movement
     [Newtonsoft.Json.JsonIgnore]
     public bool AlignCameraToMovement { get; set; } = true;

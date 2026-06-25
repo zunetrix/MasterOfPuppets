@@ -169,6 +169,7 @@ public class Plugin : IDalamudPlugin {
         SimpleInputMovement.Dispose();
         KeyboardBroadcastManager.Dispose();
         AutoLoginManager.Dispose();
+        XivLauncherManager.Cancel();
         GameWindowManager.Dispose();
         GameRenderManager.Dispose();
         ServerBarProvider.Dispose();

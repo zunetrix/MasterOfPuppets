@@ -22,7 +22,8 @@ public partial class MainWindow : Window {
             (FontAwesomeIcon.Users, "Characters", () => Ui.CharactersWindow.Toggle()),
             (FontAwesomeIcon.ArrowsDownToPeople, "Formation", () => Ui.FormationWindow.Toggle()),
             (FontAwesomeIcon.Display, "Windows Layout", () => Ui.WindowLayoutWindow.Toggle()),
-            (FontAwesomeIcon.UsersViewfinder, "PeerMonitor", () => Ui.PeerMonitorWindow.Toggle()),
+            (FontAwesomeIcon.UsersViewfinder, "Peer Monitor", () => Ui.PeerMonitorWindow.Toggle()),
+            (FontAwesomeIcon.Rocket, "XIV Launcher", () => Ui.XivLauncherWindow.Toggle()),
             (FontAwesomeIcon.Cog, "Settings", () => Ui.SettingsWindow.Toggle()),
             (FontAwesomeIcon.QuestionCircle, "Help", () => Ui.HelpWindow.Toggle()),
         };
@@ -30,14 +31,14 @@ public partial class MainWindow : Window {
         var childFlags = _sidebarCollapsed ? ImGuiWindowFlags.NoScrollbar : ImGuiWindowFlags.None;
         using (ImRaii.Child("##MopNavSidebar", new Vector2(width, -1), true, childFlags)) {
 
-            //  Toggle collapse button
+            // Toggle collapse button
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Bars, "##SidebarToggleBtn", _sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar")) {
                 _sidebarCollapsed = !_sidebarCollapsed;
                 // hide widget when collapsing to avoid invisible draw
             }
 
             if (!_sidebarCollapsed) {
-                //  Search bar
+                // Search bar
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(-1);
                 ImGui.InputTextWithHint("##SidebarSearchInput", "Search...", ref _sidebarSearch, 64);
@@ -46,7 +47,7 @@ public partial class MainWindow : Window {
                 ImGui.Separator();
                 ImGui.Spacing();
 
-                //  Macros shortcut (opens separate window)
+                // Macros shortcut (opens separate window)
                 if (string.IsNullOrEmpty(_sidebarSearch) || "Macros".Contains(_sidebarSearch, StringComparison.OrdinalIgnoreCase)) {
                     DrawNavAction(FontAwesomeIcon.Scroll, "Macros", () => Ui.MacroWindow.Toggle(), false);
 
@@ -54,7 +55,7 @@ public partial class MainWindow : Window {
                     ImGui.Spacing();
                 }
 
-                //  Sections
+                // Sections
                 bool anyNavDrawn = false;
                 foreach (var (section, icon, label, hasSeparatorBefore) in NavItems) {
                     if (!string.IsNullOrEmpty(_sidebarSearch) &&
@@ -85,7 +86,7 @@ public partial class MainWindow : Window {
                     DrawNavAction(icon, label, action, false);
                 }
             } else {
-                //  Collapsed: icons only
+                // Collapsed: icons only
                 ImGui.Spacing();
 
                 DrawNavActionIconOnly(FontAwesomeIcon.Scroll, "Macros", () => Ui.MacroWindow.Toggle());

@@ -540,6 +540,9 @@ public class PluginCommandManager : IDisposable {
                 case "peer":
                     Plugin.Ui.PeerMonitorWindow.Toggle();
                     break;
+                case "launcher":
+                    Plugin.Ui.XivLauncherWindow.Toggle();
+                    break;
                 case "globaldelay":
                     if (parsedArgs.Count < 2) {
                         DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop globaldelay <0.00 - 60.00>");

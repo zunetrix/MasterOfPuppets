@@ -25,6 +25,7 @@ public class PluginUi : IDisposable {
     public DebugWindow DebugWindow { get; }
     public FormationWindow FormationWindow { get; }
     public PeerMonitorWindow PeerMonitorWindow { get; }
+    public XivLauncherWindow XivLauncherWindow { get; }
     public WindowLayoutWindow WindowLayoutWindow { get; }
 
     public PluginUi(Plugin plugin) {
@@ -44,6 +45,7 @@ public class PluginUi : IDisposable {
         DebugWindow = AddWindow(new DebugWindow(Plugin));
         FormationWindow = AddWindow(new FormationWindow(Plugin));
         PeerMonitorWindow = AddWindow(new PeerMonitorWindow(Plugin));
+        XivLauncherWindow = AddWindow(new XivLauncherWindow(Plugin));
         WindowLayoutWindow = AddWindow(new WindowLayoutWindow(Plugin));
     }
 
