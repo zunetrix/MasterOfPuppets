@@ -687,6 +687,36 @@ public class SettingsWindow : Window {
                         CommitProfileRename(i);
                 } else {
                     ImGui.Selectable(profile.Name, false);
+
+                    if (ImGui.BeginDragDropSource()) {
+                        unsafe {
+                            ImGui.SetDragDropPayload("DND_GAMEPROFILE", new ReadOnlySpan<byte>(&i, sizeof(int)), ImGuiCond.None);
+                            ImGui.Text(profile.Name);
+                            ImGuiUtil.ToolTip("Drag to reorder");
+                        }
+                        ImGui.EndDragDropSource();
+                    }
+
+                    using (ImRaii.PushColor(ImGuiCol.DragDropTarget, Style.Components.DragDropTarget)) {
+                        if (ImGui.BeginDragDropTarget()) {
+                            var payload = ImGui.AcceptDragDropPayload("DND_GAMEPROFILE");
+                            bool isDropping = false;
+                            unsafe { isDropping = !payload.IsNull; }
+                            if (isDropping && payload.IsDelivery()) {
+                                unsafe {
+                                    int from = *(int*)payload.Data;
+                                    if (from != i) {
+                                        var profileTmp = profiles[from];
+                                        profiles.RemoveAt(from);
+                                        profiles.Insert(i, profileTmp);
+                                        Plugin.Config.Save();
+                                        Plugin.IpcProvider.SyncConfiguration();
+                                    }
+                                }
+                            }
+                            ImGui.EndDragDropTarget();
+                        }
+                    }
                 }
 
                 ImGui.TableNextColumn();
