@@ -198,7 +198,9 @@ internal static class XivLauncherManager {
     /// Starts XIVLauncher through the Windows shell.
     /// </summary>
     private static void LaunchAccount(string launcherPath, XivLaunchEntry account) {
-        var workingDirectory = Path.GetDirectoryName(launcherPath);
+        string effectiveLauncherPath = !string.IsNullOrWhiteSpace(account.XivLauncherPath) ? account.XivLauncherPath : launcherPath;
+
+        var workingDirectory = Path.GetDirectoryName(effectiveLauncherPath);
 
         var args = new System.Text.StringBuilder();
         var accountArgs = $"{account.UserName}-{account.UseOtp}-{account.UseSteamServiceAccount}";
@@ -212,7 +214,7 @@ internal static class XivLauncherManager {
             args.Append($" --roamingPath=\"{account.RoamingPath}\"");
 
         var startInfo = new ProcessStartInfo {
-            FileName = launcherPath,
+            FileName = effectiveLauncherPath,
             WorkingDirectory = string.IsNullOrWhiteSpace(workingDirectory)
                 ? Environment.CurrentDirectory
                 : workingDirectory,

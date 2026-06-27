@@ -111,11 +111,50 @@ public partial class XivLauncherWindow {
                 WindowsApi.OpenFolder(entry.RoamingPath);
             }
 
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.Text("Override XIVLauncher Path:");
+            ImGui.SameLine();
+            ImGuiUtil.HelpMarker("Set if you need use different launcher path for each account");
+            ImGui.Text(entry.XivLauncherPath.EllipsisPath(50));
+
+            ImGui.SameLine();
+            ImGuiHelpers.ScaledDummy(5);
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Folder, "##SetOverrideXivLaunchFolderBtn", "Select Launcher Path")) {
+                _fileDialogManager.OpenFileDialog(
+                    title: "Open",
+                     filters: ".exe",
+                    startPath: XivLauncherManager.GetDefaultLauncherDirecotry(),
+                    selectionCountMax: 1,
+                    callback: (result, selectedPaths) => {
+                        if (!result || selectedPaths.Count == 0) return;
+                        if (!File.Exists(selectedPaths[0])) return;
+
+                        entry.XivLauncherPath = selectedPaths[0];
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+                );
+            }
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ReseOverrideXivLaunchFolderBtn", "Reset")) {
+                entry.XivLauncherPath = string.Empty;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.FolderOpen, "##OpenOverrideXivLaunchFolderBtn", "Open Launcher Folder")) {
+                WindowsApi.OpenFolder(Path.GetDirectoryName(entry.XivLauncherPath));
+            }
+
             ImGui.EndTable();
         }
 
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
     }
 }

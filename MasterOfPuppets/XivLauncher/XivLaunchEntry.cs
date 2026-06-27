@@ -7,5 +7,6 @@ internal sealed class XivLaunchEntry {
     public bool UseSteamServiceAccount { get; set; } = false;
     public bool UseOtp { get; set; } = false;
     public string RoamingPath { get; set; } = string.Empty;
+    public string XivLauncherPath { get; set; } = string.Empty;
     public bool Enabled { get; set; } = true;
 }
