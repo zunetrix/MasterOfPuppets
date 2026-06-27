@@ -142,29 +142,29 @@ public partial class MacroEditorWindow : Window {
         _rightPanelWidth = MathF.Max(minRightPx, MathF.Min(_rightPanelWidth, maxRightPx));
         var leftPanelWidth = contentAvail.X - _rightPanelWidth - splitterWidth - spacing * 2f;
 
-        ImGui.BeginChild("##MacroEditorMain", new Vector2(0, 0), false);
+        using (ImRaii.Child("##MacroEditorMain", new Vector2(0, 0), false)) {
 
-        ImGui.BeginChild("##MacroEditorLeft", new Vector2(leftPanelWidth, 0), false);
-        DrawCommandList();
-        ImGui.EndChild();
+            using (ImRaii.Child("##MacroEditorLeftPanel", new Vector2(leftPanelWidth, 0), false)) {
+                DrawCommandList();
+            }
 
-        ImGui.SameLine();
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
-        ImGui.InvisibleButton("##MacroEditorSplitter", new Vector2(splitterWidth, -1));
-        if (ImGui.IsItemHovered())
-            ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
-        if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
-            _rightPanelWidth -= ImGui.GetIO().MouseDelta.X;
-            _rightPanelWidth = MathF.Max(minRightPx, MathF.Min(_rightPanelWidth, maxRightPx));
+            ImGui.SameLine();
+            using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(0, 0))) {
+                ImGui.InvisibleButton("##MacroEditorSplitter", new Vector2(splitterWidth, -1));
+                if (ImGui.IsItemHovered())
+                    ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
+
+                if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+                    _rightPanelWidth -= ImGui.GetIO().MouseDelta.X;
+                    _rightPanelWidth = MathF.Max(minRightPx, MathF.Min(_rightPanelWidth, maxRightPx));
+                }
+            }
+
+            ImGui.SameLine();
+            using (ImRaii.Child("##MacroEditorRightPanel", new Vector2(_rightPanelWidth, 0), true)) {
+                DrawDetailsPanel();
+            }
         }
-        ImGui.PopStyleVar();
-
-        ImGui.SameLine();
-        ImGui.BeginChild("##MacroEditorRight", new Vector2(_rightPanelWidth, 0), true);
-        DrawDetailsPanel();
-        ImGui.EndChild();
-
-        ImGui.EndChild(); // ##MacroEditorMain
     }
 
     private void DrawDetailsPanel() {
@@ -599,69 +599,64 @@ public partial class MacroEditorWindow : Window {
     }
 
     private void DrawCommandEditor(int commandIndex) {
-        ImGui.BeginGroup();
-        ImGui.BeginChild("##CommandEditor", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()));
-        ImGuiUtil.DrawColoredBanner($"COMMAND {SelectedCommandIndex + 1}", Style.Components.ButtonBlueHovered);
-        ImGui.Spacing();
+        using (ImRaii.Group()) {
+            using (ImRaii.Child("##CommandEditor", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()))) {
+                ImGuiUtil.DrawColoredBanner($"COMMAND {SelectedCommandIndex + 1}", Style.Components.ButtonBlueHovered);
+                ImGui.Spacing();
 
-        ImGui.Spacing();
+                ImGui.Spacing();
+                ImGui.Spacing();
+                ImGui.Spacing();
 
-        // Macro Variables moved to the Details panel to declutter the command editor.
+                using (ImRaii.Group()) {
+                    ImGui.Text(Language.ActionsTitle);
+                    ImGuiUtil.HelpMarker("""
+                    Press TAB to autocomplete
+                    Use # for line comment (macro ignore line)
+                """);
 
-        ImGui.Spacing();
-        ImGui.Spacing();
+                    ImGui.SameLine();
+                    ImGuiHelpers.ScaledDummy(20, 0);
 
-        ImGui.BeginGroup();
-        ImGui.Text(Language.ActionsTitle);
-        ImGuiUtil.HelpMarker("""
-            Press TAB to autocomplete
+                    ImGui.SameLine();
+                    if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##CopyTargetNameBtn", "Copy Target Name")) {
+                        ImGui.SetClipboardText($"\"{GameTargetManager.GetTargetName()}\"");
+                    }
+                    ImGui.SameLine();
+                    if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonArrowDownToLine, $"##CopyTargetPositionBtn", "Copy Target Offset Position")) {
+                        var offset = GameTargetManager.GetTargetOffsetFromMe();
+                        string commandPosition = $"{offset.X.ToString(CultureInfo.InvariantCulture)} {offset.Y.ToString(CultureInfo.InvariantCulture)} {offset.Z.ToString(CultureInfo.InvariantCulture)}";
+                        ImGui.SetClipboardText(commandPosition);
+                    }
 
-            Use # for line comment (macro ignore line)
-        """);
+                    ImGui.SameLine();
+                    ImGuiHelpers.ScaledDummy(20, 0);
+                    ImGui.SameLine();
+                    ImGui.SetNextItemWidth(100);
+                    if (ImGui.InputUInt("Lines##InputLines", ref _inputLines, 1, 1)) {
+                        _inputLines = Math.Max(11u, _inputLines);
+                    }
 
-        ImGui.SameLine();
-        ImGuiHelpers.ScaledDummy(20, 0);
+                    ImGui.Spacing();
 
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Crosshairs, $"##CopyTargetNameBtn", "Copy Target Name")) {
-            ImGui.SetClipboardText($"\"{GameTargetManager.GetTargetName()}\"");
+                    if (InputTextMultiline.Draw(
+                        $"##InputActionCommand_{commandIndex}",
+                        ref MacroItem.Commands[commandIndex].Actions,
+                        ushort.MaxValue,
+                        new Vector2(
+                            ImGui.GetContentRegionAvail().X,
+                            ImGui.GetTextLineHeight() * _inputLines
+                        ),
+                        ImGuiInputTextFlags.None
+                    )) {
+                        // DalamudApi.PluginLog.Debug($"{_inputTextContent}");
+                    }
+                }
+
+                ImGui.Spacing();
+                ImGui.Spacing();
+            }
         }
-        ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.PersonArrowDownToLine, $"##CopyTargetPositionBtn", "Copy Target Offset Position")) {
-            var offset = GameTargetManager.GetTargetOffsetFromMe();
-            string commandPosition = $"{offset.X.ToString(CultureInfo.InvariantCulture)} {offset.Y.ToString(CultureInfo.InvariantCulture)} {offset.Z.ToString(CultureInfo.InvariantCulture)}";
-            ImGui.SetClipboardText(commandPosition);
-        }
-
-        ImGui.SameLine();
-        ImGuiHelpers.ScaledDummy(20, 0);
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(100);
-        if (ImGui.InputUInt("Lines##InputLines", ref _inputLines, 1, 1)) {
-            _inputLines = Math.Max(11u, _inputLines);
-        }
-
-        ImGui.Spacing();
-
-        if (InputTextMultiline.Draw(
-            $"##InputActionCommand_{commandIndex}",
-            ref MacroItem.Commands[commandIndex].Actions,
-            ushort.MaxValue,
-            new Vector2(
-                MathF.Min(ImGui.GetContentRegionAvail().X, 500f * ImGuiHelpers.GlobalScale),
-                ImGui.GetTextLineHeight() * _inputLines
-            ),
-            ImGuiInputTextFlags.None
-        )) {
-            // DalamudApi.PluginLog.Debug($"{_inputTextContent}");
-        }
-        ImGui.EndGroup();
-
-        ImGui.Spacing();
-        ImGui.Spacing();
-
-        ImGui.EndChild(); // ##CommandEditor
-        ImGui.EndGroup();
     }
 
     private void DrawMacroIconPicker() {
