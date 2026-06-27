@@ -63,6 +63,8 @@ internal static class XivLauncherManager {
                 UseSteamServiceAccount = entry.UseSteamServiceAccount,
                 UseOtp = entry.UseOtp,
                 Enabled = entry.Enabled,
+                RoamingPath = entry.RoamingPath?.Trim() ?? string.Empty,
+                XivLauncherPath = entry.XivLauncherPath?.Trim() ?? string.Empty,
             })
             .Where(entry => !string.IsNullOrWhiteSpace(entry.UserName))
             .ToList();
@@ -97,7 +99,7 @@ internal static class XivLauncherManager {
             _isLaunching = true;
             _currentIndex = 0;
             _totalCount = queue.Count;
-            _status = $"Preparing to launch {queue.Count} bard{(queue.Count == 1 ? string.Empty : "s")}...";
+            _status = $"Preparing to launch {queue.Count} account {(queue.Count == 1 ? string.Empty : "s")}...";
         }
 
         _ = Task.Run(() => RunQueueAsync(queue, launcherPath, delaySeconds, cancellation));
@@ -150,7 +152,7 @@ internal static class XivLauncherManager {
                 SetProgress(index + 1, queue.Count, $"Launching {displayName} ({index + 1}/{queue.Count})...");
 
                 LaunchAccount(launcherPath, entry);
-                DalamudApi.PluginLog.Information($"[BardLauncher] Asked Windows to start XIVLauncher for '{displayName}'");
+                DalamudApi.PluginLog.Information($"[XivLauncher] Asked Windows to start XIVLauncher for '{displayName}'");
 
                 if (index < queue.Count - 1 && delaySeconds > 0) {
                     var remainingTime = delaySeconds;
@@ -166,11 +168,11 @@ internal static class XivLauncherManager {
                 }
             }
 
-            SetIdleStatus($"Launch queue completed. Started {queue.Count} bard{(queue.Count == 1 ? string.Empty : "s")}.");
+            SetIdleStatus($"Launch queue completed. Started {queue.Count} account{(queue.Count == 1 ? string.Empty : "s")}.");
         } catch (OperationCanceledException) {
             SetIdleStatus("Launch queue cancelled.");
         } catch (Exception ex) {
-            DalamudApi.PluginLog.Error(ex, "[BardLauncher] Launch queue failed.");
+            DalamudApi.PluginLog.Error(ex, "[XivLauncher] Launch queue failed.");
             SetIdleStatus($"Launch failed: {ex.Message}");
         } finally {
             lock (StateLock) {
@@ -197,21 +199,21 @@ internal static class XivLauncherManager {
     /// <summary>
     /// Starts XIVLauncher through the Windows shell.
     /// </summary>
-    private static void LaunchAccount(string launcherPath, XivLaunchEntry account) {
-        string effectiveLauncherPath = !string.IsNullOrWhiteSpace(account.XivLauncherPath) ? account.XivLauncherPath : launcherPath;
+    private static void LaunchAccount(string launcherPath, XivLaunchEntry entry) {
+        string effectiveLauncherPath = !string.IsNullOrWhiteSpace(entry.XivLauncherPath) ? entry.XivLauncherPath : launcherPath;
 
         var workingDirectory = Path.GetDirectoryName(effectiveLauncherPath);
 
         var args = new System.Text.StringBuilder();
-        var accountArgs = $"{account.UserName}-{account.UseOtp}-{account.UseSteamServiceAccount}";
+        var accountArgs = $"{entry.UserName}-{entry.UseOtp}-{entry.UseSteamServiceAccount}";
 
         args.Append($"--account={accountArgs}");
 
-        if (!account.AutoLogin)
+        if (!entry.AutoLogin)
             args.Append(" --noautologin");
 
-        if (!string.IsNullOrWhiteSpace(account.RoamingPath))
-            args.Append($" --roamingPath=\"{account.RoamingPath}\"");
+        if (!string.IsNullOrWhiteSpace(entry.RoamingPath))
+            args.Append($" --roamingPath=\"{entry.RoamingPath}\"");
 
         var startInfo = new ProcessStartInfo {
             FileName = effectiveLauncherPath,
@@ -227,6 +229,23 @@ internal static class XivLauncherManager {
             ?? throw new InvalidOperationException("Windows could not start XIVLauncher.");
 
         process.Dispose();
+    }
+
+    public static string GenerateLaunchCommand(string launcherPath, XivLaunchEntry entry) {
+        string effectiveLauncherPath = !string.IsNullOrWhiteSpace(entry.XivLauncherPath) ? entry.XivLauncherPath : launcherPath;
+
+        var args = new System.Text.StringBuilder();
+        var accountArgs = $"{entry.UserName}-{entry.UseOtp}-{entry.UseSteamServiceAccount}";
+
+        args.Append($"--account={accountArgs}");
+
+        if (!entry.AutoLogin)
+            args.Append(" --noautologin");
+
+        if (!string.IsNullOrWhiteSpace(entry.RoamingPath))
+            args.Append($" --roamingPath=\"{entry.RoamingPath}\"");
+
+        return $"{effectiveLauncherPath} {args}";
     }
 
     private static void SetProgress(int currentIndex, int totalCount, string status) {

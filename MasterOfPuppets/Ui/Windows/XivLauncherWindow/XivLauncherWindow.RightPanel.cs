@@ -2,9 +2,11 @@ using System.IO;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 
 using MasterOfPuppets.Extensions;
+using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -38,8 +40,6 @@ public partial class XivLauncherWindow {
             ImGui.SetNextItemWidth(-1);
             if (ImGui.InputText("##xlusername", ref userName, 256)) {
                 entry.UserName = userName;
-            }
-            if (ImGui.IsItemDeactivatedAfterEdit()) {
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
@@ -95,6 +95,7 @@ public partial class XivLauncherWindow {
                         if (!result) return;
                         if (!Path.Exists(selectedPath)) return;
                         entry.RoamingPath = selectedPath;
+                        Plugin.Config.Save();
                         Plugin.IpcProvider.SyncConfiguration();
                     });
             }
@@ -153,8 +154,14 @@ public partial class XivLauncherWindow {
                 WindowsApi.OpenFolder(Path.GetDirectoryName(entry.XivLauncherPath));
             }
 
+
+            if (ImGuiUtil.ButtonStyled("Copy run command", ImGuiUtil.ButtonStyle.Info)) {
+                var command = XivLauncherManager.GenerateLaunchCommand(Plugin.Config.XivLauncherPath, entry);
+                ImGui.SetClipboardText(command);
+                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+            }
+
             ImGui.EndTable();
         }
-
     }
 }
