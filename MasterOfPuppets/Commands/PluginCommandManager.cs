@@ -526,7 +526,11 @@ public class PluginCommandManager : IDisposable {
                             DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop settingsprofile \"profile name\"");
                             return;
                         }
-                        Plugin.IpcProvider.BroadcastApplyGameSettingsProfile(parsedArgs[1]);
+
+                        var profile = Plugin.Config.GameSettingsProfiles.FirstOrDefault(p => string.Equals(p.Name, parsedArgs[1], StringComparison.OrdinalIgnoreCase));
+                        if (profile != null) {
+                            GameSettingsManager.ApplyProfile(profile, Plugin.Config.GameSettingsProfileKeys);
+                        }
                     }
                     break;
                 case "settings":
