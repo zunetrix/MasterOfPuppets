@@ -547,6 +547,9 @@ public class PluginCommandManager : IDisposable {
                 case "launcher":
                     Plugin.Ui.XivLauncherWindow.Toggle();
                     break;
+                case "killxivlauncher":
+                    XivLauncherManager.KillXivLauncher();
+                    break;
                 case "globaldelay":
                     if (parsedArgs.Count < 2) {
                         DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop globaldelay <0.00 - 60.00>");
@@ -593,6 +596,12 @@ public class PluginCommandManager : IDisposable {
                     break;
                 case "mapflag":
                     Plugin.IpcProvider.BroadcastMyFlagMapMarker();
+                    break;
+                case "resetwindow":
+                    Plugin.Ui.MainWindow.Position = new Vector2(10, 10);
+                    DalamudApi.Framework.RunOnTick(() => {
+                        Plugin.Ui.MainWindow.Position = null;
+                    }, delayTicks: 3);
                     break;
                 default:
                     DalamudApi.ChatGui.PrintError($"Unrecognized subcommand: '{subcommand}'");

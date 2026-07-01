@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using MasterOfPuppets.Util;
+
 namespace MasterOfPuppets;
 
 internal static class XivLauncherManager {
@@ -264,4 +266,58 @@ internal static class XivLauncherManager {
             _isLaunching = false;
         }
     }
+
+    public static async Task<int> KillXivLauncherAsync(int gracefulTimeoutMs = 5000) {
+        const string processName = "XIVLauncher";
+        int killed = 0;
+
+        var processes = Process.GetProcessesByName(processName);
+
+        if (processes.Length == 0) {
+            DalamudApi.PluginLog.Debug("No XIVLauncher found");
+            return 0;
+        }
+
+        DalamudApi.PluginLog.Debug($"Found {processes.Length} XIVLauncher processes");
+
+        foreach (var process in processes) {
+            try {
+                if (!process.HasExited && process.MainWindowHandle != IntPtr.Zero) {
+                    WindowsApi.SendMessage(process.MainWindowHandle, WindowsApi.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+                    DalamudApi.PluginLog.Debug($"WM_CLOSE sent to PID {process.Id}.");
+                }
+            } catch (Exception ex) {
+                DalamudApi.PluginLog.Warning($"WM_CLOSE error on PID {process.Id}: {ex.Message}");
+            }
+        }
+
+        var waitTasks = processes.Select(p => Task.Run(() => {
+            try { p.WaitForExit(gracefulTimeoutMs); } catch { }
+        }));
+        await Task.WhenAll(waitTasks);
+
+        // force Kill() if process still running
+        foreach (var process in processes) {
+            try {
+                if (!process.HasExited) {
+                    DalamudApi.PluginLog.Warning($"Force kill PID {process.Id}...");
+                    process.Kill();
+                    killed++;
+                } else {
+                    killed++;
+                    DalamudApi.PluginLog.Debug($"PID {process.Id} killed");
+                }
+            } catch (Exception ex) {
+                DalamudApi.PluginLog.Warning($"Erro while killing PID {process.Id}: {ex.Message}");
+            } finally {
+                process.Dispose();
+            }
+        }
+
+        DalamudApi.PluginLog.Debug($"Closed: {killed} XIVLauncher processes");
+        return killed;
+    }
+
+    public static void KillXivLauncher(int gracefulTimeoutMs = 5000) =>
+        Task.Run(() => KillXivLauncherAsync(gracefulTimeoutMs));
 }
