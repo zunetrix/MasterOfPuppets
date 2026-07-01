@@ -1,4 +1,7 @@
 using System;
+using System.Text;
+
+using Dalamud.Memory;
 
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -23,36 +26,33 @@ public static class ChatBox {
     /// <param name="message">message to send</param>
     /// <exception cref="ArgumentException">If <paramref name="message"/> is empty, longer than 500 bytes in UTF-8, or contains invalid characters.</exception>
     /// <exception cref="InvalidOperationException">If the signature for this function could not be found -or- The UiModule is currently unavailable</exception>
-    public static unsafe void SendMessage(string message) {
-        var utf8 = Utf8String.FromString(message);
+    public static unsafe void SendMessageUnsafe(byte[] message) {
+        var mes = Utf8String.FromSequence(message.NullTerminate());
+        UIModule.Instance()->ProcessChatBoxEntry(mes);
+        mes->Dtor(true);
+    }
 
-        try {
-            if (utf8->Length == 0) {
-                throw new ArgumentException("message is empty", nameof(message));
-            }
+    public static void SendMessage(string message) {
+        var bytes = Encoding.UTF8.GetBytes(message);
+        if (bytes.Length == 0)
+            throw new ArgumentException("message is empty", nameof(message));
 
-            if (utf8->Length > 500) {
-                throw new ArgumentException("message is longer than 500 bytes", nameof(message));
-            }
+        if (bytes.Length > 500)
+            throw new ArgumentException("message is longer than 500 bytes", nameof(message));
 
-            var oldLength = utf8->Length;
+        if (message.Length != SanitiseText(message).Length)
+            throw new ArgumentException("message contained invalid characters", nameof(message));
 
-            utf8->SanitizeString(AllowedEntities.UppercaseLetters | AllowedEntities.LowercaseLetters | AllowedEntities.Numbers | AllowedEntities.SpecialCharacters | AllowedEntities.CharacterList | AllowedEntities.OtherCharacters | AllowedEntities.Payloads | AllowedEntities.Unknown9);
+        SendMessageUnsafe(bytes);
+    }
 
-            if (utf8->Length != oldLength) {
-                throw new ArgumentException($"message contained invalid characters", nameof(message));
-            }
+    private static unsafe string SanitiseText(string text) {
+        var uText = Utf8String.FromString(text);
 
-            var uiModule = UIModule.Instance();
-            if (uiModule == null) {
-                throw new InvalidOperationException("The UiModule is currently unavailable");
-            }
+        uText->SanitizeString((AllowedEntities)0x27F);
+        var sanitised = uText->ToString();
+        uText->Dtor(true);
 
-            uiModule->ProcessChatBoxEntry(utf8);
-        } finally {
-            if (utf8 != null) {
-                utf8->Dtor(true);
-            }
-        }
+        return sanitised;
     }
 }
