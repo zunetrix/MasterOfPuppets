@@ -37,7 +37,7 @@ internal sealed class ContinuousForwardMovementStrategy : ISimpleMovementStrateg
 
         GameFunctions.FaceDirection(context.Destination);
         _forwardInput.MoveForward();
-        SimpleMovementWalkState.IsWalking = false;
+        // SimpleMovementWalkState.IsWalking = false;
         return SimpleMovementUpdateResult.Running;
     }
 
