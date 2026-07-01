@@ -89,5 +89,17 @@ public static partial class MopCommandsHelper {
             Toggle peer monitor window
             """
         },
+        new MopAction {
+            Category = MopActionCategory.Interface,
+            TextCommand = "/mop resetwindow",
+            SuggestionCommand = "/mop resetwindow",
+            Example = """
+            /mop resetwindow
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Resets window position
+            """
+        },
     ];
 }
