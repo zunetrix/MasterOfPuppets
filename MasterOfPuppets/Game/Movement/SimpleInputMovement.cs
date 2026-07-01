@@ -4,7 +4,6 @@ using System.Threading;
 
 using Dalamud.Game.ClientState.Conditions;
 
-using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets.Movement;

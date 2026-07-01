@@ -10,7 +10,7 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 
-using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
+// using GameObjectStruct = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 
 namespace MasterOfPuppets.Movement;
 

@@ -181,8 +181,8 @@ public partial class MacroHandler {
             options.SequenceIndex,
             options.MovementMode,
             options.Anchor);
-        DalamudApi.PluginLog.Debug(
-            $"[mopformationmove] formation=\"{options.FormationName}\" reverse={options.Reverse} stride={options.Step} sequenceIndex={options.SequenceIndex} movementMode={options.MovementMode} anchor={options.Anchor}");
+
+        DalamudApi.PluginLog.Debug($"[mopformationmove] formation=\"{options.FormationName}\" reverse={options.Reverse} stride={options.Step} sequenceIndex={options.SequenceIndex} movementMode={options.MovementMode} anchor={options.Anchor}");
     }
 
     /// <summary>

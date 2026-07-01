@@ -4,7 +4,7 @@ using Dalamud.Hooking;
 
 namespace MasterOfPuppets.Movement;
 
-internal unsafe sealed class ForwardInputMovementController : IDisposable {
+internal sealed class ForwardInputMovementController : IDisposable {
     private delegate byte PlayerMoveDelegate(nint a1, int direction);
     private Hook<PlayerMoveDelegate>? _playerMoveHook;
     private MovementDirection _direction;
