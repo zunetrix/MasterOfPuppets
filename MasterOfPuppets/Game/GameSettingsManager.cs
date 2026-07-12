@@ -13,8 +13,25 @@ using FFXIVClientStructs.FFXIV.Common.Configuration;
 
 namespace MasterOfPuppets;
 
+/// <summary>Entry recorded whenever a game setting key changes while debug mode is active.</summary>
+public sealed record GameSettingsChangeEntry(int Number, string Source, string KeyName, string NewValue);
+
 public static class GameSettingsManager {
     private static List<string>? _allSettingsKeys;
+
+    //  Debug log
+    private static int _debugEntryCounter = 0;
+    public static bool IsDebugEnabled { get; private set; }
+    public static readonly List<GameSettingsChangeEntry> DebugLog = new();
+
+    public static void ClearDebugLog() {
+        DebugLog.Clear();
+        _debugEntryCounter = 0;
+    }
+
+    public static void Dispose() {
+        DisableDebug();
+    }
 
     public static unsafe void GetSettings() {
         var gameConfig = Framework.Instance()->SystemConfig.SystemConfigBase.ConfigBase.ConfigEntry;
@@ -175,66 +192,91 @@ public static class GameSettingsManager {
     //     DalamudApi.GameConfig.UiControl.Set("MoveMode", MoveMode);
 
     public static void EnableDebug() {
+        if (IsDebugEnabled) return;
+        IsDebugEnabled = true;
         DalamudApi.GameConfig.UiConfigChanged += OnUiConfigChanged;
         DalamudApi.GameConfig.UiControlChanged += OnUiControlChanged;
         DalamudApi.GameConfig.SystemChanged += OnSystemConfigChange;
     }
 
     public static void DisableDebug() {
+        if (!IsDebugEnabled) return;
+        IsDebugEnabled = false;
         DalamudApi.GameConfig.UiConfigChanged -= OnUiConfigChanged;
         DalamudApi.GameConfig.UiControlChanged -= OnUiControlChanged;
         DalamudApi.GameConfig.SystemChanged -= OnSystemConfigChange;
     }
 
     private static void OnUiConfigChanged(object? sender, ConfigChangeEvent e) {
-        var option = e.Option;
         var optionName = e.Option.ToString();
+        DalamudApi.PluginLog.Warning($"UiConfigChanged: {optionName}");
 
-        DalamudApi.PluginLog.Warning($"UiConfigChanged: {option}");
-
-        try {
-            var value = DalamudApi.GameConfig.UiConfig.GetUInt(optionName);
-            DalamudApi.PluginLog.Warning($"{optionName} [{option}] (UInt) = {value}");
-            return;
-        } catch { }
+        string newValue = "?";
 
         try {
-            var value = DalamudApi.GameConfig.UiConfig.GetFloat(optionName);
-            DalamudApi.PluginLog.Warning($"{optionName} [{option}] (Float) = {value}");
-            return;
-        } catch { }
+            newValue = DalamudApi.GameConfig.UiConfig.GetUInt(optionName).ToString();
+            DalamudApi.PluginLog.Warning($"(UiConfig UInt) {optionName} = {newValue}");
+        } catch {
+            try {
+                newValue = DalamudApi.GameConfig.UiConfig.GetFloat(optionName).ToString("F4");
+                DalamudApi.PluginLog.Warning($"(UiConfig Float) {optionName} = {newValue}");
+            } catch {
+                try {
+                    newValue = DalamudApi.GameConfig.UiConfig.GetString(optionName);
+                    DalamudApi.PluginLog.Warning($"(UiConfig String) {optionName} = {newValue}");
+                } catch { }
+            }
+        }
 
-        try {
-            var value = DalamudApi.GameConfig.UiConfig.GetString(optionName);
-            DalamudApi.PluginLog.Warning($"{optionName} [{option}] (String) = {value}");
-            return;
-        } catch { }
+        DebugLog.Add(new GameSettingsChangeEntry(++_debugEntryCounter, "UiConfig", optionName, newValue));
     }
 
     private static void OnUiControlChanged(object? sender, ConfigChangeEvent e) {
-        var option = e.Option;
         var optionName = e.Option.ToString();
+        DalamudApi.PluginLog.Warning($"UiControlChanged: {optionName}");
 
-        DalamudApi.PluginLog.Warning($"UiControlChanged: {option}");
+        string newValue = "?";
 
         try {
-            var value = DalamudApi.GameConfig.UiControl.GetUInt(optionName);
-            DalamudApi.PluginLog.Warning($"{optionName} [{option}] (UInt - Control) = {value}");
-            return;
-        } catch { }
+            newValue = DalamudApi.GameConfig.UiControl.GetUInt(optionName).ToString();
+            DalamudApi.PluginLog.Warning($"(UiControl UInt) {optionName} = {newValue}");
+        } catch {
+            try {
+                newValue = newValue = DalamudApi.GameConfig.UiControl.GetFloat(optionName).ToString("F4");
+                DalamudApi.PluginLog.Warning($"(UiControl Float) {optionName} = {newValue}");
+            } catch {
+                try {
+                    newValue = newValue = DalamudApi.GameConfig.UiControl.GetString(optionName);
+                    DalamudApi.PluginLog.Warning($"(UiControl String) {optionName} = {newValue}");
+                } catch { }
+            }
+        }
+
+        DebugLog.Add(new GameSettingsChangeEntry(++_debugEntryCounter, "UiControl", optionName, newValue));
     }
 
     private static void OnSystemConfigChange(object? sender, ConfigChangeEvent e) {
-        var option = e.Option;
         var optionName = e.Option.ToString();
+        DalamudApi.PluginLog.Warning($"SystemChanged: {optionName}");
 
-        DalamudApi.PluginLog.Warning($"SystemChanged: {optionName} [{option}]");
+        string newValue = "?";
 
-        // try {
-        //     DalamudApi.GameConfig.TryGet(SystemConfigOption.?, out uint value);
-        //     DalamudApi.PluginLog.Warning($"{optionName} [{option}] (UInt - Control) = {value}");
-        //     return;
-        // } catch { }
+        try {
+            newValue = DalamudApi.GameConfig.System.GetUInt(optionName).ToString();
+            DalamudApi.PluginLog.Warning($"(System UInt) {optionName} = {newValue}");
+        } catch {
+            try {
+                newValue = newValue = DalamudApi.GameConfig.System.GetFloat(optionName).ToString("F4");
+                DalamudApi.PluginLog.Warning($"(System Float) {optionName} = {newValue}");
+            } catch {
+                try {
+                    newValue = newValue = DalamudApi.GameConfig.System.GetString(optionName);
+                    DalamudApi.PluginLog.Warning($"(System String) {optionName} = {newValue}");
+                } catch { }
+            }
+        }
+
+        DebugLog.Add(new GameSettingsChangeEntry(++_debugEntryCounter, "System", optionName, newValue));
     }
 
     public static readonly HashSet<string> DefaultGameSettingsProfileKeys = new(StringComparer.OrdinalIgnoreCase) {
@@ -610,10 +652,10 @@ public static class GameSettingsManager {
         "PadButton_R3",
 
         // Ui -> uint
-        // "BattleEffectSelf",
-        // "BattleEffectParty",
-        // "BattleEffectOther",
-        // "BattleEffectPvPEnemyPc",
+        "BattleEffectSelf",
+        "BattleEffectParty",
+        "BattleEffectOther",
+        "BattleEffectPvPEnemyPc",
         // "PadMode",
         "WeaponAutoPutAway",
         "WeaponAutoPutAwayTime",

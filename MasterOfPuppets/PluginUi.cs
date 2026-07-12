@@ -27,6 +27,7 @@ public class PluginUi : IDisposable {
     public PeerMonitorWindow PeerMonitorWindow { get; }
     public XivLauncherWindow XivLauncherWindow { get; }
     public WindowLayoutWindow WindowLayoutWindow { get; }
+    public GameSettingsConfigurationWindow GameSettingsConfigurationWindow { get; }
 
     public PluginUi(Plugin plugin) {
         Plugin = plugin;
@@ -47,6 +48,7 @@ public class PluginUi : IDisposable {
         PeerMonitorWindow = AddWindow(new PeerMonitorWindow(Plugin));
         XivLauncherWindow = AddWindow(new XivLauncherWindow(Plugin));
         WindowLayoutWindow = AddWindow(new WindowLayoutWindow(Plugin));
+        GameSettingsConfigurationWindow = AddWindow(new GameSettingsConfigurationWindow(Plugin));
     }
 
     private T AddWindow<T>(T window) where T : Window {

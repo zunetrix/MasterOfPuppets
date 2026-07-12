@@ -173,6 +173,7 @@ public class Plugin : IDalamudPlugin {
         GameWindowManager.Dispose();
         GameRenderManager.Dispose();
         ServerBarProvider.Dispose();
+        GameSettingsManager.Dispose();
         Ui.Dispose();
     }
 }

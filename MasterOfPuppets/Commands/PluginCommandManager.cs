@@ -547,6 +547,9 @@ public class PluginCommandManager : IDisposable {
                 case "launcher":
                     Plugin.Ui.XivLauncherWindow.Toggle();
                     break;
+                case "gamesettings":
+                    Plugin.Ui.GameSettingsConfigurationWindow.Toggle();
+                    break;
                 case "killxivlauncher":
                     XivLauncherManager.KillXivLauncher();
                     break;

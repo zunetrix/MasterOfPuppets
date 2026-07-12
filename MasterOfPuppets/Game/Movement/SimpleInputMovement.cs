@@ -69,6 +69,10 @@ public sealed class SimpleInputMovement : IDisposable {
         if (DalamudApi.Condition[ConditionFlag.Performing])
             return null;
 
+        // Capture walk state before CancelActiveMove, which unconditionally sets IsWalking = false.
+        // If we read it after, savedIsWalking would always be false and the restore at the end
+        // of the movement would toggle walk off for clients that had it enabled.
+        var savedIsWalking = SimpleMovementWalkState.IsWalking;
         CancelActiveMove(callNativeStop: true);
 
         var context = new SimpleMovementContext(destination, precision, faceDirection);
@@ -82,7 +86,6 @@ public sealed class SimpleInputMovement : IDisposable {
 
         uint savedMoveMode = DalamudApi.GameConfig.UiControl.GetUInt("MoveMode");
         uint savedPadMode = DalamudApi.GameConfig.UiConfig.GetUInt("PadMode");
-        var savedIsWalking = SimpleMovementWalkState.IsWalking;
         var movementComplete = false;
 
         DalamudApi.GameConfig.UiControl.Set("MoveMode", 0u);
@@ -99,8 +102,7 @@ public sealed class SimpleInputMovement : IDisposable {
                 }
 
                 if (stuckTracker != null && stuckTracker.Update(player.Position, Environment.TickCount64, stuckTolerance, stuckTimeoutMs)) {
-                    DalamudApi.PluginLog.Warning(
-                        $"[SimpleInputMovement] Stuck for {stuckTimeoutMs}ms near {player.Position}; destination={destination}; mode={movementMode}; stopping.");
+                    DalamudApi.PluginLog.Warning($"[SimpleInputMovement] Stuck for {stuckTimeoutMs}ms near {player.Position}; destination={destination}; mode={movementMode}; stopping.");
                     CancelActiveMove(callNativeStop: true);
                     return;
                 }

@@ -91,6 +91,30 @@ public static partial class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.Interface,
+            TextCommand = "/mop launcher",
+            SuggestionCommand = "/mop launcher",
+            Example = """
+            /mop launcher
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Toggle XIV launcher window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.Interface,
+            TextCommand = "/mop gamesettings",
+            SuggestionCommand = "/mop gamesettings",
+            Example = """
+            /mop gamesettings
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Toggle game settings profile window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.Interface,
             TextCommand = "/mop resetwindow",
             SuggestionCommand = "/mop resetwindow",
             Example = """
