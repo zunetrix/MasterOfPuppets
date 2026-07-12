@@ -172,15 +172,19 @@ public class GearSetWidget : Widget {
         }
 
         ImGui.TableNextColumn();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Edit, $"##RenameGearset_{gearsetId}", "Rename")) {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Edit, $"##RenameGearset_{gearsetId}", "Broadcast rename gearset")) {
             _selectedGersetId = gearsetId;
             _gersetName = gearset.ActionName ?? string.Empty;
             _openRenamePopup = true;
         }
-        ImGuiUtil.ToolTip("Broadcast rename gearset");
 
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##EquipGearsetInventory_{gearsetId}", "Equip From Inventory")) {
+        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Play, ImGuiUtil.IconButtonStyle.Success, $"##EquipGearsetLocal_{gearsetId}", "Equip Gearset Locally")) {
+            Context.Plugin.IpcProvider.ExecuteTextCommand(gearset.TextCommand);
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Briefcase, $"##EquipGearsetInventory_{gearsetId}", "Broadcast Equip Gearset From Inventory")) {
             Context.Plugin.IpcProvider.ChangeGearset(gearsetId);
         }
         ImGuiUtil.ToolTip("""
@@ -188,8 +192,9 @@ public class GearSetWidget : Widget {
         Move the items from inventory to armoury (first slot) then equip gearset
         """);
 
+
         ImGui.SameLine();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, $"##EquipGearset_{gearsetId}", "Equip Gearset")) {
+        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.BroadcastTower, ImGuiUtil.IconButtonStyle.Success, $"##EquipGearsetBroadcast_{gearsetId}", "Broadcast Equip Gearset")) {
             Context.Plugin.IpcProvider.ExecuteTextCommand($"/mopbr {gearset.TextCommand}");
         }
 
