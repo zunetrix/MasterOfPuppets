@@ -95,4 +95,6 @@ public enum IpcMessageType {
     SetGameSettingsAlwaysInput,
     ApplyGameSettingsProfile,
     SetFlagMapMarker,
+
+    RidePillion,
 }

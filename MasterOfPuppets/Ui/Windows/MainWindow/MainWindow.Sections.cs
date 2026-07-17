@@ -42,6 +42,7 @@ public partial class MainWindow : Window {
         DrawCmdSection("FOLLOW", cols, btnW, [
             new(FontAwesomeIcon.PeopleArrows, "Start Follow", "/mop follow",     Style.Components.ButtonSuccessNormal, () => Plugin.IpcProvider.Follow(DalamudApi.PlayerState.EntityId)),
             new(FontAwesomeIcon.HandPaper,    "Stop Follow",  "/mop stopfollow", Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.StopFollow()),
+            new(FontAwesomeIcon.CarSide,      "Multi Rider Mount",  "Mount and make alts ridepillion. Select which mount to use in the settings",          Style.Components.ButtonBlueNormal,  () => Plugin.IpcProvider.ExecuteRidePillion()),
         ]);
 
         ImGui.Spacing();

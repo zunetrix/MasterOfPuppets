@@ -230,6 +230,7 @@ internal class Configuration : IPluginConfiguration {
     public bool ShowPanelActionsBroadcast { get; set; } = true;
     public bool ShowPanelMacroTags { get; set; } = true;
     public float ActionIconSize { get; set; } = 48;
+    public uint PreferredMultiRiderMountId { get; set; } = 0;
 
     // Client Launcher
     public string XivLauncherPath { get; set; } = XivLauncherManager.GetDefaultLauncherPath();

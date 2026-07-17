@@ -327,6 +327,8 @@ public class SettingsWindow : Window {
 
         DrawLoginMacroGroup();
 
+        DrawPreferredMountGroup();
+
         ImGui.Spacing();
         ImGui.Spacing();
         ImGui.Separator();
@@ -557,7 +559,44 @@ public class SettingsWindow : Window {
         }
     }
 
+    private void DrawPreferredMountGroup() {
+        using (ImGuiGroupPanel.BeginGroupPanel("Preferred Multi Rider Mount")) {
+            var preferredMultiRiderMountId = Plugin.Config.PreferredMultiRiderMountId;
 
+            using (ImRaii.PushIndent()) {
+                ImGui.Text("Mount:");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
+                string currentMount = Plugin.Config.PreferredMultiRiderMountId == 0 ? "Select..." : MountHelper.GetExecutableAction(Plugin.Config.PreferredMultiRiderMountId).ActionName;
+
+                using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor, true))
+                using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1, true))
+                using (ImRaii.PushFont(UiBuilder.DefaultFont)) {
+                    if (ImGui.BeginCombo("##PreferredMultiRiderMountId", currentMount)) {
+                        foreach (var multiRiderMount in MountHelper.GetAllowedMultiRiderMounts()) {
+                            bool isSelected = Plugin.Config.PreferredMultiRiderMountId == multiRiderMount.ActionId;
+                            if (ImGui.Selectable(multiRiderMount.ActionName, isSelected)) {
+                                Plugin.Config.PreferredMultiRiderMountId = multiRiderMount.ActionId;
+                                Plugin.Config.Save();
+                                Plugin.IpcProvider.SyncConfiguration();
+                            }
+                            if (isSelected) {
+                                ImGui.SetItemDefaultFocus();
+                            }
+                        }
+                        ImGui.EndCombo();
+                    }
+                }
+            }
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Undo, "##ResetMountId", "Reset")) {
+                Plugin.Config.PreferredMultiRiderMountId = 0;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+        }
+    }
 
     private void DrawCommandsTab() {
         using var tabItem = ImRaii.TabItem("Commands###CommandsTab");

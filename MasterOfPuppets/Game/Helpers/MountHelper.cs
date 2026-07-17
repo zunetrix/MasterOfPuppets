@@ -23,6 +23,13 @@ public static class MountHelper {
             .ToList();
     }
 
+    public static List<ExecutableAction> GetAllowedMultiRiderMounts() {
+        return DalamudApi.DataManager.GetExcelSheet<Mount>()
+            .Where(m => m.IsUnlocked() && m.ExtraSeats >= 1)
+            .Select(GetExecutableAction)
+            .ToList();
+    }
+
     private static Mount? GetMount(uint id) {
         return DalamudApi.DataManager.Excel.GetSheet<Mount>().GetRowOrDefault(id);
     }
