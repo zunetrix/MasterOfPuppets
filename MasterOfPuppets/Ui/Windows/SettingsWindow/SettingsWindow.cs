@@ -99,9 +99,6 @@ public class SettingsWindow : Window {
             }
             ImGuiUtil.HelpMarker("Allow actions to be executed in broadcast to all clients");
 
-            ImGui.Spacing();
-            ImGui.Spacing();
-
             var saveConfigAfterSync = Plugin.Config.SaveConfigAfterSync;
             if (ImGui.Checkbox(Language.SettingsWindowSaveConfigAfterSync, ref saveConfigAfterSync)) {
                 Plugin.Config.SaveConfigAfterSync = saveConfigAfterSync;
@@ -110,9 +107,6 @@ public class SettingsWindow : Window {
             }
             ImGuiUtil.HelpMarker("Enable for accounts with individual config file");
 
-            ImGui.Spacing();
-            ImGui.Spacing();
-
             var autoSaveMacro = Plugin.Config.AutoSaveMacro;
             if (ImGui.Checkbox(Language.SettingsWindowAutoSaveMacro, ref autoSaveMacro)) {
                 Plugin.Config.AutoSaveMacro = autoSaveMacro;
@@ -120,8 +114,6 @@ public class SettingsWindow : Window {
             }
             ImGuiUtil.HelpMarker("Auto save macro on close editor");
 
-            ImGui.Spacing();
-            ImGui.Spacing();
             ImGui.Text("Global delay between actions");
             ImGui.SetNextItemWidth(150);
             var delayBetweenActions = Plugin.Config.DelayBetweenActions;
@@ -269,11 +261,11 @@ public class SettingsWindow : Window {
                 if (!kbEnabled) Plugin.KeyboardBroadcastManager.IsReceiving = false;
             }
             ImGuiUtil.HelpMarker("Global feature toggle synced to all clients. When disabled, no client receives key broadcasts.");
+
             ImGui.SameLine();
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn)) {
                 Plugin.Ui.CharactersWindow.Toggle();
             }
-            ImGui.Spacing();
 
             bool isCapturing = Plugin.KeyboardBroadcastManager.IsCapturing;
             if (ImGui.Checkbox("Broadcast my keyboard input", ref isCapturing))

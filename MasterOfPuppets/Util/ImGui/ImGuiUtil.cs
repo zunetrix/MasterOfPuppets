@@ -272,29 +272,26 @@ public static class ImGuiUtil {
         return ret;
     }
 
-    public static void DrawFontawesomeIconOutlined(FontAwesomeIcon icon, Vector4 outlineColor, Vector4 iconColor) {
-        var positionOffset = ImGuiHelpers.ScaledVector2(0.0f, 1.0f);
-        var cursorStart = ImGui.GetCursorPos() + positionOffset;
-
+    public static void DrawFontawesomeIconOutlined(FontAwesomeIcon icon, Vector4 outline, Vector4 iconColor) {
         using (ImRaii.PushFont(UiBuilder.IconFont)) {
-            using (ImRaii.PushColor(ImGuiCol.Text, outlineColor)) {
-                foreach (var x in Enumerable.Range(-1, 3)) {
-                    foreach (var y in Enumerable.Range(-1, 3)) {
-                        if (x is 0 && y is 0) continue;
+            var iconText = icon.ToIconString();
+            var iconSize = ImGui.CalcTextSize(iconText);
+            var cursorScreenStart = ImGui.GetCursorScreenPos();
+            var drawList = ImGui.GetWindowDrawList();
 
-                        ImGui.SetCursorPos(cursorStart + new Vector2(x, y));
-                        ImGui.Text(icon.ToIconString());
-                    }
+            var outlineColorU32 = ImGui.ColorConvertFloat4ToU32(outline);
+            var iconColorU32 = ImGui.ColorConvertFloat4ToU32(iconColor);
+
+            foreach (var x in Enumerable.Range(-1, 3)) {
+                foreach (var y in Enumerable.Range(-1, 3)) {
+                    if (x is 0 && y is 0) continue;
+                    drawList.AddText(cursorScreenStart + new Vector2(x, y), outlineColorU32, iconText);
                 }
             }
 
-            using (ImRaii.PushColor(ImGuiCol.Text, iconColor)) {
-                ImGui.SetCursorPos(cursorStart);
-                ImGui.Text(icon.ToIconString());
-            }
+            drawList.AddText(cursorScreenStart, iconColorU32, iconText);
+            ImGui.Dummy(iconSize);
         }
-
-        ImGui.SetCursorPos(ImGui.GetCursorPos() - positionOffset);
     }
 
     public static void ToolTip(string desc, int wrap = 400, bool showBorder = true) {
