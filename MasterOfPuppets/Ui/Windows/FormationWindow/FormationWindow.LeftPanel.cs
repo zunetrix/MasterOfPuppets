@@ -93,7 +93,7 @@ public partial class FormationWindow {
                             _fileDialogManager.OpenFileDialog(
                                 title: "Import BardToolbox JSON",
                                 filters: ".json",
-                                startPath: Plugin.Config.MacroExportPath,
+                                startPath: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "XIVLauncher", "pluginConfigs"),
                                 selectionCountMax: 1,
                                 callback: (result, selectedPaths) => {
                                     if (!result || selectedPaths.Count == 0) return;
