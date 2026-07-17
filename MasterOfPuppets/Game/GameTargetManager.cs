@@ -4,8 +4,6 @@ using System.Numerics;
 
 using Dalamud.Game.ClientState.Objects.Types;
 
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
-
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Util;
 
@@ -16,7 +14,7 @@ namespace MasterOfPuppets;
 
 public static class GameTargetManager {
 
-    internal static unsafe void TargetNearestObjectInternal(Func<IGameObject, bool> match) {
+    internal static void TargetNearestObjectInternal(Func<IGameObject, bool> match) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             var player = DalamudApi.ObjectTable.LocalPlayer;
             if (player == null) return;

@@ -80,16 +80,16 @@ public partial class XivLauncherWindow {
                 Plugin.IpcProvider.SyncConfiguration();
             }
 
-            ImGui.Text("Roaming Folder:");
+            ImGui.Text("Roaming Directory (optional):");
             ImGui.Text(entry.RoamingPath.EllipsisPath(50));
 
             ImGui.SameLine();
             ImGuiHelpers.ScaledDummy(5);
 
             ImGui.SameLine();
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Folder, "##SetXivEntryRoamingPathBtn", "Select Roaming Folder")) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Folder, "##SetXivEntryRoamingPathBtn", "Select Roaming Directory")) {
                 _fileDialogManager.OpenFolderDialog(
-                    title: "Select Roaming Folder",
+                    title: "Select Roaming Directory",
                     startPath: DalamudApi.PluginInterface.ConfigDirectory.FullName,
                     callback: (result, selectedPath) => {
                         if (!result) return;
@@ -116,7 +116,7 @@ public partial class XivLauncherWindow {
             ImGui.Separator();
             ImGui.Spacing();
 
-            ImGui.Text("Override XIVLauncher Path:");
+            ImGui.Text("Override XIVLauncher Path (optional):");
             ImGui.SameLine();
             ImGuiUtil.HelpMarker("Set if you need use different launcher path for each account");
             ImGui.Text(entry.XivLauncherPath.EllipsisPath(50));
