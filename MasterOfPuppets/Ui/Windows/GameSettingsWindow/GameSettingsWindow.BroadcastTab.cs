@@ -4,7 +4,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class GameSettingsConfigurationWindow {
+public partial class GameSettingsWindow {
 
     private void DrawBroadcastTab() {
         ImGui.Text("Game Settings Broadcast");

@@ -6,7 +6,7 @@ using Dalamud.Interface.Windowing;
 
 namespace MasterOfPuppets;
 
-public partial class GameSettingsConfigurationWindow : Window {
+public partial class GameSettingsWindow : Window {
     private readonly Plugin Plugin;
 
     // Split panel state
@@ -31,8 +31,8 @@ public partial class GameSettingsConfigurationWindow : Window {
     // Broadcast tab state
     private SettingsDisplayObjectLimitType _objectQuantityType;
 
-    internal GameSettingsConfigurationWindow(Plugin plugin)
-        : base($"{Plugin.Name} Game Settings Profile###GameSettingsConfigurationWindow") {
+    internal GameSettingsWindow(Plugin plugin)
+        : base($"{Plugin.Name} Game Settings Profile###GameSettingsWindow") {
         Plugin = plugin;
 
         Size = ImGuiHelpers.ScaledVector2(820, 580);

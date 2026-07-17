@@ -12,7 +12,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class GameSettingsConfigurationWindow {
+public partial class GameSettingsWindow {
 
     private void DrawProfilesTab() {
         float splitterW = 10f * ImGuiHelpers.GlobalScale;
@@ -66,6 +66,15 @@ public partial class GameSettingsConfigurationWindow {
                 ImGui.OpenPopup("##GscPNew");
 
             DrawNewProfilePopup(profiles);
+
+            ImGui.SameLine();
+            ImGuiUtil.HelpMarker("""
+            Use this option to create Game Settings profiles. Simply adjust your settings in the native game's settings menu and create a new profile. The current settings will be saved as a snapshot that can be reapplied at any time.
+
+            To edit an existing profile, apply it locally, make the desired changes in the game's settings menu, and select Update Snapshot to overwrite the profile with the new settings.
+
+            This is especially useful for maintaining a Low Settings profile for your alts and a High Settings profile for your main character. You can also combine it with the Login Macro feature to automatically apply a specific settings profile whenever a particular character logs in.
+            """);
 
             ImGui.SameLine();
             ImGui.SetNextItemWidth(-1);

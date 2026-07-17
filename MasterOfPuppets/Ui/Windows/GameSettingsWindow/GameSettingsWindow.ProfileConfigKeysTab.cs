@@ -8,7 +8,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class GameSettingsConfigurationWindow {
+public partial class GameSettingsWindow {
 
     private void DrawProfileConfigKeysTab() {
         ImGui.TextWrapped(

@@ -22,7 +22,7 @@ public partial class MainWindow : Window {
             (FontAwesomeIcon.Users, "Characters", () => Ui.CharactersWindow.Toggle()),
             (FontAwesomeIcon.ArrowsDownToPeople, "Formation", () => Ui.FormationWindow.Toggle()),
             (FontAwesomeIcon.Display, "Windows Layout", () => Ui.WindowLayoutWindow.Toggle()),
-            (FontAwesomeIcon.SlidersH, "Game Settings Profile", () => Ui.GameSettingsConfigurationWindow.Toggle()),
+            (FontAwesomeIcon.SlidersH, "Game Settings Profile", () => Ui.GameSettingsWindow.Toggle()),
             (FontAwesomeIcon.UsersViewfinder, "Peer Monitor", () => Ui.PeerMonitorWindow.Toggle()),
             (FontAwesomeIcon.Rocket, "XIV Launcher", () => Ui.XivLauncherWindow.Toggle()),
             (FontAwesomeIcon.Cog, "Settings", () => Ui.SettingsWindow.Toggle()),
