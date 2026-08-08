@@ -13,18 +13,18 @@ namespace MasterOfPuppets;
 internal static unsafe partial class GameDialogManager {
 
     public static class AddonName {
-        //common
+        // common
         public const string SelectYesno = "SelectYesno";
         public const string SelectOk = "SelectOk";
         public const string Repair = "Repair";
         public const string SelectString = "SelectString";
-        //teleport
+        // teleport
         public const string HousingMenu = "HousingMenu";
         public const string HousingSelectBlock = "HousingSelectBlock";
         public const string WorldTravelSelect = "WorldTravelSelect";
         public const string TeleportHousingFriend = "TeleportHousingFriend";
         public const string TeleportTown = "TeleportTown";
-        //seasonal events
+        // events
         public const string EasterMowingResult = "EasterMowingResult";
         public const string FGSEnterDialog = "FGSEnterDialog";
         public const string ContentsFinderConfirm = "ContentsFinderConfirm";
