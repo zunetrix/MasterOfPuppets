@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Dalamud.Interface.ImGuiNotification;
+
 using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets;
@@ -315,6 +317,7 @@ internal static class XivLauncherManager {
         }
 
         DalamudApi.PluginLog.Debug($"Closed: {killed} XIVLauncher processes");
+        DalamudApi.ShowNotification($"Closed: {killed} XIVLauncher processes", NotificationType.Success, 5000);
         return killed;
     }
 

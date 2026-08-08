@@ -36,6 +36,11 @@ public partial class XivLauncherWindow {
                 ImGuiUtil.HelpMarker(XivLauncherManager.Status);
             }
 
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Ban, ImGuiUtil.IconButtonStyle.Danger, "##xlkillbgprocess", "Kill XIVLauncher background process")) {
+                XivLauncherManager.KillXivLauncher();
+            }
+
             ImGui.Spacing();
 
             if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Plus, ImGuiUtil.IconButtonStyle.Primary, "##xladd", "Add Account")) {

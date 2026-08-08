@@ -1,6 +1,7 @@
 ﻿using System;
 
 using Dalamud.Game.Gui.Dtr;
+using Dalamud.Game.Text;
 // using Dalamud.Game.Text.SeStringHandling;
 // using Dalamud.Game.Text.SeStringHandling.Payloads;
 
@@ -17,6 +18,7 @@ internal sealed class ServerBarProvider : IDisposable {
         _keyBroadcastDtrBarEntry.OnClick += OnKeyBroadcastBarClick;
         _keyBroadcastDtrBarEntry.Shown = Plugin.Config.ShowKeyBroadcastBarInfo;
         _keyBroadcastDtrBarEntry.Text = Plugin.KeyboardBroadcastManager.IsCapturing ? "KB: On" : "KB: Off";
+        // _keyBroadcastDtrBarEntry.Text = $"{SeIconChar.BoxedLetterM.ToIconString()}{SeIconChar.BoxedLetterO.ToIconString()}{SeIconChar.BoxedLetterP.ToIconString()}";
         _keyBroadcastDtrBarEntry.Tooltip = "Mop Key Broadcast: left click to toggle, right click to open window";
 
         // var icon = new IconPayload(Plugin.KeyboardBroadcastManager.IsCapturing
