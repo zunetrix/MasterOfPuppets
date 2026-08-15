@@ -97,4 +97,5 @@ public enum IpcMessageType {
     SetFlagMapMarker,
 
     RidePillion,
+    ExecuteUnequipGlasses,
 }

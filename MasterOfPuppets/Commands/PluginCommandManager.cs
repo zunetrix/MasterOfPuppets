@@ -365,6 +365,10 @@ public class PluginCommandManager : IDisposable {
                         GearsetManager.SwapGearsets(Plugin, gearset1 - 1, gearset2 - 1);
                     }
                     break;
+                case "facewearoff": {
+                        GameActionManager.UnequipGlasses();
+                    }
+                    break;
                 case "invite": {
                         if (parsedArgs.Count == 2) {
                             // character full name name@world
@@ -446,6 +450,8 @@ public class PluginCommandManager : IDisposable {
                     }
                     break;
                 case "formation": {
+                        if (!DalamudApi.ClientState.IsLoggedIn) return;
+
                         if (parsedArgs.Count < 2) {
                             Plugin.Ui.FormationWindow.Toggle();
                             return;

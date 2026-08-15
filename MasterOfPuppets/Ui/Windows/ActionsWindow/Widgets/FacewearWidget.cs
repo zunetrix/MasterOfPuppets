@@ -123,6 +123,11 @@ public class FacewearWidget : Widget {
         }
         ImGuiUtil.ToolTip("Icon size (drag or double-click to type)");
 
+        ImGui.SameLine();
+        if (ImGui.Button(Language.UnequipBtn)) {
+            Context.Plugin.IpcProvider.ExecuteUnequipGlasses();
+        }
+
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();

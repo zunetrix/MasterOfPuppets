@@ -222,6 +222,9 @@ Right-click to copy formation command</value>
     <data name="DismissBtn" xml:space="preserve">
         <value>Dismiss</value>
     </data>
+    <data name="UnequipBtn" xml:space="preserve">
+        <value>Unequip</value>
+    </data>
     <data name="ClickToExecute" xml:space="preserve">
         <value>Click to execute</value>
     </data>

@@ -28,4 +28,13 @@ internal partial class IpcProvider {
     private void HandleExecuteItemCommand(IpcMessage message) {
         GameActionManager.UseItem(message.DataStruct<uint>());
     }
+
+    public void ExecuteUnequipGlasses() {
+        BroadCast(IpcMessage.Create(IpcMessageType.ExecuteUnequipGlasses).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.ExecuteUnequipGlasses)]
+    private void HandleExecuteUnequipGlasses(IpcMessage message) {
+        GameActionManager.UnequipGlasses();
+    }
 }

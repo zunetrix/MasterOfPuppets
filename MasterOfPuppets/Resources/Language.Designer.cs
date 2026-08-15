@@ -414,4 +414,9 @@ internal class Language {
             return ResourceManager.GetString("MacroBackup", resourceCulture);
         }
     }
+    internal static string UnequipBtn {
+        get {
+            return ResourceManager.GetString("UnequipBtn", resourceCulture);
+        }
+    }
 }

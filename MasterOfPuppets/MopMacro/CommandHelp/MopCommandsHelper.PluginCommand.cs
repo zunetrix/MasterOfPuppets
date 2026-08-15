@@ -733,5 +733,21 @@ public static partial class MopCommandsHelper {
             Closes the game client.
             """
         },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            SubCategory = MopActionSubCategory.None,
+            TextCommand = "/mop facewearoff",
+            SuggestionCommand = "/mop facewearoff",
+            Example = """
+            /mop facewearoff
+
+            Broadcast:
+            /mopbr /mop facewearoff
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Unequip facewear (glasses)
+            """
+        },
     ];
 }

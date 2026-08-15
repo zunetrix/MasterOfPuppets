@@ -1,6 +1,7 @@
 using System;
 
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace MasterOfPuppets;
@@ -125,5 +126,21 @@ public static class GameActionManager {
         }, delayTicks: 3);
 
         // DalamudApi.PluginLog.Debug($"[USE INVENTORY ITEM NAME] {itemName}");
+    }
+
+    public static unsafe void UnequipGlasses() {
+        DalamudApi.Framework.RunOnFrameworkThread(() => {
+            var player = Control.GetLocalPlayer();
+            if (player == null) return;
+
+            var glassesIds = player->DrawData.GlassesIds;
+            if (glassesIds.Length > 0) {
+                var glassesId = glassesIds[0];
+                if (glassesId == 0) return;
+
+                var action = FacewearHelper.GetExecutableAction(glassesId);
+                Chat.SendMessage(action.TextCommand);
+            }
+        });
     }
 }
