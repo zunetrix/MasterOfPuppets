@@ -9,6 +9,7 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 
 using MasterOfPuppets.Formations;
 using MasterOfPuppets.Util;
+
 using Lumina.Text.ReadOnly;
 
 namespace MasterOfPuppets;
@@ -95,7 +96,7 @@ internal class ChatWatcher : IDisposable {
             return;
         }
 
-        var parsedArgs = ArgumentParser.ParseChatArgs(message.Message.ToString());
+        var parsedArgs = ArgumentParser.ParseChatArgs(ResolveTextWithIcons(message.Message));
         if (!parsedArgs.Any()) return;
 
 #if DEBUG
@@ -272,9 +273,37 @@ internal class ChatWatcher : IDisposable {
         FormationCharacterName.NormalizeWorldSeparator(SanitizeSenderName(sender.ExtractText()));
 
     private static string GetSenderTextName(SeString sender) {
-        var senderName = FormationCharacterName.NormalizeWorldSeparator(SanitizeSenderName(sender.TextValue));
+        var senderName = FormationCharacterName.NormalizeWorldSeparator(SanitizeSenderName(ResolveTextWithIcons(sender)));
         return !string.IsNullOrWhiteSpace(senderName)
             ? senderName
-            : FormationCharacterName.NormalizeWorldSeparator(SanitizeSenderName(sender.ToString()));
+            : FormationCharacterName.NormalizeWorldSeparator(SanitizeSenderName(ResolveTextWithIcons(sender)));
+    }
+
+    private static string ResolveTextWithIcons(SeString seString) {
+        var sb = new System.Text.StringBuilder();
+        foreach (var payload in seString.Payloads) {
+            if (payload is TextPayload textPayload) {
+                sb.Append(textPayload.Text);
+            } else if (payload is IconPayload iconPayload) {
+                if (iconPayload.Icon == BitmapFontIcon.CrossWorld) {
+                    sb.Append('@');
+                }
+            }
+        }
+        return sb.ToString();
+    }
+
+    private static string ExtractTextWithIcons(SeString seString) {
+        var sb = new System.Text.StringBuilder();
+        foreach (var payload in seString.Payloads) {
+            if (payload is TextPayload textPayload) {
+                sb.Append(textPayload.Text);
+            } else if (payload is IconPayload iconPayload) {
+                if (Enum.TryParse<SeIconChar>(iconPayload.Icon.ToString(), out var seIconChar)) {
+                    sb.Append((char)seIconChar);
+                }
+            }
+        }
+        return sb.ToString();
     }
 }
