@@ -145,13 +145,13 @@ public class Command {
         return vars;
     }
 
-    private static List<string> RemoveVariableDefinitions(IEnumerable<string> lines) {
+    internal static List<string> RemoveVariableDefinitions(IEnumerable<string> lines) {
         return lines
             .Where(l => !Regex.IsMatch(l, @"^\$[A-Za-z_]\w*\s*="))
             .ToList();
     }
 
-    private static string[] SubstituteVariables(
+    internal static string[] SubstituteVariables(
         IEnumerable<string> lines,
         Dictionary<string, string> variables
     ) {
@@ -160,12 +160,18 @@ public class Command {
         foreach (var line in lines) {
             var resolved = line;
 
-            foreach (var (key, value) in variables) {
-                resolved = Regex.Replace(
-                    resolved,
-                    $@"\${Regex.Escape(key)}\b",
-                    value
-                );
+            for (int pass = 0; pass < 5; pass++) {
+                var prev = resolved;
+                foreach (var (key, value) in variables) {
+                    resolved = Regex.Replace(
+                        resolved,
+                        $@"\${Regex.Escape(key)}\b",
+                        value
+                    );
+                }
+
+                if (string.Equals(resolved, prev, StringComparison.Ordinal))
+                    break;
             }
 
             result.Add(resolved);
@@ -218,6 +224,24 @@ public class Command {
 
         return SubstituteVariables(actionLines, mergedVars);
     }
+
+    internal MacroExecutionPlan CreateExecutionPlan(
+        Dictionary<string, string>? macroVariables = null,
+        Dictionary<string, string>? runtimeVariables = null,
+        Dictionary<string, string>? inlineOverrides = null) {
+        if (string.IsNullOrWhiteSpace(Actions))
+            return new MacroExecutionPlan(Array.Empty<string>());
+
+        var lines = PreprocessLines(Actions);
+        var commandVars = ExtractVariables(lines);
+        var mergedVars = MergeVariables(runtimeVariables, macroVariables, commandVars);
+
+        if (inlineOverrides != null)
+            foreach (var (key, value) in inlineOverrides)
+                mergedVars[key] = value;
+
+        return new MacroExecutionPlan(RemoveVariableDefinitions(lines).ToArray(), mergedVars);
+    }
 }
 
 public class Macro {
@@ -265,14 +289,22 @@ public class Macro {
         IReadOnlyList<CidGroup>? groups = null,
         Dictionary<string, string>? inlineVars = null,
         MacroRuntimeVariables? runtimeVariables = null) {
+        return CreateCidExecutionPlan(cid, groups, inlineVars, runtimeVariables).ResolveAllActions();
+    }
+
+    public MacroExecutionPlan CreateCidExecutionPlan(
+        ulong cid,
+        IReadOnlyList<CidGroup>? groups = null,
+        Dictionary<string, string>? inlineVars = null,
+        MacroRuntimeVariables? runtimeVariables = null) {
         var macroVars = GetMacroVariables();
         var runtimeVars = runtimeVariables?.ToDictionary();
         var resolvedInlineVars = runtimeVariables?.ResolveInlinePlaceholders(inlineVars) ?? inlineVars;
 
         return Commands
             .FirstOrDefault(c => c.GetEffectiveCids(groups).Contains(cid))
-            ?.GetActionList(macroVars, runtimeVars, resolvedInlineVars)
-            ?? Array.Empty<string>();
+            ?.CreateExecutionPlan(macroVars, runtimeVars, resolvedInlineVars)
+            ?? new MacroExecutionPlan(Array.Empty<string>());
     }
 
     public void SanitizeActions() {

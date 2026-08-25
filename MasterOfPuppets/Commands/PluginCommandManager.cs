@@ -144,6 +144,26 @@ public class PluginCommandManager : IDisposable {
                 case "stop":
                     Plugin.MacroHandler.StopMacroQueueExecution();
                     break;
+                case "reload":
+                case "loadconfig":
+                    Plugin.ReloadConfigFromDisk();
+                    break;
+                case "setvar":
+                case "setvars": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop setvar -var=$name=value[;$other=value]");
+                            return;
+                        }
+
+                        var variables = ArgumentParser.ParseInlineVars(parsedArgs[1]);
+                        if (variables.Count == 0) {
+                            DalamudApi.ChatGui.PrintError("No valid variables found. Usage: /mop setvar -var=$name=value[;$other=value]");
+                            return;
+                        }
+
+                        Plugin.IpcProvider.UpdateMacroVariables(variables);
+                    }
+                    break;
                 case "target":
                     if (parsedArgs.Count <= 1) {
                         DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop target <name>");

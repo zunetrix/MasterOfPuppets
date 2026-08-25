@@ -52,7 +52,7 @@ internal partial class IpcProvider {
             return;
         }
 
-        if (!TryGetFormationAnchor(formation, anchor, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid))
+        if (!TryGetFormationAnchor(formation, anchor, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid, out var anchorGameObjectId, out var anchorName, out var normalizeAnchorRotation))
             return;
 
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteFormation,
@@ -62,7 +62,10 @@ internal partial class IpcProvider {
             anchorPos.Z.ToString("G", CultureInfo.InvariantCulture),
             anchorRot.ToString("G", CultureInfo.InvariantCulture),
             anchorCid.ToString(CultureInfo.InvariantCulture),
-            SimpleInputMovement.FormatMode(movementMode)).Serialize(), includeSelf: true);
+            SimpleInputMovement.FormatMode(movementMode),
+            anchorGameObjectId.ToString(CultureInfo.InvariantCulture),
+            anchorName,
+            normalizeAnchorRotation ? "1" : "0").Serialize(), includeSelf: true);
     }
 
     [IpcHandle(IpcMessageType.ExecuteFormation)]
@@ -81,6 +84,14 @@ internal partial class IpcProvider {
         var movementMode = message.StringData.Length >= 7
             ? SimpleInputMovement.ParseModeOrDefault(message.StringData[6], SimpleMovementMode.Precise)
             : SimpleMovementMode.Precise;
+        var anchorGameObjectId = message.StringData.Length >= 8
+            && ulong.TryParse(message.StringData[7], NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedObjectId)
+                ? parsedObjectId
+                : 0;
+        var anchorName = message.StringData.Length >= 9
+            ? message.StringData[8]
+            : Plugin.Config.Characters.FirstOrDefault(character => character.Cid == anchorCid)?.Name ?? string.Empty;
+        var normalizeAnchorRotation = message.StringData.Length < 10 || message.StringData[9] == "1";
 
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
@@ -90,12 +101,14 @@ internal partial class IpcProvider {
         }
 
         var playerCid = DalamudApi.PlayerState.ContentId;
-        if (playerCid == anchorCid) return;
+        if (anchorCid != 0 && playerCid == anchorCid) return;
 
         var point = GetAssignedPoint(formation, playerCid);
         if (point == null) return;
 
-        var anchorPoint = GetAssignedPoint(formation, anchorCid);
+        var anchorPoint = anchorCid != 0
+            ? GetAssignedPoint(formation, anchorCid)
+            : formation.Points.ElementAtOrDefault(0);
         if (anchorPoint == null) return;
 
         var anchorPos = new Vector3(lx, ly, lz);
@@ -103,7 +116,28 @@ internal partial class IpcProvider {
         // DalamudApi.PluginLog.Warning($"[ExecuteFormation] anchorPos: {anchorPos} worldPos: {worldPos} faceDirection: {facingRad}");
 
         // Plugin.MovementManager.MoveTo(worldPos, facingRad.Radians());
-        FormationLocalMovementExecutor.MoveToComputed(Plugin, worldPos, facingRad, movementMode);
+        var trackingKey = $"ExecuteFormation:{name}:{anchorCid}:{playerCid}";
+        if (SimpleInputMovement.UsesLiveFormationTracking(movementMode)) {
+            var anchorPointIndex = anchorCid != 0
+                ? FormationExecution.GetAssignedPointIndex(formation, anchorCid, Plugin.Config.CidsGroups)
+                : FormationPointMovement.AnchorPointIndex;
+            var destinationPointIndex = FormationExecution.GetAssignedPointIndex(formation, playerCid, Plugin.Config.CidsGroups);
+            Plugin.FormationTrackingSession.Start(
+                formation,
+                destinationPointIndex,
+                anchorPointIndex,
+                anchorCid,
+                anchorGameObjectId,
+                anchorName,
+                anchorPos,
+                anchorRot,
+                anchorRot,
+                normalizeAnchorRotation,
+                trackingKey);
+        } else {
+            Plugin.FormationTrackingSession.Stop();
+            FormationLocalMovementExecutor.MoveToComputed(Plugin, worldPos, facingRad, movementMode, trackingKey);
+        }
 
         // Member faces the same direction as the anchor (north offset = 0)
         // Plugin.MovementManager.MoveTo(worldPos, anchorRot.Radians());
@@ -166,7 +200,7 @@ internal partial class IpcProvider {
         }
 
         var effectiveAnchor = anchor ?? FormationAnchorReference.Self;
-        if (!TryGetFormationAnchor(formation, effectiveAnchor, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid))
+        if (!TryGetFormationAnchor(formation, effectiveAnchor, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid, out var anchorGameObjectId, out var anchorName, out var normalizeAnchorRotation))
             return;
 
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteFormationMove,
@@ -182,7 +216,10 @@ internal partial class IpcProvider {
             SimpleInputMovement.FormatMode(movementMode),
             effectiveAnchor.Kind == FormationAnchorKind.FocusTarget ? "ftarget"
                 : effectiveAnchor.Kind == FormationAnchorKind.Target ? "target"
-                : "self").Serialize(), includeSelf: true);
+                : "self",
+            anchorGameObjectId.ToString(CultureInfo.InvariantCulture),
+            anchorName,
+            normalizeAnchorRotation ? "1" : "0").Serialize(), includeSelf: true);
     }
 
     [IpcHandle(IpcMessageType.ExecuteFormationMove)]
@@ -204,6 +241,16 @@ internal partial class IpcProvider {
         var movementMode = message.StringData.Length >= 10
             ? SimpleInputMovement.ParseModeOrDefault(message.StringData[9], SimpleMovementMode.Precise)
             : SimpleMovementMode.Precise;
+        var anchorGameObjectId = message.StringData.Length >= 12
+            && ulong.TryParse(message.StringData[11], NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedObjectId)
+                ? parsedObjectId
+                : 0;
+        var anchorName = message.StringData.Length >= 13
+            ? message.StringData[12]
+            : Plugin.Config.Characters.FirstOrDefault(character => character.Cid == anchorCid)?.Name ?? string.Empty;
+        var normalizeAnchorRotation = message.StringData.Length >= 14
+            ? message.StringData[13] == "1"
+            : message.StringData.Length < 11 || message.StringData[10] == "self";
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
         if (formation == null) {
@@ -223,19 +270,36 @@ internal partial class IpcProvider {
         if (anchorPointIndex < 0)
             return;
 
-        var move = FormationPath.BuildWorldMove(
-            formation,
-            anchorPointIndex,
-            playerPointIndex,
-            new Vector3(lx, ly, lz),
-            anchorRot,
-            step,
-            reverse,
-            sequenceIndex);
-        if (move == null)
+        var sequence = FormationPath.BuildDestinationSequence(formation, anchorPointIndex, playerPointIndex, step, reverse);
+        if (sequence.Count == 0)
             return;
+        var destinationPointIndex = sequence[(sequenceIndex % sequence.Count + sequence.Count) % sequence.Count];
+        var move = FormationPointMovement.BuildAnchoredWorldMove(
+            formation,
+            destinationPointIndex,
+            anchorPointIndex,
+            new Vector3(lx, ly, lz),
+            anchorRot);
+        if (move == null) return;
 
-        FormationLocalMovementExecutor.MoveToComputed(Plugin, move.Value.Position, move.Value.Rotation, movementMode);
+        var trackingKey = $"ExecuteFormationMove:{name}:{anchorCid}:{playerCid}:{reverse}:{step}:{sequenceIndex}";
+        if (SimpleInputMovement.UsesLiveFormationTracking(movementMode)) {
+            Plugin.FormationTrackingSession.Start(
+                formation,
+                destinationPointIndex,
+                anchorPointIndex,
+                anchorCid,
+                anchorGameObjectId,
+                anchorName,
+                new Vector3(lx, ly, lz),
+                anchorRot,
+                anchorRot,
+                normalizeAnchorRotation,
+                trackingKey);
+        } else {
+            Plugin.FormationTrackingSession.Stop();
+            FormationLocalMovementExecutor.MoveToComputed(Plugin, move.Value.Position, move.Value.Rotation, movementMode, trackingKey);
+        }
     }
 
     private FormationPoint? GetAssignedPoint(Formation formation, ulong playerCid) =>
@@ -247,10 +311,16 @@ internal partial class IpcProvider {
         ulong issuerCid,
         out Vector3 position,
         out float rotation,
-        out ulong cid) {
+        out ulong cid,
+        out ulong gameObjectId,
+        out string name,
+        out bool normalizeAnchorRotation) {
         position = default;
         rotation = default;
         cid = default;
+        gameObjectId = default;
+        name = string.Empty;
+        normalizeAnchorRotation = false;
 
         var player = DalamudApi.ObjectTable.LocalPlayer;
         if (player == null) return false;
@@ -259,22 +329,31 @@ internal partial class IpcProvider {
             anchor = FormationAnchorReference.Self;
 
         if (!FormationAnchorResolver.TryResolve(Plugin, formation, anchor, out var resolved, out var failureReason, out var failureKind)) {
-            if (FormationLocalMovementExecutor.IsTransientAnchorFailure(failureKind)) {
-                DalamudApi.PluginLog.Debug($"[FormationAnchor] {failureReason}");
+            if (anchor.Kind is FormationAnchorKind.Target or FormationAnchorKind.FocusTarget
+                && FormationAnchorResolver.TryResolve(Plugin, formation, FormationAnchorReference.Self, out var selfResolved, out _, out _)) {
+                resolved = selfResolved;
+                anchor = FormationAnchorReference.Self;
             } else {
-                DalamudApi.ShowNotification(failureReason, NotificationType.Error, 5000);
+                if (FormationLocalMovementExecutor.IsTransientAnchorFailure(failureKind)) {
+                    DalamudApi.PluginLog.Debug($"[FormationAnchor] {failureReason}");
+                } else {
+                    DalamudApi.ShowNotification(failureReason, NotificationType.Error, 5000);
+                }
+                return false;
             }
-            return false;
         }
 
-        cid = resolved.ContentId ?? issuerCid;
+        cid = anchor.Kind == FormationAnchorKind.Self ? issuerCid : (resolved.ContentId ?? 0);
+        gameObjectId = resolved.GameObjectId ?? 0;
+        name = resolved.Name;
         position = resolved.Position;
         rotation = resolved.Rotation;
 
-        if (ShouldNormalizeAssignedAnchorRotation(anchor) && GetAssignedPoint(formation, cid) is { } anchorPoint)
+        normalizeAnchorRotation = ShouldNormalizeAssignedAnchorRotation(anchor) && cid != 0 && GetAssignedPoint(formation, cid) is { };
+        if (normalizeAnchorRotation && GetAssignedPoint(formation, cid) is { } anchorPoint)
             rotation = FormationMath.GetFormationFrameRotation(anchorPoint, resolved.Rotation);
 
-        return cid != 0;
+        return true;
     }
 
     private static bool ShouldNormalizeAssignedAnchorRotation(FormationAnchorReference anchor) =>

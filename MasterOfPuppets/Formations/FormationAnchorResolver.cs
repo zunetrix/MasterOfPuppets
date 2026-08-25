@@ -8,7 +8,12 @@ using Dalamud.Game.ClientState.Objects.Types;
 
 namespace MasterOfPuppets.Formations;
 
-public sealed record FormationResolvedAnchor(Vector3 Position, float Rotation, ulong? ContentId = null, string Name = "");
+public sealed record FormationResolvedAnchor(
+    Vector3 Position,
+    float Rotation,
+    ulong? ContentId = null,
+    string Name = "",
+    ulong? GameObjectId = null);
 
 public static class FormationAnchorResolver {
     public static bool TryResolve(
@@ -37,7 +42,8 @@ public static class FormationAnchorResolver {
                     player.Position,
                     player.Rotation,
                     DalamudApi.PlayerState.ContentId,
-                    GetLocalPlayerNameWorld());
+                    GetLocalPlayerNameWorld(),
+                    player.GameObjectId);
                 return true;
             case FormationAnchorKind.Sender:
                 if (string.IsNullOrWhiteSpace(anchor.Name)) {
@@ -62,7 +68,8 @@ public static class FormationAnchorResolver {
                     player.TargetObject.Position,
                     player.TargetObject.Rotation,
                     null,
-                    player.TargetObject.Name.TextValue);
+                    player.TargetObject.Name.TextValue,
+                    player.TargetObject.GameObjectId);
                 return true;
             case FormationAnchorKind.FocusTarget:
                 var focusTarget = DalamudApi.TargetManager.FocusTarget;
@@ -76,9 +83,47 @@ public static class FormationAnchorResolver {
                     focusTarget.Position,
                     focusTarget.Rotation,
                     null,
-                    focusTarget.Name.TextValue);
+                    focusTarget.Name.TextValue,
+                    focusTarget.GameObjectId);
                 return true;
             case FormationAnchorKind.Named:
+                if (string.Equals(anchor.Name, "<t>", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(anchor.Name, "[t]", StringComparison.OrdinalIgnoreCase)) {
+                    if (player.TargetObject == null) {
+                        failureReason = "no target selected";
+                        failureKind = FormationAnchorFailureKind.NoTargetSelected;
+                        return false;
+                    }
+
+                    resolved = new FormationResolvedAnchor(
+                        player.TargetObject.Position,
+                        player.TargetObject.Rotation,
+                        null,
+                        player.TargetObject.Name.TextValue,
+                        player.TargetObject.GameObjectId);
+                    return true;
+                }
+
+                if (string.Equals(anchor.Name, "<f>", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(anchor.Name, "[f]", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(anchor.Name, "<focus>", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(anchor.Name, "[focus]", StringComparison.OrdinalIgnoreCase)) {
+                    var namedFocus = DalamudApi.TargetManager.FocusTarget;
+                    if (namedFocus == null) {
+                        failureReason = "no focus target selected";
+                        failureKind = FormationAnchorFailureKind.NoFocusTargetSelected;
+                        return false;
+                    }
+
+                    resolved = new FormationResolvedAnchor(
+                        namedFocus.Position,
+                        namedFocus.Rotation,
+                        null,
+                        namedFocus.Name.TextValue,
+                        namedFocus.GameObjectId);
+                    return true;
+                }
+
                 if (!TryResolveNamed(anchor.Name ?? string.Empty, out resolved, out failureReason, out failureKind))
                     return false;
 
@@ -140,7 +185,8 @@ public static class FormationAnchorResolver {
             match.Actor.Position,
             match.Actor.Rotation,
             null,
-            match.FullName);
+            match.FullName,
+            match.Actor.GameObjectId);
         return true;
     }
 
@@ -165,7 +211,7 @@ public static class FormationAnchorResolver {
                 return false;
             }
 
-            resolved = new FormationResolvedAnchor(player.Position, player.Rotation, anchorCid, GetLocalPlayerNameWorld());
+            resolved = new FormationResolvedAnchor(player.Position, player.Rotation, anchorCid, GetLocalPlayerNameWorld(), player.GameObjectId);
             return true;
         }
 

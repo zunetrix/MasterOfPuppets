@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using Dalamud.Bindings.ImGui;
 
 namespace MasterOfPuppets.Util;
 
@@ -16,6 +17,52 @@ public static class WindowsApi {
     public const int SM_CYSCREEN = 1;
     // compute task bar
     public const uint SPI_GETWORKAREA = 0x0030;
+    private const uint CF_UNICODETEXT = 13;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool OpenClipboard(IntPtr hWndNewOwner);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool CloseClipboard();
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr GetClipboardData(uint uFormat);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr GlobalLock(IntPtr hMem);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GlobalUnlock(IntPtr hMem);
+
+    public static string GetClipboardText() {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            return ImGui.GetClipboardText() ?? string.Empty;
+        }
+
+        try {
+            if (!OpenClipboard(IntPtr.Zero))
+                return ImGui.GetClipboardText() ?? string.Empty;
+
+            IntPtr handle = GetClipboardData(CF_UNICODETEXT);
+            if (handle == IntPtr.Zero) {
+                CloseClipboard();
+                return ImGui.GetClipboardText() ?? string.Empty;
+            }
+
+            IntPtr pointer = GlobalLock(handle);
+            if (pointer == IntPtr.Zero) {
+                CloseClipboard();
+                return ImGui.GetClipboardText() ?? string.Empty;
+            }
+
+            string text = Marshal.PtrToStringUni(pointer) ?? string.Empty;
+            GlobalUnlock(handle);
+            CloseClipboard();
+            return text;
+        } catch {
+            return ImGui.GetClipboardText() ?? string.Empty;
+        }
+    }
 
 
     public static void ExecuteCmd(string fileName, string args = null) {

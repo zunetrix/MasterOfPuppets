@@ -12,6 +12,7 @@ using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
@@ -60,7 +61,10 @@ public partial class MacroWindow : Window {
 
     private void ImportMacroFromClipboard() {
         try {
-            string macroImportString = ImGui.GetClipboardText();
+            string macroImportString = WindowsApi.GetClipboardText();
+            if (string.IsNullOrWhiteSpace(macroImportString))
+                macroImportString = ImGui.GetClipboardText();
+
             Plugin.MacroManager.ImportMacroFromString(macroImportString);
             Plugin.IpcProvider.SyncConfiguration();
             DalamudApi.ShowNotification($"Macro imported", NotificationType.Success, 5000);

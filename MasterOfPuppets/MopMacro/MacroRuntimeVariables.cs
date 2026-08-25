@@ -8,12 +8,14 @@ public sealed class MacroRuntimeVariables {
     public string Target { get; init; } = string.Empty;
     public string MopOrigin { get; init; } = string.Empty;
     public string MopOriginTarget { get; init; } = string.Empty;
+    public string MopOriginFocusTarget { get; init; } = string.Empty;
 
     public Dictionary<string, string> ToDictionary() => new() {
         ["me"] = Me,
         ["target"] = Target,
         ["mop_origin"] = MopOrigin,
         ["mop_origin_target"] = MopOriginTarget,
+        ["mop_origin_ftarget"] = MopOriginFocusTarget,
     };
 
     public Dictionary<string, string> ResolveInlinePlaceholders(Dictionary<string, string>? inlineVars) {
@@ -55,6 +57,7 @@ public sealed class MacroRuntimeVariables {
             Target = GameTargetManager.GetTargetName(),
             MopOrigin = me,
             MopOriginTarget = GameTargetManager.GetTargetName(),
+            MopOriginFocusTarget = GameTargetManager.GetFocusTargetName(),
         };
     }
 }

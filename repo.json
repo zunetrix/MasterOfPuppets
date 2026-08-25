@@ -1,0 +1,28 @@
+[
+  {
+    "Author": "GarrisonMangler; Zune",
+    "Name": "MasterofManglers",
+    "InternalName": "MasterOfPuppets",
+    "AssemblyVersion": "1.15.0.274",
+    "Description": "\nAn FFXIV plugin that lets you create and send custom actions, similar to in-game macros, either locally or via chat-based broadcasting.\nActions can be broadcast to multiple clients locally or through in-game chat channels such as Party, Linkshell, and Cross-World Linkshell.\nUse it to trigger custom actions like emotes, minions, mounts, glamour changes, and more.\n",
+    "ApplicableVersion": "any",
+    "RepoUrl": "https://github.com/GarrisonMangler/MasterOfPuppets",
+    "Tags": [
+      "utility",
+      "macro"
+    ],
+    "DalamudApiLevel": 15,
+    "LoadRequiredState": 0,
+    "LoadSync": false,
+    "CanUnloadAsync": false,
+    "LoadPriority": 0,
+    "IconUrl": "https://i.imgur.com/uFq8py7.png",
+    "Punchline": "Personal Gremlins Control Center",
+    "AcceptsFeedback": false,
+    "IsHide": false,
+    "IsTestingExclusive": false,
+    "DownloadLinkInstall": "https://github.com/GarrisonMangler/MasterOfPuppets/releases/download/v1.15.0.274/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/GarrisonMangler/MasterOfPuppets/releases/download/v1.15.0.274/latest.zip",
+    "LastUpdate": "1787460547"
+  }
+]

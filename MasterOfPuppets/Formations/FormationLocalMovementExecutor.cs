@@ -12,25 +12,64 @@ public static class FormationLocalMovementExecutor {
         int destinationPointIndex,
         FormationAnchorReference anchor,
         SimpleMovementMode movementMode,
-        string logPrefix = "mopformationgoto") {
+        string logPrefix = "mopformationgoto",
+        FormationAnchorReference? fallbackAnchor = null) {
         if (!TryGetFormation(plugin, formationName, logPrefix, out var formation))
             return false;
 
         if (!FormationAnchorResolver.TryResolve(plugin, formation, anchor, out var resolvedAnchor, out var anchorFailure, out var failureKind)) {
-            LogAnchorFailure(logPrefix, anchorFailure, failureKind);
-            return false;
+            if (fallbackAnchor != null && FormationAnchorResolver.TryResolve(plugin, formation, fallbackAnchor, out var fallbackResolved, out _, out _)) {
+                resolvedAnchor = fallbackResolved;
+            } else {
+                LogAnchorFailure(logPrefix, anchorFailure, failureKind);
+                return false;
+            }
         }
+
+        var localPlayer = DalamudApi.ObjectTable.LocalPlayer;
+        if (localPlayer != null && ShouldSkipLocalAnchor(anchor.Kind, resolvedAnchor.GameObjectId, localPlayer.GameObjectId)) {
+            plugin.FormationTrackingSession.Stop();
+            plugin.SimpleInputMovement.StopMove();
+            DalamudApi.PluginLog.Debug($"[{logPrefix}] local character is the selected formation anchor; no movement needed");
+            return true;
+        }
+
+        var localCid = DalamudApi.PlayerState.ContentId;
+        var isPointOneUnassigned = formation.Points.Count > 0
+            && (formation.Points[0].Cids == null || formation.Points[0].Cids.Count == 0)
+            && (formation.Points[0].GroupIds == null || formation.Points[0].GroupIds.Count == 0);
+        var assignedAnchorPointIndex = (!isPointOneUnassigned && resolvedAnchor.ContentId.HasValue)
+            ? FormationExecution.GetAssignedPointIndex(formation, resolvedAnchor.ContentId.Value, plugin.Config.CidsGroups)
+            : -1;
+        var anchorPointIndex = ResolveAnchorPointIndex(formation, plugin.Config.CidsGroups, anchor, resolvedAnchor.ContentId, localCid);
+
+        var normalizeAnchorRotation = ShouldNormalizeAssignedAnchorRotation(anchor, resolvedAnchor.ContentId, localCid, assignedAnchorPointIndex);
+        var anchorRotation = ResolveAnchorFrameRotation(
+            formation,
+            anchorPointIndex,
+            resolvedAnchor.Rotation,
+            normalizeAnchorRotation);
 
         return ExecuteAnchoredMove(
             plugin,
             formation,
             destinationPointIndex,
-            FormationPointMovement.AnchorPointIndex,
+            anchorPointIndex,
             resolvedAnchor.Position,
-            resolvedAnchor.Rotation,
+            anchorRotation,
             movementMode,
-            logPrefix);
+            logPrefix,
+            resolvedAnchor,
+            normalizeAnchorRotation);
     }
+
+    public static bool ShouldSkipLocalAnchor(
+        FormationAnchorKind anchorKind,
+        ulong? anchorGameObjectId,
+        ulong localGameObjectId) =>
+        anchorKind != FormationAnchorKind.Self
+        && anchorGameObjectId.HasValue
+        && anchorGameObjectId.Value == localGameObjectId;
 
     public static bool ExecuteChatSyncedFormation(
         Plugin plugin,
@@ -60,6 +99,8 @@ public static class FormationLocalMovementExecutor {
         if (anchor.Kind != FormationAnchorKind.Self) {
             var anchorCid = resolvedAnchor.ContentId;
             if (anchorCid == localCid) {
+                plugin.FormationTrackingSession.Stop();
+                plugin.SimpleInputMovement.StopMove();
                 DalamudApi.PluginLog.Debug($"[{logPrefix}] local character is the formation anchor for \"{formationName}\"; no movement needed");
                 return true;
             }
@@ -78,7 +119,9 @@ public static class FormationLocalMovementExecutor {
             resolvedAnchor.Position,
             anchorRotation,
             movementMode,
-            logPrefix);
+            logPrefix,
+            resolvedAnchor,
+            ShouldNormalizeAssignedAnchorRotation(anchor, resolvedAnchor.ContentId, localCid, assignedAnchorPointIndex));
     }
 
     public static int ResolveAnchorPointIndex(
@@ -87,11 +130,18 @@ public static class FormationLocalMovementExecutor {
         FormationAnchorReference anchor,
         ulong? anchorCid,
         ulong localCid) {
-        if (anchor.Kind == FormationAnchorKind.Self)
+        if (anchor.Kind == FormationAnchorKind.Self
+            || anchor.Kind == FormationAnchorKind.Target
+            || anchor.Kind == FormationAnchorKind.FocusTarget
+            || anchor.Kind == FormationAnchorKind.Default)
             return FormationPointMovement.AnchorPointIndex;
 
-        if (anchorCid == localCid)
+        // If Point 1 has no assigned characters, Point 1 is the dynamic origin/leader slot (0, 0, 0).
+        if (formation.Points.Count > 0
+            && (formation.Points[0].Cids == null || formation.Points[0].Cids.Count == 0)
+            && (formation.Points[0].GroupIds == null || formation.Points[0].GroupIds.Count == 0)) {
             return FormationPointMovement.AnchorPointIndex;
+        }
 
         if (!anchorCid.HasValue)
             return FormationPointMovement.AnchorPointIndex;
@@ -129,7 +179,9 @@ public static class FormationLocalMovementExecutor {
         Vector3 anchorWorldPosition,
         float anchorWorldRotation,
         SimpleMovementMode movementMode,
-        string logPrefix) {
+        string logPrefix,
+        FormationResolvedAnchor? resolvedAnchor = null,
+        bool normalizeAnchorRotation = false) {
         var move = FormationPointMovement.BuildAnchoredWorldMove(
             formation,
             destinationPointIndex,
@@ -141,7 +193,29 @@ public static class FormationLocalMovementExecutor {
             return false;
         }
 
-        MoveToComputed(plugin, move.Value.Position, move.Value.Rotation, movementMode);
+        var trackingKey = $"{logPrefix}:{formation.Name}:{anchorPointIndex}:{destinationPointIndex}";
+        if (SimpleInputMovement.UsesLiveFormationTracking(movementMode) && resolvedAnchor != null) {
+            plugin.FormationTrackingSession.Start(
+                formation,
+                destinationPointIndex,
+                anchorPointIndex,
+                resolvedAnchor.ContentId,
+                resolvedAnchor.GameObjectId,
+                resolvedAnchor.Name,
+                resolvedAnchor.Position,
+                anchorWorldRotation,
+                resolvedAnchor.Rotation,
+                normalizeAnchorRotation,
+                trackingKey);
+        } else {
+            plugin.FormationTrackingSession.Stop();
+            MoveToComputed(
+                plugin,
+                move.Value.Position,
+                move.Value.Rotation,
+                movementMode,
+                trackingKey);
+        }
         DalamudApi.PluginLog.Debug($"[{logPrefix}] formation=\"{formation.Name}\" point={destinationPointIndex + 1} movementMode={movementMode}");
         return true;
     }
@@ -150,7 +224,9 @@ public static class FormationLocalMovementExecutor {
         Plugin plugin,
         Vector3 position,
         float rotation,
-        SimpleMovementMode movementMode = SimpleMovementMode.Precise) {
+        SimpleMovementMode movementMode = SimpleMovementMode.Precise,
+        string? trackingKey = null,
+        bool useFormationRelativeMovement = false) {
         plugin.SimpleInputMovement.MoveTo(
             position,
             precision: plugin.Config.FormationMovePrecision,
@@ -158,7 +234,9 @@ public static class FormationLocalMovementExecutor {
             movementMode: movementMode,
             stopOnStuck: plugin.Config.StopOnStuck,
             stuckTolerance: plugin.Config.StuckTolerance,
-            stuckTimeoutMs: plugin.Config.StuckTimeoutMs);
+            stuckTimeoutMs: plugin.Config.StuckTimeoutMs,
+            trackingKey: trackingKey,
+            useFormationRelativeMovement: useFormationRelativeMovement);
     }
 
     private static bool TryGetFormation(

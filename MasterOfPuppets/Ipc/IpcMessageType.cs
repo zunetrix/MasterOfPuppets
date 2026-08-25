@@ -98,4 +98,5 @@ public enum IpcMessageType {
 
     RidePillion,
     ExecuteUnequipGlasses,
+    UpdateMacroVariables,
 }

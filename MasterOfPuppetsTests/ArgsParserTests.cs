@@ -28,6 +28,7 @@ public class ArgsParserTests
     [InlineData("mopbr /command \"param with space\"", "mopbr", "/command \"param with space\"")]
     [InlineData("mopbr /ac heal [t]", "mopbr", "/ac heal <t>")]
     [InlineData("mopbr /mopmove 10.01 11.02 12.03", "mopbr", "/mopmove 10.01 11.02 12.03")]
+    [InlineData("mopbr /mop setvar -var=$speed=1.25;$target=Alpha", "mopbr", "/mop setvar", "-var=$speed=1.25;$target=Alpha")]
     [InlineData("mopbrc \"Character Name\" /command", "mopbrc", "Character Name", "/command")]
     [InlineData("mopbrc \"Character Name\" /command \"param with space\"", "mopbrc", "Character Name", "/command \"param with space\"")]
     public void ParseChatArgs_ReturnsExpectedTokens(string input, params string[] expected)

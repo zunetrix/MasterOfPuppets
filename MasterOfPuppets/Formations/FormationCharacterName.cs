@@ -3,14 +3,17 @@ using System;
 namespace MasterOfPuppets.Formations;
 
 public static class FormationCharacterName {
-    private const char SeFontCrossWorldSeparator = '\uE05D';
+    private static readonly char[] CrossWorldSeparators = ['\uE05D', '\uE0B1', '\uE0B2'];
 
     public static string NormalizeWorldSeparator(string name) {
         if (string.IsNullOrWhiteSpace(name))
             return string.Empty;
 
-        var normalized = name.Trim()
-            .Replace(SeFontCrossWorldSeparator, '@')
+        var normalized = name.Trim();
+        foreach (var sep in CrossWorldSeparators)
+            normalized = normalized.Replace(sep, '@');
+
+        normalized = normalized
             .Replace(" @", "@", StringComparison.Ordinal)
             .Replace("@ ", "@", StringComparison.Ordinal);
 

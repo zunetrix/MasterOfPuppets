@@ -19,6 +19,7 @@ public enum FormationShapeFaceMode {
     Inward,
     North,
     Tangent,
+    ReverseTangent,
 }
 
 public enum FormationShapeAnchorMode {
@@ -50,7 +51,7 @@ public static class FormationShapeGenerator {
         "Star Poly", "Log Spiral", "Chevron", "Ring Center", "Cross"
     ];
 
-    public static readonly string[] FaceModeNames = ["Outward", "Inward", "North", "Tangent"];
+    public static readonly string[] FaceModeNames = ["Outward", "Inward", "North", "Tangent", "Reverse Tangent"];
     public static readonly string[] AnchorModeNames = ["Shape only", "Anchor at center"];
 
     public static List<FormationPoint> Generate(FormationShapeSpec spec) {
@@ -131,7 +132,9 @@ public static class FormationShapeGenerator {
         float centerX = spec.AnchorMode == FormationShapeAnchorMode.AnchorAtCenter ? 0f : points.Average(p => p.Offset.X);
         float centerZ = spec.AnchorMode == FormationShapeAnchorMode.AnchorAtCenter ? 0f : points.Average(p => p.Offset.Z);
 
-        if (spec.FaceMode != FormationShapeFaceMode.Tangent) {
+        bool isTangent = spec.FaceMode is FormationShapeFaceMode.Tangent
+            or FormationShapeFaceMode.ReverseTangent;
+        if (!isTangent) {
             foreach (var p in points) {
                 float dx = p.Offset.X - centerX;
                 float dz = p.Offset.Z - centerZ;
@@ -165,8 +168,12 @@ public static class FormationShapeGenerator {
             Vector3 b = i < points.Count - 1 ? points[i + 1].Offset : points[i].Offset;
             float dx = b.X - a.X;
             float dz = b.Z - a.Z;
-            if (MathF.Abs(dx) > 0.001f || MathF.Abs(dz) > 0.001f)
-                points[i].Angle = StoredDeltaToPlotAngleDegrees(dx, dz);
+            if (MathF.Abs(dx) > 0.001f || MathF.Abs(dz) > 0.001f) {
+                var tangent = StoredDeltaToPlotAngleDegrees(dx, dz);
+                points[i].Angle = spec.FaceMode == FormationShapeFaceMode.ReverseTangent
+                    ? FormationMath.NormalizeDegrees(tangent + 180f)
+                    : tangent;
+            }
         }
     }
 
