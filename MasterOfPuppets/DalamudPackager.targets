@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+    <Target Name="CustomDalamudPackager" AfterTargets="Build">
+        <DalamudPackager ProjectDir="$(ProjectDir)"
+                         OutputPath="$(OutputPath)"
+                         AssemblyName="$(AssemblyName)"
+                         MakeZip="false"
+                         Author="$(Author)"
+                         Name="$(Name)"
+                         Punchline="$(Punchline)"
+                         Description="$(Description)"
+                         RepoUrl="$(RepoUrl)"
+                         Tags="$(Tags)"
+                         IconUrl="$(IconUrl)"
+                         AcceptsFeedback="$(AcceptsFeedback)" />
+    </Target>
+</Project>

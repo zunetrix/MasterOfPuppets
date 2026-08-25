@@ -64,10 +64,14 @@ public static class StringExtensions {
     }
 
     public static string Decompress(this string input) {
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
+
+        input = input.Trim();
         var data = Convert.FromBase64String(input);
         using var ms = new MemoryStream(data);
         using var gs = new GZipStream(ms, CompressionMode.Decompress);
-        using var r = new StreamReader(gs);
+        using var r = new StreamReader(gs, Encoding.UTF8);
         return r.ReadToEnd();
     }
 

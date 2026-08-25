@@ -16,6 +16,7 @@ public partial class MacroHandler : IDisposable {
         public string? CurrentMacroId { get; set; }           // name of macro being executed
         public List<string> CurrentActions { get; } = new(); // actions of current macro
         public int ActionIndex { get; set; } = -1;
+        public volatile MacroExecutionPlan? CurrentPlan;
 
         public ManualResetEventSlim PauseGate { get; } = new(initialState: true);
         public CancellationTokenSource StopCts { get; private set; } = new();
@@ -37,6 +38,7 @@ public partial class MacroHandler : IDisposable {
             CurrentMacroId = null;
             CurrentActions.Clear();
             ActionIndex = -1;
+            CurrentPlan = null;
         }
 
         public void Dispose() {
@@ -59,10 +61,10 @@ public partial class MacroHandler : IDisposable {
     public List<string> LoopCurrentActions => _loopState.CurrentActions;
     public int LoopCurrentIndex => _loopState.ActionIndex;
 
-    private readonly Channel<(string macroId, string[] actions, double delay)> _macroChannel =
-        Channel.CreateUnbounded<(string, string[], double)>(new UnboundedChannelOptions { SingleReader = true });
-    private readonly Channel<(string macroId, string[] actions, double delay)> _loopChannel =
-        Channel.CreateUnbounded<(string, string[], double)>(new UnboundedChannelOptions { SingleReader = true });
+    private readonly Channel<(string macroId, MacroExecutionPlan plan, double delay)> _macroChannel =
+        Channel.CreateUnbounded<(string, MacroExecutionPlan, double)>(new UnboundedChannelOptions { SingleReader = true });
+    private readonly Channel<(string macroId, MacroExecutionPlan plan, double delay)> _loopChannel =
+        Channel.CreateUnbounded<(string, MacroExecutionPlan, double)>(new UnboundedChannelOptions { SingleReader = true });
 
     private readonly CancellationTokenSource _cts = new();
 
@@ -86,14 +88,21 @@ public partial class MacroHandler : IDisposable {
         bool SkipGlobalDelay = false
     );
 
-    private sealed record ResolvedMacroActions(string MacroName, string[] Actions);
+    private sealed record ResolvedMacroActions(string MacroName, MacroExecutionPlan Plan);
 
     private readonly Dictionary<string, MacroCommand> _commands;
 
     public static bool CommandSkipsGlobalDelay(string command) =>
         command.ToLowerInvariant() switch {
             "mopwait" or
+            "mopphasewait" or
             "mopmacro" or
+            "mopif" or
+            "mopelseif" or
+            "mopelif" or
+            "mopelse" or
+            "mopendif" or
+            "mopfi" or
             "mopobjectquantity" or
             "moptarget" or
             "moptargetof" or
@@ -146,6 +155,11 @@ public partial class MacroHandler : IDisposable {
     }
 
     public void EnqueueMacroActions(string macroId, string[] actions, double delayBetweenActions) {
+        EnqueueMacroPlan(macroId, new MacroExecutionPlan(actions), delayBetweenActions);
+    }
+
+    private void EnqueueMacroPlan(string macroId, MacroExecutionPlan plan, double delayBetweenActions) {
+        var actions = plan.ActionTemplates;
         bool hasLoop = actions.Any(a =>
             a.Contains("/moploop", StringComparison.OrdinalIgnoreCase) ||
             a.Contains("/moploopstart", StringComparison.OrdinalIgnoreCase));
@@ -153,24 +167,44 @@ public partial class MacroHandler : IDisposable {
         var channel = hasLoop ? _loopChannel : _macroChannel;
 
         state.PendingMacros.Add(macroId);
-        channel.Writer.TryWrite((macroId, actions, delayBetweenActions));
+        channel.Writer.TryWrite((macroId, plan, delayBetweenActions));
+    }
+
+    /// <summary>Updates variables on macros that are executing now. Queued and future runs are unchanged.</summary>
+    public int UpdateActiveMacroVariables(IReadOnlyDictionary<string, string> variables) {
+        int updated = 0;
+        var macroPlan = _macroState.CurrentPlan;
+        var loopPlan = _loopState.CurrentPlan;
+
+        if (macroPlan != null) {
+            macroPlan.UpdateVariables(variables);
+            updated++;
+        }
+        if (loopPlan != null && !ReferenceEquals(loopPlan, macroPlan)) {
+            loopPlan.UpdateVariables(variables);
+            updated++;
+        }
+
+        return updated;
     }
 
     private async Task RunWorker(
-        Channel<(string macroId, string[] actions, double delay)> channel,
+        Channel<(string macroId, MacroExecutionPlan plan, double delay)> channel,
         MacroQueueState state,
         CancellationToken lifetimeCt) {
         try {
-            await foreach (var (macroId, actions, delay) in channel.Reader.ReadAllAsync(lifetimeCt)) {
+            await foreach (var (macroId, plan, delay) in channel.Reader.ReadAllAsync(lifetimeCt)) {
+                var actions = plan.ActionTemplates;
                 if (state.PendingMacros.Count > 0) state.PendingMacros.RemoveAt(0);
                 state.CurrentMacroId = macroId;
                 state.CurrentActions.Clear();
                 state.CurrentActions.AddRange(actions);
                 state.ActionIndex = -1;
+                state.CurrentPlan = plan;
 
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(lifetimeCt, state.StopCts.Token);
                 try {
-                    await ExecuteActions(macroId, actions, delay, linkedCts.Token, state);
+                    await ExecuteActions(macroId, plan, delay, linkedCts.Token, state);
                 } catch (OperationCanceledException) when (lifetimeCt.IsCancellationRequested) {
                     return;
                 } catch (OperationCanceledException) {
@@ -184,18 +218,28 @@ public partial class MacroHandler : IDisposable {
         } catch (OperationCanceledException) { }
     }
 
+    private sealed class ConditionalFrame {
+        public bool BranchTaken { get; set; }
+        public bool IsActive { get; set; }
+        public bool ParentActive { get; set; }
+    }
+
     private async Task ExecuteActions(
         string macroId,
-        string[] actions,
+        MacroExecutionPlan plan,
         double delayBetweenActions,
         CancellationToken token,
         MacroQueueState state) {
+        var actions = plan.ActionTemplates;
         bool shouldLoop;
         int? loopsLeft = null;
+        var phaseClock = new MacroPhaseClock();
+        var condStack = new Stack<ConditionalFrame>();
 
         do {
             shouldLoop = false;
             state.ActionIndex = -1;
+            condStack.Clear();
 
             // State for /moploopstart … /moploopend block (reset each outer loop pass).
             int loopBlockStart = -1;
@@ -208,11 +252,88 @@ public partial class MacroHandler : IDisposable {
                 state.ActionIndex = i;
 
                 // Apply dynamic token substitution ({random(min,max)}, etc.)
-                var action = MacroTokenProcessor.Process(actions[i]);
+                var action = MacroTokenProcessor.Process(plan.ResolveAction(actions[i]));
 
                 var match = ActionRegex.Match(action);
                 var command = match.Success ? match.Groups[1].Value : null;
                 var args = match.Success ? match.Groups[2].Value.Trim() : null;
+
+                // /mopif - block or inline conditional
+                if (command != null && command.Equals("mopif", StringComparison.OrdinalIgnoreCase)) {
+                    if (TryParseInlineIf(args, out var inlineCond, out var inlineAction)) {
+                        bool parentActive = condStack.Count == 0 || condStack.Peek().IsActive;
+                        if (parentActive && await MacroConditionEvaluator.EvaluateAsync(inlineCond, Plugin)) {
+                            await ExecuteSingleAction(macroId, inlineAction, delayBetweenActions, token, phaseClock);
+                        }
+                        continue;
+                    }
+
+                    // Block /mopif <condition>
+                    bool parentIsActive = condStack.Count == 0 || condStack.Peek().IsActive;
+                    if (parentIsActive) {
+                        bool cond = await MacroConditionEvaluator.EvaluateAsync(args ?? string.Empty, Plugin);
+                        condStack.Push(new ConditionalFrame {
+                            ParentActive = true,
+                            BranchTaken = cond,
+                            IsActive = cond
+                        });
+                    } else {
+                        condStack.Push(new ConditionalFrame {
+                            ParentActive = false,
+                            BranchTaken = true,
+                            IsActive = false
+                        });
+                    }
+                    continue;
+                }
+
+                // /mopelseif / /mopelif
+                if (command != null && (command.Equals("mopelseif", StringComparison.OrdinalIgnoreCase) || command.Equals("mopelif", StringComparison.OrdinalIgnoreCase))) {
+                    if (condStack.Count == 0) {
+                        DalamudApi.PluginLog.Warning("[mopelseif] without matching /mopif");
+                    } else {
+                        var frame = condStack.Peek();
+                        if (!frame.ParentActive || frame.BranchTaken) {
+                            frame.IsActive = false;
+                        } else {
+                            bool cond = await MacroConditionEvaluator.EvaluateAsync(args ?? string.Empty, Plugin);
+                            frame.IsActive = cond;
+                            if (cond) frame.BranchTaken = true;
+                        }
+                    }
+                    continue;
+                }
+
+                // /mopelse
+                if (command != null && command.Equals("mopelse", StringComparison.OrdinalIgnoreCase)) {
+                    if (condStack.Count == 0) {
+                        DalamudApi.PluginLog.Warning("[mopelse] without matching /mopif");
+                    } else {
+                        var frame = condStack.Peek();
+                        if (!frame.ParentActive || frame.BranchTaken) {
+                            frame.IsActive = false;
+                        } else {
+                            frame.IsActive = true;
+                            frame.BranchTaken = true;
+                        }
+                    }
+                    continue;
+                }
+
+                // /mopendif / /mopfi
+                if (command != null && (command.Equals("mopendif", StringComparison.OrdinalIgnoreCase) || command.Equals("mopfi", StringComparison.OrdinalIgnoreCase))) {
+                    if (condStack.Count == 0) {
+                        DalamudApi.PluginLog.Warning("[mopendif] without matching /mopif");
+                    } else {
+                        condStack.Pop();
+                    }
+                    continue;
+                }
+
+                // If currently inside an inactive conditional branch, skip this action
+                if (condStack.Count > 0 && !condStack.Peek().IsActive) {
+                    continue;
+                }
 
                 // /moploop - whole-macro loop (existing behaviour)
                 if (command != null && command.Equals("moploop", StringComparison.OrdinalIgnoreCase)) {
@@ -256,35 +377,107 @@ public partial class MacroHandler : IDisposable {
                     continue;
                 }
 
-                if (command != null && _commands.TryGetValue(command, out var cmd)) {
-                    await cmd.Handler(macroId, args!, token);
-                    if (!cmd.SkipGlobalDelay && delayBetweenActions > 0.0) {
-                        var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
-                        DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
-                        await Task.Delay(delayMs, token);
+                // /mopphasewait keeps an absolute timeline across whole-macro
+                // and block loops. Handler and framework-tick latency therefore
+                // reduces the remaining wait instead of shifting every later phase.
+                if (command != null && command.Equals("mopphasewait", StringComparison.OrdinalIgnoreCase)) {
+                    if (string.IsNullOrWhiteSpace(args) ||
+                        !double.TryParse(
+                            args,
+                            System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture,
+                            out var seconds) ||
+                        !double.IsFinite(seconds) ||
+                        seconds < 0) {
+                        DalamudApi.PluginLog.Warning($"[mopphasewait] invalid argument: \"{args}\"");
+                        continue;
                     }
-                } else {
-                    // No regex match OR unrecognised command - forward raw to chat
-                    DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
-                    _ = DalamudApi.Framework.RunOnFrameworkThread(() => { Chat.SendMessage(action); });
-                    if (delayBetweenActions > 0.0) {
-                        var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
-                        await Task.Delay(delayMs, token);
-                    }
+
+                    var secondsRound = Math.Round(seconds, 2, MidpointRounding.AwayFromZero);
+                    var remaining = phaseClock.Advance(secondsRound);
+                    DalamudApi.PluginLog.Debug(
+                        $"[mopphasewait] phase +{secondsRound:F2}s; remaining " +
+                        $"{remaining.TotalMinutes:00}:{remaining.Seconds:00}.{remaining.Milliseconds:000}...");
+                    if (remaining > TimeSpan.Zero)
+                        await Task.Delay(remaining, token);
+                    continue;
                 }
+
+                await ExecuteSingleAction(macroId, action, delayBetweenActions, token, phaseClock);
             }
         } while (shouldLoop && !token.IsCancellationRequested);
+    }
+
+    private static bool TryParseInlineIf(string? args, out string condition, out string action) {
+        condition = string.Empty;
+        action = string.Empty;
+        if (string.IsNullOrWhiteSpace(args))
+            return false;
+
+        int slashIdx = args.IndexOf(" /", StringComparison.Ordinal);
+        if (slashIdx >= 0) {
+            condition = args[..slashIdx].Trim();
+            action = args[(slashIdx + 1)..].Trim();
+            return !string.IsNullOrEmpty(condition) && !string.IsNullOrEmpty(action);
+        }
+
+        return false;
+    }
+
+    private async Task ExecuteSingleAction(
+        string macroId,
+        string action,
+        double delayBetweenActions,
+        CancellationToken token,
+        MacroPhaseClock phaseClock) {
+        var match = ActionRegex.Match(action);
+        var command = match.Success ? match.Groups[1].Value : null;
+        var args = match.Success ? match.Groups[2].Value.Trim() : null;
+
+        if (command != null && command.Equals("mopphasewait", StringComparison.OrdinalIgnoreCase)) {
+            if (!string.IsNullOrWhiteSpace(args) &&
+                double.TryParse(
+                    args,
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out var seconds) &&
+                double.IsFinite(seconds) &&
+                seconds >= 0) {
+                var secondsRound = Math.Round(seconds, 2, MidpointRounding.AwayFromZero);
+                var remaining = phaseClock.Advance(secondsRound);
+                if (remaining > TimeSpan.Zero)
+                    await Task.Delay(remaining, token);
+            }
+            return;
+        }
+
+        if (command != null && _commands.TryGetValue(command, out var cmd)) {
+            await cmd.Handler(macroId, args!, token);
+            if (!cmd.SkipGlobalDelay && delayBetweenActions > 0.0) {
+                var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
+                DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
+                await Task.Delay(delayMs, token);
+            }
+        } else {
+            // No regex match OR unrecognised command - forward raw to chat
+            DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
+            _ = DalamudApi.Framework.RunOnFrameworkThread(() => { Chat.SendMessage(action); });
+            if (delayBetweenActions > 0.0) {
+                var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
+                await Task.Delay(delayMs, token);
+            }
+        }
     }
 
     private ResolvedMacroActions ResolveLocalPlayerMacroActions(int macroIndex, Dictionary<string, string>? inlineVars = null) {
         var macro = Plugin.MacroManager.GetMacroByIndex(macroIndex);
         var playerCid = DalamudApi.PlayerState.ContentId;
-        var actions = macro.GetCidActions(
+        var plan = macro.CreateCidExecutionPlan(
             playerCid,
             Plugin.Config.CidsGroups,
             inlineVars,
             MacroRuntimeVariables.FromCurrentGameState());
-        return new ResolvedMacroActions(macro.Name, actions);
+        return new ResolvedMacroActions(macro.Name, plan);
     }
 
     private ResolvedMacroActions ResolveLocalPlayerMacroActions(string macroNameOrNumber, Dictionary<string, string>? inlineVars = null) {
@@ -299,7 +492,7 @@ public partial class MacroHandler : IDisposable {
         await DalamudApi.Framework.RunOnFrameworkThread(() => {
             resolved = ResolveLocalPlayerMacroActions(macroIndex, inlineVars);
         });
-        return resolved ?? new ResolvedMacroActions(string.Empty, []);
+        return resolved ?? new ResolvedMacroActions(string.Empty, new MacroExecutionPlan([]));
     }
 
     private async Task<ResolvedMacroActions> ResolveLocalPlayerMacroActionsOnFrameworkThread(
@@ -309,7 +502,7 @@ public partial class MacroHandler : IDisposable {
         await DalamudApi.Framework.RunOnFrameworkThread(() => {
             resolved = ResolveLocalPlayerMacroActions(macroNameOrNumber, inlineVars);
         });
-        return resolved ?? new ResolvedMacroActions(string.Empty, []);
+        return resolved ?? new ResolvedMacroActions(string.Empty, new MacroExecutionPlan([]));
     }
 
     private async Task ResolveAndEnqueueLocalPlayerMacroActions(
@@ -320,7 +513,7 @@ public partial class MacroHandler : IDisposable {
             var resolved = await ResolveLocalPlayerMacroActionsOnFrameworkThread(macroIndex, inlineVars);
             if (token.IsCancellationRequested)
                 return;
-            EnqueueMacroActions(resolved.MacroName, resolved.Actions, Plugin.Config.DelayBetweenActions);
+            EnqueueMacroPlan(resolved.MacroName, resolved.Plan, Plugin.Config.DelayBetweenActions);
         } catch (Exception ex) {
             DalamudApi.PluginLog.Error(ex, $"[MacroHandler] Failed to resolve macro {macroIndex + 1}");
         }
@@ -334,7 +527,7 @@ public partial class MacroHandler : IDisposable {
             var resolved = await ResolveLocalPlayerMacroActionsOnFrameworkThread(macroNameOrNumber, inlineVars);
             if (token.IsCancellationRequested)
                 return;
-            EnqueueMacroActions(resolved.MacroName, resolved.Actions, Plugin.Config.DelayBetweenActions);
+            EnqueueMacroPlan(resolved.MacroName, resolved.Plan, Plugin.Config.DelayBetweenActions);
         } catch (Exception ex) {
             DalamudApi.PluginLog.Error(ex, $"[MacroHandler] Failed to resolve macro {macroNameOrNumber}");
         }

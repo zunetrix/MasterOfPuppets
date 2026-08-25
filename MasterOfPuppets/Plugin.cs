@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -31,6 +32,7 @@ public class Plugin : IDalamudPlugin {
     internal MovementManager MovementManager { get; }
     internal FollowPath FollowPath { get; }
     internal SimpleInputMovement SimpleInputMovement { get; }
+    internal FormationTrackingSession FormationTrackingSession { get; }
     internal MultiboxManager MultiboxManager { get; }
     internal GameRenderManager GameRenderManager { get; }
     internal GameWindowManager GameWindowManager { get; }
@@ -65,6 +67,7 @@ public class Plugin : IDalamudPlugin {
         FollowPath = new FollowPath(this);
         MovementManager = new MovementManager(FollowPath);
         SimpleInputMovement = new SimpleInputMovement();
+        FormationTrackingSession = new FormationTrackingSession(this);
         MultiboxManager = new MultiboxManager(this);
         GameRenderManager = new GameRenderManager(this);
         GameWindowManager = new GameWindowManager(this);
@@ -97,6 +100,7 @@ public class Plugin : IDalamudPlugin {
 
         FollowPath.Update(framework);
         MovementManager.Update();
+        FormationTrackingSession.Update();
         KeyboardBroadcastManager.Update();
         IpcProvider.UpdateCharacterDataHeartbeat();
 
@@ -116,6 +120,7 @@ public class Plugin : IDalamudPlugin {
     }
 
     internal void StopAllMovementLocal() {
+        FormationTrackingSession.Stop();
         SimpleInputMovement.StopMove();
         MovementManager.StopMove();
     }
@@ -149,6 +154,21 @@ public class Plugin : IDalamudPlugin {
         Ui.MainWindow.IsOpen = false;
     }
 
+    internal void ReloadConfigFromDisk() {
+        try {
+            var configFile = DalamudApi.PluginInterface.ConfigFile;
+            if (configFile.Exists) {
+                var json = System.IO.File.ReadAllText(configFile.FullName);
+                Config.UpdateFromJson(json);
+                IpcProvider.SyncConfiguration();
+                DalamudApi.ShowNotification("Configuration reloaded from disk and synced", Dalamud.Interface.ImGuiNotification.NotificationType.Success, 5000);
+            }
+        } catch (Exception ex) {
+            DalamudApi.PluginLog.Error(ex, "Failed to reload configuration from disk");
+            DalamudApi.ShowNotification($"Failed to reload configuration: {ex.Message}", Dalamud.Interface.ImGuiNotification.NotificationType.Error, 5000);
+        }
+    }
+
     public void Dispose() {
         DalamudApi.PluginInterface.UiBuilder.OpenConfigUi -= Ui.SettingsWindow.Toggle;
         DalamudApi.PluginInterface.UiBuilder.OpenMainUi -= Ui.MainWindow.Toggle;
@@ -166,6 +186,7 @@ public class Plugin : IDalamudPlugin {
         PluginCommandManager.Dispose();
         MovementManager.Dispose();
         FollowPath.Dispose();
+        FormationTrackingSession.Stop();
         SimpleInputMovement.Dispose();
         KeyboardBroadcastManager.Dispose();
         AutoLoginManager.Dispose();

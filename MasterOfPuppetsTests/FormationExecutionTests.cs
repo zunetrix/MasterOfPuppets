@@ -619,6 +619,80 @@ public class FormationExecutionTests
         Assert.Equal(FormationPointMovement.AnchorPointIndex, anchorPointIndex);
     }
 
+    [Fact]
+    public void FormationLocalMovementExecutor_Resolves_Anchor_Point_For_Assigned_Leader_When_Local_Is_Leader() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = Vector3.Zero }, // Point 1: Unassigned Center
+                new FormationPoint { Offset = new Vector3(0f, 0f, -0.75f), Cids = [100] }, // Point 2: Leader
+                new FormationPoint { Offset = new Vector3(0.5f, 0f, -0.5f), Cids = [101] }, // Point 3: Member
+            ],
+        };
+
+        var anchorPointIndex = FormationLocalMovementExecutor.ResolveAnchorPointIndex(
+            formation,
+            groups: null,
+            FormationAnchorReference.Named("Leader Name@World"),
+            anchorCid: 100,
+            localCid: 100);
+
+        Assert.Equal(FormationPointMovement.AnchorPointIndex, anchorPointIndex);
+    }
+
+    [Fact]
+    public void FormationLocalMovementExecutor_Resolves_Target_Anchor_To_Point_One_Center() {
+        var formation = new Formation {
+            Points = [
+                new FormationPoint { Offset = Vector3.Zero }, // Point 1: Unassigned Center
+                new FormationPoint { Offset = new Vector3(0f, 0f, -0.75f), Cids = [100] }, // Point 2: Leader
+                new FormationPoint { Offset = new Vector3(0.5f, 0f, -0.5f), Cids = [101] }, // Point 3: Member
+            ],
+        };
+
+        var anchorPointIndex = FormationLocalMovementExecutor.ResolveAnchorPointIndex(
+            formation,
+            groups: null,
+            FormationAnchorReference.Target,
+            anchorCid: null,
+            localCid: 100);
+
+        Assert.Equal(0, anchorPointIndex);
+    }
+
+    [Fact]
+    public void FormationMath_RotatingAnchor90Degrees_RotatesWorldOffsetsAndFacing() {
+        var anchorPoint = new FormationPoint { Offset = Vector3.Zero, Angle = 0f };
+        var northPoint = new FormationPoint { Offset = new Vector3(0f, 0f, -5f), Angle = 0f };
+        var eastPoint = new FormationPoint { Offset = new Vector3(5f, 0f, 0f), Angle = 90f };
+        var anchorPos = new Vector3(100f, 10f, 200f);
+        var anchorRot = MathF.PI / 2f; // 90 degrees in FFXIV rotation (east)
+
+        var northMove = FormationMath.GetMopRelativeWorld(anchorPoint, northPoint, anchorPos, anchorRot);
+        var eastMove = FormationMath.GetMopRelativeWorld(anchorPoint, eastPoint, anchorPos, anchorRot);
+
+        // When anchor is facing east (90 deg), north offset (0, 0, -5) rotates with leader to (95, 10, 200)
+        AssertClose(95f, northMove.Position.X);
+        AssertClose(10f, northMove.Position.Y);
+        AssertClose(200f, northMove.Position.Z);
+        AssertClose(MathF.PI / 2f, northMove.Rotation);
+
+        // East offset (5, 0, 0) rotates with leader to (100, 10, 195) and facing rotates by 90 + 90 = 180 deg
+        AssertClose(100f, eastMove.Position.X);
+        AssertClose(10f, eastMove.Position.Y);
+        AssertClose(195f, eastMove.Position.Z);
+        AssertClose(MathF.PI, eastMove.Rotation);
+    }
+
+    [Fact]
+    public void FormationLocalMovementExecutor_IsTransientAnchorFailure_DistinguishesTransientFromPersistent() {
+        Assert.True(FormationLocalMovementExecutor.IsTransientAnchorFailure(FormationAnchorFailureKind.NoTargetSelected));
+        Assert.True(FormationLocalMovementExecutor.IsTransientAnchorFailure(FormationAnchorFailureKind.NoFocusTargetSelected));
+        Assert.True(FormationLocalMovementExecutor.IsTransientAnchorFailure(FormationAnchorFailureKind.AnchorNotVisible));
+        Assert.True(FormationLocalMovementExecutor.IsTransientAnchorFailure(FormationAnchorFailureKind.AnchorNameEmpty));
+        Assert.False(FormationLocalMovementExecutor.IsTransientAnchorFailure(FormationAnchorFailureKind.ConfigurationError));
+        Assert.False(FormationLocalMovementExecutor.IsTransientAnchorFailure(FormationAnchorFailureKind.Unsupported));
+    }
+
     private static void AssertClose(float expected, float actual, float tolerance = 0.0001f) =>
         Assert.InRange(MathF.Abs(expected - actual), 0f, tolerance);
 

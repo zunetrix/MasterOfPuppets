@@ -1,7 +1,10 @@
-﻿using Xunit;
+using Xunit;
+using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 using MasterOfPuppets;
+using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Formations;
 using MasterOfPuppets.Movement;
 using MasterOfPuppets.Util;
@@ -63,7 +66,7 @@ public class MacroTests
             Commands = new List<Command> {
                 new Command {
                     Cids = new() { 1 },
-                    Actions = "/moptarget \"$target\"\n/echo $me\n/echo $mop_origin\n/echo $mop_origin_target"
+                    Actions = "/moptarget \"$target\"\n/echo $me\n/echo $mop_origin\n/echo $mop_origin_target\n/echo $mop_origin_ftarget"
                 }
             }
         };
@@ -76,6 +79,7 @@ public class MacroTests
                 Target = "Target Character@World",
                 MopOrigin = "Origin Character@World",
                 MopOriginTarget = "Origin Target@World",
+                MopOriginFocusTarget = "Origin Focus Target@World",
             });
 
         Assert.Equal(
@@ -84,6 +88,7 @@ public class MacroTests
                 "/echo Current Character@World",
                 "/echo Origin Character@World",
                 "/echo Origin Target@World",
+                "/echo Origin Focus Target@World",
             },
             result);
     }
@@ -162,9 +167,112 @@ public class MacroTests
     }
 
     [Fact]
+    public void Nested_Variables_Are_Substituted_Across_Passes()
+    {
+        var macro = new Macro
+        {
+            Variables = "$anchor=\"$mop_origin_target\"",
+            Commands = new List<Command> {
+                new Command {
+                    Cids = new() { 1 },
+                    Actions = "/mopformationgoto \"Circle\" 2 anchor=\"$anchor\" fallback=\"$mop_origin\""
+                }
+            }
+        };
+
+        var result = macro.GetCidActions(
+            1,
+            runtimeVariables: new MacroRuntimeVariables
+            {
+                MopOrigin = "Leader Name@World",
+                MopOriginTarget = "Target Dummy@World",
+            });
+
+        Assert.Equal(new[] { "/mopformationgoto \"Circle\" 2 anchor=\"Target Dummy@World\" fallback=\"Leader Name@World\"" }, result);
+    }
+
+    [Fact]
+    public void Macro_Import_String_Deserializes_Correctly()
+    {
+        string b64 = "H4sIAAAAAAAC/3WVTW/bMAyG7/0VgtDDBhQZJZGiNGwDigIbctlpWPfhHrzEKQzEduE63aHof5/kxEiBUclFrx5Sfkkb1POFUvpr3TX6vdI37bjZN+qNs2/V9WEa9FWm3+r7x0R/p7VaYmaS1Odh7OqpHXqd9N0cfjPshzHFPx8jfqQlrOwp/ueswkn9mpU7qdukzAqSeJkPWm+Gfr3NIbP8Xo9t/WffZC/6crc8WH1U1WLcrGg2X+mqvxzrbXt4TBhWTPpkrevqfnuu5uhxrurVbv6ZAAYxBkIybMGaq/+Rd55DxCAiQxg9y1megKiA2GDpWQk6EYUA3loRRSYwXkIcozceJITR+eAlhwzIzmAsIXSiQyZyNkh1sU1VeZSy2DtChMKBznCUzRt2zkmdZ2NSF6mAKL9NGXkTnCllMUcZoQewJRvBFhCSj+KBnL5Fb4OMnDcAMrLpvZSyKIRYQjG6AorIpmQDqIAgpYklO2BHTKUPIMqdDzZ657CEUK4ruOQP5SxEpkAl5FG2gYTWip2PwJ7kHmYUAIvImxKKhorI+SLyJYcMBsoOzYncLSH6yzgcHtbHWXnevd7kSTwP5nfd8NDu1FSP981U9RnnrW54asZmnyb2UzMNCtJ/GdCV/jB9yhN7if1bt1O+Fqo+q6bftrvjUp2HfvXqBqi0no285Cvo4uUfq90WzdIGAAA=";
+        string decompressed = b64.Decompress();
+        Assert.NotNull(decompressed);
+        var macro = decompressed.JsonDeserialize<Macro>();
+        Assert.NotNull(macro);
+        Assert.Equal("Circle (32) Auto", macro.Name);
+        Assert.Single(macro.Commands);
+        Assert.Equal(48, macro.Commands[0].Cids.Count);
+    }
+
+    [Fact]
+    public void ExecutionPlan_Uses_Updated_Variable_For_Later_Actions()
+    {
+        var macro = new Macro
+        {
+            Variables = "$speed=1",
+            Commands = new List<Command> {
+                new Command {
+                    Cids = new() { 1 },
+                    Actions = "/echo $speed\n/mopwait $speed\n/moploop"
+                }
+            }
+        };
+
+        var plan = macro.CreateCidExecutionPlan(1);
+
+        Assert.Equal("/echo 1", plan.ResolveAction(plan.ActionTemplates[0]));
+        plan.UpdateVariables(new Dictionary<string, string> { ["speed"] = "2.5" });
+        Assert.Equal("/mopwait 2.5", plan.ResolveAction(plan.ActionTemplates[1]));
+        Assert.Equal("/moploop", plan.ResolveAction(plan.ActionTemplates[2]));
+    }
+
+    [Fact]
     public void MopFormationMove_Uses_Normal_GlobalDelay()
     {
         Assert.False(MacroHandler.CommandSkipsGlobalDelay("mopformationmove"));
+    }
+
+    [Fact]
+    public void MopPhaseWait_Skips_GlobalDelay()
+    {
+        Assert.True(MacroHandler.CommandSkipsGlobalDelay("mopphasewait"));
+    }
+
+    [Fact]
+    public void MacroPhaseClock_Compensates_For_Elapsed_Work()
+    {
+        long timestamp = 0;
+        var clock = new MacroPhaseClock(() => timestamp, timestampFrequency: 1000);
+
+        timestamp = 250;
+        Assert.Equal(TimeSpan.FromMilliseconds(500), clock.Advance(0.75));
+
+        timestamp = 800;
+        Assert.Equal(TimeSpan.FromMilliseconds(700), clock.Advance(0.75));
+    }
+
+    [Fact]
+    public void MacroPhaseClock_Does_Not_Rebase_An_Overdue_Phase()
+    {
+        long timestamp = 0;
+        var clock = new MacroPhaseClock(() => timestamp, timestampFrequency: 1000);
+
+        timestamp = 1000;
+        Assert.Equal(TimeSpan.Zero, clock.Advance(0.75));
+
+        timestamp = 1100;
+        Assert.InRange(clock.Advance(0.75).TotalMilliseconds, 399.99, 400.01);
+    }
+
+    [Theory]
+    [InlineData(-0.01)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    public void MacroPhaseClock_Rejects_Invalid_Intervals(double seconds)
+    {
+        var clock = new MacroPhaseClock(() => 0, timestampFrequency: 1000);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => clock.Advance(seconds));
     }
 
     [Theory]
@@ -193,7 +301,7 @@ public class MacroTests
         Assert.Equal(0, result.SequenceIndex);
         Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
         Assert.Equal(FormationMoveAnchorMode.Self, result.AnchorMode);
-        Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
+        Assert.Equal(FormationAnchorKind.Default, result.Anchor.Kind);
     }
 
     [Fact]
@@ -222,6 +330,7 @@ public class MacroTests
     [InlineData("continuous", SimpleMovementMode.Continuous)]
     [InlineData("precise", SimpleMovementMode.Precise)]
     [InlineData("forward", SimpleMovementMode.Forward)]
+    [InlineData("natural", SimpleMovementMode.Natural)]
     public void ParseFormationMoveCommandArgs_Accepts_All_Movement_Modes(string token, SimpleMovementMode expectedMode)
     {
         var result = MacroHandler.ParseFormationMoveCommandArgs($"\"Circle\" forward 1 0 {token}");
@@ -230,14 +339,16 @@ public class MacroTests
         Assert.Equal(expectedMode, result.MovementMode);
     }
 
-    [Fact]
-    public void ParseFormationMoveCommandArgs_Rejects_Removed_Hybrid_Mode()
+    [Theory]
+    [InlineData("hybrid")]
+    [InlineData("steered")]
+    public void ParseFormationMoveCommandArgs_Rejects_Removed_Modes(string removedMode)
     {
-        var result = MacroHandler.ParseFormationMoveCommandArgs("\"Circle\" forward 1 0 hybrid");
+        var result = MacroHandler.ParseFormationMoveCommandArgs($"\"Circle\" forward 1 0 {removedMode}");
 
         Assert.NotNull(result);
-        Assert.Equal("hybrid", result.InvalidArgument);
-        Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
+        Assert.Equal(removedMode, result.InvalidArgument);
+        Assert.Equal(FormationAnchorKind.Default, result.Anchor.Kind);
     }
 
     [Fact]
@@ -314,15 +425,14 @@ public class MacroTests
     }
 
     [Fact]
-    public void ParseFormationGotoCommandArgs_Defaults_To_Self_Precise()
+    public void ParseFormationGotoCommandArgs_Defaults_To_Default_Precise()
     {
         var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 2");
 
         Assert.NotNull(result);
         Assert.Equal("Circle", result.FormationName);
         Assert.Equal(1, result.PointIndex);
-        Assert.Equal(MacroHandler.FormationGotoAnchorKind.Self, result.AnchorKind);
-        Assert.Equal(FormationAnchorKind.Self, result.Anchor.Kind);
+        Assert.Equal(FormationAnchorKind.Default, result.Anchor.Kind);
         Assert.Null(result.AnchorName);
         Assert.Equal(SimpleMovementMode.Precise, result.MovementMode);
     }
@@ -370,6 +480,27 @@ public class MacroTests
         Assert.Equal(FormationAnchorKind.FocusTarget, result.Anchor.Kind);
     }
 
+    [Theory]
+    [InlineData(FormationAnchorKind.FocusTarget, 100UL, 100UL, true)]
+    [InlineData(FormationAnchorKind.Target, 100UL, 100UL, true)]
+    [InlineData(FormationAnchorKind.Named, 100UL, 100UL, true)]
+    [InlineData(FormationAnchorKind.Self, 100UL, 100UL, false)]
+    [InlineData(FormationAnchorKind.FocusTarget, 101UL, 100UL, false)]
+    [InlineData(FormationAnchorKind.FocusTarget, null, 100UL, false)]
+    public void FormationGoto_Skips_Local_NonSelf_Anchor(
+        FormationAnchorKind anchorKind,
+        ulong? anchorGameObjectId,
+        ulong localGameObjectId,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            FormationLocalMovementExecutor.ShouldSkipLocalAnchor(
+                anchorKind,
+                anchorGameObjectId,
+                localGameObjectId));
+    }
+
     [Fact]
     public void ParseFormationGotoCommandArgs_Accepts_Focustarget_Anchor()
     {
@@ -395,6 +526,7 @@ public class MacroTests
     [InlineData("continuous", SimpleMovementMode.Continuous)]
     [InlineData("precise", SimpleMovementMode.Precise)]
     [InlineData("forward", SimpleMovementMode.Forward)]
+    [InlineData("natural", SimpleMovementMode.Natural)]
     public void ParseFormationGotoCommandArgs_Accepts_All_Movement_Modes(string token, SimpleMovementMode expectedMode)
     {
         var result = MacroHandler.ParseFormationGotoCommandArgs($"\"Circle\" 4 target {token}");
@@ -403,13 +535,15 @@ public class MacroTests
         Assert.Equal(expectedMode, result.MovementMode);
     }
 
-    [Fact]
-    public void ParseFormationGotoCommandArgs_Rejects_Removed_Hybrid_Mode()
+    [Theory]
+    [InlineData("hybrid")]
+    [InlineData("steered")]
+    public void ParseFormationGotoCommandArgs_Rejects_Removed_Modes(string removedMode)
     {
-        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 target hybrid");
+        var result = MacroHandler.ParseFormationGotoCommandArgs($"\"Circle\" 4 target {removedMode}");
 
         Assert.NotNull(result);
-        Assert.Equal("hybrid", result.InvalidArgument);
+        Assert.Equal(removedMode, result.InvalidArgument);
         Assert.Equal(MacroHandler.FormationGotoAnchorKind.Target, result.AnchorKind);
     }
 
@@ -481,12 +615,350 @@ public class MacroTests
     }
 
     [Fact]
-    public void ParseFormationGotoCommandArgs_Rejects_Invalid_Point_Number()
+    public void ParseFormationGotoCommandArgs_Defaults_To_PointOne_Anchor_When_Omitted_Or_Empty()
     {
-        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 0");
+        var omitted = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 natural");
+        var emptyString = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 \"\" natural");
+
+        Assert.NotNull(omitted);
+        Assert.Equal(FormationAnchorKind.Default, omitted.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Natural, omitted.MovementMode);
+
+        Assert.NotNull(emptyString);
+        Assert.Equal(FormationAnchorKind.Default, emptyString.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Natural, emptyString.MovementMode);
+    }
+
+    [Theory]
+    [InlineData("<t>")]
+    [InlineData("[t]")]
+    public void ParseFormationGotoCommandArgs_Parses_Target_Placeholders_As_Target(string token)
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs($"\"Circle\" 4 {token} natural");
 
         Assert.NotNull(result);
-        Assert.Equal(-1, result.PointIndex);
-        Assert.Equal("0", result.InvalidArgument);
+        Assert.Equal(FormationAnchorKind.Target, result.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Natural, result.MovementMode);
+    }
+
+    [Theory]
+    [InlineData("<f>")]
+    [InlineData("[f]")]
+    [InlineData("<focus>")]
+    [InlineData("[focus]")]
+    public void ParseFormationGotoCommandArgs_Parses_Focus_Placeholders_As_FocusTarget(string token)
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs($"\"Circle\" 4 {token} natural");
+
+        Assert.NotNull(result);
+        Assert.Equal(FormationAnchorKind.FocusTarget, result.Anchor.Kind);
+        Assert.Equal(SimpleMovementMode.Natural, result.MovementMode);
+    }
+
+    [Fact]
+    public void ParseFormationGotoCommandArgs_Parses_Fallback_Anchor()
+    {
+        var result = MacroHandler.ParseFormationGotoCommandArgs("\"Circle\" 4 anchor=\"<t>\" fallback=\"sender\" natural");
+
+        Assert.NotNull(result);
+        Assert.Equal(FormationAnchorKind.Target, result.Anchor.Kind);
+        Assert.NotNull(result.Fallback);
+        Assert.Equal(FormationAnchorKind.Sender, result.Fallback.Kind);
+        Assert.Equal(SimpleMovementMode.Natural, result.MovementMode);
+    }
+
+    [Fact]
+    public void TheBees_FormationAndMacro_RoundTrip_Test()
+    {
+        ulong[] cids = Enumerable.Range(1, 32).Select(i => (ulong)(1000000000000000 + i)).ToArray();
+
+        var formation = new Formation { Name = "The Bees!" };
+        // Point 1: Center anchor (0, 0, 0)
+        formation.Points.Add(new FormationPoint
+        {
+            Offset = Vector3.Zero,
+            Angle = 0f
+        });
+
+        // Ring 1 (Points 2-9): Radius 0.6, Clockwise (Tangent)
+        var ring1 = FormationShapeGenerator.Generate(new FormationShapeSpec
+        {
+            Type = FormationShapeType.Circle,
+            Count = 8,
+            Radius = 0.6f,
+            AnchorMode = FormationShapeAnchorMode.ShapeOnly,
+            AnchorNorthernmostPoint = false,
+            FaceMode = FormationShapeFaceMode.Tangent
+        });
+
+        // Ring 2 (Points 10-17): Radius 1.0, Counter-Clockwise (Reverse Tangent)
+        var ring2 = FormationShapeGenerator.Generate(new FormationShapeSpec
+        {
+            Type = FormationShapeType.Circle,
+            Count = 8,
+            Radius = 1.0f,
+            AnchorMode = FormationShapeAnchorMode.ShapeOnly,
+            AnchorNorthernmostPoint = false,
+            FaceMode = FormationShapeFaceMode.ReverseTangent
+        });
+
+        // Ring 3 (Points 18-25): Radius 1.4, Clockwise (Tangent)
+        var ring3 = FormationShapeGenerator.Generate(new FormationShapeSpec
+        {
+            Type = FormationShapeType.Circle,
+            Count = 8,
+            Radius = 1.4f,
+            AnchorMode = FormationShapeAnchorMode.ShapeOnly,
+            AnchorNorthernmostPoint = false,
+            FaceMode = FormationShapeFaceMode.Tangent
+        });
+
+        // Ring 4 (Points 26-33): Radius 2.0, Counter-Clockwise (Reverse Tangent)
+        var ring4 = FormationShapeGenerator.Generate(new FormationShapeSpec
+        {
+            Type = FormationShapeType.Circle,
+            Count = 8,
+            Radius = 2.0f,
+            AnchorMode = FormationShapeAnchorMode.ShapeOnly,
+            AnchorNorthernmostPoint = false,
+            FaceMode = FormationShapeFaceMode.ReverseTangent
+        });
+
+        formation.Points.AddRange(ring1);
+        formation.Points.AddRange(ring2);
+        formation.Points.AddRange(ring3);
+        formation.Points.AddRange(ring4);
+
+        var formationBlob = FormationShareCode.Export(formation, true);
+        Assert.True(FormationShareCode.TryImport(formationBlob, out var importedFormation, out var error), error);
+        Assert.Equal(33, importedFormation.Points.Count);
+
+        var macro = new Macro
+        {
+            Name = "Orbit Circle",
+            Tags = ["Formations", "Test"],
+            Color = new Vector4(0.95f, 0.75f, 0.10f, 1f),
+            IconId = 60001,
+            Variables = "$phase = .30\n$formation = Orbit Circle\n$anchor = $mop_origin_target\n$leader = Leader Character@World\n$mode = natural\n$jump = yes"
+        };
+
+        for (int charIdx = 0; charIdx < 32; charIdx++)
+        {
+            var cid = cids[charIdx];
+            int ringIdx = charIdx / 8;
+            int slotInRing = charIdx % 8;
+            int ringBasePt = 2 + (ringIdx * 8);
+            bool isReverse = (ringIdx % 2 == 1);
+            int jumpBeat = ringIdx switch { 0 => 1, 1 => 3, 2 => 5, _ => 7 };
+
+            var lines = new List<string>
+            {
+                "/mopif \"$mop_origin_target\" != \"\" /moptarget \"$mop_origin_target\"",
+                "/mopif \"$mop_origin_target\" == \"\" /moptarget \"$leader\"",
+                "/moploopstart",
+                "/mopif \"$mop_origin_target\" != \"\" && me == \"$mop_origin_target\"",
+                "    /mopphasewait $phase",
+                "/mopelseif \"$mop_origin_target\" == \"\" && me == \"$mop_origin\"",
+                "    /mopphasewait $phase",
+                "/mopelse"
+            };
+
+            for (int step = 0; step < 8; step++)
+            {
+                int ptOffset = isReverse ? (8 + slotInRing - step) % 8 : (slotInRing + step) % 8;
+                int ptNum = ringBasePt + ptOffset;
+                lines.Add($"    /mopif \"$anchor\" != \"\" /mopformationgoto \"$formation\" {ptNum} anchor=\"$anchor\" fallback=\"$leader\" $mode");
+                lines.Add($"    /mopif \"$anchor\" == \"\" /mopformationgoto \"$formation\" {ptNum} anchor=\"$mop_origin\" fallback=\"$leader\" $mode");
+
+                if (step == 0 && slotInRing == 0)
+                    lines.Add("    /ac \"Peloton\"");
+
+                if (step == 4)
+                    lines.Add("    /gaction \"sprint\"");
+
+                if (step == jumpBeat)
+                    lines.Add("    /mopif \"$jump\" == \"yes\" /gaction \"jump\"");
+
+                lines.Add("    /mopphasewait $phase");
+            }
+            lines.Add("/mopendif");
+            lines.Add("/moploopend");
+
+            macro.Commands.Add(new Command
+            {
+                Cids = [cid],
+                Actions = string.Join("\n", lines)
+            });
+        }
+
+        var macroJson = macro.JsonSerialize();
+        var macroBlob = macroJson.Compress();
+        var decompressed = macroBlob.Decompress();
+        var importedMacro = decompressed.JsonDeserialize<Macro>();
+
+        Assert.NotNull(importedMacro);
+        Assert.Equal("Orbit Circle", importedMacro.Name);
+        Assert.Equal(32, importedMacro.Commands.Count);
+
+        // Test fence stripped variations
+        var variations = new[]
+        {
+            macroBlob,
+            macroBlob + "\r\n",
+            $"```text\r\n{macroBlob}\r\n```",
+            $"```\r\n{macroBlob}\r\n```",
+            $"```text\n{macroBlob}\n```",
+            $"```\n{macroBlob}\n```"
+        };
+
+        foreach (var v in variations)
+        {
+            var stripped = System.Text.RegularExpressions.Regex.Replace(
+                v.Trim(),
+                @"^```[a-zA-Z]*\r?\n?|```$",
+                string.Empty,
+                System.Text.RegularExpressions.RegexOptions.Multiline).Trim();
+            var dec = stripped.Decompress();
+            var parsed = dec.JsonDeserialize<Macro>();
+            Assert.NotNull(parsed);
+            Assert.Equal("Orbit Circle", parsed.Name);
+        }
+    }
+
+    [Fact]
+    public void OrbitRing_FormationAndMacro_Test()
+    {
+        var formation = new Formation { Name = "Orbit Ring" };
+        formation.Points.Add(new FormationPoint
+        {
+            Offset = Vector3.Zero,
+            Angle = 0f
+        });
+
+        // 4 Concentric Rings with expanded radii (+0.3 each):
+        // Ring 1 (Points 2-9): Radius 0.9, Clockwise (Tangent)
+        var ring1 = FormationShapeGenerator.Generate(new FormationShapeSpec
+        {
+            Type = FormationShapeType.Circle,
+            Count = 8,
+            Radius = 0.9f,
+            AnchorMode = FormationShapeAnchorMode.ShapeOnly,
+            AnchorNorthernmostPoint = false,
+            FaceMode = FormationShapeFaceMode.Tangent
+        });
+
+        // Ring 2 (Points 10-17): Radius 1.3, Counter-Clockwise (Reverse Tangent)
+        var ring2 = FormationShapeGenerator.Generate(new FormationShapeSpec
+        {
+            Type = FormationShapeType.Circle,
+            Count = 8,
+            Radius = 1.3f,
+            AnchorMode = FormationShapeAnchorMode.ShapeOnly,
+            AnchorNorthernmostPoint = false,
+            FaceMode = FormationShapeFaceMode.ReverseTangent
+        });
+
+        // Ring 3 (Points 18-25): Radius 1.7, Clockwise (Tangent)
+        var ring3 = FormationShapeGenerator.Generate(new FormationShapeSpec
+        {
+            Type = FormationShapeType.Circle,
+            Count = 8,
+            Radius = 1.7f,
+            AnchorMode = FormationShapeAnchorMode.ShapeOnly,
+            AnchorNorthernmostPoint = false,
+            FaceMode = FormationShapeFaceMode.Tangent
+        });
+
+        // Ring 4 (Points 26-33): Radius 2.3, Counter-Clockwise (Reverse Tangent)
+        var ring4 = FormationShapeGenerator.Generate(new FormationShapeSpec
+        {
+            Type = FormationShapeType.Circle,
+            Count = 8,
+            Radius = 2.3f,
+            AnchorMode = FormationShapeAnchorMode.ShapeOnly,
+            AnchorNorthernmostPoint = false,
+            FaceMode = FormationShapeFaceMode.ReverseTangent
+        });
+
+        formation.Points.AddRange(ring1);
+        formation.Points.AddRange(ring2);
+        formation.Points.AddRange(ring3);
+        formation.Points.AddRange(ring4);
+
+        var cids = Enumerable.Range(1, 32).Select(i => (ulong)(1000000000000000 + i)).ToList();
+
+        for (int i = 0; i < 32; i++)
+        {
+            formation.Points[i + 1].Cids = [cids[i]];
+        }
+
+        var formationBlob = FormationShareCode.Export(formation, true);
+        Assert.True(FormationShareCode.TryImport(formationBlob, out var importedFormation, out var formError), formError);
+        Assert.Equal(33, importedFormation.Points.Count);
+
+        var macro = new Macro
+        {
+            Name = "Orbit Ring",
+            Tags = ["Formations", "Test"],
+            Color = new Vector4(0.35f, 0.75f, 0.95f, 1f),
+            IconId = 60002,
+            Variables = "$phase = .20\n$formation = Orbit Ring\n$anchor = $mop_origin_target\n$leader = Leader Character@World\n$mode = natural\n$jump = yes"
+        };
+
+        for (int charIdx = 0; charIdx < 32; charIdx++)
+        {
+            var cid = cids[charIdx];
+            int ringIdx = charIdx / 8;
+            int slotInRing = charIdx % 8;
+            int ringBasePt = 2 + (ringIdx * 8);
+            bool isReverse = (ringIdx % 2 == 1);
+            int jumpBeat = ringIdx switch { 0 => 1, 1 => 3, 2 => 5, _ => 7 };
+
+            var lines = new List<string>
+            {
+                "/mopif \"$mop_origin_target\" != \"\" /moptarget \"$mop_origin_target\"",
+                "/mopif \"$mop_origin_target\" == \"\" /moptarget \"$leader\"",
+                "/moploopstart",
+                "/mopif \"$mop_origin_target\" != \"\" && me == \"$mop_origin_target\"",
+                "    /mopphasewait $phase",
+                "/mopelseif \"$mop_origin_target\" == \"\" && me == \"$mop_origin\"",
+                "    /mopphasewait $phase",
+                "/mopelse"
+            };
+
+            for (int step = 0; step < 8; step++)
+            {
+                int ptOffset = isReverse ? (8 + slotInRing - step) % 8 : (slotInRing + step) % 8;
+                int ptNum = ringBasePt + ptOffset;
+                lines.Add($"    /mopif \"$anchor\" != \"\" /mopformationgoto \"$formation\" {ptNum} anchor=\"$anchor\" fallback=\"$leader\" $mode");
+                lines.Add($"    /mopif \"$anchor\" == \"\" /mopformationgoto \"$formation\" {ptNum} anchor=\"$mop_origin\" fallback=\"$leader\" $mode");
+
+                if (step == 0 && slotInRing == 0)
+                    lines.Add("    /ac \"Peloton\"");
+
+                if (step == 4)
+                    lines.Add("    /gaction \"sprint\"");
+
+                if (step == jumpBeat)
+                    lines.Add("    /mopif \"$jump\" == \"yes\" /gaction \"jump\"");
+
+                lines.Add("    /mopphasewait $phase");
+            }
+            lines.Add("/mopendif");
+            lines.Add("/moploopend");
+
+            macro.Commands.Add(new Command
+            {
+                Cids = [cid],
+                Actions = string.Join("\n", lines)
+            });
+        }
+
+        var macroBlob = macro.JsonSerialize().Compress();
+        var decompressed = macroBlob.Decompress();
+        var importedMacro = decompressed.JsonDeserialize<Macro>();
+        Assert.NotNull(importedMacro);
+        Assert.Equal("Orbit Ring", importedMacro.Name);
+        Assert.Equal(32, importedMacro.Commands.Count);
     }
 }

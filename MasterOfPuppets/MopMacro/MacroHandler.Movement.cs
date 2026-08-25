@@ -38,7 +38,8 @@ public partial class MacroHandler {
         int PointIndex,
         FormationAnchorReference Anchor,
         SimpleMovementMode MovementMode,
-        string? InvalidArgument) {
+        string? InvalidArgument,
+        FormationAnchorReference? Fallback = null) {
         public FormationGotoAnchorKind AnchorKind => Anchor.Kind switch {
             FormationAnchorKind.FocusTarget => FormationGotoAnchorKind.FocusTarget,
             FormationAnchorKind.Target => FormationGotoAnchorKind.Target,
@@ -67,7 +68,7 @@ public partial class MacroHandler {
 
         var anchorParse = FormationAnchorArgumentParser.ParseAnchorAndArrival(
             parts.Skip(4),
-            FormationAnchorReference.Self);
+            FormationAnchorReference.Default);
 
         return new FormationMoveCommandOptions(
             parts[0],
@@ -88,21 +89,22 @@ public partial class MacroHandler {
             return new FormationGotoCommandOptions(
                 parts[0],
                 -1,
-                FormationAnchorReference.Self,
+                FormationAnchorReference.Default,
                 SimpleMovementMode.Precise,
                 parts[1]);
         }
 
         var anchorParse = FormationAnchorArgumentParser.ParseAnchorAndArrival(
             parts.Skip(2),
-            FormationAnchorReference.Self);
+            FormationAnchorReference.Default);
 
         return new FormationGotoCommandOptions(
             parts[0],
             pointNumber - 1,
             anchorParse.Anchor,
             anchorParse.MovementMode,
-            anchorParse.InvalidArgument);
+            anchorParse.InvalidArgument,
+            anchorParse.Fallback);
     }
 
     /// <summary>
@@ -151,6 +153,15 @@ public partial class MacroHandler {
 
         string relativeCharacterName = parts[3];
 
+        var localPlayerName = FormationCharacterName.FormatPlayerNameWorld(
+            DalamudApi.PlayerState.CharacterName,
+            DalamudApi.PlayerState.HomeWorld.Value.Name.ToString());
+        if (FormationCharacterName.MatchScore(relativeCharacterName, localPlayerName) >= int.MaxValue - 1) {
+            DalamudApi.PluginLog.Debug(
+                $"[mopmoverelativeto] local character is the relative anchor \"{relativeCharacterName}\"; remaining stationary");
+            return Task.CompletedTask;
+        }
+
         Angle? facing = null;
         if (parts.Count >= 5 && float.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out float angleDeg))
             facing = angleDeg.Degrees();
@@ -161,7 +172,7 @@ public partial class MacroHandler {
     }
 
     /// <summary>
-    /// /mopformationmove "Formation Name" [forward|backward] [stride] [sequenceIndex] [continuous|precise] [self|target]
+    /// /mopformationmove "Formation Name" [forward|backward] [stride] [sequenceIndex] [continuous|precise|natural] [self|target]
     /// Broadcasts one saved-formation movement step from the selected anchor.
     /// </summary>
     private async Task HandleMopFormationMove(string macroId, string args, CancellationToken token) {
@@ -186,7 +197,7 @@ public partial class MacroHandler {
     }
 
     /// <summary>
-    /// /mopformationgoto "Formation Name" pointNumber [anchor=self|target|"Character Name@World"] [continuous|precise]
+    /// /mopformationgoto "Formation Name" pointNumber [anchor=self|target|"Character Name@World"] [continuous|precise|natural]
     /// Moves the local client to one saved formation point using point 1 as the live anchor.
     /// </summary>
     private async Task HandleMopFormationGoto(string macroId, string args, CancellationToken token) {
@@ -204,9 +215,12 @@ public partial class MacroHandler {
             return;
         }
 
-        if (options.Anchor.Kind == FormationAnchorKind.FocusTarget) {
-            DalamudApi.PluginLog.Warning("[mopformationgoto] focus target anchor is not supported for local point commands");
-            return;
+        var fallbackAnchor = options.Fallback;
+        if (fallbackAnchor == null) {
+            var currentPlan = _macroState.CurrentPlan ?? _loopState.CurrentPlan;
+            if (currentPlan != null && currentPlan.TryGetVariable("mop_origin", out var origin) && !string.IsNullOrWhiteSpace(origin)) {
+                fallbackAnchor = FormationAnchorReference.Named(origin);
+            }
         }
 
         await DalamudApi.Framework.RunOnFrameworkThread(() =>
@@ -215,7 +229,9 @@ public partial class MacroHandler {
                 options.FormationName,
                 options.PointIndex,
                 options.Anchor,
-                options.MovementMode));
+                options.MovementMode,
+                logPrefix: "mopformationgoto",
+                fallbackAnchor: fallbackAnchor));
     }
 
     private static string FormatFormationGotoAnchor(FormationGotoCommandOptions options) =>

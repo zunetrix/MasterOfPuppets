@@ -2,6 +2,16 @@
 
 FFXIV plugin that lets you create and send custom actions (similar to in-game macros), either locally or via chat-based broadcast. It supports broadcasting actions to multiple clients locally, or through in-game chat channels such as Party, Linkshell, and Cross-World Linkshell. Use it to trigger custom actions like emotes, minions, mounts, fashion changes, and more.
 
+## Install through Dalamud
+
+Add this URL under **Dalamud Settings > Experimental > Custom Plugin Repositories**:
+
+```text
+https://raw.githubusercontent.com/GarrisonMangler/MasterOfPuppets/main/repo.json
+```
+
+Save the settings, open the Plugin Installer, and search for **MasterofManglers**.
+
 
 # Builds
 ```sh
@@ -33,18 +43,12 @@ git checkout main
 git pull origin main
 ```
 
-TODO:
- - moploop block (start end):
- - add chat watcher init to prevent register on chat game listener if use chat option is disabled
- - refactor macro commands to individual handlers
+## Documentation
 
-```
-start code no loop block
-
-/moploopstart
-loop code
-/moploopend
-```
+- [Live Formations & Natural Movement](docs/live-formations-and-natural-movement.md) - Real-time tracking loop, walk/run preservation, anchor tokens (`ftarget`, `target`, `sender`), and slot holding.
+- [Configuration & Live Variables](docs/configuration-and-live-variables.md) - Hot-reloading via `/mop reload`, out-of-band `/mop setvar` updates, and Windows native clipboard/importer features.
+- [Macro Conditionals](docs/macro-conditionals.md) - Control flow and branching with `/mopif`, `/mopelseif`, `/mopelse`, and `/mopendif`.
+- [Phase-Locked Macro Timing](docs/phase-locked-macro-timing.md) - Monotonic timeline management for synchronized movement loops.
 
 ## Movement Coordinate System in Final Fantasy XIV
 
@@ -195,4 +199,3 @@ Notes:
 ## IDA Sig maker
  - https://github.com/A200K/IDA-Pro-SigMaker/releases
  - https://github.com/mahmoudimus/ida-sigmaker
-

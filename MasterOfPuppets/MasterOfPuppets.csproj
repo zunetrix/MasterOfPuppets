@@ -1,18 +1,18 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>1.15.0.227</Version>
+    <Version>1.15.0.278</Version>
   </PropertyGroup>
   <PropertyGroup>
-    <Author>Zune</Author>
-    <Name>Master Of Puppets</Name>
+    <Author>GarrisonMangler; Zune</Author>
+    <Name>MasterofManglers</Name>
     <InternalName>MasterOfPuppets</InternalName>
-    <Punchline><![CDATA[Gremlins Control Center]]></Punchline>
+    <Punchline><![CDATA[Personal Gremlins Control Center]]></Punchline>
     <Description><![CDATA[
 An FFXIV plugin that lets you create and send custom actions, similar to in-game macros, either locally or via chat-based broadcasting.
 Actions can be broadcast to multiple clients locally or through in-game chat channels such as Party, Linkshell, and Cross-World Linkshell.
 Use it to trigger custom actions like emotes, minions, mounts, glamour changes, and more.
 ]]></Description>
-    <RepoUrl>https://github.com/zunetrix/MasterOfPuppets</RepoUrl>
+    <RepoUrl>https://github.com/GarrisonMangler/MasterOfPuppets</RepoUrl>
     <IconUrl>https://i.imgur.com/uFq8py7.png</IconUrl>
     <Tags>utility;macro</Tags>
     <AcceptsFeedback>false</AcceptsFeedback>
@@ -29,7 +29,7 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
     <!-- <UseWpf>true</UseWpf> -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
-    <Version>1.15.0.227</Version>
+    <Version>1.15.0.278</Version>
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
   <!-- Linux build -->

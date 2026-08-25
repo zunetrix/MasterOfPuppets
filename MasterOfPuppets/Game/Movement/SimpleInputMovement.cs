@@ -17,13 +17,17 @@ public sealed class SimpleInputMovement : IDisposable {
     private readonly NativeStop _nativeStop = new();
     private readonly ForwardInputMovementController _forwardInput = new();
     private readonly ContinuousForwardMovementStrategy _continuousForward;
+    private readonly FormationNaturalMovementStrategy _formationNatural;
     private readonly ForwardPreciseMovementStrategy _forwardPrecise;
     private readonly ArrivePreciseMovementStrategy _arrivePrecise;
     private CancellationTokenSource? _cts;
     private ISimpleMovementStrategy? _activeStrategy;
+    private SimpleMovementMode? _activeMovementMode;
+    private string? _activeTrackingKey;
 
     public SimpleInputMovement() {
         _continuousForward = new ContinuousForwardMovementStrategy(_forwardInput);
+        _formationNatural = new FormationNaturalMovementStrategy(_forwardInput);
         _forwardPrecise = new ForwardPreciseMovementStrategy(_forwardInput);
         _arrivePrecise = new ArrivePreciseMovementStrategy(_forwardInput, _nativeStop);
     }
@@ -46,6 +50,14 @@ public sealed class SimpleInputMovement : IDisposable {
         _ = DalamudApi.Framework.RunOnFrameworkThread(() => CancelActiveMove(callNativeStop: true));
     }
 
+    public bool IsMoving => _activeStrategy != null || _cts != null;
+
+    public bool IsActiveLiveFormationMove(string trackingKey) =>
+        _activeStrategy == _formationNatural
+        && _activeMovementMode == SimpleMovementMode.Natural
+        && _cts is { IsCancellationRequested: false }
+        && string.Equals(_activeTrackingKey, trackingKey, StringComparison.Ordinal);
+
     public CancellationTokenSource? MoveTo(
         Vector3 destination,
         float precision = 0.3f,
@@ -53,7 +65,9 @@ public sealed class SimpleInputMovement : IDisposable {
         SimpleMovementMode movementMode = SimpleMovementMode.Precise,
         bool stopOnStuck = false,
         float stuckTolerance = 0.05f,
-        int stuckTimeoutMs = 500) {
+        int stuckTimeoutMs = 500,
+        string? trackingKey = null,
+        bool useFormationRelativeMovement = false) {
         if (!DalamudApi.Framework.IsInFrameworkUpdateThread) {
             _ = DalamudApi.Framework.RunOnFrameworkThread(() => MoveTo(
                 destination,
@@ -62,27 +76,51 @@ public sealed class SimpleInputMovement : IDisposable {
                 movementMode,
                 stopOnStuck,
                 stuckTolerance,
-                stuckTimeoutMs));
+                stuckTimeoutMs,
+                trackingKey,
+                useFormationRelativeMovement));
             return null;
         }
 
         if (DalamudApi.Condition[ConditionFlag.Performing])
             return null;
 
-        // Capture walk state before CancelActiveMove, which unconditionally sets IsWalking = false.
-        // If we read it after, savedIsWalking would always be false and the restore at the end
-        // of the movement would toggle walk off for clients that had it enabled.
+        if (movementMode == SimpleMovementMode.Natural
+            && _activeStrategy == _formationNatural
+            && _activeMovementMode == SimpleMovementMode.Natural
+            && _cts is { IsCancellationRequested: false } activeCts
+            && string.Equals(_activeTrackingKey, trackingKey, StringComparison.Ordinal)) {
+            _formationNatural.UpdateTarget(destination, faceDirection, useFormationRelativeMovement);
+            return activeCts;
+        }
+
+        // Capture walk state before cancellation because non-preserving movement modes may clear it.
+        // Live-toggle modes restore this value immediately and never change it while moving.
         var savedIsWalking = SimpleMovementWalkState.IsWalking;
         CancelActiveMove(callNativeStop: true);
 
-        var context = new SimpleMovementContext(destination, precision, faceDirection);
+        var preserveWalkState = PreservesWalkState(movementMode);
+        if (preserveWalkState)
+            SimpleMovementWalkState.IsWalking = savedIsWalking;
+
+        var context = new SimpleMovementContext(
+            destination,
+            precision,
+            faceDirection,
+            useFormationRelativeMovement);
         var strategy = SelectStrategy(movementMode);
         strategy.Start(context);
         _activeStrategy = strategy;
+        _activeMovementMode = movementMode;
+        _activeTrackingKey = trackingKey;
 
         var cts = new CancellationTokenSource();
         _cts = cts;
-        var stuckTracker = stopOnStuck ? new SimpleMovementProgressTracker() : null;
+        // A persistent formation slot is expected to be stationary whenever its
+        // anchor is stationary, so ordinary stuck detection must not end it.
+        var stuckTracker = stopOnStuck && !UsesLiveFormationTracking(movementMode)
+            ? new SimpleMovementProgressTracker()
+            : null;
 
         uint savedMoveMode = DalamudApi.GameConfig.UiControl.GetUInt("MoveMode");
         uint savedPadMode = DalamudApi.GameConfig.UiConfig.GetUInt("PadMode");
@@ -119,7 +157,8 @@ public sealed class SimpleInputMovement : IDisposable {
                     if (strategy.UsesNativeStopOnCompletion)
                         _nativeStop.Stop();
 
-                    SimpleMovementWalkState.IsWalking = savedIsWalking;
+                    if (!preserveWalkState)
+                        SimpleMovementWalkState.IsWalking = savedIsWalking;
 
                     if (faceDirection is float rot
                         && !cts.IsCancellationRequested
@@ -200,17 +239,31 @@ public sealed class SimpleInputMovement : IDisposable {
             return true;
         }
 
+        if (value.Equals("natural", StringComparison.OrdinalIgnoreCase)) {
+            mode = SimpleMovementMode.Natural;
+            return true;
+        }
+
         return false;
     }
+
+    public static bool PreservesWalkState(SimpleMovementMode mode) =>
+        mode == SimpleMovementMode.Natural;
+
+    public static bool UsesLiveFormationTracking(SimpleMovementMode mode) =>
+        mode == SimpleMovementMode.Natural;
 
     private ISimpleMovementStrategy SelectStrategy(SimpleMovementMode mode) =>
         mode switch {
             SimpleMovementMode.Continuous => _continuousForward,
+            SimpleMovementMode.Natural => _formationNatural,
             SimpleMovementMode.Forward => _forwardPrecise,
             _ => _arrivePrecise,
         };
 
     private void CancelActiveMove(bool callNativeStop) {
+        var wasMovingWithNonPreservedWalk = _activeMovementMode is { } activeMode
+            && !PreservesWalkState(activeMode);
         var cts = _cts;
         if (cts != null) {
             cts.Cancel();
@@ -219,7 +272,8 @@ public sealed class SimpleInputMovement : IDisposable {
         }
 
         StopStrategies();
-        SimpleMovementWalkState.IsWalking = false;
+        if (wasMovingWithNonPreservedWalk)
+            SimpleMovementWalkState.IsWalking = false;
 
         if (!callNativeStop)
             return;
@@ -233,7 +287,10 @@ public sealed class SimpleInputMovement : IDisposable {
     private void StopStrategies() {
         _activeStrategy?.Stop();
         _activeStrategy = null;
+        _activeMovementMode = null;
+        _activeTrackingKey = null;
         _continuousForward.Stop();
+        _formationNatural.Stop();
         _forwardPrecise.Stop();
         _arrivePrecise.Stop();
     }
@@ -243,6 +300,7 @@ public enum SimpleMovementMode {
     Continuous,
     Precise,
     Forward,
+    Natural,
 }
 
 public enum ArrivalMovementState {

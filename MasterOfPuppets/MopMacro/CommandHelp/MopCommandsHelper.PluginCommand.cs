@@ -64,6 +64,25 @@ public static partial class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop setvar -var=$name=value[;$other=value]",
+            SuggestionCommand = "/mop setvar -var=",
+            Example = """
+            /mop setvar -var=$speed=1.25
+            /mop setvar -var=$speed=1.25;$target="Warrior of Light"
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Broadcasts variable updates to active macros on all local clients.
+
+            Updates take effect when the next action is resolved. The action currently executing,
+            queued macros, and future macro runs are not changed.
+
+            Across ChatSync clients, send:
+            /cwl2 mopbr /mop setvar -var=$name=value
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mop globaldelay",
             SuggestionCommand = "/mop globaldelay",
             Example = """
@@ -98,7 +117,7 @@ public static partial class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
-            TextCommand = "/mop formation \"Formation Name\" [self|target|ftarget] [continuous|precise]",
+            TextCommand = "/mop formation \"Formation Name\" [self|target|ftarget] [continuous|precise|natural]",
             SuggestionCommand = "/mop formation ",
             Example = """
             /mop formation "My Formation"
@@ -113,6 +132,7 @@ public static partial class MopCommandsHelper {
             Each client moves to the formation point whose assigned CIDs/groups include it.
             Add target to place your assigned formation point at your current target.
             Default: precise. Use continuous for smoother loops.
+            Use natural for live formation tracking that leaves the walk/run toggle unchanged.
             """
         },
         new MopAction {

@@ -21,6 +21,26 @@ public static partial class MopCommandsHelper {
         new MopAction {
             Category = MopActionCategory.MacroAction,
             SubCategory = MopActionSubCategory.FlowControl,
+            TextCommand = "/mopphasewait <time>",
+            SuggestionCommand = "/mopphasewait ",
+            Example = """
+            Keep a repeating movement sequence on a 0.75-second phase clock:
+                /mopformationgoto "Circle" 2 anchor="Anchor Character@World" natural
+                /mopphasewait 0.75
+                /mopformationgoto "Circle" 3 anchor="Anchor Character@World" natural
+                /mopphasewait 0.75
+                /moploop
+            """,
+            Notes = """
+            Advances an absolute timeline measured from the start of the macro.
+            Execution and framework-frame latency reduce the remaining wait instead of accumulating.
+            The time is the complete phase interval, including global delay and command execution.
+            Intended for synchronized repeating movement; ordinary /mopwait behavior is unchanged.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.FlowControl,
             TextCommand = "/moploop <loop amount>",
             SuggestionCommand = "/moploop",
             Example = """
@@ -95,6 +115,84 @@ public static partial class MopCommandsHelper {
             """,
             Notes = """
             Use this to call another macro inside a macro
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.FlowControl,
+            TextCommand = "/mopif <condition> [/action]",
+            SuggestionCommand = "/mopif ",
+            Example = """
+            Block conditional:
+                /mopif target
+                    /mopformationgoto "Circle" 2 target precise
+                /mopelse
+                    /mopmoverelativeto 0 0 1 "Leader"
+                /mopendif
+
+            Inline conditional:
+                /mopif target /mopformationgoto "Circle" 2 target precise
+                /mopif notarget /mopmoverelativeto 0 0 1 "Leader"
+
+            Supported conditions:
+                target, notarget, targetispc, targetisnpc, focustarget, nofocustarget
+                target == "Name", "$var" == "value", "$var" != ""
+                incombat, outcombat, isperforming, isalive, isdead, isleader, inparty
+                visible "Name", exists "Name"
+            """,
+            Notes = """
+            Executes a block of actions or a single inline command only if the condition evaluates to true.
+            Supports boolean logic with && (and) and || (or), and negation with ! (not).
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.FlowControl,
+            TextCommand = "/mopelseif <condition>",
+            SuggestionCommand = "/mopelseif ",
+            Example = """
+            /mopif targetispc
+                /say Target is player!
+            /mopelseif targetisnpc
+                /say Target is NPC!
+            /mopelse
+                /say No target!
+            /mopendif
+            """,
+            Notes = """
+            Evaluates an alternative condition if preceding /mopif and /mopelseif conditions evaluated to false.
+            Alias: /mopelif
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.FlowControl,
+            TextCommand = "/mopelse",
+            SuggestionCommand = "/mopelse",
+            Example = """
+            /mopif target
+                /mopformationgoto "Circle" 2 target precise
+            /mopelse
+                /mopmoverelativeto 0 0 1 "Leader"
+            /mopendif
+            """,
+            Notes = """
+            Executes if the preceding /mopif condition evaluated to false.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.FlowControl,
+            TextCommand = "/mopendif",
+            SuggestionCommand = "/mopendif",
+            Example = """
+            /mopif target
+                /clap
+            /mopendif
+            """,
+            Notes = """
+            Marks the end of a conditional /mopif block.
+            Alias: /mopfi
             """
         },
 
@@ -266,18 +364,21 @@ public static partial class MopCommandsHelper {
         new MopAction {
             Category = MopActionCategory.MacroAction,
             SubCategory = MopActionSubCategory.Movement,
-            TextCommand = "/mopformationmove \"Formation Name\" [forward|backward] [stride] [sequenceIndex] [continuous|precise] [self|target|ftarget]",
+            TextCommand = "/mopformationmove \"Formation Name\" [forward|backward] [stride] [sequenceIndex] [continuous|precise|natural] [self|target|ftarget]",
             SuggestionCommand = "/mopformationmove \"Formation Name\" forward 1 0",
             Example = """
             /mopformationmove "Circle" forward 1 0
             /mopformationmove "Circle" backward 2 3
             /mopformationmove "Circle" forward 1 0 precise
+            /mopformationmove "Circle" forward 1 0 natural
+            /mopformationmove "Circle" forward 1 0 natural
             /mopformationmove "Circle" forward 1 0 precise target
             """,
             Notes = """
             Broadcasts one saved-formation movement step from the current character.
             Stride is the skip amount through formation point order; sequenceIndex is the zero-based step to execute from each recipient's computed path.
             Default: precise. Use continuous for smoother loops.
+            Use natural for live formation tracking that leaves the walk/run toggle unchanged.
             Add target to anchor the movement at the controller's current target.
             Generated formation macros use continuous by default.
             """
@@ -285,11 +386,13 @@ public static partial class MopCommandsHelper {
         new MopAction {
             Category = MopActionCategory.MacroAction,
             SubCategory = MopActionSubCategory.Movement,
-            TextCommand = "/mopformationgoto \"Formation Name\" <pointNumber> [anchor=<self|target|\"Character Name@World\">] [continuous|precise]",
+            TextCommand = "/mopformationgoto \"Formation Name\" <pointNumber> [anchor=<self|target|ftarget|\"Character Name@World\">] [continuous|precise|natural]",
             SuggestionCommand = "/mopformationgoto \"Formation Name\" 2 anchor=\"Character Name@World\"",
             Example = """
             /mopformationgoto "Circle" 2 anchor="Anchor Character@World"
             /mopformationgoto "Circle" 3 anchor=target precise
+            /mopformationgoto "Circle" 3 anchor="Anchor Character@World" natural
+            /mopformationgoto "Circle" 3 ftarget natural
             /mopformationgoto "Circle" 4 anchor=self
             """,
             Notes = """
@@ -297,7 +400,9 @@ public static partial class MopCommandsHelper {
             Point numbers are 1-based; point 1 is always the live anchor/origin.
             Use anchor="Name@World" when each PC should place itself relative to the same visible anchor character.
             anchor=target uses this client's current target.
+            ftarget uses this client's focus target; if the focus target is the local character, it remains still as the leader.
             Default: precise. Use continuous for smoother loops.
+            Use natural for live formation tracking that leaves the walk/run toggle unchanged.
             This is the precise local alternative to IPC-broadcast /mopformationmove.
             """
         },

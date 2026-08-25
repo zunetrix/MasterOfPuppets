@@ -214,6 +214,16 @@ public partial class MacroEditorWindow : Window {
             /mopwait $time
             """);
         ImGui.InputTextMultiline("##MacroVariablesInput", ref MacroItem.Variables, size: new Vector2(-1, 250));
+        if (ImGui.Button("Apply to Running Macro##ApplyLiveMacroVariables")) {
+            var variables = Command.ExtractVariables(Command.PreprocessLines(MacroItem.Variables));
+            if (variables.Count == 0) {
+                DalamudApi.ShowNotification("No valid macro variables to apply", NotificationType.Warning, 3000);
+            } else {
+                Plugin.IpcProvider.UpdateMacroVariables(variables);
+                DalamudApi.ShowNotification("Macro variables sent to running macros", NotificationType.Success, 3000);
+            }
+        }
+        ImGuiUtil.ToolTip("Updates the active macro and loop macro on all connected clients. The next action uses the new values.");
         ImGui.Spacing();
         ImGui.Spacing();
     }

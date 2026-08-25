@@ -45,9 +45,9 @@ public partial class MacroEditorWindow {
     private static readonly string[] MacroGeneratorSourceNames = ["Existing Formation", "Generated Shape"];
     private static readonly string[] MacroGeneratorDirectionNames = ["Forward through point order", "Backward through point order"];
     private static readonly string[] MacroGeneratorExistingFormationCommandStyleNames = ["Broadcast formation move", "Local point commands"];
-    private static readonly string[] MacroGeneratorMovementModeNames = ["Continuous", "Precise"];
+    private static readonly string[] MacroGeneratorMovementModeNames = ["Continuous", "Precise", "Natural (live tracking, preserve walk/run)"];
     private static readonly string[] MacroGeneratorBroadcastAnchorModeNames = ["Controller", "Controller target", "Controller focus target"];
-    private static readonly string[] MacroGeneratorLocalPointAnchorModeNames = ["Point 1", "Point 1 target"];
+    private static readonly string[] MacroGeneratorLocalPointAnchorModeNames = ["Point 1", "Point 1 target", "Point 1 focus target"];
 
     private void DrawMacroCommandGeneratorModal() {
         ImGui.SetNextWindowSize(new Vector2(520f, 0f), ImGuiCond.FirstUseEver);
@@ -310,8 +310,8 @@ public partial class MacroEditorWindow {
             DrawMacroGeneratorLabel(
                 "Origin",
                 localPointCommands
-                    ? "Where point 1 is placed. Run local point macros from point 1."
-                    : "Where the controller places the formation. Focus target only works for broadcast commands.");
+                    ? "Where point 1 is placed ($mop_origin, $mop_origin_target, or $mop_origin_ftarget). Run local point macros from point 1."
+                    : "Where the controller places the formation (self, target, or focus target).");
             ImGui.SetNextItemWidth(160);
             ImGui.Combo("##macroGenFormationMoveAnchor", ref _macroGenFormationMoveAnchorMode, anchorNames, anchorNames.Length);
         }
@@ -435,6 +435,7 @@ public partial class MacroEditorWindow {
                 Reverse = _macroGenReverse,
                 FormationMoveMode = _macroGenFormationMoveMode switch {
                     1 => SimpleMovementMode.Precise,
+                    2 => SimpleMovementMode.Natural,
                     _ => SimpleMovementMode.Continuous,
                 },
                 FormationMoveAnchorMode = _macroGenFormationMoveAnchorMode switch {

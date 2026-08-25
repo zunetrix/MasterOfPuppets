@@ -162,9 +162,11 @@ public static class FormationMacroGenerator {
 
         var step = Math.Max(1, options.Step);
         var movementMode = SimpleInputMovement.FormatMode(options.FormationMoveMode);
-        var anchorArg = options.FormationMoveAnchorMode == FormationMoveAnchorMode.Target
-            ? " anchor=\"$mop_origin_target\""
-            : " anchor=\"$mop_origin\"";
+        var anchorArg = options.FormationMoveAnchorMode switch {
+            FormationMoveAnchorMode.FocusTarget => " anchor=\"$mop_origin_ftarget\"",
+            FormationMoveAnchorMode.Target => " anchor=\"$mop_origin_target\"",
+            _ => " anchor=\"$mop_origin\"",
+        };
 
         foreach (var start in destinations) {
             var assignment = BuildAssignment(start.Point, groups, options.UseMatchingGroups);
@@ -195,6 +197,7 @@ public static class FormationMacroGenerator {
         FormationPoint anchor,
         FormationMacroGeneratorOptions options,
         IReadOnlyList<CidGroup>? groups) {
+        var originReference = options.OriginReference;
         var step = Math.Max(1, options.Step);
         foreach (var start in destinations) {
             var assignment = BuildAssignment(start.Point, groups, options.UseMatchingGroups);
@@ -213,7 +216,7 @@ public static class FormationMacroGenerator {
                     + $"{Format(relative.X, options.Precision)} "
                     + $"{Format(relative.Y, options.Precision)} "
                     + $"{Format(relative.Z, options.Precision)} "
-                    + $"\"{options.OriginReference}\"";
+                    + $"\"{originReference}\"";
                 if (facing.HasValue)
                     line += $" {Format(facing.Value, options.Precision)}";
 
