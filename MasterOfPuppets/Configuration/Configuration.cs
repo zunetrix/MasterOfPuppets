@@ -193,6 +193,10 @@ internal class Configuration : IPluginConfiguration {
     public bool IncludeCidOnImport { get; set; } = true;
     public bool BackupBeforeImport { get; set; } = true;
 
+    public Dictionary<string, List<string>> EnabledCommandAliases { get; set; } = new();
+    // commandKey → { defaultAlias → customAlias }
+    public Dictionary<string, Dictionary<string, string>> CustomAliasNames { get; set; } = new();
+
     // Chat commands
     public bool UseChatSync { get; set; } = false;
     public HashSet<XivChatType> ListenedChatTypes { get; set; } = new();
