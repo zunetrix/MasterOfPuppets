@@ -144,8 +144,7 @@ public class PluginCommandManager : IDisposable {
                 case "stop":
                     Plugin.MacroHandler.StopMacroQueueExecution();
                     break;
-                case "reload":
-                case "loadconfig":
+                case "reloadconfig":
                     Plugin.ReloadConfigFromDisk();
                     break;
                 case "setvar":

@@ -363,21 +363,3 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-## Local MasterOfPuppets macro exports, formations, and client data
-MasterOfPuppets.json
-*.blob.txt
-*_blob.txt
-*.formation.txt
-*_export.json
-*_macro.json
-*.docx
-scratch_*.json
-conga_*.json
-moon_orbit_*.json
-the_bees_*.json
-The-Line-*.json
-BALLROOM_DANCE_*.md
-LUA_SCRIPTING_*.md
-Sample Formation Prompt.md
-AGENTS.md
-MASTER_OF_PUPPETS_GUIDE.md
