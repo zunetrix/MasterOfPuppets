@@ -28,8 +28,10 @@ public static class FormationLocalMovementExecutor {
 
         var localPlayer = DalamudApi.ObjectTable.LocalPlayer;
         if (localPlayer != null && ShouldSkipLocalAnchor(anchor.Kind, resolvedAnchor.GameObjectId, localPlayer.GameObjectId)) {
-            plugin.FormationTrackingSession.Stop();
-            plugin.SimpleInputMovement.StopMove();
+            if (plugin.FormationTrackingSession.IsActive)
+                plugin.FormationTrackingSession.Stop();
+            if (plugin.SimpleInputMovement.IsMoving)
+                plugin.SimpleInputMovement.StopMove();
             DalamudApi.PluginLog.Debug($"[{logPrefix}] local character is the selected formation anchor; no movement needed");
             return true;
         }
@@ -99,8 +101,10 @@ public static class FormationLocalMovementExecutor {
         if (anchor.Kind != FormationAnchorKind.Self) {
             var anchorCid = resolvedAnchor.ContentId;
             if (anchorCid == localCid) {
-                plugin.FormationTrackingSession.Stop();
-                plugin.SimpleInputMovement.StopMove();
+                if (plugin.FormationTrackingSession.IsActive)
+                    plugin.FormationTrackingSession.Stop();
+                if (plugin.SimpleInputMovement.IsMoving)
+                    plugin.SimpleInputMovement.StopMove();
                 DalamudApi.PluginLog.Debug($"[{logPrefix}] local character is the formation anchor for \"{formationName}\"; no movement needed");
                 return true;
             }

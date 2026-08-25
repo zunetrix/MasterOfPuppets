@@ -50,6 +50,8 @@ public sealed class SimpleInputMovement : IDisposable {
         _ = DalamudApi.Framework.RunOnFrameworkThread(() => CancelActiveMove(callNativeStop: true));
     }
 
+    public bool IsMoving => _activeStrategy != null || _cts != null;
+
     public bool IsActiveLiveFormationMove(string trackingKey) =>
         _activeStrategy == _formationNatural
         && _activeMovementMode == SimpleMovementMode.Natural
@@ -260,8 +262,8 @@ public sealed class SimpleInputMovement : IDisposable {
         };
 
     private void CancelActiveMove(bool callNativeStop) {
-        var preserveWalkState = _activeMovementMode is { } movementMode
-            && PreservesWalkState(movementMode);
+        var wasMovingWithNonPreservedWalk = _activeMovementMode is { } activeMode
+            && !PreservesWalkState(activeMode);
         var cts = _cts;
         if (cts != null) {
             cts.Cancel();
@@ -270,7 +272,7 @@ public sealed class SimpleInputMovement : IDisposable {
         }
 
         StopStrategies();
-        if (!preserveWalkState)
+        if (wasMovingWithNonPreservedWalk)
             SimpleMovementWalkState.IsWalking = false;
 
         if (!callNativeStop)
