@@ -106,6 +106,16 @@ internal partial class IpcProvider {
         });
     }
 
+    public void StopAllExecution() {
+        BroadCast(IpcMessage.Create(IpcMessageType.StopAllExecution).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.StopAllExecution)]
+    private void HandleStopAllExecution(IpcMessage message) {
+        Plugin.StopAllMovementLocal();
+        Plugin.MacroHandler.StopMacroQueueExecution();
+    }
+
     public void StopMacroExecution() {
         BroadCast(IpcMessage.Create(IpcMessageType.StopMacroExecution).Serialize(), includeSelf: true);
     }

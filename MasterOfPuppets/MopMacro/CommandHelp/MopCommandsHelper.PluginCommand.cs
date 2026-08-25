@@ -52,6 +52,18 @@ public static partial class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop stopmacro",
+            SuggestionCommand = "/mop stopmacro",
+            Example = """
+            /mop stopmacro
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Stops all macro execution
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
             TextCommand = "/mop stop",
             SuggestionCommand = "/mop stop",
             Example = """
@@ -59,7 +71,7 @@ public static partial class MopCommandsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Stops all macro execution
+            Stops all actions: macro execution and movement
             """
         },
         new MopAction {

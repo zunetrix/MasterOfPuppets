@@ -142,7 +142,14 @@ public class PluginCommandManager : IDisposable {
                     }
                     break;
                 case "stop":
+                    Plugin.StopAllMovementLocal();
                     Plugin.MacroHandler.StopMacroQueueExecution();
+                    break;
+                case "stopmacro":
+                    Plugin.MacroHandler.StopMacroQueueExecution();
+                    break;
+                case "stopmove":
+                    Plugin.StopAllMovementLocal();
                     break;
                 case "reloadconfig":
                     Plugin.ReloadConfigFromDisk();
@@ -231,9 +238,6 @@ public class PluginCommandManager : IDisposable {
                         Plugin.SimpleInputMovement.MoveTo(destination);
                     }
                     break;
-                case "stopmoveinput":
-                    Plugin.StopAllMovementLocal();
-                    break;
                 case "move": {
                         if (parsedArgs.Count < 2) {
                             DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop move x y z");
@@ -290,9 +294,6 @@ public class PluginCommandManager : IDisposable {
                         // Plugin.MovementManager.FaceDirection(target);
                         GameFunctions.FaceDirectionDeferred(target);
                     }
-                    break;
-                case "stopmove":
-                    Plugin.IpcProvider.StopMovement();
                     break;
                 case "follow":
                     Plugin.IpcProvider.Follow(DalamudApi.PlayerState.EntityId);
