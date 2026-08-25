@@ -22,9 +22,6 @@ public class SettingsWindow : Window {
     private Plugin Plugin { get; }
     private string _characterName = string.Empty;
     private float _cameraYOffset = GameCameraManager.MaxYOffset;
-    // commandKey → { defaultAlias → current input text }
-    private readonly Dictionary<string, Dictionary<string, string>> _aliasInputs = new();
-
 
     //  keyboard filter popup
     private const string KbFilterPopupId = "Key Filter##KbFilter";
@@ -62,17 +59,6 @@ public class SettingsWindow : Window {
         SizeCondition = ImGuiCond.FirstUseEver;
         // SizeCondition = ImGuiCond.Always;
         // Flags = ImGuiWindowFlags.NoResize;
-    }
-
-    public override void OnOpen() {
-        foreach (var def in PluginCommandManager.Definitions) {
-            _aliasInputs[def.Key] = new();
-            foreach (var alias in def.DefaultAliases) {
-                if (alias.Equals(def.DefaultCommand, StringComparison.OrdinalIgnoreCase)) continue;
-                _aliasInputs[def.Key][alias] = GetEffectiveAliasName(def.Key, alias);
-            }
-        }
-        base.OnOpen();
     }
 
     public override void Draw() {
@@ -602,91 +588,27 @@ public class SettingsWindow : Window {
         using var tabItem = ImRaii.TabItem("Commands###CommandsTab");
         if (!tabItem) return;
 
-        ImGui.TextWrapped("Enable and rename aliases for built-in commands. Changes are synced to all clients.");
-        ImGuiUtil.HelpMarker("Example: enable '/br' as alias for '/mopbr', or rename it to '/broadcast'.");
+        ImGui.TextWrapped("Built-in plugin slash commands.");
 
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
-        foreach (var def in PluginCommandManager.Definitions) {
-            var visibleAliases = def.DefaultAliases
-                .Where(a => !a.Equals(def.DefaultCommand, StringComparison.OrdinalIgnoreCase))
-                .ToArray();
-            if (visibleAliases.Length == 0) continue;
+        if (ImGui.BeginTable("##SettingsCommandsTable", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchProp)) {
+            ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthFixed, 100 * ImGuiHelpers.GlobalScale);
+            ImGui.TableSetupColumn("Description", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableHeadersRow();
 
-            ImGui.TextDisabled(def.DefaultCommand);
-
-            Plugin.Config.EnabledCommandAliases.TryGetValue(def.Key, out var enabledAliases);
-            if (!_aliasInputs.ContainsKey(def.Key)) _aliasInputs[def.Key] = new();
-
-            foreach (var alias in visibleAliases) {
-                ImGui.Indent(16);
-
-                bool enabled = enabledAliases != null && enabledAliases.Contains(alias, StringComparer.OrdinalIgnoreCase);
-                if (ImGui.Checkbox($"##chk_{def.Key}_{alias}", ref enabled)) {
-                    if (!Plugin.Config.EnabledCommandAliases.ContainsKey(def.Key))
-                        Plugin.Config.EnabledCommandAliases[def.Key] = new();
-                    if (enabled)
-                        Plugin.Config.EnabledCommandAliases[def.Key].Add(alias);
-                    else
-                        Plugin.Config.EnabledCommandAliases[def.Key].Remove(alias);
-                    SaveAndRefreshCommands();
-                }
-
-                ImGui.SameLine();
-
-                if (!_aliasInputs[def.Key].TryGetValue(alias, out var aliasInput))
-                    aliasInput = _aliasInputs[def.Key][alias] = GetEffectiveAliasName(def.Key, alias);
-
-                string stored = GetEffectiveAliasName(def.Key, alias);
-                bool inputDiffers = !aliasInput.Equals(stored, StringComparison.OrdinalIgnoreCase);
-                bool isValid = aliasInput.StartsWith('/') && aliasInput.Length >= 2 && !aliasInput.Contains(' ');
-
-                ImGui.SetNextItemWidth(120 * ImGuiHelpers.GlobalScale);
-                if (ImGui.InputText($"##inp_{def.Key}_{alias}", ref aliasInput, 64))
-                    _aliasInputs[def.Key][alias] = aliasInput;
-
-                ImGui.SameLine();
-                using (ImRaii.Disabled(!inputDiffers || !isValid)) {
-                    if (ImGui.Button($"Apply##aliasApply_{def.Key}_{alias}")) {
-                        if (!Plugin.Config.CustomAliasNames.ContainsKey(def.Key))
-                            Plugin.Config.CustomAliasNames[def.Key] = new();
-                        Plugin.Config.CustomAliasNames[def.Key][alias] = aliasInput.Trim().ToLowerInvariant();
-                        SaveAndRefreshCommands();
-                    }
-                }
-
-                bool hasCustom = Plugin.Config.CustomAliasNames.TryGetValue(def.Key, out var cn) && cn.ContainsKey(alias);
-                ImGui.SameLine();
-                using (ImRaii.Disabled(!hasCustom)) {
-                    if (ImGui.Button($"Reset##aliasReset_{def.Key}_{alias}")) {
-                        Plugin.Config.CustomAliasNames.TryGetValue(def.Key, out var rn);
-                        rn?.Remove(alias);
-                        _aliasInputs[def.Key][alias] = alias;
-                        SaveAndRefreshCommands();
-                    }
-                }
-
-                ImGui.Unindent(16);
+            foreach (var def in PluginCommandManager.Definitions) {
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGui.TextUnformatted(def.DefaultCommand);
+                ImGui.TableNextColumn();
+                ImGui.TextUnformatted(def.HelpMessage);
             }
 
-            ImGui.Spacing();
+            ImGui.EndTable();
         }
-    }
-
-    private string GetEffectiveAliasName(string key, string defaultAlias) {
-        if (Plugin.Config.CustomAliasNames.TryGetValue(key, out var names) &&
-            names.TryGetValue(defaultAlias, out var custom) &&
-            !string.IsNullOrWhiteSpace(custom))
-            return custom;
-        return defaultAlias;
-    }
-
-    private void SaveAndRefreshCommands() {
-        Plugin.Config.Save();
-        Plugin.IpcProvider.SyncConfiguration();
-        Plugin.IpcProvider.RefreshCommands();
     }
 
 

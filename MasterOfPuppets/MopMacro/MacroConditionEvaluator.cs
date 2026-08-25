@@ -29,7 +29,7 @@ public static class MacroConditionEvaluator {
     /// Supports:
     /// - Logical operators: &amp;&amp;, and, ||, or
     /// - Unary negation: !, not
-    /// - Targeting: target, hastarget, notarget, targetispc, targetisnpc, focustarget, hasfocustarget, nofocustarget
+    /// - Targeting: hastarget, notarget, targetisplayer, targetisnpc, hasfocustarget, nofocustarget
     /// - Comparisons: target == "Name", "$var" == "val", "$var" != "", etc.
     /// - Player state: incombat, outcombat, isperforming, isalive, isdead, isleader, inparty
     /// - Object queries: visible "Name", exists "Name"
@@ -96,17 +96,12 @@ public static class MacroConditionEvaluator {
         // Built-in keywords
         var localPlayer = DalamudApi.ObjectTable?.LocalPlayer;
         switch (expr.ToLowerInvariant()) {
-            case "target":
             case "hastarget":
-            case "has_target":
-            case "hast":
                 return localPlayer?.TargetObject != null;
 
             case "notarget":
-            case "no_target":
-                return localPlayer != null && localPlayer.TargetObject == null;
+                return localPlayer == null || localPlayer.TargetObject == null;
 
-            case "targetispc":
             case "targetisplayer":
                 return localPlayer?.TargetObject?.ObjectKind == ObjectKind.Pc;
 
@@ -115,41 +110,28 @@ public static class MacroConditionEvaluator {
                        (localPlayer.TargetObject.ObjectKind == ObjectKind.BattleNpc ||
                         localPlayer.TargetObject.ObjectKind == ObjectKind.EventNpc);
 
-            case "focustarget":
             case "hasfocustarget":
-            case "has_focustarget":
                 return DalamudApi.TargetManager?.FocusTarget != null;
 
             case "nofocustarget":
-            case "no_focustarget":
-                return DalamudApi.TargetManager != null && DalamudApi.TargetManager.FocusTarget == null;
+                return DalamudApi.TargetManager == null || DalamudApi.TargetManager.FocusTarget == null;
 
             case "incombat":
-            case "inbattle":
                 return DalamudApi.Condition != null && DalamudApi.Condition[ConditionFlag.InCombat];
 
             case "outcombat":
-            case "notincombat":
-            case "outofcombat":
                 return DalamudApi.Condition != null && !DalamudApi.Condition[ConditionFlag.InCombat];
 
             case "isperforming":
-            case "performing":
                 return DalamudApi.Condition != null && DalamudApi.Condition[ConditionFlag.Performing];
 
-            case "notperforming":
-                return DalamudApi.Condition != null && !DalamudApi.Condition[ConditionFlag.Performing];
-
             case "isdead":
-            case "dead":
                 return (localPlayer?.CurrentHp ?? 0) == 0 || (DalamudApi.Condition != null && DalamudApi.Condition[ConditionFlag.Unconscious]);
 
             case "isalive":
-            case "alive":
                 return (localPlayer?.CurrentHp ?? 0) > 0 && (DalamudApi.Condition == null || !DalamudApi.Condition[ConditionFlag.Unconscious]);
 
             case "isleader":
-            case "leader":
                 return DalamudApi.PartyList != null && DalamudApi.PartyList.IsPartyLeader();
 
             case "inparty":

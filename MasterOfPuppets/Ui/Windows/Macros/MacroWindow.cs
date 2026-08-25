@@ -61,9 +61,7 @@ public partial class MacroWindow : Window {
 
     private void ImportMacroFromClipboard() {
         try {
-            string macroImportString = WindowsApi.GetClipboardText();
-            if (string.IsNullOrWhiteSpace(macroImportString))
-                macroImportString = ImGui.GetClipboardText();
+            string macroImportString = ImGui.GetClipboardText();
 
             Plugin.MacroManager.ImportMacroFromString(macroImportString);
             Plugin.IpcProvider.SyncConfiguration();

@@ -20,21 +20,20 @@ public class PluginCommandManager : IDisposable {
     public record MopCommandDef(
         string Key,
         string DefaultCommand,
-        string[] DefaultAliases,
         string HelpMessage
     );
 
     private static readonly MopCommandDef[] CommandDefs = [
-        new("mop",    "/mop",    ["/mop"], "Show/hide UI. Subcommands: run, stop, queue, move, ..."),
-        new("mopbr",  "/mopbr",  ["/br"],  "Broadcast a command to all local clients"),
-        new("mopbrn", "/mopbrn", ["/brn"], "Broadcast a command to all local clients except yourself"),
-        new("mopbrc", "/mopbrc", ["/brc"], "Broadcast a command to a specific character"),
-        new("mopbrg", "/mopbrg", ["/brg"], "Broadcast a command to a specific group"),
+        new("mop",    "/mop",    "Show/hide UI. Subcommands: run, stop, queue, move, ..."),
+        new("mopbr",  "/mopbr",  "Broadcast a command to all local clients"),
+        new("mopbrn", "/mopbrn", "Broadcast a command to all local clients except yourself"),
+        new("mopbrc", "/mopbrc", "Broadcast a command to a specific character"),
+        new("mopbrg", "/mopbrg", "Broadcast a command to a specific group"),
     ];
 
     public static IReadOnlyList<MopCommandDef> Definitions => CommandDefs;
 
-    // key → all currently registered command names (main + aliases)
+    // key → all currently registered command names (main command)
     private readonly Dictionary<string, List<string>> _registered = new();
 
     public PluginCommandManager(Plugin plugin) {
@@ -51,20 +50,6 @@ public class PluginCommandManager : IDisposable {
         foreach (var def in CommandDefs) {
             var registered = new List<string>();
             TryRegister(def.DefaultCommand, GetHandlerForKey(def.Key), def.HelpMessage, showInHelp: true, registered);
-
-            Plugin.Config.EnabledCommandAliases.TryGetValue(def.Key, out var enabled);
-
-            foreach (var alias in def.DefaultAliases) {
-                if (enabled == null || !enabled.Contains(alias, StringComparer.OrdinalIgnoreCase)) continue;
-                var effectiveAlias = alias;
-                if (Plugin.Config.CustomAliasNames.TryGetValue(def.Key, out var aliasNames) &&
-                    aliasNames.TryGetValue(alias, out var custom) &&
-                    !string.IsNullOrWhiteSpace(custom))
-                    effectiveAlias = custom;
-                if (effectiveAlias.Equals(def.DefaultCommand, StringComparison.OrdinalIgnoreCase)) continue;
-                TryRegister(effectiveAlias, GetHandlerForKey(def.Key), $"Alias for {def.DefaultCommand}", showInHelp: false, registered);
-            }
-
             _registered[def.Key] = registered;
         }
     }
