@@ -5,7 +5,8 @@ namespace MasterOfPuppets.Movement;
 public readonly record struct SimpleMovementContext(
     Vector3 Destination,
     float Precision,
-    float? FaceDirection);
+    float? FaceDirection,
+    bool UseFormationRelativeMovement = false);
 
 internal enum SimpleMovementUpdateResult {
     Running,

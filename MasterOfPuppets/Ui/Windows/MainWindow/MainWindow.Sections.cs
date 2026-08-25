@@ -65,7 +65,8 @@ public partial class MainWindow : Window {
         ImGui.Spacing();
 
         DrawCmdSection("MACRO", cols, btnW, [
-            new(FontAwesomeIcon.Stop,                              "Stop Macro",     "/mop stop", Style.Components.ButtonDangerNormal, () => Plugin.IpcProvider.StopMacroExecution()),
+            new(FontAwesomeIcon.Stop, "Stop All",     "Stops Macro + Movement \n /mop stop", Style.Components.ButtonDangerNormal, () => Plugin.IpcProvider.StopAllExecution()),
+            new(FontAwesomeIcon.StopCircle, "Stop Macro",     "/mop stopmacro", Style.Components.ButtonDangerNormal, () => Plugin.IpcProvider.StopMacroExecution()),
         ]);
 
         ImGui.Spacing();

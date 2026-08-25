@@ -12,6 +12,9 @@ internal sealed class ForwardInputMovementController : IDisposable {
     public MovementDirection Direction {
         get => _direction;
         set {
+            if (_direction == value)
+                return;
+
             _direction = value;
             if (value == MovementDirection.None)
                 _playerMoveHook?.Disable();
@@ -35,6 +38,10 @@ internal sealed class ForwardInputMovementController : IDisposable {
 
     public void MoveForward() {
         Direction = MovementDirection.Forward;
+    }
+
+    public void Move(MovementDirection direction) {
+        Direction = direction;
     }
 
     public void Stop() {

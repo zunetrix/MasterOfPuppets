@@ -313,8 +313,36 @@ public class MacroManager {
         return macroJson.Compress();
     }
 
-    public void ImportMacroFromString(string compressedMacroString) {
-        string macroString = compressedMacroString.Decompress();
+    public void ImportMacroFromString(string macroInput) {
+        if (string.IsNullOrWhiteSpace(macroInput)) {
+            throw new ArgumentException("Macro import string is empty");
+        }
+
+        macroInput = macroInput.Trim();
+        // Strip markdown code fences if copied directly from chat/docs
+        macroInput = System.Text.RegularExpressions.Regex.Replace(
+            macroInput,
+            @"^```[a-zA-Z]*\r?\n?|```$",
+            string.Empty,
+            System.Text.RegularExpressions.RegexOptions.Multiline).Trim();
+
+        string macroString;
+        if (macroInput.StartsWith("{") && macroInput.EndsWith("}")) {
+            macroString = macroInput;
+        } else if (macroInput.StartsWith("[") && macroInput.EndsWith("]")) {
+            var list = macroInput.JsonDeserialize<List<Macro>>();
+            if (list != null && list.Count > 0) {
+                foreach (var m in list) {
+                    Plugin.Config.Macros.Add(m);
+                }
+                Plugin.Config.Save();
+                return;
+            }
+            throw new ArgumentException("Invalid macro list");
+        } else {
+            macroString = macroInput.Decompress();
+        }
+
         var newMacro = macroString.JsonDeserialize<Macro>();
 
         if (newMacro == null) {
@@ -322,6 +350,7 @@ public class MacroManager {
         }
 
         Plugin.Config.Macros.Add(newMacro);
+        Plugin.Config.Save();
     }
 
     public void ExportSelectedMacrosToFile(string filePath, bool includeCids = false) {
@@ -393,9 +422,12 @@ public class MacroManager {
                 .ToList();
             }
 
-            var macroIndexMap = Plugin.Config.Macros
-                .Select((m, i) => new { m.Name, Index = i })
-                .ToDictionary(x => x.Name, x => x.Index, StringComparer.OrdinalIgnoreCase);
+            var macroIndexMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < Plugin.Config.Macros.Count; i++) {
+                if (!string.IsNullOrEmpty(Plugin.Config.Macros[i].Name)) {
+                    macroIndexMap[Plugin.Config.Macros[i].Name] = i;
+                }
+            }
 
             void AddImportedMacro(Macro macro) {
                 int newIndex = Plugin.Config.Macros.Count;

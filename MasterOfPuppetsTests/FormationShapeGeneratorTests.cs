@@ -180,6 +180,42 @@ public class FormationShapeGeneratorTests {
     }
 
     [Fact]
+    public void ReverseTangent_Facing_Opposes_Plot_Directions() {
+        var points = FormationShapeGenerator.Generate(new FormationShapeSpec {
+            Type = FormationShapeType.Line,
+            Count = 2,
+            Spacing = 2f,
+            FaceMode = FormationShapeFaceMode.ReverseTangent,
+        });
+
+        AssertAngleClose(-90f, points[0].Angle);
+        AssertAngleClose(-90f, points[1].Angle);
+    }
+
+    [Fact]
+    public void ReverseTangent_AnchorAtCenter_RemainsNeutral() {
+        var points = FormationShapeGenerator.Generate(new FormationShapeSpec {
+            Type = FormationShapeType.Circle,
+            Count = 5,
+            Radius = 2f,
+            AnchorMode = FormationShapeAnchorMode.AnchorAtCenter,
+            FaceMode = FormationShapeFaceMode.ReverseTangent,
+        });
+
+        AssertAngleClose(0f, points[0].Angle);
+        for (int i = 1; i < points.Count; i++) {
+            var tangentPoints = FormationShapeGenerator.Generate(new FormationShapeSpec {
+                Type = FormationShapeType.Circle,
+                Count = 5,
+                Radius = 2f,
+                AnchorMode = FormationShapeAnchorMode.AnchorAtCenter,
+                FaceMode = FormationShapeFaceMode.Tangent,
+            });
+            AssertAngleClose(180f, FormationMath.NormalizeDegrees(points[i].Angle - tangentPoints[i].Angle));
+        }
+    }
+
+    [Fact]
     public void AngleOffset_Rotates_Position_And_Facing() {
         var points = FormationShapeGenerator.Generate(new FormationShapeSpec {
             Type = FormationShapeType.Line,

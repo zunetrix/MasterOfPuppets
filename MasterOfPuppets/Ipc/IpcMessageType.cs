@@ -6,6 +6,7 @@ public enum IpcMessageType {
     Acknowledge,
     RunMacro,
     StopMacroExecution,
+    StopAllExecution,
     PauseMacroExecution,
     ResumeMacroExecution,
     StopMovement,
@@ -98,4 +99,5 @@ public enum IpcMessageType {
 
     RidePillion,
     ExecuteUnequipGlasses,
+    UpdateMacroVariables,
 }

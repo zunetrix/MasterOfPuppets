@@ -112,7 +112,7 @@ public static partial class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.ChatSyncCommand,
-            TextCommand = "mopformation \"Formation Name\" [sender|default|self|target|\"Character Name\"|\"Character Name@World\"] [continuous|precise]",
+            TextCommand = "mopformation \"Formation Name\" [sender|default|self|target|\"Character Name\"|\"Character Name@World\"] [continuous|precise|natural]",
             SuggestionCommand = "mopformation ",
             Example = """
             Move each chat-sync client to its assigned point in a shared formation:
@@ -125,6 +125,7 @@ public static partial class MopCommandsHelper {
             * Without an explicit anchor, the chat sender is used as the live anchor and must be visible.
             * Use default to anchor on point 1's assigned character.
             * Default: precise. Use continuous for smoother loops.
+            * Use natural for live formation tracking that leaves the walk/run toggle unchanged.
             * All clients need the same formation imported or configured.
             """
         },

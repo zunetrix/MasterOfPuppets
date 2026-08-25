@@ -142,7 +142,33 @@ public class PluginCommandManager : IDisposable {
                     }
                     break;
                 case "stop":
+                    Plugin.StopAllMovementLocal();
                     Plugin.MacroHandler.StopMacroQueueExecution();
+                    break;
+                case "stopmacro":
+                    Plugin.MacroHandler.StopMacroQueueExecution();
+                    break;
+                case "stopmove":
+                    Plugin.StopAllMovementLocal();
+                    break;
+                case "reloadconfig":
+                    Plugin.ReloadConfigFromDisk();
+                    break;
+                case "setvar":
+                case "setvars": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop setvar -var=$name=value[;$other=value]");
+                            return;
+                        }
+
+                        var variables = ArgumentParser.ParseInlineVars(parsedArgs[1]);
+                        if (variables.Count == 0) {
+                            DalamudApi.ChatGui.PrintError("No valid variables found. Usage: /mop setvar -var=$name=value[;$other=value]");
+                            return;
+                        }
+
+                        Plugin.IpcProvider.UpdateMacroVariables(variables);
+                    }
                     break;
                 case "target":
                     if (parsedArgs.Count <= 1) {
@@ -212,9 +238,6 @@ public class PluginCommandManager : IDisposable {
                         Plugin.SimpleInputMovement.MoveTo(destination);
                     }
                     break;
-                case "stopmoveinput":
-                    Plugin.StopAllMovementLocal();
-                    break;
                 case "move": {
                         if (parsedArgs.Count < 2) {
                             DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop move x y z");
@@ -271,9 +294,6 @@ public class PluginCommandManager : IDisposable {
                         // Plugin.MovementManager.FaceDirection(target);
                         GameFunctions.FaceDirectionDeferred(target);
                     }
-                    break;
-                case "stopmove":
-                    Plugin.IpcProvider.StopMovement();
                     break;
                 case "follow":
                     Plugin.IpcProvider.Follow(DalamudApi.PlayerState.EntityId);

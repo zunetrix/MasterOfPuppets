@@ -2,6 +2,16 @@
 
 FFXIV plugin that lets you create and send custom actions (similar to in-game macros), either locally or via chat-based broadcast. It supports broadcasting actions to multiple clients locally, or through in-game chat channels such as Party, Linkshell, and Cross-World Linkshell. Use it to trigger custom actions like emotes, minions, mounts, fashion changes, and more.
 
+## Install through Dalamud
+
+Add this URL under **Dalamud Settings > Experimental > Custom Plugin Repositories**:
+
+```
+https://raw.githubusercontent.com/zunetrix/DalamudPlugins/main/pluginmaster.json
+```
+
+Save the settings, open the Plugin Installer, and search for **Master Of Puppets**.
+
 
 # Builds
 ```sh
@@ -33,131 +43,7 @@ git checkout main
 git pull origin main
 ```
 
-TODO:
- - moploop block (start end):
- - add chat watcher init to prevent register on chat game listener if use chat option is disabled
- - refactor macro commands to individual handlers
 
-```
-start code no loop block
-
-/moploopstart
-loop code
-/moploopend
-```
-
-## Movement Coordinate System in Final Fantasy XIV
-
-The movement system in Final Fantasy XIV is based on a 3D Cartesian coordinate system, combined with a facing (rotation) value expressed in radians.
-
----
-
-## World Axes (Top View)
-
-```
-           North (-Z)
-               ↑
-               |
-West (-X) ←----+----→ East (+X)
-               |
-               ↓
-           South (+Z)
-```
-
-* X increases to the **right (East)**
-* Z increases **downward (South)**
-
----
-
-## Facing = North (π radians)
-
-```
-           Forward (-Z)
-               ↑
-               |
-Left (-X)  ←---+---→  Right (+X)
-               |
-               ↓
-           Backward (+Z)
-```
-
-* Right → +X
-* Left → -X
-* Forward → -Z
-* Backward → +Z
-
----
-
-## Facing = South (0 radians)
-
-```
-           Backward (-Z)
-               ↑
-               |
-Right (-X) ←---+---→ Left (+X)
-               |
-               ↓
-           Forward (+Z)
-```
-
-* Left → +X
-* Right → -X
-* Forward → +Z
-* Backward → -Z
-
----
-
-## Y Axis (Vertical)
-
-```
-        Up (+Y)
-          ↑
-          |
-          ● (character)
-          |
-          ↓
-        Down (-Y)
-```
-
-* Up → +Y
-* Down → -Y
-
----
-
-## Facing (Rotation)
-
-* `0` radians → facing **South**
-* Rotation increases **counterclockwise**
-* Rotation decreases **clockwise**
-
-```
-             π (North)
-               ↑
-               |
- +π/2 (West) ← + → -π/2 (East)
-               |
-               ↓
-             0 (South)
-```
-
-Facing is represented in radians:
-
-- South → 0
-- North → π (≈ 3.14159)
-- East → -π/2 (≈ -1.5708)
-- West → +π/2 (≈ 1.5708)
-
-Notes:
-- Rotation increases counterclockwise
-- Rotation decreases clockwise
-
----
-
-## Notes
-
-* The coordinate system is **world-aligned** (not camera-based).
-* Movement directions depend on the current facing.
-* Y axis is independent from X/Z movement.
 
 # Reference projects
 
@@ -195,4 +81,3 @@ Notes:
 ## IDA Sig maker
  - https://github.com/A200K/IDA-Pro-SigMaker/releases
  - https://github.com/mahmoudimus/ida-sigmaker
-

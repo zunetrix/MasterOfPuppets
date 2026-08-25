@@ -427,6 +427,7 @@ public class FormationMacroGeneratorTests {
         Assert.Equal("/mopwait 1.00", lines[1]);
         Assert.Equal("/mopformationgoto \"Circle\" 3 anchor=\"$mop_origin\" continuous", lines[2]);
         Assert.DoesNotContain("/mopformationmove", result.Macro.Commands[0].Actions);
+        Assert.DoesNotContain("/mopmoverelativeto", result.Macro.Commands[0].Actions);
         Assert.EndsWith("/moploop", result.Macro.Commands[0].Actions);
     }
 
@@ -447,6 +448,28 @@ public class FormationMacroGeneratorTests {
         Assert.Equal(7, result.Macro.Commands.Count);
         Assert.DoesNotContain(result.Macro.Commands, command => command.Cids.SequenceEqual([100UL]));
         Assert.Contains(result.Macro.Commands, command => command.Cids.SequenceEqual([103UL]));
+    }
+
+    [Theory]
+    [InlineData(SimpleMovementMode.Continuous, "continuous")]
+    [InlineData(SimpleMovementMode.Precise, "precise")]
+    [InlineData(SimpleMovementMode.Natural, "natural")]
+    public void GenerateLoopMacro_ExistingFormationLocalPointMovement_EmitsMovementModes(
+        SimpleMovementMode movementMode,
+        string expectedToken) {
+        var formation = BuildEightPointFormation();
+
+        var result = FormationMacroGenerator.GenerateLoopMacroWithDiagnostics(
+            formation,
+            new FormationMacroGeneratorOptions {
+                Mode = FormationMacroGeneratorMode.Movement,
+                UseLocalFormationPointCommand = true,
+                FormationMoveName = "Circle",
+                FormationMoveMode = movementMode,
+            });
+
+        var command = Assert.Single(result.Macro.Commands, command => command.Cids.SequenceEqual([101UL]));
+        Assert.StartsWith($"/mopformationgoto \"Circle\" 2 anchor=\"$mop_origin\" {expectedToken}", command.Actions);
     }
 
     [Fact]
@@ -491,7 +514,23 @@ public class FormationMacroGeneratorTests {
         var command = Assert.Single(result.Macro.Commands, command => command.Cids.SequenceEqual([101UL]));
         var firstLine = command.Actions.Split('\n')[0];
         Assert.Equal("/mopformationgoto \"Circle\" 2 anchor=\"$mop_origin_target\" precise", firstLine);
-        Assert.DoesNotContain("anchor=target", command.Actions);
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_ExistingFormationLocalPointMovement_UsesOriginFocusTarget() {
+        var formation = BuildEightPointFormation();
+
+        var result = FormationMacroGenerator.GenerateLoopMacroWithDiagnostics(
+            formation,
+            new FormationMacroGeneratorOptions {
+                Mode = FormationMacroGeneratorMode.Movement,
+                UseLocalFormationPointCommand = true,
+                FormationMoveName = "Circle",
+                FormationMoveAnchorMode = FormationMoveAnchorMode.FocusTarget,
+            });
+
+        var command = Assert.Single(result.Macro.Commands, command => command.Cids.SequenceEqual([101UL]));
+        Assert.StartsWith("/mopformationgoto \"Circle\" 2 anchor=\"$mop_origin_ftarget\" continuous", command.Actions);
     }
 
     [Fact]

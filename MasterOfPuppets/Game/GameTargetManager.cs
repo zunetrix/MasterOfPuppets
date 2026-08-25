@@ -139,6 +139,14 @@ public static class GameTargetManager {
         return target.GetPlayerNameWorld() ?? target.Name.TextValue;
     }
 
+    public static string GetFocusTargetName() {
+        var focusTarget = DalamudApi.TargetManager.FocusTarget;
+        if (focusTarget == null)
+            return string.Empty;
+
+        return focusTarget.GetPlayerNameWorld() ?? focusTarget.Name.TextValue;
+    }
+
     public static void InteractWithTarget() {
         DalamudApi.Framework.RunOnTick(() => {
             DalamudApi.ObjectTable.LocalPlayer?.TargetObject?.Interact();

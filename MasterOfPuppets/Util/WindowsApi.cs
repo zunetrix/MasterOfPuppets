@@ -17,7 +17,6 @@ public static class WindowsApi {
     // compute task bar
     public const uint SPI_GETWORKAREA = 0x0030;
 
-
     public static void ExecuteCmd(string fileName, string args = null) {
         ProcessStartInfo processStartInfo;
         processStartInfo = args is null

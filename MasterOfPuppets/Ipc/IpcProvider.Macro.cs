@@ -26,11 +26,30 @@ internal partial class IpcProvider {
         var runtime = MacroRuntimeVariables.FromCurrentGameState();
         result["mop_origin"] = runtime.MopOrigin;
         result["mop_origin_target"] = runtime.MopOriginTarget;
+        result["mop_origin_ftarget"] = runtime.MopOriginFocusTarget;
         return result;
     }
 
     private static string FormatInlineVarValue(string value) =>
         string.IsNullOrEmpty(value) ? "\"\"" : value;
+
+    public void UpdateMacroVariables(IReadOnlyDictionary<string, string> variables) {
+        if (variables.Count == 0)
+            return;
+
+        var varsToken = "-var=" + string.Join(";", variables.Select(kv => $"${kv.Key}={FormatInlineVarValue(kv.Value)}"));
+        BroadCast(IpcMessage.Create(IpcMessageType.UpdateMacroVariables, varsToken).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.UpdateMacroVariables)]
+    private void HandleUpdateMacroVariables(IpcMessage message) {
+        if (message.StringData is not { Length: > 0 })
+            return;
+
+        var variables = ArgumentParser.ParseInlineVars(message.StringData[0]);
+        if (variables.Count > 0)
+            Plugin.MacroHandler.UpdateActiveMacroVariables(variables);
+    }
 
     [IpcHandle(IpcMessageType.RunMacro)]
     private void HandleRunMacro(IpcMessage message) {
@@ -85,6 +104,16 @@ internal partial class IpcProvider {
             if (!groupHasCid) return;
             Plugin.MacroHandler.EnqueueMacroActions("#mop-inline-macro-group", actions: [textCommand], delayBetweenActions: 0);
         });
+    }
+
+    public void StopAllExecution() {
+        BroadCast(IpcMessage.Create(IpcMessageType.StopAllExecution).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.StopAllExecution)]
+    private void HandleStopAllExecution(IpcMessage message) {
+        Plugin.StopAllMovementLocal();
+        Plugin.MacroHandler.StopMacroQueueExecution();
     }
 
     public void StopMacroExecution() {

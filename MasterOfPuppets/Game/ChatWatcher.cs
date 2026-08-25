@@ -120,16 +120,17 @@ internal class ChatWatcher : IDisposable {
             ? ArgumentParser.ParseInlineVars(args[1])
             : null;
 
+        if (!string.IsNullOrWhiteSpace(senderName)) {
+            inlineVars ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (!inlineVars.ContainsKey("mop_origin"))
+                inlineVars["mop_origin"] = senderName;
+        }
+
         string macroNameOrIndex = args[0];
         int macroIndex = Plugin.MacroManager.FindMacroIndex(macroNameOrIndex);
-        var macro = Plugin.MacroManager.GetMacroByIndex(macroIndex);
-        var playerActions = macro.GetCidActions(
-            DalamudApi.PlayerState.ContentId,
-            Plugin.Config.CidsGroups,
-            inlineVars,
-            MacroRuntimeVariables.FromCurrentGameState());
-
-        Plugin.MacroHandler.EnqueueMacroActions(macro.Name, playerActions, Plugin.Config.DelayBetweenActions);
+        // Keep action templates and their variable context intact. Resolving to strings here
+        // would freeze every variable and prevent later ChatSync updates from taking effect.
+        Plugin.MacroHandler.ExecuteMacro(macroIndex, inlineVars);
     }
 
     public void SendChatStopMacroExecution() {
@@ -147,7 +148,9 @@ internal class ChatWatcher : IDisposable {
             return;
         }
 
-        var textCommand = args[0];
+        var textCommand = string.Join(" ", args);
+        if (TryHandleImmediateMacroVariableUpdate(textCommand))
+            return;
         Plugin.MacroHandler.EnqueueMacroActions("#mopbr-inline-macro", actions: [textCommand], delayBetweenActions: 0);
     }
 
@@ -160,7 +163,9 @@ internal class ChatWatcher : IDisposable {
         var localPlayerName = DalamudApi.PlayerState.CharacterName;
         if (string.Equals(localPlayerName, senderName, StringComparison.OrdinalIgnoreCase)) return;
 
-        var textCommand = args[0];
+        var textCommand = string.Join(" ", args);
+        if (TryHandleImmediateMacroVariableUpdate(textCommand))
+            return;
         Plugin.MacroHandler.EnqueueMacroActions("#mopbrn-inline-macro", actions: [textCommand], delayBetweenActions: 0);
     }
 
@@ -171,10 +176,12 @@ internal class ChatWatcher : IDisposable {
         }
 
         var characterName = args[0];
-        var textCommand = args[1];
+        var textCommand = string.Join(" ", args.Skip(1));
         var localPlayerName = $"{DalamudApi.PlayerState.CharacterName}@{DalamudApi.PlayerState.HomeWorld.Value.Name}";
         if (!localPlayerName.Contains(characterName, StringComparison.InvariantCultureIgnoreCase)) return;
 
+        if (TryHandleImmediateMacroVariableUpdate(textCommand))
+            return;
         Plugin.MacroHandler.EnqueueMacroActions("#mopbrc-inline-macro", actions: [textCommand], delayBetweenActions: 0);
     }
 
@@ -185,13 +192,47 @@ internal class ChatWatcher : IDisposable {
         }
 
         var groupName = args[0];
-        var textCommand = args[1];
+        var textCommand = string.Join(" ", args.Skip(1));
         bool groupHasCid = Plugin.Config.CidsGroups.Any(group =>
             group.Name.Equals(groupName, StringComparison.InvariantCultureIgnoreCase) &&
             group.Cids.Contains(DalamudApi.PlayerState.ContentId)
         );
         if (!groupHasCid) return;
+        if (TryHandleImmediateMacroVariableUpdate(textCommand))
+            return;
         Plugin.MacroHandler.EnqueueMacroActions("#mop-inline-macro-group", actions: [textCommand], delayBetweenActions: 0);
+    }
+
+    /// <summary>
+    /// Handles live-variable control messages outside the action queues. This is essential
+    /// when the queue being controlled is already occupied by a long-running macro.
+    /// </summary>
+    private bool TryHandleImmediateMacroVariableUpdate(string textCommand) {
+        const string mopPrefix = "/mop ";
+        textCommand = textCommand.Trim();
+        if (!textCommand.StartsWith(mopPrefix, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var parsedArgs = ArgumentParser.ParseCommandArgs(textCommand[mopPrefix.Length..]);
+        if (parsedArgs.Count == 0 ||
+            (!parsedArgs[0].Equals("setvar", StringComparison.OrdinalIgnoreCase) &&
+             !parsedArgs[0].Equals("setvars", StringComparison.OrdinalIgnoreCase)))
+            return false;
+
+        if (parsedArgs.Count < 2) {
+            DalamudApi.ChatGui.PrintError("Invalid ChatSync variable update. Usage: mopbr /mop setvar -var=$name=value[;$other=value]");
+            return true;
+        }
+
+        var variables = ArgumentParser.ParseInlineVars(parsedArgs[1]);
+        if (variables.Count == 0) {
+            DalamudApi.ChatGui.PrintError("ChatSync variable update contained no valid variables.");
+            return true;
+        }
+
+        int updated = Plugin.MacroHandler.UpdateActiveMacroVariables(variables);
+        DalamudApi.PluginLog.Debug($"[ChatSync] Updated {variables.Count} variable(s) on {updated} active macro queue(s)");
+        return true;
     }
 
     private void HandleFormationCommand(string[] args, string senderName) {
