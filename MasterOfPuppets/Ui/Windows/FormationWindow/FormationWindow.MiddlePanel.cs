@@ -80,7 +80,9 @@ public partial class FormationWindow {
         for (int i = 0; i < formation.Points.Count; i++) {
             var pt = formation.Points[i];
             bool selected = i == _selPoint;
-            uint color = selected ? 0xFFFFAA00u : 0xFF3377CCu;
+            // Color an unassigned point 1 (wildcard origin) magenta to make its role obvious.
+            bool origin = i == FormationPointMovement.AnchorPointIndex && FormationAnchorRules.IsPointOneUnassigned(formation);
+            uint color = selected ? 0xFFFFAA00u : (origin ? 0xFFCC66FFu : 0xFF3377CCu);
 
             // Use OffsetToPlot for consistent coordinate mapping
             var plot = pt.Offset.OffsetToPlot();

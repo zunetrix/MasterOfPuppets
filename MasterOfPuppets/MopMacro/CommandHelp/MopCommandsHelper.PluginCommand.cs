@@ -144,6 +144,8 @@ public static partial class MopCommandsHelper {
             Broadcasts formation execution to all local clients.
             Each client moves to the formation point assigned to it (by its cids or group).
             Add target to place your assigned formation point at your current target.
+            Point 1 is the anchor/origin: assign it to pin the anchor to that character, or
+            leave it unassigned to anchor on self/target/focus target.
             Default: precise. continuous gives smoother loops. natural keeps the walk/run
             toggle as it is while the character tracks the formation live.
             """

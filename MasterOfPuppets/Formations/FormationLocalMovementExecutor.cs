@@ -90,8 +90,16 @@ public static class FormationLocalMovementExecutor {
         }
 
         if (!FormationAnchorResolver.TryResolve(plugin, formation, anchor, out var resolvedAnchor, out var anchorFailure, out var failureKind)) {
-            LogAnchorFailure(logPrefix, anchorFailure, failureKind);
-            return false;
+            // Mirrors the IPC broadcast path (TryGetFormationAnchor): when point 1 is unassigned,
+            // a missing target/focus-target falls back to the issuer (self) as the origin leader.
+            if (FormationAnchorRules.ShouldFallBackToSelfOnTargetlessAnchor(formation, anchor.Kind, plugin.Config.CidsGroups)
+                && FormationAnchorResolver.TryResolve(plugin, formation, FormationAnchorReference.Self, out var selfResolved, out _, out _)) {
+                resolvedAnchor = selfResolved;
+                anchor = FormationAnchorReference.Self;
+            } else {
+                LogAnchorFailure(logPrefix, anchorFailure, failureKind);
+                return false;
+            }
         }
 
         var assignedAnchorPointIndex = resolvedAnchor.ContentId.HasValue

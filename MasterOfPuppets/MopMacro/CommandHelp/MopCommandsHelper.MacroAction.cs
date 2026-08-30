@@ -508,6 +508,8 @@ public static partial class MopCommandsHelper {
             Default: precise. continuous gives smoother loops. natural keeps the walk/run
             toggle as it is while the character tracks the formation live.
             Add target to anchor the movement at the controller's current target.
+            Point 1 is the anchor/origin: assign it to pin the anchor to that character, or
+            leave it unassigned to anchor on self/target/focus target.
             Generated formation macros use continuous by default.
             """
         },
@@ -525,7 +527,9 @@ public static partial class MopCommandsHelper {
             """,
             Notes = """
             Moves only this client to a specific saved formation point.
-            Point numbers are 1-based; point 1 is always the live anchor/origin.
+            Point numbers are 1-based; point 1 is always the live anchor/origin. Assign point 1
+            to pin the anchor to that character, or leave it unassigned for a wildcard origin
+            that anchors on self/target/focus target.
             anchor="Name@World" places each client relative to the same visible anchor character.
             anchor=target uses this client's current target.
             ftarget uses this client's focus target; if the focus target is the local

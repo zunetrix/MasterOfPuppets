@@ -31,6 +31,11 @@ public partial class FormationWindow {
         float anchorRot = player.Rotation;
         var localCid = DalamudApi.PlayerState.ContentId;
         var myPoint = formation.Points.FirstOrDefault(p => p.GetEffectiveCids(Plugin.Config.CidsGroups).Contains(localCid));
+        var pointOneUnassigned = FormationAnchorRules.IsPointOneUnassigned(formation);
+        // For the unassigned-point-1 leader (not assigned to any point), draw relative to point 1,
+        // which is the origin slot (offset 0,0,0) at the player's position.
+        if (myPoint == null && pointOneUnassigned && formation.Points.Count > 0)
+            myPoint = formation.Points[FormationPointMovement.AnchorPointIndex];
         if (myPoint == null) return;
 
         for (int i = 0; i < formation.Points.Count; i++) {
@@ -38,7 +43,8 @@ public partial class FormationWindow {
 
             var (worldPos, facingRad) = FormationMath.GetMopRelativeWorld(myPoint, pt, playerPos, anchorRot);
 
-            uint c = i == _selPoint ? 0xFFFFAA00u : 0xFF3388FFu;
+            bool origin = i == FormationPointMovement.AnchorPointIndex && pointOneUnassigned;
+            uint c = i == _selPoint ? 0xFFFFAA00u : (origin ? 0xFFCC66FFu : 0xFF3388FFu);
 
             if (!DrawWorldArrow(bdl, worldPos, facingRad, c, _markerSizeWorld)) continue;
             if (DalamudApi.GameGui.WorldToScreen(worldPos, out var centerPx)) {

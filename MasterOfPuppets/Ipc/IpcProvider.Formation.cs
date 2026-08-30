@@ -47,7 +47,7 @@ internal partial class IpcProvider {
         if (issuerCid == 0)
             return;
 
-        if (GetAssignedPoint(formation, issuerCid) == null) {
+        if (FormationAnchorRules.ShouldRejectIssuer(formation, issuerCid, Plugin.Config.CidsGroups)) {
             DalamudApi.ShowNotification($"Current character is not assigned to formation '{name}'.", NotificationType.Error, 5000);
             return;
         }
@@ -194,7 +194,7 @@ internal partial class IpcProvider {
         if (issuerCid == 0)
             return;
 
-        if (GetAssignedPoint(formation, issuerCid) == null) {
+        if (FormationAnchorRules.ShouldRejectIssuer(formation, issuerCid, Plugin.Config.CidsGroups)) {
             DalamudApi.ShowNotification($"Current character is not assigned to formation '{name}'.", NotificationType.Error, 5000);
             return;
         }
@@ -259,21 +259,24 @@ internal partial class IpcProvider {
         }
 
         var playerCid = DalamudApi.PlayerState.ContentId;
-        if (playerCid == anchorCid)
+        if (anchorCid != 0 && playerCid == anchorCid)
             return;
 
         var playerPointIndex = FormationExecution.GetAssignedPointIndex(formation, playerCid, Plugin.Config.CidsGroups);
         if (playerPointIndex < 0)
             return;
 
-        var anchorPointIndex = FormationExecution.GetAssignedPointIndex(formation, anchorCid, Plugin.Config.CidsGroups);
+        var anchorPointIndex = anchorCid != 0
+            ? FormationExecution.GetAssignedPointIndex(formation, anchorCid, Plugin.Config.CidsGroups)
+            : FormationPointMovement.AnchorPointIndex;
         if (anchorPointIndex < 0)
             return;
 
         var sequence = FormationPath.BuildDestinationSequence(formation, anchorPointIndex, playerPointIndex, step, reverse);
-        if (sequence.Count == 0)
+        var destinationPointIndex = FormationAnchorRules.ResolveMoveDestinationPointIndex(
+            anchorCid, playerPointIndex, anchorPointIndex, sequence, sequenceIndex);
+        if (destinationPointIndex < 0)
             return;
-        var destinationPointIndex = sequence[(sequenceIndex % sequence.Count + sequence.Count) % sequence.Count];
         var move = FormationPointMovement.BuildAnchoredWorldMove(
             formation,
             destinationPointIndex,
@@ -329,7 +332,10 @@ internal partial class IpcProvider {
             anchor = FormationAnchorReference.Self;
 
         if (!FormationAnchorResolver.TryResolve(Plugin, formation, anchor, out var resolved, out var failureReason, out var failureKind)) {
-            if (anchor.Kind is FormationAnchorKind.Target or FormationAnchorKind.FocusTarget
+            // Point-1-unassigned formations use point 1 as a wildcard origin: when no
+            // target/focus target is selected, fall back to the issuer (self) as the leader.
+            // When point 1 is assigned, missing target/focus target is a no-op (legacy behavior).
+            if (FormationAnchorRules.ShouldFallBackToSelfOnTargetlessAnchor(formation, anchor.Kind, Plugin.Config.CidsGroups)
                 && FormationAnchorResolver.TryResolve(Plugin, formation, FormationAnchorReference.Self, out var selfResolved, out _, out _)) {
                 resolved = selfResolved;
                 anchor = FormationAnchorReference.Self;
@@ -343,7 +349,7 @@ internal partial class IpcProvider {
             }
         }
 
-        cid = anchor.Kind == FormationAnchorKind.Self ? issuerCid : (resolved.ContentId ?? 0);
+        cid = FormationAnchorRules.SelectAnchorCid(formation, anchor.Kind, resolved.ContentId ?? 0, issuerCid, Plugin.Config.CidsGroups);
         gameObjectId = resolved.GameObjectId ?? 0;
         name = resolved.Name;
         position = resolved.Position;
