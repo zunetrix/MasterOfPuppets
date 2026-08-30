@@ -23,12 +23,12 @@ public sealed class MacroExecutionPlan {
 
     public string ResolveAction(string actionTemplate) {
         lock (_variablesLock)
-            return Command.SubstituteVariables([actionTemplate], _variables)[0];
+            return Command.SubstituteVariables([actionTemplate], ResolvedVariables())[0];
     }
 
     public string[] ResolveAllActions() {
         lock (_variablesLock)
-            return Command.SubstituteVariables(ActionTemplates, _variables);
+            return Command.SubstituteVariables(ActionTemplates, ResolvedVariables());
     }
 
     public void UpdateVariables(IReadOnlyDictionary<string, string> variables) {
@@ -41,5 +41,14 @@ public sealed class MacroExecutionPlan {
     public bool TryGetVariable(string name, out string? value) {
         lock (_variablesLock)
             return _variables.TryGetValue(name, out value);
+    }
+
+    // Re-derives variable values from the CURRENT raw definitions, so arithmetic
+    // expressions (e.g. $totalWait = $count * $interval) recompute after a live
+    // variable update instead of being frozen at plan creation.
+    private Dictionary<string, string> ResolvedVariables() {
+        var vars = new Dictionary<string, string>(_variables);
+        Command.ResolveVariableExpressions(vars);
+        return vars;
     }
 }

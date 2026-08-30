@@ -66,7 +66,7 @@ public class MacroTests
             Commands = new List<Command> {
                 new Command {
                     Cids = new() { 1 },
-                    Actions = "/moptarget \"$target\"\n/echo $me\n/echo $mop_origin\n/echo $mop_origin_target\n/echo $mop_origin_ftarget"
+                    Actions = "/moptarget \"$target\"\n/echo $me\n/echo $mop_origin\n/echo $mop_origin_target\n/echo $mop_origin_ftarget\n/echo $ftarget\n/echo $job $class\n/echo level $level\n/echo $world\n/echo leader $leader"
                 }
             }
         };
@@ -77,6 +77,11 @@ public class MacroTests
             {
                 Me = "Current Character@World",
                 Target = "Target Character@World",
+                FocusTarget = "Focus Target@World",
+                Job = "DNC",
+                Level = "90",
+                World = "Hyperion",
+                Leader = "Leader Character@World",
                 MopOrigin = "Origin Character@World",
                 MopOriginTarget = "Origin Target@World",
                 MopOriginFocusTarget = "Origin Focus Target@World",
@@ -89,8 +94,41 @@ public class MacroTests
                 "/echo Origin Character@World",
                 "/echo Origin Target@World",
                 "/echo Origin Focus Target@World",
+                "/echo Focus Target@World",
+                "/echo DNC DNC",
+                "/echo level 90",
+                "/echo Hyperion",
+                "/echo leader Leader Character@World",
             },
             result);
+    }
+
+    [Fact]
+    public void RuntimeVariables_ToDictionary_Exposes_New_Local_Variables()
+    {
+        var vars = new MacroRuntimeVariables
+        {
+            Me = "Current Character@World",
+            Target = "Target Character@World",
+            FocusTarget = "Focus Target@World",
+            Job = "SGE",
+            Level = "100",
+            World = "Hyperion",
+            Leader = "Leader Character@World",
+            GlobalDelaySeconds = 0.5,
+        };
+
+        var dict = vars.ToDictionary();
+
+        Assert.Equal("Current Character@World", dict["me"]);
+        Assert.Equal("Target Character@World", dict["target"]);
+        Assert.Equal("Focus Target@World", dict["ftarget"]);
+        Assert.Equal("SGE", dict["job"]);
+        Assert.Equal("SGE", dict["class"]);
+        Assert.Equal("100", dict["level"]);
+        Assert.Equal("Hyperion", dict["world"]);
+        Assert.Equal("Leader Character@World", dict["leader"]);
+        Assert.Equal("0.5", dict["globaldelay"]);
     }
 
     [Fact]

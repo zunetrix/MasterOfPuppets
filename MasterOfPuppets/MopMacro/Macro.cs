@@ -180,6 +180,48 @@ public class Command {
         return result.ToArray();
     }
 
+    /// <summary>
+    /// Resolves arithmetic expressions inside variable definitions. A variable whose
+    /// value is (or references other variables that make it) a finite arithmetic
+    /// expression is replaced with its computed result, e.g.
+    /// <c>$totalWait = 7 * $interval</c> becomes <c>$totalWait = 5.6</c> once
+    /// <c>$interval = 0.8</c> is substituted and evaluated. Non-numeric values such as
+    /// <c>/clap</c> or <c>some name</c> are left untouched.
+    /// </summary>
+    internal static Dictionary<string, string> ResolveVariableExpressions(Dictionary<string, string> variables) {
+        if (variables == null || variables.Count == 0)
+            return variables;
+
+        // Iterate so forward references ($a = $b where $b is defined later) settle too.
+        for (int pass = 0; pass < 5; pass++) {
+            bool changed = false;
+            foreach (var key in variables.Keys.ToList()) {
+                var resolved = variables[key];
+
+                // Substitute sibling variable references into this value (multi-pass).
+                for (int inner = 0; inner < 5; inner++) {
+                    var prev = resolved;
+                    foreach (var (k, v) in variables) {
+                        resolved = Regex.Replace(resolved, $@"\${Regex.Escape(k)}\b", v);
+                    }
+                    if (string.Equals(resolved, prev, StringComparison.Ordinal))
+                        break;
+                }
+
+                if (MathExpressionEvaluator.TryEvaluate(resolved, out string evaluated)) {
+                    if (!string.Equals(evaluated, variables[key], StringComparison.Ordinal)) {
+                        variables[key] = evaluated;
+                        changed = true;
+                    }
+                }
+            }
+            if (!changed)
+                break;
+        }
+
+        return variables;
+    }
+
     private static Dictionary<string, string> MergeVariables(
         Dictionary<string, string>? runtimeVars,
         Dictionary<string, string>? macroVars,
@@ -219,6 +261,8 @@ public class Command {
 
         if (inlineOverrides != null)
             foreach (var (k, v) in inlineOverrides) mergedVars[k] = v;
+
+        ResolveVariableExpressions(mergedVars);
 
         var actionLines = RemoveVariableDefinitions(lines);
 
@@ -301,10 +345,62 @@ public class Macro {
         var runtimeVars = runtimeVariables?.ToDictionary();
         var resolvedInlineVars = runtimeVariables?.ResolveInlinePlaceholders(inlineVars) ?? inlineVars;
 
-        return Commands
-            .FirstOrDefault(c => c.GetEffectiveCids(groups).Contains(cid))
-            ?.CreateExecutionPlan(macroVars, runtimeVars, resolvedInlineVars)
-            ?? new MacroExecutionPlan(Array.Empty<string>());
+        // Resolve which command this characteristic targets and find its position in the
+        // macro's ordered command list. Two families of auto-variables are exposed:
+        //   $commandIndex/$commandCount      — macro level: which command am I, how many commands.
+        //   $assignmentIndex/$assignmentCount — command level: this character's stagger lane among
+        //                                       everyone this command targets (direct cids first,
+        //                                       then each group's cids, in author listing order,
+        //                                       deduplicated by first-seen position). This lets one
+        //                                       command with identical text drive a per-character
+        //                                       stagger, $offset = $assignmentIndex * $step, with no
+        //                                       hardcoded count or index. All four are injected as
+        //                                       authoritative overrides so author-declared values
+        //                                       cannot break the stagger.
+        int commandIndex = -1;
+        Command? command = null;
+        for (int i = 0; i < Commands.Count; i++) {
+            if (Commands[i].GetEffectiveCids(groups).Contains(cid)) {
+                commandIndex = i;
+                command = Commands[i];
+                break;
+            }
+        }
+
+        if (command == null)
+            return new MacroExecutionPlan(Array.Empty<string>());
+
+        // Assignment lane = union of the command's targets in author-listing order.
+        var orderedTargets = new List<ulong>();
+        var seen = new HashSet<ulong>(); // first-seen position wins when a cid appears more than once
+        foreach (var directCid in command.Cids) {
+            if (seen.Add(directCid))
+                orderedTargets.Add(directCid);
+        }
+        if (groups != null && command.GroupIds.Count > 0) {
+            foreach (var groupName in command.GroupIds) {
+                var group = groups.FirstOrDefault(g => g.Name == groupName);
+                if (group == null)
+                    continue;
+                foreach (var groupCid in group.Cids) {
+                    if (seen.Add(groupCid))
+                        orderedTargets.Add(groupCid);
+                }
+            }
+        }
+        var assignmentIndex = orderedTargets.IndexOf(cid);
+
+        // Preserve caller precedence: resolvedInlineVars first (as before), then overlay the
+        // auto variables so they are authoritative and cannot be shadowed.
+        var mergedInline = new Dictionary<string, string>();
+        if (resolvedInlineVars != null)
+            foreach (var (k, v) in resolvedInlineVars) mergedInline[k] = v;
+        mergedInline["commandIndex"] = commandIndex.ToString();
+        mergedInline["commandCount"] = Commands.Count.ToString();
+        mergedInline["assignmentIndex"] = assignmentIndex.ToString();
+        mergedInline["assignmentCount"] = orderedTargets.Count.ToString();
+
+        return command.CreateExecutionPlan(macroVars, runtimeVars, mergedInline);
     }
 
     public void SanitizeActions() {

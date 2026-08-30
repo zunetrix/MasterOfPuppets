@@ -20,10 +20,11 @@ public static partial class MopCommandsHelper {
             Notes = """
             * This is a chat sync command - all local clients reading the chat will execute the macro.
 
-            Inline variables (-var=) override macro-level and command-local variables at runtime.
+            Inline variables (-var=) override the macro's variables at runtime.
             Format: -var=$name=value;$name2="value with spaces";$name3=/command
             Variable names must start with a letter or underscore.
-            Priority: inline vars > command-local vars > macro-level vars
+            When a name is set in more than one place, inline vars win over command-level vars,
+            which win over the macro's own Variables field.
             """
         },
         new MopAction {
@@ -40,9 +41,8 @@ public static partial class MopCommandsHelper {
             Notes = """
             * This is a chat sync command - broadcast a command to all local clients via chat
 
-            Some special game characters need to be replaced to work correctly,
-            for example, <me> will be translated to the current character's name instead of being printed in the chat,
-            for the correct functioning of inline chat actions replace <> with []
+            Chat translates a few special names before the command runs. For inline chat
+            actions, use [ ] instead of < > so the intended character name is used:
                 /ac heal <me> => /ac heal [me]
                 /ac heal <t> => /ac heal [t]
             """
@@ -61,9 +61,8 @@ public static partial class MopCommandsHelper {
             Notes = """
             * This is a chat sync command - broadcast a command to all local clients except yourself via chat
 
-            Some special game characters need to be replaced to work correctly,
-            for example, <me> will be translated to the current character's name instead of being printed in the chat,
-            for the correct functioning of inline chat actions replace <> with []
+            Chat translates a few special names before the command runs. For inline chat
+            actions, use [ ] instead of < > so the intended character name is used:
                 /ac heal <me> => /ac heal [me]
                 /ac heal <t> => /ac heal [t]
             """
@@ -82,9 +81,8 @@ public static partial class MopCommandsHelper {
             Notes = """
             * This is a chat sync command - broadcast a command to a specific character via chat
 
-            Some special game characters need to be replaced to work correctly,
-            for example, <me> will be translated to the current character's name instead of being printed in the chat,
-            for the correct functioning of inline chat actions replace <> with []
+            Chat translates a few special names before the command runs. For inline chat
+            actions, use [ ] instead of < > so the intended character name is used:
                 /ac heal <me> => /ac heal [me]
                 /ac heal <t> => /ac heal [t]
             """
@@ -103,9 +101,8 @@ public static partial class MopCommandsHelper {
             Notes = """
             * This is a chat sync command - broadcast a command to a specific group via chat
 
-            Some special game characters need to be replaced to work correctly,
-            for example, <me> will be translated to the current character's name instead of being printed in the chat,
-            for the correct functioning of inline chat actions replace <> with []
+            Chat translates a few special names before the command runs. For inline chat
+            actions, use [ ] instead of < > so the intended character name is used:
                 /ac heal <me> => /ac heal [me]
                 /ac heal <t> => /ac heal [t]
             """
@@ -121,12 +118,13 @@ public static partial class MopCommandsHelper {
                 mopformation "Tight Circle" "Anchor Character@World"
             """,
             Notes = """
-            * This is a chat sync command - all clients reading the chat resolve and move only their local character.
-            * Without an explicit anchor, the chat sender is used as the live anchor and must be visible.
-            * Use default to anchor on point 1's assigned character.
-            * Default: precise. Use continuous for smoother loops.
-            * Use natural for live formation tracking that leaves the walk/run toggle unchanged.
-            * All clients need the same formation imported or configured.
+            * This is a chat sync command - all clients reading the chat move only their local character.
+
+            Without an explicit anchor, the chat sender is used as the live anchor and must be visible.
+            Use default to anchor on point 1's assigned character.
+            Default: precise. continuous gives smoother loops. natural keeps the walk/run
+            toggle as it is while the character tracks the formation live.
+            All clients need the same formation imported or configured.
             """
         },
         new MopAction {
