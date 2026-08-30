@@ -80,27 +80,42 @@ public class FormationAnchorRulesTests
         Assert.False(FormationAnchorRules.ShouldRejectIssuer(formation, AnchorCid));
     }
 
-    // Assigned point 1: no targetless fallback (legacy) --------------------
+    [Fact]
+    public void ShouldRejectIssuer_True_When_PointOne_Has_Unresolved_Group() {
+        var formation = Formation(GroupPoint("Missing"), Point(AnchorCid));
+        Assert.False(FormationAnchorRules.IsPointOneAssigned(formation, []));
+        Assert.False(FormationAnchorRules.IsPointOneUnassigned(formation));
+        Assert.True(FormationAnchorRules.ShouldRejectIssuer(formation, issuerCid: 9999, groups: []));
+    }
+
+    // Assigned/configured point 1: no targetless fallback ------------------
 
     [Fact]
-    public void ShouldNot_FallBackToSelf_When_PointOneAssigned() {
+    public void ShouldNot_FallBackToLeader_When_PointOneAssigned() {
         var formation = FormationWithAssignedPointOne();
-        Assert.False(FormationAnchorRules.ShouldFallBackToSelfOnTargetlessAnchor(formation, FormationAnchorKind.Target));
-        Assert.False(FormationAnchorRules.ShouldFallBackToSelfOnTargetlessAnchor(formation, FormationAnchorKind.FocusTarget));
+        Assert.False(FormationAnchorRules.ShouldUseLeaderFallbackOnTargetlessAnchor(formation, FormationAnchorKind.Target));
+        Assert.False(FormationAnchorRules.ShouldUseLeaderFallbackOnTargetlessAnchor(formation, FormationAnchorKind.FocusTarget));
     }
 
     [Fact]
-    public void Should_FallBackToSelf_When_PointOneUnassigned_And_TargetRequested() {
+    public void Should_FallBackToLeader_When_PointOneUnassigned_And_TargetRequested() {
         var formation = FormationWithWildcardOrigin();
-        Assert.True(FormationAnchorRules.ShouldFallBackToSelfOnTargetlessAnchor(formation, FormationAnchorKind.Target));
-        Assert.True(FormationAnchorRules.ShouldFallBackToSelfOnTargetlessAnchor(formation, FormationAnchorKind.FocusTarget));
+        Assert.True(FormationAnchorRules.ShouldUseLeaderFallbackOnTargetlessAnchor(formation, FormationAnchorKind.Target));
+        Assert.True(FormationAnchorRules.ShouldUseLeaderFallbackOnTargetlessAnchor(formation, FormationAnchorKind.FocusTarget));
     }
 
     [Fact]
-    public void ShouldNot_FallBackToSelf_For_Self_Or_Named_Anchors() {
+    public void ShouldNot_FallBackToLeader_For_Self_Or_Named_Anchors() {
         var formation = FormationWithWildcardOrigin();
-        Assert.False(FormationAnchorRules.ShouldFallBackToSelfOnTargetlessAnchor(formation, FormationAnchorKind.Self));
-        Assert.False(FormationAnchorRules.ShouldFallBackToSelfOnTargetlessAnchor(formation, FormationAnchorKind.Named));
+        Assert.False(FormationAnchorRules.ShouldUseLeaderFallbackOnTargetlessAnchor(formation, FormationAnchorKind.Self));
+        Assert.False(FormationAnchorRules.ShouldUseLeaderFallbackOnTargetlessAnchor(formation, FormationAnchorKind.Named));
+    }
+
+    [Fact]
+    public void ShouldNot_FallBackToLeader_When_PointOne_Has_Unresolved_Group() {
+        var formation = Formation(GroupPoint("Missing"), Point(AnchorCid));
+        Assert.False(FormationAnchorRules.ShouldUseLeaderFallbackOnTargetlessAnchor(
+            formation, FormationAnchorKind.Target));
     }
 
     // Anchor CID selection --------------------------------------------------
@@ -130,6 +145,21 @@ public class FormationAnchorRulesTests
     public void SelectAnchorCid_AssignedPointOne_Named_ResolvedChar_Is_That_Char() {
         var formation = FormationWithAssignedPointOne();
         Assert.Equal(AnchorCid, FormationAnchorRules.SelectAnchorCid(formation, FormationAnchorKind.Named, resolvedContentId: AnchorCid, issuerCid: IssuerCid));
+    }
+
+    [Fact]
+    public void SelectAnchorCid_AssignedPointOne_ExternalNamedAnchorWithoutCid_Uses_OriginSentinel() {
+        var formation = FormationWithAssignedPointOne();
+        Assert.Equal(0ul, FormationAnchorRules.SelectAnchorCid(
+            formation, FormationAnchorKind.Named, resolvedContentId: 0, issuerCid: IssuerCid));
+    }
+
+    [Fact]
+    public void SelectAnchorCid_AssignedPointOne_ConfiguredButUnassignedNamedAnchor_Uses_OriginSentinel() {
+        const ulong externalCid = 9999;
+        var formation = FormationWithAssignedPointOne();
+        Assert.Equal(0ul, FormationAnchorRules.SelectAnchorCid(
+            formation, FormationAnchorKind.Named, resolvedContentId: externalCid, issuerCid: IssuerCid));
     }
 
     [Fact]

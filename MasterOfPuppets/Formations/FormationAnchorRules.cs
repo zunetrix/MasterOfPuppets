@@ -7,12 +7,11 @@ namespace MasterOfPuppets.Formations;
 /// Kept free of Dalamud dependencies so the semantics can be unit-tested headless.
 ///
 /// Point 1 is the formation's anchor/origin slot:
-///   - assigned   -> the assigned character is the strict anchor; target/focus-target
-///                   anchoring keeps the issuer's point as the anchor frame and pivots
-///                   on the external object (legacy behavior).
-///   - unassigned -> a wildcard origin; anchoring falls back to self (the issuer) when
-///                   no target/focus target is selected, and otherwise pivots on the
-///                   external object with point 1 as the origin slot.
+///   - configured -> normal formation membership rules apply. Character anchors use their
+///                   assigned point when available; external target/focus-target anchors use
+///                   point 1 as the origin frame.
+///   - raw empty  -> a wildcard origin. Target/focus-target fallback may use the command
+///                   leader, while receivers continue to use point 1 as the origin frame.
 /// </summary>
 public static class FormationAnchorRules {
     public static bool IsPointOneAssigned(
@@ -34,15 +33,14 @@ public static class FormationAnchorRules {
     }
 
     /// <summary>
-    /// Whether a missing target/focus-target anchor should fall back to the issuer (self)
-    /// instead of doing nothing. Only true for the unassigned-point-1 wildcard-origin case.
+    /// Whether a missing target/focus-target anchor may fall back to the command leader
+    /// instead of doing nothing. Only true for the raw-empty point-1 wildcard-origin case.
     /// </summary>
-    public static bool ShouldFallBackToSelfOnTargetlessAnchor(
+    public static bool ShouldUseLeaderFallbackOnTargetlessAnchor(
         Formation formation,
-        FormationAnchorKind anchorKind,
-        IReadOnlyList<CidGroup>? groups = null) =>
+        FormationAnchorKind anchorKind) =>
         anchorKind is FormationAnchorKind.Target or FormationAnchorKind.FocusTarget
-        && !IsPointOneAssigned(formation, groups);
+        && IsPointOneUnassigned(formation);
 
     /// <summary>
     /// Whether the command sender should be rejected because they have no role in the formation.
@@ -55,7 +53,7 @@ public static class FormationAnchorRules {
         ulong issuerCid,
         IReadOnlyList<CidGroup>? groups = null) =>
         FormationExecution.GetAssignedPoint(formation, issuerCid, groups) == null
-        && IsPointOneAssigned(formation, groups);
+        && !IsPointOneUnassigned(formation);
 
     /// <summary>
     /// Selects the anchor ContentId to broadcast.
@@ -63,8 +61,10 @@ public static class FormationAnchorRules {
     ///                                    and the broadcast position is the target/issuer. 0 avoids
     ///                                    the "playerCid == anchorCid" skip, so an assigned point 1
     ///                                    participates and moves to the target like any member.
-    ///   - other anchor kinds        -> assigned point 1: the resolved character's id, else issuer;
-    ///                                   unassigned point 1: 0 (origin; the leader is not a member).
+    ///   - self                      -> issuer cid when point 1 is configured.
+    ///   - named/sender               -> resolved cid only when that character is a formation
+    ///                                   member; otherwise 0 for an external anchor.
+    ///   - raw-empty point 1          -> 0 for every anchor kind (wildcard origin).
     /// </summary>
     public static ulong SelectAnchorCid(
         Formation formation,
@@ -75,10 +75,16 @@ public static class FormationAnchorRules {
         if (effectiveAnchorKind is FormationAnchorKind.Target or FormationAnchorKind.FocusTarget)
             return 0;
 
-        if (IsPointOneAssigned(formation, groups))
-            return resolvedContentId != 0 ? resolvedContentId : issuerCid;
+        if (IsPointOneUnassigned(formation))
+            return 0;
 
-        return 0;
+        if (effectiveAnchorKind == FormationAnchorKind.Self)
+            return issuerCid;
+
+        return resolvedContentId != 0
+            && FormationExecution.GetAssignedPoint(formation, resolvedContentId, groups) != null
+                ? resolvedContentId
+                : 0;
     }
 
     /// <summary>

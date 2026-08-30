@@ -24,6 +24,8 @@ public sealed class SimpleInputMovement : IDisposable {
     private ISimpleMovementStrategy? _activeStrategy;
     private SimpleMovementMode? _activeMovementMode;
     private string? _activeTrackingKey;
+    private MovementControlState? _controlBaseline;
+    private bool? _walkBaseline;
 
     public SimpleInputMovement() {
         _continuousForward = new ContinuousForwardMovementStrategy(_forwardInput);
@@ -38,6 +40,8 @@ public sealed class SimpleInputMovement : IDisposable {
         cts?.Cancel();
         cts?.Dispose();
         StopStrategies();
+        RestoreControlBaseline();
+        RestoreWalkBaseline();
         _forwardInput.Dispose();
     }
 
@@ -94,14 +98,24 @@ public sealed class SimpleInputMovement : IDisposable {
             return activeCts;
         }
 
-        // Capture walk state before cancellation because non-preserving movement modes may clear it.
-        // Live-toggle modes restore this value immediately and never change it while moving.
-        var savedIsWalking = SimpleMovementWalkState.IsWalking;
-        CancelActiveMove(callNativeStop: true);
-
+        // MoveMode/PadMode use one baseline for the whole replacement chain. Walk/run state is
+        // different: non-preserving modes keep their own baseline, while Natural deliberately
+        // releases it so manual walk/run changes remain live.
+        CaptureControlBaselineIfNeeded();
         var preserveWalkState = PreservesWalkState(movementMode);
+        if (!preserveWalkState) {
+            _walkBaseline = CaptureWalkBaseline(
+                _walkBaseline,
+                SimpleMovementWalkState.IsWalking);
+        }
+
+        CancelActiveMove(
+            callNativeStop: true,
+            restoreControlBaseline: false,
+            restoreWalkBaseline: false);
+
         if (preserveWalkState)
-            SimpleMovementWalkState.IsWalking = savedIsWalking;
+            RestoreWalkBaseline();
 
         var context = new SimpleMovementContext(
             destination,
@@ -122,8 +136,6 @@ public sealed class SimpleInputMovement : IDisposable {
             ? new SimpleMovementProgressTracker()
             : null;
 
-        uint savedMoveMode = DalamudApi.GameConfig.UiControl.GetUInt("MoveMode");
-        uint savedPadMode = DalamudApi.GameConfig.UiConfig.GetUInt("PadMode");
         var movementComplete = false;
 
         DalamudApi.GameConfig.UiControl.Set("MoveMode", 0u);
@@ -150,15 +162,12 @@ public sealed class SimpleInputMovement : IDisposable {
             callback: () => {
                 var newerMoveStarted = _cts != null && !ReferenceEquals(_cts, cts);
                 if (!newerMoveStarted) {
-                    DalamudApi.GameConfig.UiControl.Set("MoveMode", savedMoveMode);
-                    DalamudApi.GameConfig.UiConfig.Set("PadMode", savedPadMode);
-
                     StopStrategies();
                     if (strategy.UsesNativeStopOnCompletion)
                         _nativeStop.Stop();
 
-                    if (!preserveWalkState)
-                        SimpleMovementWalkState.IsWalking = savedIsWalking;
+                    RestoreControlBaseline();
+                    RestoreWalkBaseline();
 
                     if (faceDirection is float rot
                         && !cts.IsCancellationRequested
@@ -253,6 +262,14 @@ public sealed class SimpleInputMovement : IDisposable {
     public static bool UsesLiveFormationTracking(SimpleMovementMode mode) =>
         mode == SimpleMovementMode.Natural;
 
+    public static MovementControlState CaptureControlBaseline(
+        MovementControlState? existingBaseline,
+        MovementControlState currentState) =>
+        existingBaseline ?? currentState;
+
+    public static bool CaptureWalkBaseline(bool? existingBaseline, bool currentState) =>
+        existingBaseline ?? currentState;
+
     private ISimpleMovementStrategy SelectStrategy(SimpleMovementMode mode) =>
         mode switch {
             SimpleMovementMode.Continuous => _continuousForward,
@@ -261,7 +278,10 @@ public sealed class SimpleInputMovement : IDisposable {
             _ => _arrivePrecise,
         };
 
-    private void CancelActiveMove(bool callNativeStop) {
+    private void CancelActiveMove(
+        bool callNativeStop,
+        bool restoreControlBaseline = true,
+        bool restoreWalkBaseline = true) {
         var wasMovingWithNonPreservedWalk = _activeMovementMode is { } activeMode
             && !PreservesWalkState(activeMode);
         var cts = _cts;
@@ -275,13 +295,40 @@ public sealed class SimpleInputMovement : IDisposable {
         if (wasMovingWithNonPreservedWalk)
             SimpleMovementWalkState.IsWalking = false;
 
-        if (!callNativeStop)
+        if (callNativeStop
+            && DalamudApi.ObjectTable.LocalPlayer != null
+            && DalamudApi.ClientState.IsLoggedIn) {
+            _nativeStop.Stop();
+        }
+
+        if (restoreControlBaseline)
+            RestoreControlBaseline();
+        if (restoreWalkBaseline)
+            RestoreWalkBaseline();
+    }
+
+    private void CaptureControlBaselineIfNeeded() {
+        var currentState = new MovementControlState(
+            DalamudApi.GameConfig.UiControl.GetUInt("MoveMode"),
+            DalamudApi.GameConfig.UiConfig.GetUInt("PadMode"));
+        _controlBaseline = CaptureControlBaseline(_controlBaseline, currentState);
+    }
+
+    private void RestoreControlBaseline() {
+        if (_controlBaseline is not { } baseline)
             return;
 
-        if (DalamudApi.ObjectTable.LocalPlayer == null || !DalamudApi.ClientState.IsLoggedIn)
+        DalamudApi.GameConfig.UiControl.Set("MoveMode", baseline.MoveMode);
+        DalamudApi.GameConfig.UiConfig.Set("PadMode", baseline.PadMode);
+        _controlBaseline = null;
+    }
+
+    private void RestoreWalkBaseline() {
+        if (_walkBaseline is not { } baseline)
             return;
 
-        _nativeStop.Stop();
+        SimpleMovementWalkState.IsWalking = baseline;
+        _walkBaseline = null;
     }
 
     private void StopStrategies() {
@@ -310,6 +357,8 @@ public enum ArrivalMovementState {
 }
 
 public readonly record struct ContinuousMovementProgress(bool Complete, bool HasApproached);
+
+public readonly record struct MovementControlState(uint MoveMode, uint PadMode);
 
 public sealed class SimpleMovementProgressTracker {
     private Vector3 _lastSignificantPosition;

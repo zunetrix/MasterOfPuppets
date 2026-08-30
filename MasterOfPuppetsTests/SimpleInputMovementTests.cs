@@ -25,6 +25,25 @@ public class SimpleInputMovementTests {
     }
 
     [Fact]
+    public void CaptureControlBaseline_PreservesOriginalModesAcrossReplacementMoves() {
+        var original = new MovementControlState(MoveMode: 1, PadMode: 1);
+        var transient = new MovementControlState(MoveMode: 0, PadMode: 0);
+
+        var baseline = SimpleInputMovement.CaptureControlBaseline(null, original);
+        baseline = SimpleInputMovement.CaptureControlBaseline(baseline, transient);
+
+        Assert.Equal(original, baseline);
+    }
+
+    [Fact]
+    public void CaptureWalkBaseline_PreservesOriginalStateAcrossReplacementMoves() {
+        var baseline = SimpleInputMovement.CaptureWalkBaseline(null, currentState: false);
+        baseline = SimpleInputMovement.CaptureWalkBaseline(baseline, currentState: true);
+
+        Assert.False(baseline);
+    }
+
+    [Fact]
     public void FormationTargetTracker_ResetsVelocityAfterTeleport() {
         var tracker = new FormationTargetTracker();
         tracker.Reset(Vector3.Zero, nowMs: 0);

@@ -335,7 +335,7 @@ internal partial class IpcProvider {
             // Point-1-unassigned formations use point 1 as a wildcard origin: when no
             // target/focus target is selected, fall back to the issuer (self) as the leader.
             // When point 1 is assigned, missing target/focus target is a no-op (legacy behavior).
-            if (FormationAnchorRules.ShouldFallBackToSelfOnTargetlessAnchor(formation, anchor.Kind, Plugin.Config.CidsGroups)
+            if (FormationAnchorRules.ShouldUseLeaderFallbackOnTargetlessAnchor(formation, anchor.Kind)
                 && FormationAnchorResolver.TryResolve(Plugin, formation, FormationAnchorReference.Self, out var selfResolved, out _, out _)) {
                 resolved = selfResolved;
                 anchor = FormationAnchorReference.Self;
