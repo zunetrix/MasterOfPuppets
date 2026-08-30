@@ -22,10 +22,11 @@ public static partial class MopCommandsHelper {
             * This is a plugin command (works only on local clients)
             Broadcasts macro execution to all local clients via IPC.
 
-            Inline variables (-var=) override macro-level and command-local variables at runtime.
+            Inline variables (-var=) override the macro's variables at runtime.
             Format: -var=$name=value;$name2="value with spaces";$name3=/command
             Variable names must start with a letter or underscore.
-            Priority: inline vars > command-local vars > macro-level vars
+            When a name is set in more than one place, inline vars win over command-level vars,
+            which win over the macro's own Variables field.
             """
         },
         new MopAction {
@@ -45,9 +46,9 @@ public static partial class MopCommandsHelper {
             * This is a plugin command (works only on local clients)
             Executes an in-game FFXIV macro from the individual or shared macro set.
 
-            Numeric indexes use the game macro index directly (0-99), matching BardToolbox runmacro behavior.
-            If scope is omitted for a name, individual macros are searched first, then shared macros.
-            If the same name exists more than once, specify individual or shared, or rename one macro.
+            Numeric indexes map directly to the game macro index (0-99).
+            If a name is given without a scope, individual macros are searched first, then shared.
+            If the same name exists in both sets, specify individual or shared, or rename one macro.
             """
         },
         new MopAction {
@@ -141,10 +142,10 @@ public static partial class MopCommandsHelper {
             Notes = """
             * This is a plugin command (works only on local clients)
             Broadcasts formation execution to all local clients.
-            Each client moves to the formation point whose assigned CIDs/groups include it.
+            Each client moves to the formation point assigned to it (by its cids or group).
             Add target to place your assigned formation point at your current target.
-            Default: precise. Use continuous for smoother loops.
-            Use natural for live formation tracking that leaves the walk/run toggle unchanged.
+            Default: precise. continuous gives smoother loops. natural keeps the walk/run
+            toggle as it is while the character tracks the formation live.
             """
         },
         new MopAction {
@@ -239,7 +240,7 @@ public static partial class MopCommandsHelper {
             Example = """
             /mop invite "Character Name@World"
 
-            Invites all local charactrers:
+            Invites all local characters:
             /mop invite
             """,
             Notes = """
@@ -312,10 +313,10 @@ public static partial class MopCommandsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Moves to the desired position using your current position as reference (origin)
-            X (+Left | -Right)
-            Y (+Fly Up | -Fly Down) *Inactive
-            Z (+Forward | -Back)
+            Moves to a position relative to your current position (the origin).
+            X: +left / -right
+            Y: +fly up / -fly down (not currently active)
+            Z: +forward / -back
             """
         },
         new MopAction {
@@ -376,8 +377,8 @@ public static partial class MopCommandsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Moves to the position of the given character
-            This also works with NPCs, Minions, Etc
+            Moves to the position of the given character.
+            Also works with NPCs, minions, etc.
             """
         },
         new MopAction {
@@ -427,7 +428,9 @@ public static partial class MopCommandsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Change the gearset using inventory items. First moves the gearset items from the inventory to the armoury, then equips the gearset. Prioritizes empty armoury slots; if none are available, uses the first slot and swaps that item back into inventory.
+            Equips a gearset using inventory items. It first moves the gearset's items from
+            inventory to the armoury, then equips the gearset. It prefers an empty armoury slot;
+            if none is free it uses the first slot and swaps that item back into inventory.
             """
         },
         new MopAction {
@@ -442,7 +445,8 @@ public static partial class MopCommandsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Moves any items from the specified gearsets (comma-separated, 1-based) that are in inventory bags to the armoury chest. Does not equip any gearset.
+            Moves items from the specified gearsets (comma-separated, 1-based) that are in
+            inventory bags up to the armoury chest. It does not equip any gearset.
             """
         },
 

@@ -16,7 +16,7 @@ public static partial class MopCommandsHelper {
             /mopwait 3.5
             /mopwait 0.5
             """,
-            Notes = "Use to wait a certain amount of time, it accepts decimals"
+            Notes = "Waits the given number of seconds; decimals are allowed."
         },
         new MopAction {
             Category = MopActionCategory.MacroAction,
@@ -33,7 +33,8 @@ public static partial class MopCommandsHelper {
             """,
             Notes = """
             Advances an absolute timeline measured from the start of the macro.
-            Execution and framework-frame latency reduce the remaining wait instead of accumulating.
+            If a step runs slow, the remaining wait shrinks instead of stacking up, so the
+            schedule stays on track rather than drifting later and later.
             The time is the complete phase interval, including global delay and command execution.
             vs /mopwait: /mopwait always waits the full duration (relative, so latency accumulates
             and repeating loops drift). /mopphasewait waits only the time left until the absolute
@@ -163,7 +164,8 @@ public static partial class MopCommandsHelper {
             /mopendif
             """,
             Notes = """
-            Evaluates an alternative condition if preceding /mopif and /mopelseif conditions evaluated to false.
+            Runs an alternative condition when the preceding /mopif and /mopelseif conditions
+            all evaluated to false.
             Alias: /mopelif
             """
         },
@@ -222,10 +224,10 @@ public static partial class MopCommandsHelper {
                 /moploopend
             """,
             Notes = """
-            Replaced at execution time by a random value between min and max (inclusive).
-            Integer inputs produce an integer result: {random(1,5)} → 1, 2, 3, 4, or 5.
-            Decimal inputs produce a float result with 2 decimal places: {random(1.5,3.5)} → e.g. 2.17.
-            The value is re-evaluated on every execution, including each loop iteration.
+            Replaced, when the action runs, by a random value between min and max (inclusive).
+            Integer inputs give an integer result: {random(1,5)} → 1, 2, 3, 4, or 5.
+            Decimal inputs give a float result with 2 decimal places: {random(1.5,3.5)} → e.g. 2.17.
+            The value is rolled fresh on every run, including each loop iteration.
             Use {random(a,b,c,...)} with three or more values to pick from a specific list.
             """
         },
@@ -268,12 +270,12 @@ public static partial class MopCommandsHelper {
                 /mopphasewait {calc($k * {random(1,3)})}
             """,
             Notes = """
-            Evaluates an arithmetic expression at execution time (re-evaluated each loop iteration).
+            Computes an arithmetic expression when the action runs (freshly each loop iteration).
             Supports + - * / % ^, parentheses, and unary minus; results round to 2 decimals.
             Runs after $-variable substitution and {random(...)}, so it can combine both.
-            An invalid expression is left untouched rather than breaking the action.
-            Use this for a one-off inline computation. To compute a reusable named value, declare
-            a variable with $name=$expression instead (see $name=value - Declared Variables).
+            If the expression is invalid it is left as-is rather than breaking the action.
+            Use this for a one-off inline calculation. For a reusable named value, declare a
+            variable with $name=$expression instead (see $name=value - Declared Variables).
             """
         },
 
@@ -305,22 +307,20 @@ public static partial class MopCommandsHelper {
                 /mopphasewait $totalWait
             """,
             Notes = """
-            Declare your own variables with $name=value. Put them in the macro's Variables
-            field, or at the top of a command's action text. Definition lines are stripped
-            from the emitted actions; use $name in any later action line.
+            Give a name to any value and use it anywhere in the macro. Declare with
+            $name=value in the macro's Variables field, or at the top of a command's
+            action text. The declaration line itself never runs - it just stores a value.
 
-            Substitution is case-sensitive and repeats until stable, and the definition row is
-            removed from the emitted action line. Arithmetic in a definition is evaluated
-            automatically using + - * / % ^ with parentheses and unary minus, rounded to 2
-            decimals. Forward references settle: $tail=$totalWait - $offset works even when the
-            referenced values are defined above. Non-numeric values (/surprised, a name) pass
-            through untouched.
+            Reference it later with $name, e.g. /mopphasewait $totalWait. Names are
+            case-sensitive. If a value is arithmetic it is computed for you: $offset=4 * 0.8
+            becomes 3.2, and $tail=$totalWait - $offset works even when $totalWait is defined
+            further down the file. Plain text values like /surprised stay as-is.
 
-            Each character sharing one command resolves $assignmentIndex/$assignmentCount to
-            its own lane, so identical text staggers per character without hand-tuning.
+            Each character that shares one command resolves $assignmentIndex/$assignmentCount
+            to its own lane, so identical text staggers per character without hand-tuning.
 
-            This is the reusable named-value form. For a one-off inline computation on a single
-            action line, use {calc(expression)} instead — it needs no declaration.
+            Use this when you want a reusable, named value. For a one-off inline calculation
+            on a single action line, use {calc(expression)} instead - it needs no declaration.
             """
         },
 
@@ -331,36 +331,45 @@ public static partial class MopCommandsHelper {
             TextCommand = "$variable - Built-in Variables",
             SuggestionCommand = "$",
             Example = """
-            Runtime (game state):
+            Variables adapt a macro without editing it. Some are filled in for you:
+
+            About the current client:
                 $me                 your name (Name@World when known)
                 $target             your current target's name
-                $globaldelay        configured Delay Between Actions (default 0.5s)
-                $mop_origin         launching character
-                $mop_origin_target  what the launcher was targeting
-                $mop_origin_ftarget what the launcher had as focus target
+                $globaldelay        your configured Delay Between Actions (default 0.5s)
+                $mop_origin         who launched this macro
+                $mop_origin_target  who the launcher was targeting
+                $mop_origin_ftarget who the launcher had as focus target
 
-            Macro structure (authoritative):
-                $commandIndex       this command's 0-based position in the macro
-                $commandCount       total number of commands in the macro
+            About the macro's structure:
+                $commandIndex       which command is running (0-based)
+                $commandCount       how many commands the macro has
 
-            Assignment / stagger (authoritative, per character in this command):
-                $assignmentIndex    this character's lane among the command's targets
-                $assignmentCount    how many characters this command targets
+            About this character's spot in this command:
+                $assignmentIndex    this character's lane among everyone the command targets
+                $assignmentCount    how many characters the command targets
                                     (direct cids first, then groups, in listing order)
 
-            Declare your own with $name=value lines (macro Variables field or an action line):
+            Declare your own with $name=value in the Variables field or on an action line:
                 $emote=/surprised
                 $interval=0.80
                 $offset=$assignmentIndex * $interval
                 $totalWait=$assignmentCount * $interval
+
+            Then use them when the macro runs: /mopphasewait $offset
             """,
             Notes = """
-            Built-in variables are provided automatically; you do not declare them.
-            Use $name anywhere in an action line; substitution is case-sensitive.
-            Arithmetic in a definition is evaluated (e.g. $totalWait=$count * $interval).
-            $assignmentIndex/$assignmentCount let ONE command targeting many cids (directly or
-            via groups) drive a per-character stagger with identical text. $commandIndex/
-            $commandCount describe the macro structure instead. None can be overridden by author vars.
+            Built-in variables are provided automatically, so you never declare them.
+            Write $name in any action line; substitution is case-sensitive.
+
+            Reaching for the right one:
+            - $me, $target and $globaldelay describe the current client.
+            - $assignmentIndex/$assignmentCount let ONE command target many cids (directly or
+              via groups) and give each character its own stagger lane from identical text.
+            - $commandIndex/$commandCount describe the macro's own structure instead.
+
+            Arithmetic in a definition is worked out for you, e.g. $totalWait=$count * $interval.
+            You cannot override a built-in by declaring the same name yourself.
             """
         },
 
@@ -381,7 +390,7 @@ public static partial class MopCommandsHelper {
                 /dote
             """,
             Notes = """
-            For characters with same names in different world combine the world at end:
+            If characters share a name across different worlds, add the world at the end:
             /moptarget "Warrior of Light@Jenova"
             """
         },
@@ -446,10 +455,10 @@ public static partial class MopCommandsHelper {
                 /mopmove 0 0 4 90
             """,
             Notes = """
-            Moves to the desired position using your current position as reference (origin).
-            X (+Left | -Right)
-            Y (+Fly Up | -Fly Down) *Inactive
-            Z (+Forward | -Back)
+            Moves to a position relative to your current position (the origin).
+            X: +left / -right
+            Y: +fly up / -fly down (not currently active)
+            Z: +forward / -back
             Optional 4th argument: face this direction in degrees after arriving (0=north, 90=east, 180=south, 270=west).
             """
         },
@@ -466,10 +475,10 @@ public static partial class MopCommandsHelper {
                 /mopmoverelativeto 0 0 2 "Character Name" 180
             """,
             Notes = """
-            Moves to the desired position using the specified character as the reference point (origin).
-            X (+Left | -Right)
-            Y (+Fly Up | -Fly Down) *Inactive
-            Z (+Forward | -Back)
+            Moves to a position relative to the specified character (the origin).
+            X: +left / -right
+            Y: +fly up / -fly down (not currently active)
+            Z: +forward / -back
             Optional 5th argument: face this direction in degrees after arriving (0=north, 90=east, 180=south, 270=west).
             """
         },
@@ -483,14 +492,15 @@ public static partial class MopCommandsHelper {
             /mopformationmove "Circle" backward 2 3
             /mopformationmove "Circle" forward 1 0 precise
             /mopformationmove "Circle" forward 1 0 natural
-            /mopformationmove "Circle" forward 1 0 natural
+            /mopformationmove "Circle" forward 1 0 ftarget
             /mopformationmove "Circle" forward 1 0 precise target
             """,
             Notes = """
-            Broadcasts one saved-formation movement step from the current character.
-            Stride is the skip amount through formation point order; sequenceIndex is the zero-based step to execute from each recipient's computed path.
-            Default: precise. Use continuous for smoother loops.
-            Use natural for live formation tracking that leaves the walk/run toggle unchanged.
+            Broadcasts a single step of a saved-formation movement from the current character.
+            stride skips through the formation point order; sequenceIndex is the zero-based
+            step to execute from each recipient's computed path.
+            Default: precise. continuous gives smoother loops. natural keeps the walk/run
+            toggle as it is while the character tracks the formation live.
             Add target to anchor the movement at the controller's current target.
             Generated formation macros use continuous by default.
             """
@@ -510,12 +520,13 @@ public static partial class MopCommandsHelper {
             Notes = """
             Moves only this client to a specific saved formation point.
             Point numbers are 1-based; point 1 is always the live anchor/origin.
-            Use anchor="Name@World" when each PC should place itself relative to the same visible anchor character.
+            anchor="Name@World" places each client relative to the same visible anchor character.
             anchor=target uses this client's current target.
-            ftarget uses this client's focus target; if the focus target is the local character, it remains still as the leader.
-            Default: precise. Use continuous for smoother loops.
-            Use natural for live formation tracking that leaves the walk/run toggle unchanged.
-            This is the precise local alternative to IPC-broadcast /mopformationmove.
+            ftarget uses this client's focus target; if the focus target is the local
+            character, that character stays put as the leader.
+            Default: precise. continuous gives smoother loops. natural keeps the walk/run
+            toggle as it is while the character tracks the formation live.
+            This is the precise local alternative to the broadcast /mopformationmove.
             """
         },
         new MopAction {
@@ -606,8 +617,8 @@ public static partial class MopCommandsHelper {
             /mopmovetocharacter "Character Name"
             """,
             Notes = """
-            Moves to the position of the given character
-            This also works with NPCs, Minions, Etc
+            Moves to the position of the given character.
+            Also works with NPCs, minions, etc.
             """
         },
         new MopAction {
@@ -675,9 +686,7 @@ public static partial class MopCommandsHelper {
                 /mophotbar 5 4
 
             """,
-            Notes = """
-            Use actions assigned to a hotbar slot
-            """
+            Notes = "Triggers an action assigned to a hotbar slot."
         },
         new MopAction {
             Category = MopActionCategory.MacroAction,
@@ -706,8 +715,8 @@ public static partial class MopCommandsHelper {
                 /cheer
             """,
             Notes = """
-            Use special pet hotbar slots like mount specials and parasol actions.
-            As an alternative it can also be used with skill name:
+            Uses special pet hotbar slots like mount specials and parasol actions.
+            As an alternative, you can name the skill directly:
                 /mopaction "Umbrella Dance"
             """
         },
@@ -803,7 +812,7 @@ public static partial class MopCommandsHelper {
             Umbrella Dance:
                 /mopaction "Umbrella Dance"
             """,
-            Notes = "Similar to native game macro commands /action /ac but allows some actions that can't be used with /ac"
+            Notes = "Works like the game's own /action or /ac macro commands, but can trigger some actions /ac cannot."
         },
         new MopAction {
             Category = MopActionCategory.MacroAction,
@@ -819,8 +828,8 @@ public static partial class MopCommandsHelper {
             /mopitem 8214
             """,
             Notes = """
-            Use items like fireworks and prisms,
-            you can set each character to use a different item
+            Uses items like fireworks and prisms.
+            You can set each character to use a different item.
             """
         },
         new MopAction {
@@ -837,7 +846,8 @@ public static partial class MopCommandsHelper {
             /moptargetclear
             """,
             Notes = """
-            Use to increase object limit to target someone in high populated areas and then reduce it
+            Raises the display object limit temporarily so you can target someone in a densely
+            populated area, then lowers it again afterward.
                 0 - Automatic
                 1 - Maximum
                 2 - High
