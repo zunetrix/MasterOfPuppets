@@ -336,6 +336,11 @@ public static partial class MopCommandsHelper {
             About the current client:
                 $me                 your name (Name@World when known)
                 $target             your current target's name
+                $ftarget            your current focus target's name
+                $job                your job abbreviation ($class is the same)
+                $level              your current level
+                $world              your home world name
+                $leader             your party leader's name (Name@World when known)
                 $globaldelay        your configured Delay Between Actions (default 0.5s)
                 $mop_origin         who launched this macro
                 $mop_origin_target  who the launcher was targeting
@@ -363,7 +368,8 @@ public static partial class MopCommandsHelper {
             Write $name in any action line; substitution is case-sensitive.
 
             Reaching for the right one:
-            - $me, $target and $globaldelay describe the current client.
+            - $me, $target, $ftarget, $job, $level, $world and $leader describe the current client.
+            - $mop_origin* describe the launcher instead, which is only meaningful on the launcher.
             - $assignmentIndex/$assignmentCount let ONE command target many cids (directly or
               via groups) and give each character its own stagger lane from identical text.
             - $commandIndex/$commandCount describe the macro's own structure instead.

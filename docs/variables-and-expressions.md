@@ -56,6 +56,11 @@ by action-line or inline definitions.
 | :--- | :--- |
 | `$me` | The local character's name, formatted `Name@World` when a world is known. |
 | `$target` | The local character's current target's name. |
+| `$ftarget` | The local character's current focus target's name. |
+| `$job` | The local character's current job abbreviation (e.g. `DNC`, `SGE`). `$class` is an alias. |
+| `$level` | The local character's current level. |
+| `$world` | The local character's home world name. |
+| `$leader` | The local party leader's name, formatted `Name@World` when a world is known. Empty when not in a party. |
 | `$mop_origin` | The macro launching character (same as `$me` on the local client). |
 | `$mop_origin_target` | What the launching character was targeting. |
 | `$mop_origin_ftarget` | What the launching character had as focus target. |
