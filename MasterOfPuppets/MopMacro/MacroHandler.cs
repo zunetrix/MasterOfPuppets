@@ -476,7 +476,7 @@ public partial class MacroHandler : IDisposable {
             playerCid,
             Plugin.Config.CidsGroups,
             inlineVars,
-            MacroRuntimeVariables.FromCurrentGameState());
+            MacroRuntimeVariables.FromCurrentGameState(Plugin.Config.DelayBetweenActions));
         return new ResolvedMacroActions(macro.Name, plan);
     }
 

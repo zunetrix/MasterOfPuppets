@@ -18,11 +18,16 @@ public static class MacroTokenProcessor {
     private static readonly Regex RandomRegex =
         new(@"\{random\((\d+(?:\.\d+)?(?:,\d+(?:\.\d+)?)+)\)\}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    // Matches {calc(<arithmetic expression>)}. The inner expression may reference
+    // $-variables already substituted by ResolutionPlan, e.g. {calc($interval * 7)}.
+    private static readonly Regex CalcRegex =
+        new(@"\{calc\((.+?)\)\}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
     /// <summary>
     /// Replaces all recognised tokens in <paramref name="action"/> and returns the result.
     /// </summary>
     public static string Process(string action) {
-        return RandomRegex.Replace(action, match => {
+        var result = RandomRegex.Replace(action, match => {
             var raw = match.Groups[1].Value;
             var parts = raw.Split(',');
             bool isFloat = raw.Contains('.');
@@ -45,5 +50,15 @@ public static class MacroTokenProcessor {
             // List: return one raw string value (preserves original formatting).
             return parts[Random.Shared.Next(parts.Length)].Trim();
         });
+
+        // Evaluate {calc(...)} after {random(...)} so a calc can embed a random result.
+        result = CalcRegex.Replace(result, match => {
+            var expr = match.Groups[1].Value;
+            return MathExpressionEvaluator.TryEvaluate(expr, out string evaluated)
+                ? evaluated
+                : match.Value; // leave original token untouched if it isn't a valid expression
+        });
+
+        return result;
     }
 }

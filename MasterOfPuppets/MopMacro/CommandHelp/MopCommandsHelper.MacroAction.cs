@@ -35,6 +35,9 @@ public static partial class MopCommandsHelper {
             Advances an absolute timeline measured from the start of the macro.
             Execution and framework-frame latency reduce the remaining wait instead of accumulating.
             The time is the complete phase interval, including global delay and command execution.
+            vs /mopwait: /mopwait always waits the full duration (relative, so latency accumulates
+            and repeating loops drift). /mopphasewait waits only the time left until the absolute
+            phase deadline, keeping repeating loops locked to a shared schedule.
             Intended for synchronized repeating movement; ordinary /mopwait behavior is unchanged.
             """
         },
@@ -249,6 +252,115 @@ public static partial class MopCommandsHelper {
             Two values always produce a range: {random(1,5)} = any integer 1-5.
             Three+ values pick from the exact set: {random(1,3,5)} = 1, 3, or 5 only.
             Supports decimals in lists: {random(0.5,1.0,1.5)} = 0.5, 1.0, or 1.5.
+            """
+        },
+
+        //  Variables
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.Variables,
+            TextCommand = "{calc(expression)}",
+            SuggestionCommand = "{calc(}",
+            Example = """
+            Compute an inline value at execution time:
+                /mopphasewait {calc(0.8 * 7)}
+                /mopphasewait {calc($interval * 7)}
+                /mopphasewait {calc($k * {random(1,3)})}
+            """,
+            Notes = """
+            Evaluates an arithmetic expression at execution time (re-evaluated each loop iteration).
+            Supports + - * / % ^, parentheses, and unary minus; results round to 2 decimals.
+            Runs after $-variable substitution and {random(...)}, so it can combine both.
+            An invalid expression is left untouched rather than breaking the action.
+            Use this for a one-off inline computation. To compute a reusable named value, declare
+            a variable with $name=$expression instead (see $name=value - Declared Variables).
+            """
+        },
+
+        //  Variables
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.Variables,
+            TextCommand = "$name=value - Declared Variables",
+            SuggestionCommand = "$name=",
+            Example = """
+            Give the emote macro one tunable knob and derive everything else:
+                $emote=/surprised
+                $interval=0.80
+                $offset=$assignmentIndex * $interval
+                $totalWait=$assignmentCount * $interval
+                $tail=$totalWait - $offset
+
+            7-char repeating emote from the above (single command, identical text):
+                $offset=$assignmentIndex * $interval
+                $totalWait=$assignmentCount * $interval
+                $tail=$totalWait - $offset
+                /mopphasewait $offset
+                $emote
+                /mopphasewait $tail
+                /moploop
+
+            Inline use in any action line:
+                /say My offset is $offset
+                /mopphasewait $totalWait
+            """,
+            Notes = """
+            Declare your own variables with $name=value. Put them in the macro's Variables
+            field, or at the top of a command's action text. Definition lines are stripped
+            from the emitted actions; use $name in any later action line.
+
+            Substitution is case-sensitive and repeats until stable, and the definition row is
+            removed from the emitted action line. Arithmetic in a definition is evaluated
+            automatically using + - * / % ^ with parentheses and unary minus, rounded to 2
+            decimals. Forward references settle: $tail=$totalWait - $offset works even when the
+            referenced values are defined above. Non-numeric values (/surprised, a name) pass
+            through untouched.
+
+            Each character sharing one command resolves $assignmentIndex/$assignmentCount to
+            its own lane, so identical text staggers per character without hand-tuning.
+
+            This is the reusable named-value form. For a one-off inline computation on a single
+            action line, use {calc(expression)} instead — it needs no declaration.
+            """
+        },
+
+        //  Variables
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.Variables,
+            TextCommand = "$variable - Built-in Variables",
+            SuggestionCommand = "$",
+            Example = """
+            Runtime (game state):
+                $me                 your name (Name@World when known)
+                $target             your current target's name
+                $globaldelay        configured Delay Between Actions (default 0.5s)
+                $mop_origin         launching character
+                $mop_origin_target  what the launcher was targeting
+                $mop_origin_ftarget what the launcher had as focus target
+
+            Macro structure (authoritative):
+                $commandIndex       this command's 0-based position in the macro
+                $commandCount       total number of commands in the macro
+
+            Assignment / stagger (authoritative, per character in this command):
+                $assignmentIndex    this character's lane among the command's targets
+                $assignmentCount    how many characters this command targets
+                                    (direct cids first, then groups, in listing order)
+
+            Declare your own with $name=value lines (macro Variables field or an action line):
+                $emote=/surprised
+                $interval=0.80
+                $offset=$assignmentIndex * $interval
+                $totalWait=$assignmentCount * $interval
+            """,
+            Notes = """
+            Built-in variables are provided automatically; you do not declare them.
+            Use $name anywhere in an action line; substitution is case-sensitive.
+            Arithmetic in a definition is evaluated (e.g. $totalWait=$count * $interval).
+            $assignmentIndex/$assignmentCount let ONE command targeting many cids (directly or
+            via groups) drive a per-character stagger with identical text. $commandIndex/
+            $commandCount describe the macro structure instead. None can be overridden by author vars.
             """
         },
 

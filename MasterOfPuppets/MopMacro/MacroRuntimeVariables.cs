@@ -9,6 +9,7 @@ public sealed class MacroRuntimeVariables {
     public string MopOrigin { get; init; } = string.Empty;
     public string MopOriginTarget { get; init; } = string.Empty;
     public string MopOriginFocusTarget { get; init; } = string.Empty;
+    public double GlobalDelaySeconds { get; init; } = 0.5;
 
     public Dictionary<string, string> ToDictionary() => new() {
         ["me"] = Me,
@@ -16,6 +17,7 @@ public sealed class MacroRuntimeVariables {
         ["mop_origin"] = MopOrigin,
         ["mop_origin_target"] = MopOriginTarget,
         ["mop_origin_ftarget"] = MopOriginFocusTarget,
+        ["globaldelay"] = GlobalDelaySeconds.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
     };
 
     public Dictionary<string, string> ResolveInlinePlaceholders(Dictionary<string, string>? inlineVars) {
@@ -39,7 +41,7 @@ public sealed class MacroRuntimeVariables {
 
     public static MacroRuntimeVariables Empty { get; } = new();
 
-    public static MacroRuntimeVariables FromCurrentGameState() {
+    public static MacroRuntimeVariables FromCurrentGameState(double globalDelaySeconds = 0.5) {
         var me = string.Empty;
         try {
             if (!string.IsNullOrWhiteSpace(DalamudApi.PlayerState.CharacterName)) {
@@ -58,6 +60,7 @@ public sealed class MacroRuntimeVariables {
             MopOrigin = me,
             MopOriginTarget = GameTargetManager.GetTargetName(),
             MopOriginFocusTarget = GameTargetManager.GetFocusTargetName(),
+            GlobalDelaySeconds = globalDelaySeconds,
         };
     }
 }
