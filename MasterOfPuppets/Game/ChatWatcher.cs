@@ -259,12 +259,17 @@ internal class ChatWatcher : IDisposable {
             return;
         }
 
+        var fallbackAnchor = string.IsNullOrWhiteSpace(senderName)
+            ? null
+            : FormationAnchorReference.Named(senderName);
+
         _ = DalamudApi.Framework.RunOnFrameworkThread(() =>
             FormationLocalMovementExecutor.ExecuteChatSyncedFormation(
                 Plugin,
                 args[0],
                 anchor.Anchor,
-                anchor.MovementMode));
+                anchor.MovementMode,
+                fallbackAnchor));
     }
 
     private static string SanitizeSenderName(string raw) {

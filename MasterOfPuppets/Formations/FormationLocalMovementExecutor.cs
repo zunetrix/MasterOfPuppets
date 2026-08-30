@@ -37,9 +37,7 @@ public static class FormationLocalMovementExecutor {
         }
 
         var localCid = DalamudApi.PlayerState.ContentId;
-        var isPointOneUnassigned = formation.Points.Count > 0
-            && (formation.Points[0].Cids == null || formation.Points[0].Cids.Count == 0)
-            && (formation.Points[0].GroupIds == null || formation.Points[0].GroupIds.Count == 0);
+        var isPointOneUnassigned = FormationAnchorRules.IsPointOneUnassigned(formation);
         var assignedAnchorPointIndex = (!isPointOneUnassigned && resolvedAnchor.ContentId.HasValue)
             ? FormationExecution.GetAssignedPointIndex(formation, resolvedAnchor.ContentId.Value, plugin.Config.CidsGroups)
             : -1;
@@ -77,7 +75,8 @@ public static class FormationLocalMovementExecutor {
         Plugin plugin,
         string formationName,
         FormationAnchorReference anchor,
-        SimpleMovementMode movementMode) {
+        SimpleMovementMode movementMode,
+        FormationAnchorReference? fallbackAnchor = null) {
         const string logPrefix = "mopformation";
         if (!TryGetFormation(plugin, formationName, logPrefix, out var formation))
             return false;
@@ -90,8 +89,17 @@ public static class FormationLocalMovementExecutor {
         }
 
         if (!FormationAnchorResolver.TryResolve(plugin, formation, anchor, out var resolvedAnchor, out var anchorFailure, out var failureKind)) {
-            LogAnchorFailure(logPrefix, anchorFailure, failureKind);
-            return false;
+            // Chat-sync target fallback must stay anchored on the chat sender/leader. Using
+            // FormationAnchorReference.Self here would make every receiving client its own origin.
+            if (FormationAnchorRules.ShouldUseLeaderFallbackOnTargetlessAnchor(formation, anchor.Kind)
+                && fallbackAnchor != null
+                && FormationAnchorResolver.TryResolve(plugin, formation, fallbackAnchor, out var fallbackResolved, out _, out _)) {
+                resolvedAnchor = fallbackResolved;
+                anchor = fallbackAnchor;
+            } else {
+                LogAnchorFailure(logPrefix, anchorFailure, failureKind);
+                return false;
+            }
         }
 
         var assignedAnchorPointIndex = resolvedAnchor.ContentId.HasValue
@@ -140,12 +148,9 @@ public static class FormationLocalMovementExecutor {
             || anchor.Kind == FormationAnchorKind.Default)
             return FormationPointMovement.AnchorPointIndex;
 
-        // If Point 1 has no assigned characters, Point 1 is the dynamic origin/leader slot (0, 0, 0).
-        if (formation.Points.Count > 0
-            && (formation.Points[0].Cids == null || formation.Points[0].Cids.Count == 0)
-            && (formation.Points[0].GroupIds == null || formation.Points[0].GroupIds.Count == 0)) {
+        // A raw-empty point 1 is the dynamic origin/leader slot (0, 0, 0).
+        if (FormationAnchorRules.IsPointOneUnassigned(formation))
             return FormationPointMovement.AnchorPointIndex;
-        }
 
         if (!anchorCid.HasValue)
             return FormationPointMovement.AnchorPointIndex;
