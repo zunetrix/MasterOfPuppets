@@ -9,6 +9,8 @@ using Dalamud.Plugin.Services;
 using MasterOfPuppets.Camera;
 using MasterOfPuppets.Formations;
 using MasterOfPuppets.Ipc;
+using MasterOfPuppets.LuaScripting;
+using MasterOfPuppets.LuaScripting.Synchronization;
 using MasterOfPuppets.Movement;
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt.AutoComplete;
@@ -16,6 +18,8 @@ using MasterOfPuppets.Util.ImGuiExt.AutoComplete;
 namespace MasterOfPuppets;
 
 public class Plugin : IDalamudPlugin {
+    private readonly LuaFrameworkUpdateCadence _luaFrameworkUpdateCadence = new();
+
     internal static string Name => "Master Of Puppets";
 
     internal Configuration Config { get; }
@@ -33,17 +37,25 @@ public class Plugin : IDalamudPlugin {
     internal FollowPath FollowPath { get; }
     internal SimpleInputMovement SimpleInputMovement { get; }
     internal FormationTrackingSession FormationTrackingSession { get; }
+    internal CombatActionObserver CombatActionObserver { get; }
+    internal EmoteObserver EmoteObserver { get; }
+    internal LuaScriptManager LuaScriptManager { get; }
     internal MultiboxManager MultiboxManager { get; }
     internal GameRenderManager GameRenderManager { get; }
     internal GameWindowManager GameWindowManager { get; }
     internal KeyboardBroadcastManager KeyboardBroadcastManager { get; }
     internal AutoLoginManager AutoLoginManager { get; }
     internal ServerBarProvider ServerBarProvider { get; }
+    internal DateTime LastDiskReloadTime { get; set; } = DateTime.MinValue;
 
     public Plugin(IDalamudPluginInterface pluginInterface) {
         pluginInterface.Create<DalamudApi>();
         Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(DalamudApi.PluginInterface);
+        if (LuaScriptCatalog.EnsureMirrorCombatTarget(Config))
+            DalamudApi.PluginLog.Information("[Lua] Added packaged script 'Mirror Combat Target' (no forced targeting).");
+        // Load packaged defaults into memory without mutating the user's
+        // configuration until they explicitly save through the UI.
         GameCameraManager.Initialize();
 
         Ui = new PluginUi(this);
@@ -68,6 +80,9 @@ public class Plugin : IDalamudPlugin {
         MovementManager = new MovementManager(FollowPath);
         SimpleInputMovement = new SimpleInputMovement();
         FormationTrackingSession = new FormationTrackingSession(this);
+        CombatActionObserver = new CombatActionObserver();
+        EmoteObserver = new EmoteObserver();
+        LuaScriptManager = new LuaScriptManager(this);
         MultiboxManager = new MultiboxManager(this);
         GameRenderManager = new GameRenderManager(this);
         GameWindowManager = new GameWindowManager(this);
@@ -81,6 +96,7 @@ public class Plugin : IDalamudPlugin {
 
         DalamudApi.ClientState.Login += OnLogin;
         DalamudApi.ClientState.Logout += OnLogout;
+        DalamudApi.ClientState.TerritoryChanged += OnTerritoryChanged;
         DalamudApi.PluginInterface.UiBuilder.Draw += Ui.Draw;
         DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += Ui.SettingsWindow.Toggle;
         DalamudApi.PluginInterface.UiBuilder.OpenMainUi += Ui.MainWindow.Toggle;
@@ -101,8 +117,15 @@ public class Plugin : IDalamudPlugin {
         FollowPath.Update(framework);
         MovementManager.Update();
         FormationTrackingSession.Update();
+        LuaScriptManager.Update();
+        var nowMs = Environment.TickCount64;
+        if (_luaFrameworkUpdateCadence.ShouldUpdateLaunches(nowMs))
+            ChatWatcher.LuaDistributedLaunches.Update();
+        if (_luaFrameworkUpdateCadence.ShouldTickSessions(nowMs))
+            ChatWatcher.LuaDistributedSessions.Tick(DateTimeOffset.UtcNow);
         KeyboardBroadcastManager.Update();
         IpcProvider.UpdateCharacterDataHeartbeat();
+        IpcProvider.UpdateMirrorDynamicLaunch();
 
         if (Config.AutoAcceptPartyInvite || Config.AutoAcceptTeleport) {
             var charConfig = Config.Characters.FirstOrDefault(c => c.Cid == DalamudApi.PlayerState.ContentId);
@@ -120,6 +143,11 @@ public class Plugin : IDalamudPlugin {
     }
 
     internal void StopAllMovementLocal() {
+        LuaScriptManager.StopLocal();
+        StopNonLuaMovementLocal();
+    }
+
+    internal void StopNonLuaMovementLocal() {
         FormationTrackingSession.Stop();
         SimpleInputMovement.StopMove();
         MovementManager.StopMove();
@@ -151,16 +179,30 @@ public class Plugin : IDalamudPlugin {
     }
 
     private void OnLogout(int type, int code) {
+        LuaScriptManager.CancelForHostTransition("logged out or changed character");
+        ChatWatcher.LuaDistributedLaunches.CancelAll("logged out or changed character");
+        ChatWatcher.LuaDistributedSessions.StopAll("logged out or changed character");
         Ui.MainWindow.IsOpen = false;
+    }
+
+    private void OnTerritoryChanged(uint territoryId) {
+        LuaScriptManager.CancelForHostTransition($"territory changed to {territoryId}");
+        ChatWatcher.LuaDistributedLaunches.CancelAll($"territory changed to {territoryId}");
+        ChatWatcher.LuaDistributedSessions.StopAll($"territory changed to {territoryId}");
     }
 
     internal void ReloadConfigFromDisk() {
         try {
             var configFile = DalamudApi.PluginInterface.ConfigFile;
             if (configFile.Exists) {
-                var json = System.IO.File.ReadAllText(configFile.FullName);
+                string json;
+                using (var stream = new System.IO.FileStream(configFile.FullName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+                using (var reader = new System.IO.StreamReader(stream)) {
+                    json = reader.ReadToEnd();
+                }
+                LastDiskReloadTime = DateTime.UtcNow;
                 Config.UpdateFromJson(json);
-                IpcProvider.SyncConfiguration();
+                IpcProvider.SyncConfiguration(saveLocally: false);
                 DalamudApi.ShowNotification("Configuration reloaded from disk and synced", Dalamud.Interface.ImGuiNotification.NotificationType.Success, 5000);
             }
         } catch (Exception ex) {
@@ -175,9 +217,13 @@ public class Plugin : IDalamudPlugin {
         DalamudApi.PluginInterface.UiBuilder.Draw -= Ui.Draw;
         DalamudApi.ClientState.Logout -= OnLogout;
         DalamudApi.ClientState.Login -= OnLogin;
+        DalamudApi.ClientState.TerritoryChanged -= OnTerritoryChanged;
         DalamudApi.PluginInterface.LanguageChanged -= OnLanguageChange;
         DalamudApi.Framework.Update -= OnFrameworkUpdate;
         GameCameraManager.Dispose();
+        CombatActionObserver.Dispose();
+        EmoteObserver.Dispose();
+        GameActionManager.Dispose();
         IpcProvider.Dispose();
         ChatWatcher.Dispose();
         // ChatLogMessageWatcher.Dispose();
@@ -186,6 +232,7 @@ public class Plugin : IDalamudPlugin {
         PluginCommandManager.Dispose();
         MovementManager.Dispose();
         FollowPath.Dispose();
+        LuaScriptManager.Dispose();
         FormationTrackingSession.Stop();
         SimpleInputMovement.Dispose();
         KeyboardBroadcastManager.Dispose();

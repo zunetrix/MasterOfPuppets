@@ -13,7 +13,8 @@ public sealed record FormationResolvedAnchor(
     float Rotation,
     ulong? ContentId = null,
     string Name = "",
-    ulong? GameObjectId = null);
+    ulong? GameObjectId = null,
+    IGameObject? Actor = null);
 
 public static class FormationAnchorResolver {
     public static bool TryResolve(
@@ -43,7 +44,8 @@ public static class FormationAnchorResolver {
                     player.Rotation,
                     DalamudApi.PlayerState.ContentId,
                     GetLocalPlayerNameWorld(),
-                    player.GameObjectId);
+                    player.GameObjectId,
+                    player);
                 return true;
             case FormationAnchorKind.Sender:
                 if (string.IsNullOrWhiteSpace(anchor.Name)) {
@@ -57,20 +59,25 @@ public static class FormationAnchorResolver {
 
                 resolved = resolved with { ContentId = ResolveContentIdFromName(plugin, resolved.Name) };
                 return true;
-            case FormationAnchorKind.Target:
-                if (player.TargetObject == null) {
+            case FormationAnchorKind.Target: {
+                var target = DalamudApi.TargetManager.SoftTarget
+                    ?? DalamudApi.TargetManager.Target
+                    ?? player.TargetObject;
+                if (target == null) {
                     failureReason = "no target selected";
                     failureKind = FormationAnchorFailureKind.NoTargetSelected;
                     return false;
                 }
 
                 resolved = new FormationResolvedAnchor(
-                    player.TargetObject.Position,
-                    player.TargetObject.Rotation,
+                    target.Position,
+                    target.Rotation,
                     null,
-                    player.TargetObject.Name.TextValue,
-                    player.TargetObject.GameObjectId);
+                    target.Name.TextValue,
+                    target.GameObjectId,
+                    target);
                 return true;
+            }
             case FormationAnchorKind.FocusTarget:
                 var focusTarget = DalamudApi.TargetManager.FocusTarget;
                 if (focusTarget == null) {
@@ -84,23 +91,28 @@ public static class FormationAnchorResolver {
                     focusTarget.Rotation,
                     null,
                     focusTarget.Name.TextValue,
-                    focusTarget.GameObjectId);
+                    focusTarget.GameObjectId,
+                    focusTarget);
                 return true;
             case FormationAnchorKind.Named:
                 if (string.Equals(anchor.Name, "<t>", StringComparison.OrdinalIgnoreCase)
                     || string.Equals(anchor.Name, "[t]", StringComparison.OrdinalIgnoreCase)) {
-                    if (player.TargetObject == null) {
+                    var namedTarget = DalamudApi.TargetManager.SoftTarget
+                        ?? DalamudApi.TargetManager.Target
+                        ?? player.TargetObject;
+                    if (namedTarget == null) {
                         failureReason = "no target selected";
                         failureKind = FormationAnchorFailureKind.NoTargetSelected;
                         return false;
                     }
 
                     resolved = new FormationResolvedAnchor(
-                        player.TargetObject.Position,
-                        player.TargetObject.Rotation,
+                        namedTarget.Position,
+                        namedTarget.Rotation,
                         null,
-                        player.TargetObject.Name.TextValue,
-                        player.TargetObject.GameObjectId);
+                        namedTarget.Name.TextValue,
+                        namedTarget.GameObjectId,
+                        namedTarget);
                     return true;
                 }
 
@@ -120,7 +132,8 @@ public static class FormationAnchorResolver {
                         namedFocus.Rotation,
                         null,
                         namedFocus.Name.TextValue,
-                        namedFocus.GameObjectId);
+                        namedFocus.GameObjectId,
+                        namedFocus);
                     return true;
                 }
 
@@ -153,7 +166,7 @@ public static class FormationAnchorResolver {
         }
 
         var candidates = DalamudApi.ObjectTable
-            .Where(actor => actor != null && actor.Name.TextValue.Length > 0)
+            .Where(actor => actor is { Address: not 0 } && actor.Name.TextValue.Length > 0)
             .Select(actor => {
                 var name = actor!.Name.TextValue;
                 var fullName = name;
@@ -169,24 +182,42 @@ public static class FormationAnchorResolver {
             })
             .ToList();
 
-        AnchorCandidate? match =
-            candidates.FirstOrDefault(candidate => candidate.FullName.Equals(objectName, StringComparison.InvariantCultureIgnoreCase))
-            ?? candidates.FirstOrDefault(candidate => candidate.Name.Equals(objectName, StringComparison.InvariantCultureIgnoreCase))
-            ?? candidates.FirstOrDefault(candidate => candidate.FullName.Contains(objectName, StringComparison.InvariantCultureIgnoreCase))
-            ?? candidates.FirstOrDefault(candidate => candidate.Name.Contains(objectName, StringComparison.InvariantCultureIgnoreCase));
+        if (ulong.TryParse(objectName, out var actorId)) {
+            var idMatch = candidates.FirstOrDefault(candidate =>
+                candidate.Actor.GameObjectId == actorId || candidate.Actor.EntityId == actorId);
+            if (idMatch != null) {
+                resolved = ToResolved(idMatch);
+                return true;
+            }
+        }
 
-        if (match == null) {
+        var matches = candidates
+            .Where(candidate => candidate.FullName.Equals(objectName, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        if (matches.Length == 0) {
+            matches = candidates
+                .Where(candidate => candidate.Name.Equals(objectName, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+        if (matches.Length == 0) {
+            matches = candidates
+                .Where(candidate => candidate.FullName.Contains(objectName, StringComparison.OrdinalIgnoreCase)
+                    || candidate.Name.Contains(objectName, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
+        if (matches.Length == 0) {
             failureReason = $"anchor not visible: \"{objectName}\"";
             failureKind = FormationAnchorFailureKind.AnchorNotVisible;
             return false;
         }
+        if (matches.Length > 1) {
+            failureReason = $"anchor is ambiguous: \"{objectName}\" matches {matches.Length} visible objects; use Name@World or a live actor ID";
+            failureKind = FormationAnchorFailureKind.AnchorNotVisible;
+            return false;
+        }
 
-        resolved = new FormationResolvedAnchor(
-            match.Actor.Position,
-            match.Actor.Rotation,
-            null,
-            match.FullName,
-            match.Actor.GameObjectId);
+        resolved = ToResolved(matches[0]);
         return true;
     }
 
@@ -211,7 +242,7 @@ public static class FormationAnchorResolver {
                 return false;
             }
 
-            resolved = new FormationResolvedAnchor(player.Position, player.Rotation, anchorCid, GetLocalPlayerNameWorld(), player.GameObjectId);
+            resolved = new FormationResolvedAnchor(player.Position, player.Rotation, anchorCid, GetLocalPlayerNameWorld(), player.GameObjectId, player);
             return true;
         }
 
@@ -244,22 +275,23 @@ public static class FormationAnchorResolver {
         if (string.IsNullOrWhiteSpace(actorFullName))
             return null;
 
-        ulong? bestMatch = null;
-        var bestScore = -1;
-
-        foreach (var character in plugin.Config.Characters) {
-            if (string.IsNullOrWhiteSpace(character.Name))
-                continue;
-
-            var score = FormationCharacterName.MatchScore(character.Name, actorFullName);
-            if (score > bestScore) {
-                bestScore = score;
-                bestMatch = character.Cid;
-            }
-        }
-
-        return bestScore >= 0 ? bestMatch : null;
+        var matches = plugin.Config.Characters
+            .Where(character => character.Cid != 0
+                && FormationCharacterName.Matches(character.Name, actorFullName))
+            .Select(character => character.Cid)
+            .Distinct()
+            .Take(2)
+            .ToArray();
+        return matches.Length == 1 ? matches[0] : null;
     }
+
+    private static FormationResolvedAnchor ToResolved(AnchorCandidate match) => new(
+        match.Actor.Position,
+        match.Actor.Rotation,
+        null,
+        match.FullName,
+        match.Actor.GameObjectId,
+        match.Actor);
 
     private sealed record AnchorCandidate(IGameObject Actor, string Name, string FullName);
 }

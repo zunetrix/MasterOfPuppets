@@ -12,8 +12,6 @@ internal sealed class ForwardPreciseMovementStrategy : ISimpleMovementStrategy {
     }
 
     public string Name => "Forward";
-    public bool UsesNativeStopOnCompletion => true;
-
     public void Start(SimpleMovementContext context) {
     }
 

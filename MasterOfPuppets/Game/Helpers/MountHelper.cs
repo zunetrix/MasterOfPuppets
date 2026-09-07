@@ -12,6 +12,7 @@ public static class MountHelper {
             ActionName = mount.Singular.ToString(),
             IconId = mount.Icon,
             TextCommand = $"/mount \"{mount.Singular}\"",
+            Category = mount.ExtraSeats > 0 ? "Multi-seat mount" : "Single-seat mount",
             // SortOrder = (mount.UIPriority << 8) + mount.Order
         };
     }

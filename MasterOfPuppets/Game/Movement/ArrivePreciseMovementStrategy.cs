@@ -6,17 +6,14 @@ namespace MasterOfPuppets.Movement;
 
 internal sealed class ArrivePreciseMovementStrategy : ISimpleMovementStrategy {
     private readonly ForwardInputMovementController _forwardInput;
-    private readonly NativeStop _nativeStop;
     private bool _settling;
     private int _settleFrames;
 
-    public ArrivePreciseMovementStrategy(ForwardInputMovementController forwardInput, NativeStop nativeStop) {
+    public ArrivePreciseMovementStrategy(ForwardInputMovementController forwardInput) {
         _forwardInput = forwardInput;
-        _nativeStop = nativeStop;
     }
 
     public string Name => "Precise";
-    public bool UsesNativeStopOnCompletion => true;
 
     public void Start(SimpleMovementContext context) {
         _settling = false;
@@ -42,7 +39,6 @@ internal sealed class ArrivePreciseMovementStrategy : ISimpleMovementStrategy {
         if (distance <= context.Precision) {
             _forwardInput.Stop();
             SimpleMovementWalkState.IsWalking = false;
-            _nativeStop.Stop();
             _settling = true;
             _settleFrames = 0;
             return SimpleMovementUpdateResult.Running;

@@ -9,6 +9,7 @@ public static partial class MopCommandsHelper {
         .. GetInterfaceCommands(),
         .. GetPluginCommands(),
         .. GetChatSyncCommands(),
+        .. GetLuaScriptCommands(),
         .. GetMacroActions(),
         .. GetGameActions(),
     ];
@@ -36,6 +37,7 @@ public enum MopActionCategory {
     MacroAction,
     Interface,
     ChatSyncCommand,
+    LuaScript,
     GameAction,
 }
 

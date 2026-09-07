@@ -14,6 +14,9 @@ public class CongaConditionTest
     [InlineData("\"\" == \"\"", true)]
     [InlineData("\"test\" == \"test\" && \"a\" != \"b\"", true)]
     [InlineData("\"test\" == \"wrong\" || \"a\" != \"b\"", true)]
+    [InlineData("1 == 10", false)]
+    [InlineData("1 != 10", true)]
+    [InlineData("\"W\" == \"WAR\"", false)]
     public void Test_Condition_Evaluation(string cond, bool expected)
     {
         bool res = MacroConditionEvaluator.Evaluate(cond, null);

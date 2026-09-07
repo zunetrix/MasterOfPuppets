@@ -29,6 +29,38 @@ public static partial class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.ChatSyncCommand,
+            TextCommand = "mopluarun \"Script Name\" [-var=$name=value;...]",
+            SuggestionCommand = "mopluarun ",
+            Example = """
+            /cwl2 mopluarun "Swirling Vortex" -var=$anchor="<t>"
+            """,
+            Notes = """
+            * Cross-PC Lua equivalent of moprun.
+            * Uses the same -var=$name=value syntax as moprun.
+            * A script's Participant Formation determines who runs and assigns slots by formation-point order.
+            * $anchor is supplied to Lua as both mop.get_var("anchor") and mop.get_run_target().
+            * The sender's client automatically supplies the script hash, shared seed, and synchronized start time.
+            * Every participating PC must have the same script and Participant Formation and must listen to this Chat Sync channel.
+            * Lua commands use the normal Chat Sync channel and optional sender-whitelist settings; no separate conductor authorization is required.
+            * Optional PREPARE/READY/GO formation staging is configured under Settings > Lua Synchronization and must be enabled consistently on every PC.
+            * Replace /cwl2 with the channel configured in MoP Settings.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.ChatSyncCommand,
+            TextCommand = "mopluastop",
+            SuggestionCommand = "mopluastop",
+            Example = """
+            /cwl2 mopluastop
+            """,
+            Notes = """
+            * Stops active Lua scripts on every MoP client listening to the Chat Sync channel.
+            * Uses the normal Chat Sync channel and optional sender-whitelist settings, like moprun and mopstop.
+            * Replace /cwl2 with the channel configured in MoP Settings.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.ChatSyncCommand,
             TextCommand = "mopbr <command>",
             SuggestionCommand = "mopbr ",
             Example = """

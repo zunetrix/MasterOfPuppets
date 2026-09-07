@@ -12,6 +12,7 @@ public static class MinionHelper {
             ActionName = minion.Singular.ToString(),
             IconId = minion.Icon,
             TextCommand = $"/minion \"{minion.Singular}\"",
+            Category = minion.MinionRace.ValueNullable?.Name.ToString() ?? "Minion",
             // SortOrder = minion.Order
         };
     }

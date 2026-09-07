@@ -12,6 +12,10 @@
 *.ps1
 __ignore*/
 
+# Personal Lua scripts used by the local multi-client hot-reload workflow.
+# The public plugin contains the runtime and import/editor support, not these scripts.
+MasterOfPuppets/Lua/Scripts/*.lua
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

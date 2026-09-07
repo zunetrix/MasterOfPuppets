@@ -28,6 +28,8 @@ public class PluginUi : IDisposable {
     public XivLauncherWindow XivLauncherWindow { get; }
     public WindowLayoutWindow WindowLayoutWindow { get; }
     public GameSettingsWindow GameSettingsWindow { get; }
+    public LuaScriptsWindow LuaScriptsWindow { get; }
+    public LuaScriptEditorWindow LuaScriptEditorWindow { get; }
 
     public PluginUi(Plugin plugin) {
         Plugin = plugin;
@@ -49,6 +51,8 @@ public class PluginUi : IDisposable {
         XivLauncherWindow = AddWindow(new XivLauncherWindow(Plugin));
         WindowLayoutWindow = AddWindow(new WindowLayoutWindow(Plugin));
         GameSettingsWindow = AddWindow(new GameSettingsWindow(Plugin));
+        LuaScriptEditorWindow = AddWindow(new LuaScriptEditorWindow(Plugin, this));
+        LuaScriptsWindow = AddWindow(new LuaScriptsWindow(Plugin, this));
     }
 
     private T AddWindow<T>(T window) where T : Window {

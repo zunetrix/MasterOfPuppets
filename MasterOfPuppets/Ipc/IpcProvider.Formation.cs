@@ -55,6 +55,8 @@ internal partial class IpcProvider {
         if (!TryGetFormationAnchor(formation, anchor, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid, out var anchorGameObjectId, out var anchorName, out var normalizeAnchorRotation))
             return;
 
+        var eligibleMemberBits = FormationMemberVisibility.CaptureEligibleMemberBits(Plugin, formation);
+
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteFormation,
             name,
             anchorPos.X.ToString("G", CultureInfo.InvariantCulture),
@@ -65,7 +67,8 @@ internal partial class IpcProvider {
             SimpleInputMovement.FormatMode(movementMode),
             anchorGameObjectId.ToString(CultureInfo.InvariantCulture),
             anchorName,
-            normalizeAnchorRotation ? "1" : "0").Serialize(), includeSelf: true);
+            normalizeAnchorRotation ? "1" : "0",
+            eligibleMemberBits).Serialize(), includeSelf: true);
     }
 
     [IpcHandle(IpcMessageType.ExecuteFormation)]
@@ -74,7 +77,7 @@ internal partial class IpcProvider {
     }
 
     private void HandleExecuteFormationOnFrameworkThread(IpcMessage message) {
-        if (message.StringData == null || message.StringData.Length < 6) return;
+        if (message.StringData == null || message.StringData.Length < 11) return;
         var name = message.StringData[0];
         if (!float.TryParse(message.StringData[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float lx)) return;
         if (!float.TryParse(message.StringData[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float ly)) return;
@@ -92,11 +95,16 @@ internal partial class IpcProvider {
             ? message.StringData[8]
             : Plugin.Config.Characters.FirstOrDefault(character => character.Cid == anchorCid)?.Name ?? string.Empty;
         var normalizeAnchorRotation = message.StringData.Length < 10 || message.StringData[9] == "1";
+        var eligibleMemberBits = message.StringData[10];
 
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
         if (formation == null) {
             DalamudApi.PluginLog.Warning($"[ExecuteFormation] Formation '{name}' not found.");
+            return;
+        }
+        if (!FormationMemberVisibility.IsLocalMemberEligible(Plugin, formation, eligibleMemberBits)) {
+            DalamudApi.PluginLog.Debug("[ExecuteFormation] local formation member was not visible to the command issuer; ignoring command");
             return;
         }
 
@@ -111,7 +119,14 @@ internal partial class IpcProvider {
             : formation.Points.ElementAtOrDefault(0);
         if (anchorPoint == null) return;
 
-        var anchorPos = new Vector3(lx, ly, lz);
+        var rawAnchorPos = new Vector3(lx, ly, lz);
+        var anchorPos = rawAnchorPos;
+        if (anchorCid == 0)
+            anchorPos = FormationPointMovement.AdjustExternalOriginPosition(
+                formation,
+                FormationPointMovement.AnchorPointIndex,
+                anchorPos,
+                anchorRot);
         var (worldPos, facingRad) = FormationMath.GetMopRelativeWorld(anchorPoint, point, anchorPos, anchorRot);
         // DalamudApi.PluginLog.Warning($"[ExecuteFormation] anchorPos: {anchorPos} worldPos: {worldPos} faceDirection: {facingRad}");
 
@@ -129,11 +144,12 @@ internal partial class IpcProvider {
                 anchorCid,
                 anchorGameObjectId,
                 anchorName,
-                anchorPos,
+                anchorCid == 0 ? rawAnchorPos : anchorPos,
                 anchorRot,
                 anchorRot,
                 normalizeAnchorRotation,
-                trackingKey);
+                trackingKey,
+                anchorCid == 0);
         } else {
             Plugin.FormationTrackingSession.Stop();
             FormationLocalMovementExecutor.MoveToComputed(Plugin, worldPos, facingRad, movementMode, trackingKey);
@@ -203,6 +219,8 @@ internal partial class IpcProvider {
         if (!TryGetFormationAnchor(formation, effectiveAnchor, issuerCid, out var anchorPos, out var anchorRot, out var anchorCid, out var anchorGameObjectId, out var anchorName, out var normalizeAnchorRotation))
             return;
 
+        var eligibleMemberBits = FormationMemberVisibility.CaptureEligibleMemberBits(Plugin, formation);
+
         BroadCast(IpcMessage.Create(IpcMessageType.ExecuteFormationMove,
             name,
             anchorPos.X.ToString("G", CultureInfo.InvariantCulture),
@@ -219,7 +237,8 @@ internal partial class IpcProvider {
                 : "self",
             anchorGameObjectId.ToString(CultureInfo.InvariantCulture),
             anchorName,
-            normalizeAnchorRotation ? "1" : "0").Serialize(), includeSelf: true);
+            normalizeAnchorRotation ? "1" : "0",
+            eligibleMemberBits).Serialize(), includeSelf: true);
     }
 
     [IpcHandle(IpcMessageType.ExecuteFormationMove)]
@@ -228,7 +247,10 @@ internal partial class IpcProvider {
     }
 
     private void HandleExecuteFormationMoveOnFrameworkThread(IpcMessage message) {
-        if (message.StringData == null || message.StringData.Length < 9) return;
+        // The eligibility bitmap was added after the upstream 14-field
+        // payload. Accept legacy messages and treat every roster member as
+        // eligible when that optional field is absent.
+        if (message.StringData == null || message.StringData.Length < 14) return;
         var name = message.StringData[0];
         if (!float.TryParse(message.StringData[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float lx)) return;
         if (!float.TryParse(message.StringData[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float ly)) return;
@@ -251,10 +273,23 @@ internal partial class IpcProvider {
         var normalizeAnchorRotation = message.StringData.Length >= 14
             ? message.StringData[13] == "1"
             : message.StringData.Length < 11 || message.StringData[10] == "self";
+        var eligibleMemberBits = message.StringData.Length >= 15
+            ? message.StringData[14]
+            : null;
         var formation = Plugin.Config.Formations.FirstOrDefault(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
         if (formation == null) {
             DalamudApi.PluginLog.Warning($"[ExecuteFormationMove] Formation '{name}' not found.");
+            return;
+        }
+        if (eligibleMemberBits == null) {
+            eligibleMemberBits = FormationChatSyncCodec.EncodeEligibleMembers(
+                formation,
+                Plugin.Config.CidsGroups,
+                formation.Points.SelectMany(point => point.GetEffectiveCids(Plugin.Config.CidsGroups)));
+        }
+        if (!FormationMemberVisibility.IsLocalMemberEligible(Plugin, formation, eligibleMemberBits)) {
+            DalamudApi.PluginLog.Debug("[ExecuteFormationMove] local formation member was not visible to the command issuer; ignoring command");
             return;
         }
 
@@ -277,11 +312,19 @@ internal partial class IpcProvider {
             anchorCid, playerPointIndex, anchorPointIndex, sequence, sequenceIndex);
         if (destinationPointIndex < 0)
             return;
+        var rawAnchorPos = new Vector3(lx, ly, lz);
+        var anchorPos = anchorCid == 0
+            ? FormationPointMovement.AdjustExternalOriginPosition(
+                formation,
+                anchorPointIndex,
+                rawAnchorPos,
+                anchorRot)
+            : rawAnchorPos;
         var move = FormationPointMovement.BuildAnchoredWorldMove(
             formation,
             destinationPointIndex,
             anchorPointIndex,
-            new Vector3(lx, ly, lz),
+            anchorPos,
             anchorRot);
         if (move == null) return;
 
@@ -294,11 +337,12 @@ internal partial class IpcProvider {
                 anchorCid,
                 anchorGameObjectId,
                 anchorName,
-                new Vector3(lx, ly, lz),
+                anchorCid == 0 ? rawAnchorPos : anchorPos,
                 anchorRot,
                 anchorRot,
                 normalizeAnchorRotation,
-                trackingKey);
+                trackingKey,
+                anchorCid == 0);
         } else {
             Plugin.FormationTrackingSession.Stop();
             FormationLocalMovementExecutor.MoveToComputed(Plugin, move.Value.Position, move.Value.Rotation, movementMode, trackingKey);
@@ -332,9 +376,6 @@ internal partial class IpcProvider {
             anchor = FormationAnchorReference.Self;
 
         if (!FormationAnchorResolver.TryResolve(Plugin, formation, anchor, out var resolved, out var failureReason, out var failureKind)) {
-            // Point-1-unassigned formations use point 1 as a wildcard origin: when no
-            // target/focus target is selected, fall back to the issuer (self) as the leader.
-            // When point 1 is assigned, missing target/focus target is a no-op (legacy behavior).
             if (FormationAnchorRules.ShouldUseLeaderFallbackOnTargetlessAnchor(formation, anchor.Kind)
                 && FormationAnchorResolver.TryResolve(Plugin, formation, FormationAnchorReference.Self, out var selfResolved, out _, out _)) {
                 resolved = selfResolved;
@@ -349,7 +390,12 @@ internal partial class IpcProvider {
             }
         }
 
-        cid = FormationAnchorRules.SelectAnchorCid(formation, anchor.Kind, resolved.ContentId ?? 0, issuerCid, Plugin.Config.CidsGroups);
+        cid = FormationAnchorRules.SelectAnchorCid(
+            formation,
+            anchor.Kind,
+            resolved.ContentId ?? 0,
+            issuerCid,
+            Plugin.Config.CidsGroups);
         gameObjectId = resolved.GameObjectId ?? 0;
         name = resolved.Name;
         position = resolved.Position;

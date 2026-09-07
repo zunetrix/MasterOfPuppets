@@ -1,6 +1,6 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>1.15.0.231</Version>
+    <Version>1.15.0.450</Version>
   </PropertyGroup>
   <PropertyGroup>
     <Author>Zune</Author>
@@ -29,7 +29,7 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
     <!-- <UseWpf>true</UseWpf> -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
-    <Version>1.15.0.231</Version>
+    <Version>1.15.0.450</Version>
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
   <!-- Linux build -->
@@ -57,6 +57,8 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
     <PackageReference Include="Sprache" Version="2.3.1" />
     <!-- Efficient text searching -->
     <PackageReference Include="KTrie" Version="2.6.0" />
+    <!-- Managed Lua 5.2 runtime used by the sandboxed choreography runner -->
+    <PackageReference Include="LuaCSharp" Version="0.5.6" />
     <!-- Discriminated unions -->
     <!-- <PackageReference Include="OneOf" Version="3.0.263" /> -->
     <!-- <PackageReference Include="LiteDB" Version="5.0.21" /> -->
@@ -74,5 +76,10 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
       <DependentUpon>Language.resx</DependentUpon>
     </Compile>
     <!-- <Content Include="Assets\**\*.png" CopyToOutputDirectory="Always" /> -->
+      <EmbeddedResource Include="Lua\Scripts\mirror_combat_target.lua" />
+      <Content Include="Lua\Scripts\*.lua">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <TargetPath>Scripts\%(Filename)%(Extension)</TargetPath>
+      </Content>
   </ItemGroup>
 </Project>

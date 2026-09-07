@@ -38,6 +38,9 @@ public static class FormationCharacterName {
     }
 
     public static int MatchScore(string configName, string actorName) {
+        if (string.IsNullOrWhiteSpace(configName) || string.IsNullOrWhiteSpace(actorName))
+            return -1;
+
         configName = NormalizeWorldSeparator(configName);
         actorName = NormalizeWorldSeparator(actorName);
 
@@ -46,6 +49,9 @@ public static class FormationCharacterName {
 
         var configBaseName = GetBaseCharacterName(configName);
         var actorBaseName = GetBaseCharacterName(actorName);
+
+        if (string.IsNullOrWhiteSpace(configBaseName) || string.IsNullOrWhiteSpace(actorBaseName))
+            return -1;
 
         if (string.Equals(configBaseName, actorBaseName, StringComparison.OrdinalIgnoreCase))
             return int.MaxValue - 1;
@@ -66,5 +72,26 @@ public static class FormationCharacterName {
 
         var atIndex = fullName.LastIndexOf('@');
         return atIndex >= 0 ? fullName[..atIndex].Trim() : fullName.Trim();
+    }
+
+    public static bool Matches(string left, string right) {
+        if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+            return false;
+
+        left = NormalizeWorldSeparator(left);
+        right = NormalizeWorldSeparator(right);
+
+        if (string.Equals(left, right, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var leftHasWorld = left.Contains('@');
+        var rightHasWorld = right.Contains('@');
+
+        if (leftHasWorld && rightHasWorld)
+            return false;
+
+        var leftBase = GetBaseCharacterName(left);
+        var rightBase = GetBaseCharacterName(right);
+        return string.Equals(leftBase, rightBase, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -10,6 +10,7 @@ using Dalamud.Plugin;
 
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Formations;
+using MasterOfPuppets.LuaScripting;
 using MasterOfPuppets.WindowLayouts;
 
 namespace MasterOfPuppets;
@@ -31,6 +32,7 @@ internal class Configuration : IPluginConfiguration {
     public List<Formation> Formations { get; set; } = new();
     public List<WindowLayout> WindowLayouts { get; set; } = new();
     public List<GameSettingsProfile> GameSettingsProfiles { get; set; } = new();
+    public List<LuaScriptDefinition> LuaScripts { get; set; } = new();
     public HashSet<string> GameSettingsProfileKeys { get; set; } = new(StringComparer.OrdinalIgnoreCase) {
         "Refreshrate",
         "Fps",
@@ -203,6 +205,9 @@ internal class Configuration : IPluginConfiguration {
     public bool UseChatCommandSenderWhitelist { get; set; } = false;
     public List<string> ChatCommandSenderWhitelist { get; set; } = new();
     public string DefaultChatSyncPrefix { get; set; } = "/p";
+    public bool LuaDistributedReadinessEnabled { get; set; } = false;
+    public int LuaReadinessTimeoutSeconds { get; set; } = 30;
+    public string LuaReadinessTimeoutPolicy { get; set; } = "abort";
 
     // General
     public bool MultiboxEnabled { get; set; } = false;
@@ -229,6 +234,7 @@ internal class Configuration : IPluginConfiguration {
     public bool AllowCloseWithEscape { get; set; } = false;
     public bool ShowPanelActionsBroadcast { get; set; } = true;
     public bool ShowPanelMacroTags { get; set; } = true;
+    public bool ShowPanelLuaScriptTags { get; set; } = true;
     public float ActionIconSize { get; set; } = 48;
     public uint PreferredMultiRiderMountId { get; set; } = 0;
 
@@ -269,6 +275,7 @@ internal class Configuration : IPluginConfiguration {
         Formations = new();
         WindowLayouts = new();
         GameSettingsProfiles = new();
+        LuaScripts = new();
         ListenedChatTypes = new();
     }
 
@@ -374,6 +381,11 @@ internal class Configuration : IPluginConfiguration {
 
     public void MoveCharacterToIndex(int itemIndex, int targetIndex) {
         Characters.MoveItemToIndex(itemIndex, targetIndex);
+        this.Save();
+    }
+
+    public void MoveLuaScriptToIndex(int itemIndex, int targetIndex) {
+        LuaScripts.MoveItemToIndex(itemIndex, targetIndex);
         this.Save();
     }
 }

@@ -47,6 +47,9 @@ public static class ActionHelper {
         return action == null ? null : GetExecutableAction(action.Value);
     }
 
+    public static bool IsGroundTargeted(uint actionId) =>
+        GetAction(actionId) is { } action && action.TargetArea;
+
     public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
         return GetAction(item)?.Icon ?? undefinedIcon;

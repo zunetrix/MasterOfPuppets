@@ -48,10 +48,18 @@ public partial class MainWindow : Window {
                 ImGui.Separator();
                 ImGui.Spacing();
 
-                // Macros shortcut (opens separate window)
+                // Macros and scripts are the two automation modes.
+                var drewAutomationAction = false;
                 if (string.IsNullOrEmpty(_sidebarSearch) || "Macros".Contains(_sidebarSearch, StringComparison.OrdinalIgnoreCase)) {
                     DrawNavAction(FontAwesomeIcon.Scroll, "Macros", () => Ui.MacroWindow.Toggle(), false);
+                    drewAutomationAction = true;
+                }
+                if (string.IsNullOrEmpty(_sidebarSearch) || "Scripts".Contains(_sidebarSearch, StringComparison.OrdinalIgnoreCase)) {
+                    DrawNavAction(FontAwesomeIcon.Code, "Scripts", () => Ui.LuaScriptsWindow.Toggle(), false);
+                    drewAutomationAction = true;
+                }
 
+                if (drewAutomationAction) {
                     ImGui.Separator();
                     ImGui.Spacing();
                 }
@@ -91,6 +99,7 @@ public partial class MainWindow : Window {
                 ImGui.Spacing();
 
                 DrawNavActionIconOnly(FontAwesomeIcon.Scroll, "Macros", () => Ui.MacroWindow.Toggle());
+                DrawNavActionIconOnly(FontAwesomeIcon.Code, "Scripts", () => Ui.LuaScriptsWindow.Toggle());
 
                 ImGui.Spacing();
                 ImGui.Separator();

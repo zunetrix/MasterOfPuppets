@@ -6,6 +6,8 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 
+using MasterOfPuppets.Util;
+
 namespace MasterOfPuppets.Extensions;
 
 public static class StringExtensions {
@@ -56,23 +58,16 @@ public static class StringExtensions {
     }
 
     public static string Compress(this string input) {
+        // Use BlobUtil to produce line‑wrapped Base64 with optional GZip compression.
         var bytes = Encoding.UTF8.GetBytes(input);
-        using var ms = new MemoryStream();
-        using (var gs = new GZipStream(ms, CompressionMode.Compress))
-            gs.Write(bytes, 0, bytes.Length);
-        return Convert.ToBase64String(ms.ToArray());
+        return BlobUtil.Encode(bytes, compress: true);
     }
 
     public static string Decompress(this string input) {
+        // BlobUtil handles whitespace, line breaks, and auto‑detects GZip compression.
         if (string.IsNullOrWhiteSpace(input))
             return string.Empty;
-
-        input = input.Trim();
-        var data = Convert.FromBase64String(input);
-        using var ms = new MemoryStream(data);
-        using var gs = new GZipStream(ms, CompressionMode.Decompress);
-        using var r = new StreamReader(gs, Encoding.UTF8);
-        return r.ReadToEnd();
+        return BlobUtil.Decode(input);
     }
 
     internal static byte[] ToTerminatedBytes(this string s) {

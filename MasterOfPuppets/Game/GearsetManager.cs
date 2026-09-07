@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -8,15 +10,137 @@ using MasterOfPuppets.Extensions.Dalamud;
 
 namespace MasterOfPuppets;
 
+public sealed record GearsetDescriptor(int Number, string Name, byte ClassJobId);
+
+public sealed record GearsetSelector(int? Number = null, string Name = "") {
+    public static GearsetSelector ByNumber(int number) => new(number);
+    public static GearsetSelector ByName(string name) => new(null, name);
+}
+
+public sealed record GearsetResolution(
+    bool Success,
+    string Status,
+    string Message,
+    GearsetDescriptor? Gearset,
+    IReadOnlyList<GearsetDescriptor> Candidates);
+
 public static class GearsetManager {
-    // try move gearset items to armoury before equip
-    public static void ChangeGearset(Plugin plugin, int gearsetIndex) {
-        if (!EnqueueGearsetItemsToArmoury(plugin, gearsetIndex)) {
-            EquipGearset(gearsetIndex);
-            return;
+    public static unsafe IReadOnlyList<GearsetDescriptor> GetGearsets(uint? classJobId = null) {
+        if (classJobId is > byte.MaxValue)
+            return [];
+        var rapture = RaptureGearsetModule.Instance();
+        var inventory = InventoryManager.Instance();
+        if (rapture == null || inventory == null)
+            return [];
+
+        var result = new List<GearsetDescriptor>();
+        var gearsetCount = Math.Min(100, (int)inventory->GetPermittedGearsetCount());
+        for (var gearsetIndex = 0; gearsetIndex < gearsetCount; gearsetIndex++) {
+            if (!rapture->IsValidGearset(gearsetIndex))
+                continue;
+            var gearset = rapture->GetGearset(gearsetIndex);
+            if (gearset == null
+                || !gearset->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists)
+                || gearset->ClassJob == 0
+                || (classJobId.HasValue && gearset->ClassJob != classJobId.Value))
+                continue;
+            result.Add(new GearsetDescriptor(
+                gearsetIndex + 1,
+                gearset->NameString?.Trim() ?? string.Empty,
+                gearset->ClassJob));
+        }
+        return result;
+    }
+
+    internal static GearsetResolution ResolveGearset(
+        IReadOnlyList<GearsetDescriptor> gearsets,
+        byte? requiredClassJobId,
+        GearsetSelector? selector) {
+        ArgumentNullException.ThrowIfNull(gearsets);
+        if (requiredClassJobId == 0)
+            return Failure("invalid", "class/job ID must be between 1 and 255");
+
+        var ordered = gearsets
+            .Where(item => item.Number is >= 1 and <= 100 && item.ClassJobId != 0)
+            .OrderBy(item => item.Number)
+            .ToArray();
+        var jobMatches = requiredClassJobId.HasValue
+            ? ordered.Where(item => item.ClassJobId == requiredClassJobId.Value).ToArray()
+            : ordered;
+
+        if (selector == null) {
+            return Failure(
+                "selector_required",
+                requiredClassJobId.HasValue
+                    ? $"class/job {requiredClassJobId.Value} requires an exact gearset name or number"
+                    : "an exact gearset name or number is required",
+                jobMatches);
         }
 
-        plugin.ItemMover.ItemsMoved += () => EquipGearset(gearsetIndex);
+        var hasNumber = selector.Number.HasValue;
+        var name = selector.Name?.Trim() ?? string.Empty;
+        var hasName = name.Length > 0;
+        if (hasNumber == hasName)
+            return Failure("invalid", "gearset selector must contain exactly one name or number");
+
+        if (hasNumber) {
+            if (selector.Number is < 1 or > 100)
+                return Failure("invalid", "gearset number must be between 1 and 100");
+            var selected = ordered.FirstOrDefault(item => item.Number == selector.Number.Value);
+            if (selected == null)
+                return Failure("missing", $"gearset {selector.Number.Value} does not exist");
+            if (requiredClassJobId.HasValue && selected.ClassJobId != requiredClassJobId.Value)
+                return Failure(
+                    "job_mismatch",
+                    $"gearset {selected.Number} '{selected.Name}' is class/job {selected.ClassJobId}, not {requiredClassJobId.Value}",
+                    [selected]);
+            return Found(selected);
+        }
+
+        var nameMatches = ordered
+            .Where(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        if (nameMatches.Length == 0)
+            return Failure("missing", $"gearset named '{name}' does not exist");
+        var eligibleNameMatches = requiredClassJobId.HasValue
+            ? nameMatches.Where(item => item.ClassJobId == requiredClassJobId.Value).ToArray()
+            : nameMatches;
+        if (eligibleNameMatches.Length == 0)
+            return Failure(
+                "job_mismatch",
+                $"gearset named '{name}' does not match class/job {requiredClassJobId!.Value}",
+                nameMatches);
+        return eligibleNameMatches.Length == 1
+            ? Found(eligibleNameMatches[0])
+            : Failure(
+                "ambiguous",
+                $"gearset name '{name}' matches {eligibleNameMatches.Length} gearsets; use a gearset number",
+                eligibleNameMatches);
+    }
+
+    public static GearsetResolution ResolveGearset(byte? requiredClassJobId, GearsetSelector? selector) =>
+        ResolveGearset(GetGearsets(), requiredClassJobId, selector);
+
+    private static GearsetResolution Found(GearsetDescriptor gearset) =>
+        new(true, "found", $"resolved gearset {gearset.Number} '{gearset.Name}'", gearset, [gearset]);
+
+    private static GearsetResolution Failure(
+        string status,
+        string message,
+        IReadOnlyList<GearsetDescriptor>? candidates = null) =>
+        new(false, status, message, null, candidates ?? []);
+
+    internal static unsafe IReadOnlyList<uint> GetAvailableClassJobIds() {
+        return GetGearsets()
+            .Select(item => (uint)item.ClassJobId)
+            .Distinct()
+            .OrderBy(id => id)
+            .ToArray();
+    }
+
+    // Direct gearset equip
+    public static void ChangeGearset(Plugin plugin, int gearsetIndex) {
+        EquipGearset(gearsetIndex);
     }
 
     public static unsafe void MoveGearsetsToArmoury(Plugin plugin, IReadOnlyList<int> gearsetIndices) {
@@ -124,8 +248,14 @@ public static class GearsetManager {
         return any;
     }
 
-    public static void EquipGearset(int gearsetIndex) {
-        Chat.SendMessage($"/gs change {gearsetIndex + 1}");
+    public static unsafe void EquipGearset(int gearsetIndex) {
+        if (gearsetIndex is < 0 or > 99)
+            return;
+        var rapture = RaptureGearsetModule.Instance();
+        if (rapture == null || !rapture->IsValidGearset(gearsetIndex))
+            return;
+
+        rapture->EquipGearset(gearsetIndex, 0);
     }
 
     public static unsafe void RenameGearset(int gearsetIndex, string gearsetName) {

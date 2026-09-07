@@ -19,6 +19,30 @@ public static partial class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.Interface,
+            TextCommand = "/mop macro",
+            SuggestionCommand = "/mop macro",
+            Example = """
+            /mop macro
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Toggle macros window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.Interface,
+            TextCommand = "/mop script",
+            SuggestionCommand = "/mop script",
+            Example = """
+            /mop script
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Toggle scripts window
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.Interface,
             TextCommand = "/mop formation",
             SuggestionCommand = "/mop formation",
             Example = """

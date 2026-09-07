@@ -37,6 +37,11 @@ internal partial class IpcProvider {
         if (variables.Count == 0)
             return;
 
+        if (!Plugin.Config.SyncClients) {
+            ApplyActiveVariableUpdates(variables);
+            return;
+        }
+
         var varsToken = "-var=" + string.Join(";", variables.Select(kv => $"${kv.Key}={FormatInlineVarValue(kv.Value)}"));
         BroadCast(IpcMessage.Create(IpcMessageType.UpdateMacroVariables, varsToken).Serialize(), includeSelf: true);
     }
@@ -48,7 +53,12 @@ internal partial class IpcProvider {
 
         var variables = ArgumentParser.ParseInlineVars(message.StringData[0]);
         if (variables.Count > 0)
-            Plugin.MacroHandler.UpdateActiveMacroVariables(variables);
+            ApplyActiveVariableUpdates(variables);
+    }
+
+    private void ApplyActiveVariableUpdates(IReadOnlyDictionary<string, string> variables) {
+        Plugin.MacroHandler.UpdateActiveMacroVariables(variables);
+        Plugin.LuaScriptManager.UpdateActiveVariables(variables);
     }
 
     [IpcHandle(IpcMessageType.RunMacro)]

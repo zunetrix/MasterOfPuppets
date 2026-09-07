@@ -99,12 +99,20 @@ public sealed class FormationTrackingSession {
         float fallbackAnchorRotation,
         float fallbackAnchorActorRotation,
         bool normalizeAnchorRotation,
-        string trackingKey) {
+        string trackingKey,
+        bool externalOrigin = false) {
+        var effectiveFallbackPosition = externalOrigin
+            ? FormationPointMovement.AdjustExternalOriginPosition(
+                formation,
+                anchorPointIndex,
+                fallbackAnchorPosition,
+                fallbackAnchorRotation)
+            : fallbackAnchorPosition;
         if (!TryComputeTarget(
                 formation,
                 destinationPointIndex,
                 anchorPointIndex,
-                fallbackAnchorPosition,
+            effectiveFallbackPosition,
                 fallbackAnchorRotation,
                 out var target))
             return;
@@ -131,7 +139,8 @@ public sealed class FormationTrackingSession {
             anchorName,
             normalizeAnchorRotation,
             trackingKey,
-            new FormationAnchorPoseTracker(fallbackAnchorPosition, fallbackAnchorRotation, now),
+            externalOrigin,
+            new FormationAnchorPoseTracker(effectiveFallbackPosition, fallbackAnchorRotation, now),
             new FormationAnchorLocomotionTracker(fallbackAnchorPosition, fallbackAnchorActorRotation, now),
             null,
             now - ReacquireIntervalMs,
@@ -174,7 +183,14 @@ public sealed class FormationTrackingSession {
         var anchorRotation = session.NormalizeAnchorRotation
             ? FormationMath.GetFormationFrameRotation(session.Formation.Points[session.AnchorPointIndex], anchor.Rotation)
             : anchor.Rotation;
-        session.PoseTracker.Update(anchor.Position, anchorRotation, now);
+        var anchorPosition = session.ExternalOrigin
+            ? FormationPointMovement.AdjustExternalOriginPosition(
+                session.Formation,
+                session.AnchorPointIndex,
+                anchor.Position,
+                anchorRotation)
+            : anchor.Position;
+        session.PoseTracker.Update(anchorPosition, anchorRotation, now);
         if (!TryComputeTarget(
                 session.Formation,
                 session.DestinationPointIndex,
@@ -263,6 +279,7 @@ public sealed class FormationTrackingSession {
             string anchorName,
             bool normalizeAnchorRotation,
             string trackingKey,
+            bool externalOrigin,
             FormationAnchorPoseTracker poseTracker,
             FormationAnchorLocomotionTracker anchorLocomotionTracker,
             IGameObject? cachedAnchor,
@@ -276,6 +293,7 @@ public sealed class FormationTrackingSession {
             AnchorName = anchorName;
             NormalizeAnchorRotation = normalizeAnchorRotation;
             TrackingKey = trackingKey;
+            ExternalOrigin = externalOrigin;
             PoseTracker = poseTracker;
             AnchorLocomotionTracker = anchorLocomotionTracker;
             CachedAnchor = cachedAnchor;
@@ -291,6 +309,7 @@ public sealed class FormationTrackingSession {
         public string AnchorName { get; }
         public bool NormalizeAnchorRotation { get; }
         public string TrackingKey { get; }
+        public bool ExternalOrigin { get; }
         public FormationAnchorPoseTracker PoseTracker { get; }
         public FormationAnchorLocomotionTracker AnchorLocomotionTracker { get; }
         public IGameObject? CachedAnchor { get; set; }

@@ -45,4 +45,14 @@ internal partial class IpcProvider {
     private void HandleStopMovement(IpcMessage message) {
         Plugin.StopAllMovementLocal();
     }
+
+    public void StopManagedMovement() {
+        Plugin.StopNonLuaMovementLocal();
+        BroadCast(IpcMessage.Create(IpcMessageType.StopManagedMovement).Serialize(), includeSelf: false);
+    }
+
+    [IpcHandle(IpcMessageType.StopManagedMovement)]
+    private void HandleStopManagedMovement(IpcMessage message) {
+        Plugin.StopNonLuaMovementLocal();
+    }
 }

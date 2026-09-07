@@ -143,6 +143,8 @@ public static partial class MopCommandsHelper {
                 target == "Name", "$var" == "value", "$var" != ""
                 incombat, outcombat, isperforming, isalive, isdead, isleader, inparty
                 visible "Name", exists "Name"
+                scriptrunning "Script Name", scriptactive "Script Name"
+                macrorunning "Macro Name", macroactive "Macro Name"
             """,
             Notes = """
             Executes a block of actions or a single inline command only if the condition evaluates to true.
@@ -254,6 +256,60 @@ public static partial class MopCommandsHelper {
             Two values always produce a range: {random(1,5)} = any integer 1-5.
             Three+ values pick from the exact set: {random(1,3,5)} = 1, 3, or 5 only.
             Supports decimals in lists: {random(0.5,1.0,1.5)} = 0.5, 1.0, or 1.5.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.Variables,
+            TextCommand = "{calc(expression)}",
+            SuggestionCommand = "{calc(}",
+            Example = """
+            /mopphasewait {calc(0.8 * 7)}
+            /mopphasewait {calc($interval * 7)}
+            """,
+            Notes = """
+            Evaluates a bounded arithmetic expression at execution time after variable and
+            random-token substitution. Supports + - * / % ^, parentheses, and unary signs;
+            results are rounded to 2 decimals. Invalid expressions are left untouched.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.Variables,
+            TextCommand = "$name=value - Declared Variables",
+            SuggestionCommand = "$name=",
+            Example = """
+            $interval=0.80
+            $offset=$assignmentIndex * $interval
+            $totalWait=$assignmentCount * $interval
+            /mopphasewait $totalWait
+            """,
+            Notes = """
+            Declare reusable values in the macro Variables field or at the top of a command.
+            Arithmetic definitions are evaluated automatically. Use $commandIndex and
+            $commandCount for macro structure, and $assignmentIndex and $assignmentCount
+            for a character's lane among the matched command's targets.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.Variables,
+            TextCommand = "$variable - Built-in Variables",
+            SuggestionCommand = "$",
+            Example = """
+            $me                 local character name
+            $target             current target name
+            $ftarget            current focus target name
+            $job                current job abbreviation
+            $level              current level
+            $world              current home world
+            $leader             party leader name
+            $globaldelay        configured global delay in seconds
+            """,
+            Notes = """
+            Runtime values are populated from game state. Structure values are authoritative:
+            $commandIndex/$commandCount describe the selected command, while
+            $assignmentIndex/$assignmentCount describe its targeted character roster.
             """
         },
 
@@ -537,6 +593,52 @@ public static partial class MopCommandsHelper {
             Default: precise. continuous gives smoother loops. natural keeps the walk/run
             toggle as it is while the character tracks the formation live.
             This is the precise local alternative to the broadcast /mopformationmove.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.Movement,
+            TextCommand = "/moppetplace X Y Z [anchor]",
+            SuggestionCommand = "/moppetplace 0 0 -1 target",
+            Example = """
+            Place pet 1 yalm behind your target:
+                /moppetplace 0 0 -1 target
+
+            Place pet 2 yalms in front of yourself:
+                /moppetplace 0 0 2 self
+
+            Place pet relative to a specific character:
+                /moppetplace 1 0 0 "Tank Name@World"
+            """,
+            Notes = """
+            Places your summoned pet at 3D coordinates relative to the specified anchor without switching targets or clicking.
+            X (+Left | -Right)
+            Y (+Up | -Down)
+            Z (+Forward | -Back)
+            Anchor options: target, self, ftarget, or "Character Name@World".
+            Default anchor: target if one is selected, otherwise self.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.MacroAction,
+            SubCategory = MopActionSubCategory.Movement,
+            TextCommand = "/moppetformationplace \"Formation Name\" <pointNumber> [anchor=self|target|ftarget|\"Character Name@World\"]",
+            SuggestionCommand = "/moppetformationplace \"Formation Name\" 1 anchor=self",
+            Example = """
+            Carbuncle Rodeo circuit using a saved formation:
+                /moppetformationplace "Rodeo" 1 anchor=self
+                /mopwait 0.25
+                /moppetformationplace "Rodeo" 2 anchor=self
+                /mopwait 0.25
+                /moppetformationplace "Rodeo" 3 anchor=self
+                /mopwait 0.25
+                /moploop
+            """,
+            Notes = """
+            Places your summoned pet directly at one saved formation point using point 1 as the origin/anchor.
+            Point numbers are 1-based.
+            Anchor options: self, target, ftarget, or "Character Name@World".
+            Eliminates the need to target waypoint puppet characters to move your pet along a path.
             """
         },
         new MopAction {

@@ -81,7 +81,27 @@ If the condition is met, the single action following the slash is executed immed
 
 *Note: The name query is case-insensitive and supports substring matching.*
 
-### 2.4 Value Comparisons (`==` and `!=`)
+### 2.4 Lua Script State
+
+| Expression | True When |
+| :--- | :--- |
+| `scriptrunning "Script Name"` | A matching Lua script is waiting or actively executing. Matching is case-insensitive. |
+| `scriptactive "Script Name"` | Alias for `scriptrunning`. |
+
+The selector may also be a specific active run ID. Paused, completed, stopped, cancelled, timed-out, and failed runs do not satisfy this condition.
+
+Use this condition in the macro that controls the desired QoLBar visibility, for example by placing the QoLBar provider's show/hide commands inside the `/mopif` and `/mopelse` branches.
+
+MoP macros can be checked in the same way:
+
+| Expression | True When |
+| :--- | :--- |
+| `macrorunning "Macro Name"` | The named MoP macro is currently executing. |
+| `macroactive "Macro Name"` | Alias for `macrorunning`. |
+
+This checks the active macro or loop worker on the local client. A queued macro that has not started executing yet does not satisfy the condition.
+
+### 2.5 Value Comparisons (`==` and `!=`)
 
 You can compare special game variables, target names, player jobs, or custom macro variables using equality (`==`) or inequality (`!=`):
 
@@ -101,7 +121,7 @@ You can compare special game variables, target names, player jobs, or custom mac
 
 *Note: String comparisons are case-insensitive and allow substring containment unless comparing against an empty string `""`.*
 
-### 2.5 Logical Operators & Grouping
+### 2.6 Logical Operators & Grouping
 
 Expressions can be combined with boolean logic:
 * **Conjunction (AND)**: `&&` or ` and `

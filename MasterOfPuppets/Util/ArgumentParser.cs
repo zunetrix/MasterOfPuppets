@@ -152,16 +152,27 @@ public static class ArgumentParser {
             return new Dictionary<string, string>();
 
         var vars = new Dictionary<string, string>();
-        foreach (Match m in InlineVarRegex.Matches(flagsToken[prefix.Length..])) {
+        var content = flagsToken[prefix.Length..].Trim();
+        foreach (Match m in InlineVarRegex.Matches(content)) {
             var name = m.Groups["name"].Value;
             var value = m.Groups["value"].Value;
             if ((value.StartsWith('"') && value.EndsWith('"')) ||
                 (value.StartsWith('\'') && value.EndsWith('\'')))
                 value = value[1..^1];
             else
-                value = value.TrimEnd();
+                value = Regex.Replace(value, @"\s+-var=$", string.Empty, RegexOptions.IgnoreCase).Trim();
             vars[name] = value;
         }
+
+        if (vars.Count == 0 && !string.IsNullOrWhiteSpace(content)) {
+            var raw = content;
+            if ((raw.StartsWith('"') && raw.EndsWith('"')) ||
+                (raw.StartsWith('\'') && raw.EndsWith('\'')))
+                raw = raw[1..^1];
+            if (!string.IsNullOrWhiteSpace(raw))
+                vars["anchor"] = raw.Trim();
+        }
+
         return vars;
     }
 

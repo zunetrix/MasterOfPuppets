@@ -39,5 +39,8 @@ internal partial class IpcProvider : IDisposable {
         _bus.Broadcast(serialized, includeSelf);
     }
 
-    public void Dispose() => _bus.Dispose();
+    public void Dispose() {
+        DisposeLuaChatSyncSender();
+        _bus.Dispose();
+    }
 }

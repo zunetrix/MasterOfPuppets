@@ -27,6 +27,11 @@ public static partial class MopCommandsHelper {
             Variable names must start with a letter or underscore.
             When a name is set in more than one place, inline vars win over command-level vars,
             which win over the macro's own Variables field.
+
+            Inside macro actions, prefix a variable reference with a backslash to emit it
+            literally while other references are expanded. This is useful for forwarding an
+            active value to a later macro run:
+            /cwl2 moprun "My macro" -var=\$item="$item"
             """
         },
         new MopAction {

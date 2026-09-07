@@ -12,7 +12,7 @@ public static class FacewearHelper {
             ActionName = facewear.Name.ToString(),
             IconId = (uint)facewear.Icon,
             TextCommand = $"/facewear \"{facewear.Name}\"",
-            // Category = facewear.Style.ValueNullable?.Name.ToString() ?? "Unknown",
+            Category = facewear.Style.ValueNullable?.Name.ToString() ?? "Facewear",
             // SortOrder = (int)(((facewear.Style.ValueNullable?.Order ?? 0) << sizeof(ushort)) + facewear.RowId),
         };
     }

@@ -747,4 +747,61 @@ public class FormationMacroGeneratorTests {
 
         return formation;
     }
+
+    [Fact]
+    public void GenerateLoopMacro_PetPlacement_EmitsMoppetFormationPlaceCommands() {
+        var formation = BuildEightPointFormation();
+        formation.Name = "Rodeo Ring";
+
+        var macro = FormationMacroGenerator.GenerateLoopMacro(formation, new FormationMacroGeneratorOptions {
+            MacroName = "Rodeo Pet Macro",
+            Mode = FormationMacroGeneratorMode.PetPlacement,
+            UsePetFormationPlaceCommand = true,
+            FormationMoveName = "Rodeo Ring",
+            FormationMoveAnchorMode = FormationMoveAnchorMode.Self,
+            TravelSecondsPerUnit = 0.5f,
+            GlobalDelaySeconds = 0f,
+        });
+
+        Assert.Equal("Rodeo Pet Macro", macro.Name);
+        Assert.Equal(7, macro.Commands.Count);
+
+        var firstLines = macro.Commands[0].Actions.Split('\n');
+        Assert.Equal("/moppetformationplace \"Rodeo Ring\" 2 anchor=self", firstLines[0]);
+        Assert.StartsWith("/mopwait", firstLines[1]);
+        Assert.Equal("/moploop", firstLines[^1]);
+        Assert.DoesNotContain("/moptarget", macro.Commands[0].Actions);
+    }
+
+    [Fact]
+    public void GenerateLoopMacro_PetPlacement_WithoutAssignedPoints_EmitsForOriginCharacter() {
+        var formation = new Formation {
+            Name = "Unassigned Rodeo",
+            Points = [
+                new FormationPoint { Offset = Vector3.Zero },
+                new FormationPoint { Offset = new Vector3(0f, 0f, 2f) },
+                new FormationPoint { Offset = new Vector3(2f, 0f, 0f) },
+            ],
+        };
+
+        var macro = FormationMacroGenerator.GenerateLoopMacro(formation, new FormationMacroGeneratorOptions {
+            MacroName = "Solo Rodeo",
+            Mode = FormationMacroGeneratorMode.PetPlacement,
+            UsePetFormationPlaceCommand = true,
+            OriginContentId = 999UL,
+            FormationMoveAnchorMode = FormationMoveAnchorMode.Target,
+            TravelSecondsPerUnit = 0.2f,
+            GlobalDelaySeconds = 0f,
+        });
+
+        Assert.Single(macro.Commands);
+        Assert.Equal([999UL], macro.Commands[0].Cids);
+
+        var lines = macro.Commands[0].Actions.Split('\n');
+        Assert.Equal("/moppetformationplace \"Unassigned Rodeo\" 2 target", lines[0]);
+        Assert.StartsWith("/mopwait", lines[1]);
+        Assert.Equal("/moppetformationplace \"Unassigned Rodeo\" 3 target", lines[2]);
+        Assert.StartsWith("/mopwait", lines[3]);
+        Assert.Equal("/moploop", lines[4]);
+    }
 }

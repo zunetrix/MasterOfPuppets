@@ -15,6 +15,7 @@ public class DalamudApi {
     // using CSPlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
     [PluginService] public static IPlayerState PlayerState { get; private set; } = null;
     [PluginService] public static IPartyList PartyList { get; private set; } = null;
+    [PluginService] public static IBuddyList BuddyList { get; private set; } = null;
     [PluginService] public static INotificationManager NotificationManager { get; private set; } = null;
     [PluginService] public static IFramework Framework { get; private set; } = null;
     [PluginService] public static IDataManager DataManager { get; private set; } = null;

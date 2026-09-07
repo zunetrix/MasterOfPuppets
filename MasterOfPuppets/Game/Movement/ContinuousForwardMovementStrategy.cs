@@ -14,8 +14,6 @@ internal sealed class ContinuousForwardMovementStrategy : ISimpleMovementStrateg
     }
 
     public string Name => "Continuous";
-    public bool UsesNativeStopOnCompletion => false;
-
     public void Start(SimpleMovementContext context) {
         _previousDistance = null;
         _hasApproachedDestination = false;

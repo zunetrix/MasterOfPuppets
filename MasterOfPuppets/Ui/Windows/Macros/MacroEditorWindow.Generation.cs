@@ -27,6 +27,7 @@ public partial class MacroEditorWindow {
     private int _macroGenPetStep = 1;
     private bool _macroGenPetReverse;
     private string _macroGenPetActionCommand = "/pac \"Place\" <t>";
+    private bool _macroGenUsePetFormationPlaceCommand = true;
 
     private FormationShapeType _macroGenShapeType = FormationShapeType.Circle;
     private int _macroGenShapeCount = 8;
@@ -161,9 +162,14 @@ public partial class MacroEditorWindow {
     }
 
     private void DrawMacroGeneratorPetControls() {
-        DrawMacroGeneratorLabel("Pet action", "Command to run after targeting each destination.");
-        ImGui.SetNextItemWidth(220);
-        ImGui.InputText("##macroGenPetAction", ref _macroGenPetActionCommand, 256);
+        DrawMacroGeneratorLabel("Use /moppetformationplace", "Places pet directly at formation points without switching targets or requiring dummy puppets.");
+        ImGui.Checkbox("##macroGenUsePetFormationPlace", ref _macroGenUsePetFormationPlaceCommand);
+
+        if (!_macroGenUsePetFormationPlaceCommand) {
+            DrawMacroGeneratorLabel("Pet action", "Command to run after targeting each destination.");
+            ImGui.SetNextItemWidth(220);
+            ImGui.InputText("##macroGenPetAction", ref _macroGenPetActionCommand, 256);
+        }
     }
 
     private void DrawMacroGeneratorShapeControls(int assignmentPointCount) {
@@ -446,6 +452,7 @@ public partial class MacroEditorWindow {
                 ClosedLoop = true,
                 UseMatchingGroups = false,
                 PetActionCommand = string.IsNullOrWhiteSpace(_macroGenPetActionCommand) ? "/pac \"Place\" <t>" : _macroGenPetActionCommand.Trim(),
+                UsePetFormationPlaceCommand = _macroGenUsePetFormationPlaceCommand,
                 LinkPetTraversalToMovement = _macroGenLinkPetTraversalToMovement,
                 PetStep = _macroGenPetStep,
                 PetReverse = _macroGenPetReverse,

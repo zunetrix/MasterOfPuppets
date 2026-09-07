@@ -26,6 +26,16 @@
         "resolved": "2.6.0",
         "contentHash": "UDiq0OeQzS8WAMs/WwBcKJIaMx4dBOtipXx3Y/+sOb/brMo2HiWWo2LAfpuHX3XAzwfweo/q1q3ZE/Pdi3Ik8A=="
       },
+      "LuaCSharp": {
+        "type": "Direct",
+        "requested": "[0.5.6, )",
+        "resolved": "0.5.6",
+        "contentHash": "ncwP3iXeonYM7bILBjsPPIk12mfvCO4tBFnrt9bjnKEZ8Ugdp+MlKskRUGEbo/WHGKU2dRlhxEyuN17L2PHYfg==",
+        "dependencies": {
+          "LuaCSharp.Annotations": "0.5.6",
+          "LuaCSharp.SourceGenerator": "0.5.6"
+        }
+      },
       "protobuf-net": {
         "type": "Direct",
         "requested": "[3.2.56, )",
@@ -69,6 +79,16 @@
         "requested": "[0.0.8, )",
         "resolved": "0.0.8",
         "contentHash": "MGQt+wVUjj7HKYzBUbhpUOEoJuzEFl3GXr9T+bXZCMZ7SI9WUUyTx/jxULoMdTZoYgiueCGuKcW1wuEHTDDi0w=="
+      },
+      "LuaCSharp.Annotations": {
+        "type": "Transitive",
+        "resolved": "0.5.6",
+        "contentHash": "tb8JLViDSSHpmMmBpxqbr+y+4Dpu6v5p3in7RlAUIi+YD7CMi7BEEI7fTc6o5lzoJxSMbIdzzGzjzXXMF6aaSg=="
+      },
+      "LuaCSharp.SourceGenerator": {
+        "type": "Transitive",
+        "resolved": "0.5.6",
+        "contentHash": "IJLlWaIYdpvZ5zO20DidDusqMl5pnoHzrmNmB7UnWMWqOfz1t8LeGfDH8kFTDpGcveFE8YUNeEUa4j6SmWGUPg=="
       },
       "MessagePack": {
         "type": "Transitive",

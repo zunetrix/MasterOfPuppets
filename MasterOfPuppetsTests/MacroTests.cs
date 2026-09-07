@@ -12,6 +12,66 @@ using MasterOfPuppets.Util;
 public class MacroTests
 {
 
+    [Theory]
+    [InlineData("7 * 0.8", "5.6")]
+    [InlineData("(3 + 1) * 2.5", "10")]
+    [InlineData("2 ^ 3", "8")]
+    [InlineData("-1.5 + 3", "1.5")]
+    public void Evaluates_Arithmetic_Expressions(string input, string expected) {
+        Assert.True(MathExpressionEvaluator.TryEvaluate(input, out var result));
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void Resolves_Arithmetic_Variables_And_Calc_Tokens() {
+        var macro = new Macro {
+            Variables = "$interval=0.8\n$total=7 * $interval",
+            Commands = new List<Command> {
+                new Command { Cids = new() { 1 }, Actions = "/mopwait $total\n/mopwait {calc(0.8 * 7)}" },
+            },
+        };
+
+        var actions = macro.GetCidActions(1);
+        Assert.Equal("/mopwait 5.6", actions[0]);
+        Assert.Equal("/mopwait 5.6", MacroTokenProcessor.Process(actions[1]));
+    }
+
+    [Fact]
+    public void Injects_Command_And_Assignment_AutoVariables() {
+        var macro = new Macro {
+            Variables = "$step=0.1",
+            Commands = new List<Command> {
+                new Command { Cids = new() { 10 }, Actions = "/mopwait $commandIndex" },
+                new Command { Cids = new() { 20, 30 }, Actions = "/mopwait {calc($assignmentIndex * $step)} $assignmentCount/$commandCount" },
+            },
+        };
+
+        Assert.Equal("/mopwait 0", macro.GetCidActions(10)[0]);
+        Assert.Equal("/mopwait 0 2/2", MacroTokenProcessor.Process(macro.GetCidActions(20)[0]));
+        Assert.Equal("/mopwait 0.1 2/2", MacroTokenProcessor.Process(macro.GetCidActions(30)[0]));
+    }
+
+    [Fact]
+    public void Exposes_Runtime_State_Variables() {
+        var macro = new Macro {
+            Commands = new List<Command> {
+                new Command { Cids = new() { 1 }, Actions = "/echo $job $class $level $world $leader $ftarget $globaldelay" },
+            },
+        };
+        var runtime = new MacroRuntimeVariables {
+            Job = "PLD",
+            Level = "100",
+            World = "World",
+            Leader = "Leader@World",
+            FocusTarget = "Focus@World",
+            GlobalDelaySeconds = 0.75,
+        };
+
+        Assert.Equal(
+            "/echo PLD PLD 100 World Leader@World Focus@World 0.75",
+            macro.GetCidActions(1, runtimeVariables: runtime)[0]);
+    }
+
     [Fact]
     public void Returns_Actions_For_Specific_Cid()
     {
@@ -227,6 +287,52 @@ public class MacroTests
             });
 
         Assert.Equal(new[] { "/mopformationgoto \"Circle\" 2 anchor=\"Target Dummy@World\" fallback=\"Leader Name@World\"" }, result);
+    }
+
+    [Fact]
+    public void Escaped_Variable_Remains_Literal_While_Unescaped_Value_Is_Substituted()
+    {
+        var macro = new Macro
+        {
+            Variables = "$firework=\"Heavenscracker\"",
+            Commands = new List<Command> {
+                new Command {
+                    Cids = new() { 1 },
+                    Actions = "/cwl2 moprun \"Goodies: Firework\" -var=\\$firework=\"$firework\""
+                }
+            }
+        };
+
+        var result = macro.GetCidActions(
+            1,
+            inlineVars: new Dictionary<string, string> { ["firework"] = "Bombard Bloom" });
+
+        Assert.Equal(
+            new[] { "/cwl2 moprun \"Goodies: Firework\" -var=$firework=\"Bombard Bloom\"" },
+            result);
+    }
+
+    [Fact]
+    public void Escaped_Variable_Can_Be_Parsed_As_An_Inline_Override_After_Substitution()
+    {
+        var macro = new Macro
+        {
+            Variables = "$firework=\"Heavenscracker\"",
+            Commands = new List<Command> {
+                new Command {
+                    Cids = new() { 1 },
+                    Actions = "/cwl2 moprun \"Goodies: Firework\" -var=\\$firework=\"$firework\""
+                }
+            }
+        };
+
+        var command = Assert.Single(macro.GetCidActions(1));
+        var flags = Assert.Single(
+            ArgumentParser.ParseCommandArgs(command[6..]),
+            token => token.StartsWith("-var="));
+        var variables = ArgumentParser.ParseInlineVars(flags);
+
+        Assert.Equal("Heavenscracker", variables["firework"]);
     }
 
     [Fact]

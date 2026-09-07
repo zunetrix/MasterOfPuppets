@@ -69,6 +69,10 @@ public static class Chat {
         DalamudApi.Framework.RunOnTick(() => SendMessageInternal(message));
     }
 
+    public static void SendMessageImmediate(string message) {
+        SendMessageInternal(message);
+    }
+
     /// <summary>
     /// <para>
     /// Send a given message to the chat box. <b>This can send chat to the server.</b>

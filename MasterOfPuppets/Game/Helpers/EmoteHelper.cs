@@ -39,6 +39,19 @@ public static class EmoteHelper {
         return emote == null ? null : GetExecutableAction(emote.Value);
     }
 
+    public static bool IsPersistent(uint id) =>
+        GetEmote(id) is { } emote && emote.EmoteMode.RowId != 0;
+
+    public static uint? GetChangePoseEmoteId() {
+        foreach (var emote in DalamudApi.DataManager.GetExcelSheet<Emote>()) {
+            var command = emote.TextCommand.ValueNullable?.Command.ToString() ?? string.Empty;
+            if (command.Equals("/changepose", System.StringComparison.OrdinalIgnoreCase)
+                || command.Equals("/cpose", System.StringComparison.OrdinalIgnoreCase))
+                return emote.RowId;
+        }
+        return null;
+    }
+
     public static uint GetIconId(uint item) {
         uint undefinedIcon = 60042;
         return GetEmote(item)?.Icon ?? undefinedIcon;

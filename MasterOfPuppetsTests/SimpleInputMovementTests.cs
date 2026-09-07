@@ -7,6 +7,28 @@ using Xunit;
 
 public class SimpleInputMovementTests {
     [Theory]
+    [InlineData(false, 0u, 0u, false, false, false)]
+    [InlineData(false, 7u, 0u, false, false, true)]
+    [InlineData(false, 0u, 7u, false, false, true)]
+    [InlineData(true, 0u, 0u, false, false, true)]
+    [InlineData(false, 0u, 0u, true, false, true)]
+    [InlineData(false, 0u, 0u, false, true, true)]
+    public void PersistentEmoteDetection_UsesActiveControllerStateWithoutTimelineHistory(
+        bool isLoopMode,
+        uint baseOverride,
+        uint lipsOverride,
+        bool controllerReportsEmoting,
+        bool controllerReportsLoop,
+        bool expected) {
+        Assert.Equal(expected, SimpleInputMovement.HasCancelableEmoteState(
+            isLoopMode,
+            baseOverride,
+            lipsOverride,
+            controllerReportsEmoting,
+            controllerReportsLoop));
+    }
+
+    [Theory]
     [InlineData(SimpleMovementMode.Natural, true)]
     [InlineData(SimpleMovementMode.Continuous, false)]
     [InlineData(SimpleMovementMode.Precise, false)]
@@ -68,7 +90,19 @@ public class SimpleInputMovementTests {
         Assert.True(FormationTargetTracker.ShouldHold(0.09f, 0.1f, wasHolding: false, slotMoving: false));
         Assert.True(FormationTargetTracker.ShouldHold(0.15f, 0.1f, wasHolding: true, slotMoving: false));
         Assert.False(FormationTargetTracker.ShouldHold(0.19f, 0.1f, wasHolding: true, slotMoving: false));
-        Assert.True(FormationTargetTracker.ShouldHold(0.01f, 0.1f, wasHolding: true, slotMoving: true));
+        Assert.False(FormationTargetTracker.ShouldHold(0.01f, 0.1f, wasHolding: true, slotMoving: true));
+    }
+
+    [Fact]
+    public void FormationTargetTracker_ProjectsMovingTargetForward() {
+        var tracker = new FormationTargetTracker();
+        tracker.Reset(Vector3.Zero, nowMs: 0);
+        tracker.UpdateTarget(new Vector3(0f, 0f, 0.1f), nowMs: 100);
+
+        var pursuitTarget = tracker.GetPursuitTarget();
+
+        Assert.True(pursuitTarget.Z > tracker.Target.Z);
+        Assert.Equal(0f, pursuitTarget.X);
     }
 
     [Fact]
@@ -77,6 +111,28 @@ public class SimpleInputMovementTests {
         Assert.False(FormationTargetTracker.ShouldUpdateFacing(0f, 0.01f));
         Assert.True(FormationTargetTracker.ShouldUpdateFacing(0f, 0.02f));
         Assert.False(FormationTargetTracker.ShouldUpdateFacing(MathF.PI, -MathF.PI + 0.01f));
+    }
+
+    [Theory]
+    [InlineData(0f, 1f, 0.1f, 0.1f)]
+    [InlineData(0f, -1f, 0.1f, -0.1f)]
+    [InlineData(0f, 0.05f, 0.1f, 0.05f)]
+    public void FormationTargetTracker_RateLimitsRotation(
+        float currentRotation,
+        float desiredRotation,
+        float maximumStep,
+        float expected) {
+        Assert.Equal(
+            expected,
+            FormationTargetTracker.StepRotationToward(currentRotation, desiredRotation, maximumStep),
+            precision: 4);
+    }
+
+    [Fact]
+    public void FormationTargetTracker_RateLimitedRotationUsesShortestWrappedTurn() {
+        var result = FormationTargetTracker.StepRotationToward(3.1f, -3.1f, 0.02f);
+
+        Assert.Equal(3.12f, result, precision: 4);
     }
 
     [Theory]
@@ -114,6 +170,28 @@ public class SimpleInputMovementTests {
 
         Assert.Equal(MovementDirection.Backward, mostlyBehind);
         Assert.Equal(MovementDirection.StrafeRight, mostlyRight);
+    }
+
+    [Fact]
+    public void FormationTargetTracker_RetainsPreviousDirectionNearDiagonalBoundary() {
+        var result = FormationTargetTracker.SelectRelativeMovementDirection(
+            Vector3.Zero,
+            new Vector3(-1.05f, 0f, 1f),
+            facingRadians: 0f,
+            previousDirection: MovementDirection.Forward);
+
+        Assert.Equal(MovementDirection.Forward, result);
+    }
+
+    [Fact]
+    public void FormationTargetTracker_SwitchesAfterDirectionClearlyDominates() {
+        var result = FormationTargetTracker.SelectRelativeMovementDirection(
+            Vector3.Zero,
+            new Vector3(-1.5f, 0f, 1f),
+            facingRadians: 0f,
+            previousDirection: MovementDirection.Forward);
+
+        Assert.Equal(MovementDirection.StrafeRight, result);
     }
 
     [Theory]

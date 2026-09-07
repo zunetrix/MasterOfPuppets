@@ -7,8 +7,13 @@ using System.Numerics;
 using Dalamud.Game.Command;
 using Dalamud.Interface.ImGuiNotification;
 
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+
 using MasterOfPuppets.Camera;
+using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Formations;
+using MasterOfPuppets.LuaScripting;
 using MasterOfPuppets.Movement;
 using MasterOfPuppets.Util;
 
@@ -30,6 +35,9 @@ public class PluginCommandManager : IDisposable {
         new("mopbrn", "/mopbrn", ["/brn"], "Broadcast a command to all local clients except yourself"),
         new("mopbrc", "/mopbrc", ["/brc"], "Broadcast a command to a specific character"),
         new("mopbrg", "/mopbrg", ["/brg"], "Broadcast a command to a specific group"),
+        new("moptargetclear", "/moptargetclear", [], "Clear target on all local clients"),
+        new("moppetplace", "/moppetplace", [], "Place summoned pet at an offset relative to an anchor"),
+        new("moppetformationplace", "/moppetformationplace", [], "Place summoned pet at a formation point"),
     ];
 
     public static IReadOnlyList<MopCommandDef> Definitions => CommandDefs;
@@ -97,6 +105,9 @@ public class PluginCommandManager : IDisposable {
         "mopbrn" => OnBroadcastNotMeCommand,
         "mopbrc" => OnBroadcastCharacterCommand,
         "mopbrg" => OnBroadcastGroupCommand,
+        "moptargetclear" => (_, _) => Plugin.IpcProvider.ExecuteTargetClear(),
+        "moppetplace" => OnPetPlaceCommand,
+        "moppetformationplace" => OnPetFormationPlaceCommand,
         _ => OnMainCommand,
     };
 
@@ -107,6 +118,9 @@ public class PluginCommandManager : IDisposable {
     private void OnMainCommand(string command, string arguments) {
         var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
         if (parsedArgs.Count == 1 && parsedArgs[0].StartsWith("gamemacro ", StringComparison.OrdinalIgnoreCase)) {
+            parsedArgs = ArgumentParser.ParseMacroArgs(parsedArgs[0]);
+        }
+        if (parsedArgs.Count == 1 && parsedArgs[0].StartsWith("lua ", StringComparison.OrdinalIgnoreCase)) {
             parsedArgs = ArgumentParser.ParseMacroArgs(parsedArgs[0]);
         }
 
@@ -151,6 +165,80 @@ public class PluginCommandManager : IDisposable {
                 case "stopmove":
                     Plugin.StopAllMovementLocal();
                     break;
+                case "resetemote":
+                    ForceResetLocalEmote();
+                    break;
+                case "lua": {
+                        var luaAction = parsedArgs.Count >= 2 ? parsedArgs[1] : "status";
+                        switch (luaAction.ToLowerInvariant()) {
+                            case "run": {
+                                    if (parsedArgs.Count < 3) {
+                                        DalamudApi.ChatGui.PrintError(
+                                            "Invalid arguments. Usage: /mop lua run \"script name\" [-var=$name=value;...]");
+                                        break;
+                                    }
+
+                                    var inlineVars = parsedArgs.Count > 3
+                                        ? ArgumentParser.ParseInlineVars(parsedArgs[3])
+                                        : null;
+                                    Plugin.IpcProvider.StartLuaScript(parsedArgs[2], inlineVars);
+                                }
+                                break;
+                            case "sync": {
+                                    if (parsedArgs.Count < 3) {
+                                        DalamudApi.ChatGui.PrintError(
+                                            "Invalid arguments. Usage: /mop lua sync \"script name\" [-var=$name=value;...]");
+                                        break;
+                                    }
+
+                                    var chatPrefix = Plugin.Config.DefaultChatSyncPrefix?.Trim();
+                                    if (string.IsNullOrWhiteSpace(chatPrefix)) {
+                                        DalamudApi.ChatGui.PrintError("[MoP] Configure a default Chat Sync prefix before starting synchronized Lua.");
+                                        break;
+                                    }
+
+                                    var varArg = parsedArgs.Count > 3 ? $" {parsedArgs[3]}" : string.Empty;
+                                    Chat.SendMessage($"{chatPrefix} mopluarun \"{parsedArgs[2]}\"{varArg}");
+                                }
+                                break;
+                            case "stop":
+                                Plugin.IpcProvider.StopLuaScript(parsedArgs.Count > 2 ? parsedArgs[2] : null);
+                                break;
+                            case "pause":
+                                Plugin.IpcProvider.PauseLuaScript(parsedArgs.Count > 2 ? parsedArgs[2] : null);
+                                break;
+                            case "resume":
+                                Plugin.IpcProvider.ResumeLuaScript(parsedArgs.Count > 2 ? parsedArgs[2] : null);
+                                break;
+                            case "restart": {
+                                    var selector = parsedArgs.Count > 2 ? parsedArgs[2] : null;
+                                    if (!Plugin.LuaScriptManager.TryResolveScriptName(selector, out var scriptName)
+                                        && (string.IsNullOrWhiteSpace(selector)
+                                            || LuaScriptCatalog.Find(Plugin.Config, selector) == null)) {
+                                        DalamudApi.ChatGui.PrintError(
+                                            string.IsNullOrWhiteSpace(selector)
+                                                ? "No Lua run is available to restart."
+                                                : $"No Lua run or configured script matches '{selector}'.");
+                                        break;
+                                    }
+
+                                    Plugin.IpcProvider.StopLuaScript(selector);
+                                    Plugin.IpcProvider.StartLuaScript(scriptName);
+                                }
+                                break;
+                            case "status":
+                                DalamudApi.ChatGui.Print(
+                                    $"Lua: {Plugin.LuaScriptManager.GetStatusText(parsedArgs.Count > 2 ? parsedArgs[2] : null)}");
+                                break;
+                            default:
+                                DalamudApi.ChatGui.PrintError(
+                                    "Invalid arguments. Usage: /mop lua <sync \"script\"|run \"script\"|pause [run|script]|resume [run|script]|stop [run|script]|restart [run|script]|status [run|script]>");
+                                break;
+                        }
+                    }
+                    break;
+                case "reload":
+                case "loadconfig":
                 case "reloadconfig":
                     Plugin.ReloadConfigFromDisk();
                     break;
@@ -193,8 +281,41 @@ public class PluginCommandManager : IDisposable {
                 case "tc":
                     Plugin.IpcProvider.ExecuteTargetClear();
                     break;
+                case "checkvisible": {
+                        var group = Plugin.Config.CidsGroups.FirstOrDefault(g => g.Name.Equals("32 Ordered", StringComparison.OrdinalIgnoreCase));
+                        if (group == null) {
+                            DalamudApi.ChatGui.PrintError("Group '32 Ordered' not found.");
+                            return;
+                        }
+                        var chars = Plugin.Config.Characters.ToDictionary(c => c.Cid, c => c.Name);
+                        var freshPeers = Plugin.IpcProvider.GetFreshPeerCharacterData().Select(p => p.ContentId).ToHashSet();
+                        var visible = new List<string>();
+                        var missing = new List<string>();
+                        foreach (var cid in group.Cids) {
+                            chars.TryGetValue(cid, out var name);
+                            var shortName = (name ?? cid.ToString()).Split('@')[0];
+                            var isVis = LuaParticipantResolver.IsVisible(cid, name);
+                            var isPeer = freshPeers.Contains(cid);
+                            if (isVis || isPeer)
+                                visible.Add($"{shortName}{(isPeer ? "[IPC]" : "[3D]")}");
+                            else
+                                missing.Add(shortName);
+                        }
+                        DalamudApi.ChatGui.Print($"[MoP] Visible/Peer ({visible.Count}): {string.Join(", ", visible)}");
+                        DalamudApi.ChatGui.Print($"[MoP] Missing ({missing.Count}): {string.Join(", ", missing)}");
+                    }
+                    break;
                 case "macro":
+                case "macros":
                     Plugin.Ui.MacroWindow.Toggle();
+                    break;
+                case "script":
+                case "scripts":
+                    if (parsedArgs.Count < 2) {
+                        Plugin.Ui.LuaScriptsWindow.Toggle();
+                    } else {
+                        goto case "lua";
+                    }
                     break;
                 case "queue":
                     Plugin.Ui.MacroQueueWindow.Toggle();
@@ -264,6 +385,20 @@ public class PluginCommandManager : IDisposable {
 
                         Plugin.MovementManager.MoveTo(new Vector3(x, y, z), DalamudApi.ObjectTable.LocalPlayer.Position, facing);
                     }
+                    break;
+                case "petplace":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop petplace x y z [anchor]");
+                        return;
+                    }
+                    OnPetPlaceCommand(subcommand, parsedArgs[1]);
+                    break;
+                case "petformationplace":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop petformationplace \"Formation Name\" <point> [anchor]");
+                        return;
+                    }
+                    OnPetFormationPlaceCommand(subcommand, parsedArgs[1]);
                     break;
                 case "face": {
                         // relative sum to current rotation
@@ -613,6 +748,24 @@ public class PluginCommandManager : IDisposable {
         }
     }
 
+    private static unsafe void ForceResetLocalEmote() {
+        var player = Control.GetLocalPlayer();
+        if (player == null) {
+            DalamudApi.ChatGui.PrintError("Unable to reset emote: local player is unavailable.");
+            return;
+        }
+
+        player->Character.Timeline.BaseOverride = 0;
+        player->Character.Timeline.LipsOverride = 0;
+        player->Character.EmoteController.EmoteId = 0;
+        player->Character.EmoteController.Target = 0;
+        player->Character.EmoteController.Stance = 0;
+        player->Character.EmoteController.CPoseState = 0;
+        player->Character.SetMode(CharacterModes.Normal, 0);
+        player->Character.Timeline.PlayActionTimeline(1);
+        DalamudApi.ChatGui.Print("Emote/pose animation reset requested.");
+    }
+
     private void OnBroadcastCommand(string command, string arguments) {
         if (arguments.Any())
             Plugin.IpcProvider.EnqueueMacroActions(arguments, includeSelf: true);
@@ -633,5 +786,65 @@ public class PluginCommandManager : IDisposable {
         var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
         if (parsedArgs.Count >= 2)
             Plugin.IpcProvider.EnqueueGroupMacroActions(parsedArgs[1], parsedArgs[0]);
+    }
+
+    private void OnPetPlaceCommand(string command, string arguments) {
+        var parts = ArgumentParser.ParseMacroArgs(arguments);
+        if (parts.Count < 3) {
+            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /moppetplace x y z [anchor]");
+            return;
+        }
+
+        if (!float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
+            || !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
+            || !float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
+            DalamudApi.ChatGui.PrintError($"[moppetplace] invalid coordinate offsets: \"{arguments}\"");
+            return;
+        }
+
+        DalamudApi.Framework.RunOnFrameworkThread(() => {
+            var defaultAnchor = DalamudApi.TargetManager.Target != null
+                ? FormationAnchorReference.Target
+                : FormationAnchorReference.Self;
+
+            var anchorParse = FormationAnchorArgumentParser.ParseAnchorAndArrival(
+                parts.Skip(3),
+                defaultAnchor);
+
+            if (!FormationAnchorResolver.TryResolve(Plugin, new Formation(), anchorParse.Anchor, out var resolved, out var failureReason, out _)) {
+                if (anchorParse.Fallback != null && FormationAnchorResolver.TryResolve(Plugin, new Formation(), anchorParse.Fallback, out var fallbackResolved, out _, out _)) {
+                    resolved = fallbackResolved;
+                } else {
+                    DalamudApi.ChatGui.PrintError($"[moppetplace] failed to resolve anchor: {failureReason}");
+                    return;
+                }
+            }
+
+            var offset = new Vector3(x, y, z);
+            var worldPos = offset.ApplyLeaderRotation(resolved.Rotation, resolved.Position);
+            worldPos.Y = resolved.Position.Y + y;
+
+            bool isSelf = anchorParse.Anchor.Kind == FormationAnchorKind.Self;
+            var targetActor = resolved.Actor ?? (resolved.GameObjectId.HasValue ? DalamudApi.ObjectTable.FirstOrDefault(a => a != null && a.GameObjectId == resolved.GameObjectId) : null);
+
+            GameActionManager.PlacePet(worldPos, targetActor, isSelf);
+        });
+    }
+
+    private void OnPetFormationPlaceCommand(string command, string arguments) {
+        var options = MacroHandler.ParseFormationGotoCommandArgs(arguments);
+        if (options == null || options.PointIndex < 0) {
+            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /moppetformationplace \"Formation Name\" <point> [anchor]");
+            return;
+        }
+
+        DalamudApi.Framework.RunOnFrameworkThread(() =>
+            FormationLocalMovementExecutor.ExecuteFormationPetPlace(
+                Plugin,
+                options.FormationName,
+                options.PointIndex,
+                options.Anchor,
+                logPrefix: "moppetformationplace",
+                fallbackAnchor: options.Fallback));
     }
 }

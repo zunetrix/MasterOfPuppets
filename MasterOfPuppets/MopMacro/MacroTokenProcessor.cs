@@ -17,9 +17,6 @@ public static class MacroTokenProcessor {
     //                                 {random(1.5,2,2.5)} → "1.5", "2", or "2.5"
     private static readonly Regex RandomRegex =
         new(@"\{random\((\d+(?:\.\d+)?(?:,\d+(?:\.\d+)?)+)\)\}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-    // Matches {calc(<arithmetic expression>)}. The inner expression may reference
-    // $-variables already substituted by ResolutionPlan, e.g. {calc($interval * 7)}.
     private static readonly Regex CalcRegex =
         new(@"\{calc\((.+?)\)\}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -50,15 +47,9 @@ public static class MacroTokenProcessor {
             // List: return one raw string value (preserves original formatting).
             return parts[Random.Shared.Next(parts.Length)].Trim();
         });
-
-        // Evaluate {calc(...)} after {random(...)} so a calc can embed a random result.
-        result = CalcRegex.Replace(result, match => {
-            var expr = match.Groups[1].Value;
-            return MathExpressionEvaluator.TryEvaluate(expr, out string evaluated)
+        return CalcRegex.Replace(result, match =>
+            MathExpressionEvaluator.TryEvaluate(match.Groups[1].Value, out var evaluated)
                 ? evaluated
-                : match.Value; // leave original token untouched if it isn't a valid expression
-        });
-
-        return result;
+                : match.Value);
     }
 }

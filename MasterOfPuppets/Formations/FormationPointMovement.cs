@@ -9,6 +9,23 @@ namespace MasterOfPuppets.Formations;
 public static class FormationPointMovement {
     public const int AnchorPointIndex = 0;
 
+    public static Vector3 AdjustExternalOriginPosition(
+        Formation formation,
+        int anchorPointIndex,
+        Vector3 originPosition,
+        float originRotation) {
+        if (!formation.Points.IndexExists(anchorPointIndex))
+            return originPosition;
+
+        // BuildAnchoredWorldMove uses the saved anchor point as the reference.
+        // Shift that reference so an external actor remains the formation origin.
+        return FormationMath.ToMopWorld(
+            formation.Points[anchorPointIndex].Offset,
+            0f,
+            originPosition,
+            originRotation).Position;
+    }
+
     public static (Vector3 Position, float Rotation)? BuildAnchoredWorldMove(
         Formation formation,
         int destinationPointIndex,

@@ -30,5 +30,9 @@
             <HintPath>$(DALAMUD_HOME)\Dalamud.dll</HintPath>
             <Private>true</Private>
         </Reference>
+        <Reference Include="Lumina">
+            <HintPath>$(DALAMUD_HOME)\Lumina.dll</HintPath>
+            <Private>true</Private>
+        </Reference>
     </ItemGroup>
 </Project>

@@ -1,6 +1,4 @@
-
-
-## Movement Coordinate System in Final Fantasy XIV
+# Movement Coordinate System in Final Fantasy XIV
 
 The movement system in Final Fantasy XIV is based on a 3D Cartesian coordinate system, combined with a facing (rotation) value expressed in radians.
 

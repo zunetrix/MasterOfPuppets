@@ -29,6 +29,7 @@ public sealed class FormationMacroGeneratorOptions {
     public int Precision { get; set; } = 2;
     public bool UseMatchingGroups { get; set; }
     public string PetActionCommand { get; set; } = "/pac \"Place\" <t>";
+    public bool UsePetFormationPlaceCommand { get; set; }
     public bool LinkPetTraversalToMovement { get; set; } = true;
     public int PetStep { get; set; } = 1;
     public bool PetReverse { get; set; }
@@ -98,7 +99,7 @@ public static class FormationMacroGenerator {
         }
 
         if (options.Mode is FormationMacroGeneratorMode.PetPlacement or FormationMacroGeneratorMode.MovementAndPetPlacement)
-            AddPetPlacementCommands(macro, destinations, anchor, options, groups, characters, warnings);
+            AddPetPlacementCommands(macro, destinations, anchor, formation, options, groups, characters, warnings);
 
         return new FormationMacroGenerationResult { Macro = macro, Warnings = warnings };
     }
@@ -255,12 +256,73 @@ public static class FormationMacroGenerator {
         Macro macro,
         IReadOnlyList<IndexedPoint> destinations,
         FormationPoint anchor,
+        Formation formation,
         FormationMacroGeneratorOptions options,
         IReadOnlyList<CidGroup>? groups,
         IReadOnlyList<Character>? characters,
         List<string> warnings) {
         var step = Math.Max(1, options.LinkPetTraversalToMovement ? options.Step : options.PetStep);
         var reverse = options.LinkPetTraversalToMovement ? options.Reverse : options.PetReverse;
+
+        if (options.UsePetFormationPlaceCommand) {
+            var formationName = string.IsNullOrWhiteSpace(options.FormationMoveName)
+                ? formation.Name
+                : options.FormationMoveName.Trim();
+            var anchorArg = options.FormationMoveAnchorMode switch {
+                FormationMoveAnchorMode.FocusTarget => " ftarget",
+                FormationMoveAnchorMode.Target => " target",
+                _ => " anchor=self",
+            };
+
+            var hasAnyAssignments = destinations.Any(d => !BuildAssignment(d.Point, groups, options.UseMatchingGroups).IsEmpty);
+            if (!hasAnyAssignments && options.OriginContentId != 0) {
+                var order = SequenceFrom(destinations[0].Index, destinations, step, reverse);
+                var waits = SegmentDelays(order, anchor, options);
+                var lines = new List<string>();
+
+                for (int i = 0; i < order.Count; i++) {
+                    lines.Add($"/moppetformationplace \"{ArgumentParser.EscapeQuotedArgument(formationName)}\" {order[i].Index + 1}{anchorArg}");
+                    lines.Add($"/mopwait {waits[i].ToString("F2", CultureInfo.InvariantCulture)}");
+                }
+
+                if (lines.Count > 0) {
+                    lines.Add("/moploop");
+                    macro.Commands.Add(new Command {
+                        Cids = [options.OriginContentId],
+                        GroupIds = [],
+                        Actions = string.Join("\n", lines),
+                    });
+                }
+                return;
+            }
+
+            foreach (var start in destinations) {
+                var assignment = BuildAssignment(start.Point, groups, options.UseMatchingGroups);
+                if (assignment.IsEmpty)
+                    continue;
+
+                var order = SequenceFrom(start.Index, destinations, step, reverse);
+                var waits = SegmentDelays(order, anchor, options);
+                var lines = new List<string>();
+
+                for (int i = 0; i < order.Count; i++) {
+                    lines.Add($"/moppetformationplace \"{ArgumentParser.EscapeQuotedArgument(formationName)}\" {order[i].Index + 1}{anchorArg}");
+                    lines.Add($"/mopwait {waits[i].ToString("F2", CultureInfo.InvariantCulture)}");
+                }
+
+                if (lines.Count == 0)
+                    continue;
+
+                lines.Add("/moploop");
+                macro.Commands.Add(new Command {
+                    Cids = assignment.Cids,
+                    GroupIds = assignment.GroupIds,
+                    Actions = string.Join("\n", lines),
+                });
+            }
+            return;
+        }
+
         foreach (var start in destinations) {
             var assignment = BuildAssignment(start.Point, groups, options.UseMatchingGroups);
             if (assignment.IsEmpty)

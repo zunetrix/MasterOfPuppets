@@ -1,4 +1,4 @@
-﻿using Xunit;
+using Xunit;
 using System.Collections.Generic;
 
 using MasterOfPuppets.Util;
@@ -19,6 +19,7 @@ public class ArgsParserTests
     [InlineData("moprun \"My Macro Name\" -var=$emote=/ac \"standard step\";$emote2=/clap", "moprun", "My Macro Name", "-var=$emote=/ac \"standard step\";$emote2=/clap")]
     [InlineData("moprun \"My Macro Name\" -var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"", "moprun", "My Macro Name", "-var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"")]
     [InlineData("moprun \"My -- Macro\" -var=$x=1", "moprun", "My -- Macro", "-var=$x=1")]
+    [InlineData("mopluarun \"Bee Swarm\" -var=$group=\"32 Ordered\";$anchor=\"Kazuko Aura@Sargatanas\"", "mopluarun", "Bee Swarm", "-var=$group=\"32 Ordered\";$anchor=\"Kazuko Aura@Sargatanas\"")]
     [InlineData("mopstop", "mopstop")]
     [InlineData("mopbr Text", "mopbr", "Text")]
     [InlineData("mopbr \"Text with spaces\"", "mopbr", "Text with spaces")]
@@ -48,6 +49,7 @@ public class ArgsParserTests
     [InlineData("run \"Macro Name\"", "run", "Macro Name")]
     [InlineData("run \"My Macro Name\" -var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"", "run", "My Macro Name", "-var=$var1=/clap;$var2=0.5;$var3=\"Character Name\";$emote=/clap;$emote2=\"/clap\"")]
     [InlineData("run \"My -- Macro\" -var=$x=1", "run", "My -- Macro", "-var=$x=1")]
+    [InlineData("lua run \"Bee Swarm\" -var=$group=\"32 Ordered\";$anchor=\"[t]\"", "lua", "run", "Bee Swarm", "-var=$group=\"32 Ordered\";$anchor=\"[t]\"")]
     [InlineData("run 1", "run", "1")]
     [InlineData("run \"1\"", "run", "1")]
     [InlineData("move \"10.01 11.02 12.03\"", "move", "10.01 11.02 12.03")]
@@ -213,5 +215,17 @@ public class ArgsParserTests
         Assert.Equal(2, result.Count);
         Assert.Equal("<t>", result["target"]);
         Assert.Equal("0.5", result["delay"]);
+    }
+
+    [Theory]
+    [InlineData("-var=\"Garrison Mangler@Sargatanas\"", "Garrison Mangler@Sargatanas")]
+    [InlineData("-var='Garrison Mangler@Sargatanas'", "Garrison Mangler@Sargatanas")]
+    [InlineData("-var=Garrison Mangler@Sargatanas", "Garrison Mangler@Sargatanas")]
+    public void ParseInlineVars_RawTargetName_CapturedAsAnchor(string flag, string expectedAnchor)
+    {
+        var result = ArgumentParser.ParseInlineVars(flag);
+
+        Assert.Single(result);
+        Assert.Equal(expectedAnchor, result["anchor"]);
     }
 }

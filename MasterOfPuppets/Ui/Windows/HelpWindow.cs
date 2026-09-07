@@ -58,7 +58,8 @@ public class HelpWindow : Window {
         if (!child) return;
 
         foreach (var catGroup in macroActionGroups) {
-            if (ImGui.CollapsingHeader($"{catGroup.Key}##MacroHelpCategory{catGroup.Key}")) {
+            var categoryLabel = catGroup.Key == MopActionCategory.LuaScript ? "Lua Scripts" : catGroup.Key.ToString();
+            if (ImGui.CollapsingHeader($"{categoryLabel}##MacroHelpCategory{catGroup.Key}")) {
 
                 if (isFiltered) {
                     // In search mode: flatten — render all commands directly without sub-grouping

@@ -69,6 +69,25 @@
         "resolved": "2.6.0",
         "contentHash": "UDiq0OeQzS8WAMs/WwBcKJIaMx4dBOtipXx3Y/+sOb/brMo2HiWWo2LAfpuHX3XAzwfweo/q1q3ZE/Pdi3Ik8A=="
       },
+      "LuaCSharp": {
+        "type": "Transitive",
+        "resolved": "0.5.6",
+        "contentHash": "ncwP3iXeonYM7bILBjsPPIk12mfvCO4tBFnrt9bjnKEZ8Ugdp+MlKskRUGEbo/WHGKU2dRlhxEyuN17L2PHYfg==",
+        "dependencies": {
+          "LuaCSharp.Annotations": "0.5.6",
+          "LuaCSharp.SourceGenerator": "0.5.6"
+        }
+      },
+      "LuaCSharp.Annotations": {
+        "type": "Transitive",
+        "resolved": "0.5.6",
+        "contentHash": "tb8JLViDSSHpmMmBpxqbr+y+4Dpu6v5p3in7RlAUIi+YD7CMi7BEEI7fTc6o5lzoJxSMbIdzzGzjzXXMF6aaSg=="
+      },
+      "LuaCSharp.SourceGenerator": {
+        "type": "Transitive",
+        "resolved": "0.5.6",
+        "contentHash": "IJLlWaIYdpvZ5zO20DidDusqMl5pnoHzrmNmB7UnWMWqOfz1t8LeGfDH8kFTDpGcveFE8YUNeEUa4j6SmWGUPg=="
+      },
       "MessagePack": {
         "type": "Transitive",
         "resolved": "3.1.7",
@@ -249,6 +268,7 @@
         "dependencies": {
           "DalamudPackager": "[15.0.0, )",
           "KTrie": "[2.6.0, )",
+          "LuaCSharp": "[0.5.6, )",
           "Sprache": "[2.3.1, )",
           "TinyIpc": "[5.2.1, )",
           "XivIpc": "[0.0.8, )",

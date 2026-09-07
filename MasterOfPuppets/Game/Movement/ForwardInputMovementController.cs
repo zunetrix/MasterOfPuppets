@@ -16,14 +16,24 @@ internal sealed class ForwardInputMovementController : IDisposable {
                 return;
 
             _direction = value;
-            if (value == MovementDirection.None)
+            if (value == MovementDirection.None) {
                 _playerMoveHook?.Disable();
-            else
-                _playerMoveHook?.Enable();
+                return;
+            }
+
+            EnsureHook();
+            _playerMoveHook!.Enable();
         }
     }
 
-    public ForwardInputMovementController() {
+    // Hook creation is intentionally lazy. Constructing native hooks while Dalamud
+    // is replacing an old plugin instance can deadlock a hot reload. By waiting
+    // until movement is actually requested, the old instance has completed its
+    // unload and all of its hooks have already been disposed.
+    private void EnsureHook() {
+        if (_playerMoveHook != null)
+            return;
+
         _playerMoveHook = DalamudApi.GameInteropProvider.HookFromSignature<PlayerMoveDelegate>(
             "E8 ?? ?? ?? ?? 4C 63 4B 04",
             PlayerMoveDetour);

@@ -136,6 +136,8 @@ public partial class MacroHandler : IDisposable {
             ["mophotbaremote"] = new(HandleMopHotbarEmote),
             ["mopmove"] = new(HandleMopMove),
             ["mopmoverelativeto"] = new(HandleMopMoveRelativeTo),
+            ["moppetplace"] = new(HandleMopPetPlace),
+            ["moppetformationplace"] = new(HandleMopPetFormationPlace),
             ["mopformationmove"] = new(HandleMopFormationMove),
             ["mopformationgoto"] = new(HandleMopFormationGoto),
             ["mopmovetotarget"] = new(HandleMopMoveToTarget),
@@ -235,6 +237,7 @@ public partial class MacroHandler : IDisposable {
         int? loopsLeft = null;
         var phaseClock = new MacroPhaseClock();
         var condStack = new Stack<ConditionalFrame>();
+        Task? loopControlChanged = null;
 
         do {
             shouldLoop = false;
@@ -248,6 +251,15 @@ public partial class MacroHandler : IDisposable {
             for (int i = 0; i < actions.Length; i++) {
                 if (token.IsCancellationRequested) return;
                 state.PauseGate.Wait(token);
+
+                if (loopBlockStart >= 0 && loopControlChanged?.IsCompleted == true) {
+                    loopControlChanged = plan.LoopControlChanged;
+                    condStack.Clear();
+                    // Discard the old phase deadline/debt along with the old
+                    // branch. Restart at the path selector, not startup/targeting.
+                    phaseClock = new MacroPhaseClock();
+                    i = loopBlockStart;
+                }
 
                 state.ActionIndex = i;
 
@@ -352,6 +364,7 @@ public partial class MacroHandler : IDisposable {
                 // /moploopstart [N] - begin a loop block (runs N times, or forever)
                 if (command != null && command.Equals("moploopstart", StringComparison.OrdinalIgnoreCase)) {
                     loopBlockStart = i + 1;
+                    loopControlChanged = plan.LoopControlChanged;
                     if (string.IsNullOrWhiteSpace(args)) {
                         loopBlockIterLeft = null; // infinite
                     } else if (uint.TryParse(args, out uint count) && count > 0) {
@@ -399,7 +412,7 @@ public partial class MacroHandler : IDisposable {
                         $"[mopphasewait] phase +{secondsRound:F2}s; remaining " +
                         $"{remaining.TotalMinutes:00}:{remaining.Seconds:00}.{remaining.Milliseconds:000}...");
                     if (remaining > TimeSpan.Zero)
-                        await Task.Delay(remaining, token);
+                        await MacroExecutionPlan.DelayPhaseAsync(remaining, loopControlChanged, token);
                     continue;
                 }
 

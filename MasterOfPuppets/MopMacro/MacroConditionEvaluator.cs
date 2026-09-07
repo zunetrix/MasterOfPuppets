@@ -7,12 +7,16 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Enums;
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Extensions.Dalamud;
+using MasterOfPuppets.Formations;
+using MasterOfPuppets.LuaScripting.Runs;
 
 namespace MasterOfPuppets;
 
 public static class MacroConditionEvaluator {
     private static readonly Regex BinaryOpRegex = new(@"^\s*(.*?)\s*(==|!=)\s*(.*?)\s*$", RegexOptions.Compiled);
     private static readonly Regex ExistsRegex = new(@"^(?:visible|exists)\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex ScriptRunningRegex = new(@"^(?:scriptrunning|scriptactive)\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex MacroRunningRegex = new(@"^(?:macrorunning|macroactive)\s+(.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     /// <summary>
     /// Evaluates a condition asynchronously on the main framework thread to ensure safe access to game objects and Dalamud services.
@@ -33,6 +37,8 @@ public static class MacroConditionEvaluator {
     /// - Comparisons: target == "Name", "$var" == "val", "$var" != "", etc.
     /// - Player state: incombat, outcombat, isperforming, isalive, isdead, isleader, inparty
     /// - Object queries: visible "Name", exists "Name"
+    /// - Lua run queries: scriptrunning "Script Name" (or a run ID)
+    /// - Macro run queries: macrorunning "Macro Name"
     /// </summary>
     public static bool Evaluate(string condition, Plugin plugin) {
         if (string.IsNullOrWhiteSpace(condition))
@@ -91,6 +97,22 @@ public static class MacroConditionEvaluator {
                 o != null &&
                 (o.Name.TextValue.Equals(targetName, StringComparison.OrdinalIgnoreCase) ||
                  o.Name.TextValue.Contains(targetName, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        var scriptRunningMatch = ScriptRunningRegex.Match(expr);
+        if (scriptRunningMatch.Success) {
+            var selector = CleanQuotes(scriptRunningMatch.Groups[1].Value.Trim());
+            return plugin.LuaScriptManager.ActiveRuns.Any(run =>
+                (run.State is LuaRunState.Waiting or LuaRunState.Running) &&
+                (run.ScriptName.Equals(selector, StringComparison.OrdinalIgnoreCase) ||
+                 run.RunId.Equals(selector, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        var macroRunningMatch = MacroRunningRegex.Match(expr);
+        if (macroRunningMatch.Success) {
+            var selector = CleanQuotes(macroRunningMatch.Groups[1].Value.Trim());
+            return string.Equals(plugin.MacroHandler.MacroCurrentId, selector, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(plugin.MacroHandler.LoopCurrentId, selector, StringComparison.OrdinalIgnoreCase);
         }
 
         // Built-in keywords
@@ -162,10 +184,12 @@ public static class MacroConditionEvaluator {
         var leftVal = ResolveValue(left);
         var rightVal = ResolveValue(right);
 
-        bool isEqual = string.Equals(leftVal, rightVal, StringComparison.OrdinalIgnoreCase) ||
-                       (leftVal.Length > 0 && rightVal.Length > 0 &&
-                        (leftVal.Contains(rightVal, StringComparison.OrdinalIgnoreCase) ||
-                         rightVal.Contains(leftVal, StringComparison.OrdinalIgnoreCase)));
+        // Character selectors may omit the world suffix, but general values
+        // must use exact equality so numeric and short-token comparisons are safe.
+        bool isEqual = IsCharacterSelector(left) || IsCharacterSelector(right)
+            || IsCharacterNameValue(leftVal) || IsCharacterNameValue(rightVal)
+            ? FormationCharacterName.Matches(leftVal, rightVal)
+            : string.Equals(leftVal, rightVal, StringComparison.OrdinalIgnoreCase);
 
         // If either side was explicitly quoted empty string (""), compare exact emptiness
         if ((left.Equals("\"\"", StringComparison.Ordinal) || left.Equals("''", StringComparison.Ordinal) ||
@@ -179,6 +203,17 @@ public static class MacroConditionEvaluator {
             _ => false,
         };
     }
+
+    private static bool IsCharacterSelector(string token) =>
+        token.Trim().ToLowerInvariant() is
+            "target" or "target.name" or "<t>" or
+            "focustarget" or "focustarget.name" or "<f>" or
+            "me" or "self" or "<me>";
+
+    private static bool IsCharacterNameValue(string value) =>
+        !double.TryParse(value, out _)
+        && (value.Contains('@', StringComparison.Ordinal)
+            || value.Any(char.IsWhiteSpace));
 
     private static string ResolveValue(string token) {
         var trimmed = token.Trim();

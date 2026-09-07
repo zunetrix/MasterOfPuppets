@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MasterOfPuppets;
 
@@ -11,6 +13,7 @@ namespace MasterOfPuppets;
 public sealed class MacroExecutionPlan {
     private readonly object _variablesLock = new();
     private readonly Dictionary<string, string> _variables;
+    private volatile TaskCompletionSource? _loopControlChanged;
 
     public string[] ActionTemplates { get; }
 
@@ -33,8 +36,47 @@ public sealed class MacroExecutionPlan {
 
     public void UpdateVariables(IReadOnlyDictionary<string, string> variables) {
         lock (_variablesLock) {
-            foreach (var (name, value) in variables)
+            bool restartLoop = false;
+            foreach (var (name, value) in variables) {
+                if (_loopControlChanged != null
+                    && name is "shape" or "mode" or "direction" or "anchor"
+                    && (!_variables.TryGetValue(name, out var previous) || !string.Equals(previous, value, StringComparison.Ordinal)))
+                    restartLoop = true;
                 _variables[name] = value;
+            }
+            if (restartLoop) {
+                var previousSignal = _loopControlChanged!;
+                _loopControlChanged = NewLoopControlSignal();
+                // Publish after the entire variable batch is applied. Never run
+                // a macro continuation inline on the incoming IPC/game thread.
+                previousSignal.TrySetResult();
+            }
+        }
+    }
+
+    internal Task? LoopControlChanged => _loopControlChanged?.Task;
+
+    private static TaskCompletionSource NewLoopControlSignal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    internal static Task DelayPhaseAsync(TimeSpan delay, Task? controlChanged, CancellationToken token) {
+        token.ThrowIfCancellationRequested();
+        if (delay <= TimeSpan.Zero || controlChanged?.IsCompleted == true)
+            return Task.CompletedTask;
+        return controlChanged == null ? Task.Delay(delay, token) : WaitForControlOrDelayAsync(delay, controlChanged, token);
+    }
+
+    private static async Task WaitForControlOrDelayAsync(TimeSpan delay, Task controlChanged, CancellationToken token) {
+        using var delayCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+        var delayTask = Task.Delay(delay, delayCts.Token);
+        try {
+            var completed = await Task.WhenAny(delayTask, controlChanged);
+            if (completed == delayTask)
+                await delayTask;
+            token.ThrowIfCancellationRequested();
+        } finally {
+            // Cancel an interrupted timer instead of leaving it running after
+            // every shape change. The run/stop cancellation token is unchanged.
+            delayCts.Cancel();
         }
     }
 
@@ -43,12 +85,9 @@ public sealed class MacroExecutionPlan {
             return _variables.TryGetValue(name, out value);
     }
 
-    // Re-derives variable values from the CURRENT raw definitions, so arithmetic
-    // expressions (e.g. $totalWait = $count * $interval) recompute after a live
-    // variable update instead of being frozen at plan creation.
     private Dictionary<string, string> ResolvedVariables() {
-        var vars = new Dictionary<string, string>(_variables);
-        Command.ResolveVariableExpressions(vars);
-        return vars;
+        var variables = new Dictionary<string, string>(_variables);
+        Command.ResolveVariableExpressions(variables);
+        return variables;
     }
 }

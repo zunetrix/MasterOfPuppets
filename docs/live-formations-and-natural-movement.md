@@ -30,9 +30,25 @@ In `Natural` mode, the follower character does not navigate to a static world co
 
 ### 2.2 Anti-Overshoot & Slot Arrival Holding
 To prevent followers from overshooting their slot, turning around, or jittering when walking close to their anchor:
-* **Slot Arrival Detection**: When a follower enters the slot arrival radius (`distance <= holdRadius`), forward movement stops immediately and the character matches the formation heading (`ApplyFormationFacing`).
+* **Exact Slot Tracking**: Ordinary live formations steer toward the actual slot coordinate. A moving slot is not projected ahead of its anchor unless the caller explicitly enables pursuit prediction.
+* **Slot Arrival Detection**: When a follower enters the slot arrival radius (`distance <= holdRadius`), forward movement stops immediately and the character matches the formation heading (`ApplyFormationFacing`). This remains available while the slot is moving unless the caller explicitly disables it.
 * **Hysteresis Buffer**: A 3-inch resume buffer prevents rapid start-stop toggling.
 * **Slot Spacing Preservation**: When the leader comes to a halt, followers halt cleanly at their exact assigned slot offsets (e.g. `0.5y` intervals), preventing formation collapse or bunching up into the leader.
+* **Immediate Travel Steering**: Ordinary formations can turn directly toward a nearby slot, avoiding a minimum turning-circle trap around short offsets.
+
+### 2.3 Explicit Movement Policies
+
+The natural movement engine now exposes three independent policy switches through `SimpleMovementContext` rather than applying one behavior to every live movement source:
+
+| Policy | Ordinary Formation Default | Purpose |
+| :--- | :--- | :--- |
+| `UsePursuitTarget` | `false` | When enabled, projects a moving target forward using measured velocity. |
+| `AllowHoldWhileTargetMoving` | `true` | Allows braking inside the arrival radius even while the target slot is moving. |
+| `RateLimitTravelFacing` | `false` | When enabled, smooths travel turns instead of applying the desired heading immediately. |
+
+This separation fixes the generic failure mode where a close moving slot could be projected past its anchor, refuse to brake, and remain inside the follower's turning circle. In a chained formation such as a conga line, one orbiting follower could otherwise make every downstream slot orbit as well.
+
+Continuous Lua trajectories opt into pursuit prediction, disable holding on their constantly moving waypoint, and use rate-limited steering. Lua actor-follow scripts select these policies explicitly through `mop.follow_actor`. This keeps trajectory motion smooth without changing the expected arrival behavior of ordinary formations.
 
 ---
 
@@ -76,6 +92,7 @@ In the Formation Shape Generator UI (`FormationShapeGenerator.cs`):
 * `MasterOfPuppets/Formations/FormationTrackingSession.cs`: Live framework tracking engine.
 * `MasterOfPuppets/Game/Movement/FormationNaturalMovementStrategy.cs`: Natural movement steering and facing.
 * `MasterOfPuppets/Game/Movement/FormationTargetTracker.cs`: Motion hold debounce and slot arrival holding.
+* `MasterOfPuppets/Game/Movement/SimpleMovementContext.cs`: Per-movement policy switches for pursuit, holding, and steering.
 * `MasterOfPuppets/Formations/FormationAnchorResolver.cs`: Dynamic anchor resolution (`target`, `ftarget`, `sender`, name).
 * `MasterOfPuppets/Formations/FormationLocalMovementExecutor.cs`: Dynamic origin slot mapping.
 * `MasterOfPuppets/Formations/FormationShapeGenerator.cs`: `ReverseTangent` math and facing generation.

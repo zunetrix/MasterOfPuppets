@@ -18,6 +18,9 @@ public sealed class FormationTargetTracker {
     public const float MovingSlotSpeed = 0.2f;
     public const float HoldResumeBuffer = 0.08f;
     public const float FacingUpdateThresholdRadians = 0.0175f;
+    public const float RelativeDirectionSwitchRatio = 1.25f;
+    public const float PursuitPredictionSeconds = 0.35f;
+    public const float MaximumPursuitLeadDistance = 1.5f;
     public const long MotionHoldMs = 250;
 
     private bool _hasTarget;
@@ -69,8 +72,20 @@ public sealed class FormationTargetTracker {
     public bool IsSlotMoving => Length2D(Velocity) >= MovingSlotSpeed || (Environment.TickCount64 - _lastMovingMs <= MotionHoldMs);
 
     public static bool ShouldHold(float distance, float precision, bool wasHolding, bool slotMoving = false) {
+        // A live trajectory point is not an arrival destination. Releasing input
+        // whenever the actor catches it produces a visible stop/start cadence.
+        if (slotMoving)
+            return false;
+
         var holdRadius = Math.Max(0f, precision) + (wasHolding ? HoldResumeBuffer : 0f);
         return distance <= holdRadius;
+    }
+
+    public Vector3 GetPursuitTarget() {
+        var lead = Velocity * PursuitPredictionSeconds;
+        lead.Y = 0f;
+        lead = ClampLength2D(lead, MaximumPursuitLeadDistance);
+        return Target + lead;
     }
 
     public static bool ShouldUpdateFacing(float? previousRotation, float nextRotation) {
@@ -83,6 +98,13 @@ public sealed class FormationTargetTracker {
         return MathF.Abs(delta) >= FacingUpdateThresholdRadians;
     }
 
+    public static float StepRotationToward(float currentRotation, float desiredRotation, float maximumStep) {
+        var delta = MathF.Atan2(
+            MathF.Sin(desiredRotation - currentRotation),
+            MathF.Cos(desiredRotation - currentRotation));
+        return currentRotation + Math.Clamp(delta, -MathF.Abs(maximumStep), MathF.Abs(maximumStep));
+    }
+
     /// <summary>
     /// Chooses a movement input in the character's desired-facing coordinate frame.
     /// This lets formation followers backpedal or strafe toward their slot without
@@ -91,7 +113,8 @@ public sealed class FormationTargetTracker {
     public static MovementDirection SelectRelativeMovementDirection(
         Vector3 playerPosition,
         Vector3 targetPosition,
-        float facingRadians) {
+        float facingRadians,
+        MovementDirection previousDirection = MovementDirection.None) {
         var error = targetPosition - playerPosition;
         error.Y = 0f;
         if (error.LengthSquared() <= float.Epsilon)
@@ -103,15 +126,34 @@ public sealed class FormationTargetTracker {
         var forwardAmount = Vector3.Dot(error, forward);
         var rightAmount = Vector3.Dot(error, right);
 
-        if (MathF.Abs(forwardAmount) >= MathF.Abs(rightAmount))
-            return forwardAmount >= 0f
+        var candidate = MathF.Abs(forwardAmount) >= MathF.Abs(rightAmount)
+            ? forwardAmount >= 0f
                 ? MovementDirection.Forward
-                : MovementDirection.Backward;
+                : MovementDirection.Backward
+            : rightAmount >= 0f
+                ? MovementDirection.StrafeRight
+                : MovementDirection.StrafeLeft;
 
-        return rightAmount >= 0f
-            ? MovementDirection.StrafeRight
-            : MovementDirection.StrafeLeft;
+        if (previousDirection == MovementDirection.None || previousDirection == candidate)
+            return candidate;
+
+        var candidateAmount = DirectionAmount(candidate, forwardAmount, rightAmount);
+        var previousAmount = DirectionAmount(previousDirection, forwardAmount, rightAmount);
+        return previousAmount > 0f && candidateAmount < previousAmount * RelativeDirectionSwitchRatio
+            ? previousDirection
+            : candidate;
     }
+
+    private static float DirectionAmount(
+        MovementDirection direction,
+        float forwardAmount,
+        float rightAmount) => direction switch {
+        MovementDirection.Forward => forwardAmount,
+        MovementDirection.Backward => -forwardAmount,
+        MovementDirection.StrafeRight => rightAmount,
+        MovementDirection.StrafeLeft => -rightAmount,
+        _ => 0f,
+    };
 
     private static Vector3 ClampLength2D(Vector3 value, float maximumLength) {
         var length = Length2D(value);

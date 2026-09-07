@@ -63,16 +63,14 @@ public sealed class MacroRuntimeVariables {
         var leader = string.Empty;
         try {
             if (!string.IsNullOrWhiteSpace(DalamudApi.PlayerState.CharacterName)) {
-                world = DalamudApi.PlayerState.HomeWorld.Value.Name.ToString() ?? string.Empty;
+                world = DalamudApi.PlayerState.HomeWorld.Value.Name.ToString();
                 me = string.IsNullOrWhiteSpace(world)
                     ? DalamudApi.PlayerState.CharacterName
                     : $"{DalamudApi.PlayerState.CharacterName}@{world}";
             }
-
             var localPlayer = DalamudApi.ObjectTable?.LocalPlayer as IPlayerCharacter;
             job = DalamudApi.PlayerState.ClassJob.ValueNullable?.Abbreviation.ToString() ?? string.Empty;
             level = localPlayer?.Level.ToString() ?? string.Empty;
-
             if (DalamudApi.PartyList.IsInParty()) {
                 var partyLeader = DalamudApi.PartyList.GetPartyLeader();
                 if (partyLeader != null) {
@@ -84,7 +82,7 @@ public sealed class MacroRuntimeVariables {
                 }
             }
         } catch {
-            // Game state may be partially unavailable; leave fields empty rather than throwing.
+            // Game state may be partially unavailable during login or teardown.
         }
 
         return new MacroRuntimeVariables {

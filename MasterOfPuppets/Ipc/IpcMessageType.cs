@@ -100,4 +100,13 @@ public enum IpcMessageType {
     RidePillion,
     ExecuteUnequipGlasses,
     UpdateMacroVariables,
+
+    // Lua scripting
+    RunLuaScript,
+    StopLuaScript,
+    PauseLuaScript,
+    ResumeLuaScript,
+    StopManagedMovement,
+    LuaSharedVariable,
+    LuaParticipantMessage,
 }

@@ -501,6 +501,45 @@ public class SettingsWindow : Window {
             ImGui.Unindent();
         }
 
+        ImGui.Spacing();
+        if (ImGui.CollapsingHeader("Lua Synchronization", ImGuiTreeNodeFlags.DefaultOpen)) {
+            ImGui.Indent();
+            var readinessEnabled = Plugin.Config.LuaDistributedReadinessEnabled;
+            if (ImGui.Checkbox("Experimental PREPARE / READY / GO staging", ref readinessEnabled)) {
+                Plugin.Config.LuaDistributedReadinessEnabled = readinessEnabled;
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGui.TextWrapped("When enabled, Chat Sync Lua performers first move to their participant-formation slots, report settled readiness, and wait for a conductor GO epoch. Keep disabled until every participating PC runs this build and the formation/anchor is visible.");
+            if (readinessEnabled) {
+                var timeout = Math.Clamp(Plugin.Config.LuaReadinessTimeoutSeconds, 5, 120);
+                ImGui.SetNextItemWidth(160f * ImGuiHelpers.GlobalScale);
+                if (ImGui.InputInt("Readiness timeout (seconds)", ref timeout)) {
+                    Plugin.Config.LuaReadinessTimeoutSeconds = Math.Clamp(timeout, 5, 120);
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+                var policy = Plugin.Config.LuaReadinessTimeoutPolicy?.Trim().ToLowerInvariant() ?? "abort";
+                var policyLabel = policy switch {
+                    "continue_ready" => "Continue ready performers",
+                    "continue_all" => "Continue all performers",
+                    _ => "Abort",
+                };
+                if (ImGui.BeginCombo("Readiness timeout policy", policyLabel)) {
+                    foreach (var option in new[] {
+                                 (Value: "abort", Label: "Abort"),
+                                 (Value: "continue_ready", Label: "Continue ready performers"),
+                                 (Value: "continue_all", Label: "Continue all performers"),
+                             }) {
+                        if (ImGui.Selectable(option.Label, policy == option.Value)) {
+                            Plugin.Config.LuaReadinessTimeoutPolicy = option.Value;
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+                    }
+                    ImGui.EndCombo();
+                }
+            }
+            ImGui.Unindent();
+        }
+
     }
 
     private void DrawLoginMacroGroup() {
