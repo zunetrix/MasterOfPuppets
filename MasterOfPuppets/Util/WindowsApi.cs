@@ -176,4 +176,25 @@ public static class WindowsApi {
         });
         return list;
     }
+
+    [DllImport("psapi.dll")]
+    static extern bool EmptyWorkingSet(IntPtr hProcess);
+
+    public static void FreeProcessWorkingMemory() {
+        foreach (var process in Process.GetProcessesByName("ffxiv_dx11")) {
+            try {
+                DalamudApi.PluginLog.Warning($"Process ({process.Id}): {process.WorkingSet64 / 1024 / 1024} MB");
+
+                if (EmptyWorkingSet(process.Handle)) {
+                    process.Refresh();
+
+                    DalamudApi.PluginLog.Warning($"  -> {process.WorkingSet64 / 1024 / 1024} MB");
+                }
+            } catch (Exception ex) {
+                DalamudApi.PluginLog.Error($"{process.Id}: {ex.Message}");
+            } finally {
+                process.Dispose();
+            }
+        }
+    }
 }

@@ -6,6 +6,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 
 using MasterOfPuppets.Resources;
+using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
@@ -39,6 +40,11 @@ public partial class XivLauncherWindow {
             ImGui.SameLine();
             if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Ban, ImGuiUtil.IconButtonStyle.Danger, "##xlkillbgprocess", "Kill XIVLauncher background process")) {
                 XivLauncherManager.KillXivLauncher();
+            }
+
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Memory, ImGuiUtil.IconButtonStyle.Danger, "##freeXivMem", "EXPERIMENTAL:\n Forces ffxiv_dx11 process free memory usage")) {
+                WindowsApi.FreeProcessWorkingMemory();
             }
 
             ImGui.Spacing();
