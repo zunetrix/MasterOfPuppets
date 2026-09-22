@@ -55,7 +55,7 @@ public partial class GameSettingsWindow {
         }
     }
 
-    //  Left panel — profile list
+    //  Left panel - profile list
     private void DrawProfileListPanel() {
         var profiles = Plugin.Config.GameSettingsProfiles;
 
@@ -260,7 +260,7 @@ public partial class GameSettingsWindow {
         }
     }
 
-    //  Right panel — keys read-only view
+    //  Right panel - keys read-only view
 
     private void DrawProfileKeysPanel() {
         if (_selectedProfileIdx < 0 ||

@@ -74,7 +74,7 @@ public partial class GameSettingsWindow {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             ImGui.TableNextColumn();
-            ImGui.TextDisabled("No entries — enable debug and change a game setting.");
+            ImGui.TextDisabled("No entries - enable debug and change a game setting.");
         }
 
         ImGui.EndTable();

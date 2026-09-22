@@ -347,8 +347,8 @@ public class Macro {
 
         // Resolve which command this characteristic targets and find its position in the
         // macro's ordered command list. Two families of auto-variables are exposed:
-        //   $commandIndex/$commandCount      — macro level: which command am I, how many commands.
-        //   $assignmentIndex/$assignmentCount — command level: this character's stagger lane among
+        //   $commandIndex/$commandCount      - macro level: which command am I, how many commands.
+        //   $assignmentIndex/$assignmentCount - command level: this character's stagger lane among
         //                                       everyone this command targets (direct cids first,
         //                                       then each group's cids, in author listing order,
         //                                       deduplicated by first-seen position). This lets one

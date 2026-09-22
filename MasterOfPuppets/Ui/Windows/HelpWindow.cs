@@ -61,7 +61,7 @@ public class HelpWindow : Window {
             if (ImGui.CollapsingHeader($"{catGroup.Key}##MacroHelpCategory{catGroup.Key}")) {
 
                 if (isFiltered) {
-                    // In search mode: flatten — render all commands directly without sub-grouping
+                    // In search mode: flatten - render all commands directly without sub-grouping
                     foreach (var action in catGroup) {
                         DrawActionSelectable(action);
                     }
@@ -71,7 +71,7 @@ public class HelpWindow : Window {
 
                     foreach (var subGroup in subGroups) {
                         if (subGroup.Key == MopActionSubCategory.None) {
-                            // No subcategory — render items directly under the category
+                            // No subcategory - render items directly under the category
                             foreach (var action in subGroup) {
                                 DrawActionSelectable(action);
                             }

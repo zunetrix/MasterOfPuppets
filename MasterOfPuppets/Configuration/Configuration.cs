@@ -204,6 +204,24 @@ internal class Configuration : IPluginConfiguration {
     public List<string> ChatCommandSenderWhitelist { get; set; } = new();
     public string DefaultChatSyncPrefix { get; set; } = "/p";
 
+    // Remote Control
+    [NoSync]
+    [Newtonsoft.Json.JsonIgnore]
+    public bool RemoteControlEnabled { get; set; } = false;
+    public int RemoteControlPort { get; set; } = 4782;
+    public string RemoteControlToken { get; set; } = string.Empty;
+    [NoSync]
+    [Newtonsoft.Json.JsonIgnore]
+    public bool TunnelEnabled { get; set; } = false;
+    public string TunnelCommand { get; set; } = string.Empty;
+
+    // Remote Control - Client mode
+    [NoSync]
+    [Newtonsoft.Json.JsonIgnore]
+    public bool RemoteControlClientEnabled { get; set; } = false;
+    public string RemoteControlClientUrl { get; set; } = string.Empty;
+    public string RemoteControlClientToken { get; set; } = string.Empty;
+
     // General
     public bool MultiboxEnabled { get; set; } = false;
     public bool KeyboardBroadcastEnabled { get; set; } = true;

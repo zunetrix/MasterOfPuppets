@@ -104,7 +104,14 @@ public class PluginCommandManager : IDisposable {
         UnregisterAll();
     }
 
-    private void OnMainCommand(string command, string arguments) {
+    private void OnMainCommand(string command, string arguments) =>
+        ExecuteSubcommand(arguments);
+
+    /// <summary>
+    /// Executes a /mop subcommand by its argument string (everything after "/mop ").
+    /// Called by both the Dalamud command handler and the Remote Control server.
+    /// </summary>
+    public void ExecuteSubcommand(string arguments) {
         var parsedArgs = ArgumentParser.ParseCommandArgs(arguments);
         if (parsedArgs.Count == 1 && parsedArgs[0].StartsWith("gamemacro ", StringComparison.OrdinalIgnoreCase)) {
             parsedArgs = ArgumentParser.ParseMacroArgs(parsedArgs[0]);

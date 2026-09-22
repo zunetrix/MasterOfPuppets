@@ -1,10 +1,10 @@
 using Xunit;
+
 using MasterOfPuppets;
 
 namespace MasterOfPuppetsTests;
 
-public class MathExpressionEvaluatorTests
-{
+public class MathExpressionEvaluatorTests {
     [Theory]
     [InlineData("7 * 0.8", "5.6")]
     [InlineData("7*0.8", "5.6")]
@@ -16,8 +16,7 @@ public class MathExpressionEvaluatorTests
     [InlineData("-1.5 + 3", "1.5")]
     [InlineData("7 % 2", "1")]
     [InlineData("1 + 2 * 3", "7")]
-    public void Evaluates_Arithmetic_Expressions(string input, string expected)
-    {
+    public void Evaluates_Arithmetic_Expressions(string input, string expected) {
         Assert.True(MathExpressionEvaluator.TryEvaluate(input, out var result), $"expected '{input}' to evaluate");
         Assert.Equal(expected, result);
     }
@@ -29,16 +28,13 @@ public class MathExpressionEvaluatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("2 +")]
-    public void Leaves_Non_Arithmetic_Input_Untouched(string input)
-    {
+    public void Leaves_Non_Arithmetic_Input_Untouched(string input) {
         Assert.False(MathExpressionEvaluator.TryEvaluate(input, out _), $"expected '{input}' NOT to evaluate");
     }
 
     [Fact]
-    public void Macro_Definition_Computes_TotalWait_From_Interval()
-    {
-        var macro = new Macro
-        {
+    public void Macro_Definition_Computes_TotalWait_From_Interval() {
+        var macro = new Macro {
             Variables = "$emote=/surprised\n$interval=0.80\n$totalWait=7 * $interval",
             Commands = new List<Command> {
                 new Command {
@@ -56,11 +52,9 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Macro_Per_Character_Offset_Computes_From_Interval()
-    {
+    public void Macro_Per_Character_Offset_Computes_From_Interval() {
         // Character at position 3 of 7: offset = 3 * interval.
-        var macro = new Macro
-        {
+        var macro = new Macro {
             Variables = "$interval=0.80\n$offset=3 * $interval\n$totalWait=7 * $interval",
             Commands = new List<Command> {
                 new Command {
@@ -78,8 +72,7 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Calc_Token_Evaluates_Inline_Math()
-    {
+    public void Calc_Token_Evaluates_Inline_Math() {
         // {calc} is evaluated at dispatch time (after $-variable substitution), so the
         // token body can reference already-substituted variables.
         var result = MacroTokenProcessor.Process("/mopphasewait {calc(0.8 * 7)}");
@@ -88,8 +81,7 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Calc_Token_Leaves_Invalid_Expression_Untouched()
-    {
+    public void Calc_Token_Leaves_Invalid_Expression_Untouched() {
         // A non-arithmetic calc body is left as-is rather than breaking the action.
         var actions = MacroTokenProcessor.Process("/moptarget \"{calc(Foo @ X)}\"");
 
@@ -97,17 +89,15 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Rotating_Emote_Blob_Resolves_For_Character_K()
-    {
+    public void Rotating_Emote_Blob_Resolves_For_Character_K() {
         // Mirrors the exportable blob: ONE command targets all 7 characters with identical
         // text, and $assignmentIndex/$assignmentCount give each character its own stagger lane.
         // The two phase-waits per loop (offset + tail) sum to one full cycle (totalWait) so the
-        // absolute phase clock advances exactly one cycle per iteration — no drift.
+        // absolute phase clock advances exactly one cycle per iteration - no drift.
         // 5th listed cid -> assignmentIndex 4 -> offset 3.2; totalWait = count(7) * 0.8 = 5.6;
         // tail = 5.6 - 3.2 = 2.4.
         var cids = new List<ulong> { 101, 102, 103, 104, 105, 106, 107 };
-        var macro = new Macro
-        {
+        var macro = new Macro {
             Variables = "$emote=/surprised\n$interval=0.80",
             Commands = new List<Command> {
                 new Command {
@@ -124,12 +114,10 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Single_Command_Single_Template_Staggers_Each_Cid()
-    {
+    public void Single_Command_Single_Template_Staggers_Each_Cid() {
         // Identical command text, one command, but each targeted character derives a different
         // offset (and matching tail) from its own $assignmentIndex. offset + tail = cycle(5.6).
-        var macro = new Macro
-        {
+        var macro = new Macro {
             Variables = "$emote=/surprised\n$interval=0.80",
             Commands = new List<Command> {
                 new Command {
@@ -151,12 +139,10 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void CommandIndex_And_CommandCount_Are_Macro_Level()
-    {
+    public void CommandIndex_And_CommandCount_Are_Macro_Level() {
         // $commandIndex/$commandCount are macro-level: which command, how many commands.
         // Three commands, each targeting its own cid; each sees its own list position and count 3.
-        var macro = new Macro
-        {
+        var macro = new Macro {
             Variables = "$interval=0.1",
             Commands = new List<Command> {
                 new Command { Cids = new() { 100 }, Actions = "/mopwait $offset\n/mopwait $total\n$offset=$commandIndex * $interval\n$total=$commandCount * $interval" },
@@ -173,16 +159,14 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Assignment_Index_Is_Author_Listing_Order_Over_Union_With_Groups()
-    {
+    public void Assignment_Index_Is_Author_Listing_Order_Over_Union_With_Groups() {
         // A command may target characters via direct cids AND via groups. The assignment lane
         // is the union in author-listing order (direct cids first, then group cids, dedup by
         // first-seen position).
         var groups = new List<CidGroup> {
             new() { Name = "G", Cids = new() { 600, 100 } }, // 100 already direct -> skipped for dedup
         };
-        var macro = new Macro
-        {
+        var macro = new Macro {
             Variables = "$interval=1",
             Commands = new List<Command> {
                 new Command {
@@ -201,14 +185,12 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Group_Assigned_Characters_Get_Assignment_Lanes()
-    {
+    public void Group_Assigned_Characters_Get_Assignment_Lanes() {
         // Characters reached purely through a group still receive their own stagger lane.
         var groups = new List<CidGroup> {
             new() { Name = "Trio", Cids = new() { 11, 22, 33 } },
         };
-        var macro = new Macro
-        {
+        var macro = new Macro {
             Variables = "$interval=0.5",
             Commands = new List<Command> {
                 new Command {
@@ -224,12 +206,10 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Command_And_Assignment_Vars_Are_Authoritative()
-    {
+    public void Command_And_Assignment_Vars_Are_Authoritative() {
         // Author-declared auto-vars MUST NOT shadow the engine values, else the stagger
         // corrupts. Inline commandVars are lower precedence than the injected auto-vars.
-        var macro = new Macro
-        {
+        var macro = new Macro {
             Variables = "$interval=0.1",
             Commands = new List<Command> {
                 new Command {
@@ -244,11 +224,9 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void GlobalDelay_Variable_Resolves_From_Runtime()
-    {
+    public void GlobalDelay_Variable_Resolves_From_Runtime() {
         // $globaldelay is exposed from the runtime variables and is usable in arithmetic.
-        var macro = new Macro
-        {
+        var macro = new Macro {
             Commands = new List<Command> {
                 new Command { Cids = new() { 1 }, Actions = "/mopwait $globaldelay\n/mopwait $doubled\n$doubled=$globaldelay * 2" },
             }
@@ -262,23 +240,20 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Evaluator_Rejects_Overly_Long_Input()
-    {
+    public void Evaluator_Rejects_Overly_Long_Input() {
         var longInput = string.Join(" + ", Enumerable.Repeat("1", 300));
         Assert.True(longInput.Length > 512);
         Assert.False(MathExpressionEvaluator.TryEvaluate(longInput, out _));
     }
 
     [Fact]
-    public void Evaluator_Rejects_Deeply_Nested_Parentheses()
-    {
+    public void Evaluator_Rejects_Deeply_Nested_Parentheses() {
         var nested = new string('(', 200) + "1" + new string(')', 200);
         Assert.False(MathExpressionEvaluator.TryEvaluate(nested, out _));
     }
 
     [Fact]
-    public void Evaluator_Still_Handles_Legitimate_Depth_And_Length()
-    {
+    public void Evaluator_Still_Handles_Legitimate_Depth_And_Length() {
         Assert.True(MathExpressionEvaluator.TryEvaluate("(((1 + 2) * (3 + 4)))", out var result));
         Assert.Equal("21", result);
 
@@ -287,12 +262,10 @@ public class MathExpressionEvaluatorTests
     }
 
     [Fact]
-    public void Live_Setvar_Interval_Recomputes_Derived_Values()
-    {
+    public void Live_Setvar_Interval_Recomputes_Derived_Values() {
         // Changing $interval on a running macro flows through UpdateVariables onto the
         // execution plan; the derived offsets re-evaluate at next action resolution.
-        var macro = new Macro
-        {
+        var macro = new Macro {
             Variables = "$interval=0.80\n$count=7\n$totalWait=$count * $interval",
             Commands = new List<Command> {
                 new Command {

@@ -80,4 +80,10 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
         </Compile>
         <!-- <Content Include="Assets\**\*.png" CopyToOutputDirectory="Always" /> -->
     </ItemGroup>
+    <ItemGroup>
+        <!-- Remote Control embedded web UI -->
+        <EmbeddedResource Include="RemoteControl\Web\index.html" />
+        <EmbeddedResource Include="RemoteControl\Web\app.js" />
+        <EmbeddedResource Include="RemoteControl\Web\styles.css" />
+    </ItemGroup>
 </Project>

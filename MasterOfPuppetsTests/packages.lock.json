@@ -64,6 +64,11 @@
         "resolved": "4.4.0",
         "contentHash": "gwJEfIGS7FhykvtZoscwXj/XwW+mJY6UbAZk+qtLKFUGWC95kfKXnj8VkxsZQnWBxJemM/q664rGLN5nf+OHZw=="
       },
+      "ExposedObject": {
+        "type": "Transitive",
+        "resolved": "2.2.0",
+        "contentHash": "YIRgcIAVJ5VKavBW1VidPNoU5a5VAfCdJLcHuaA3JGJIBjKqyOjdkPkc7zPPTKl4XKOQTsT7yR5dtP552nk+vg=="
+      },
       "KTrie": {
         "type": "Transitive",
         "resolved": "2.6.0",
@@ -248,6 +253,7 @@
         "type": "Project",
         "dependencies": {
           "DalamudPackager": "[15.0.0, )",
+          "ExposedObject": "[2.2.0, )",
           "KTrie": "[2.6.0, )",
           "Sprache": "[2.3.1, )",
           "TinyIpc": "[5.2.1, )",

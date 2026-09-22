@@ -44,7 +44,7 @@ public static class FormationAnchorRules {
 
     /// <summary>
     /// Whether the command sender should be rejected because they have no role in the formation.
-    /// Only rejected when the sender is not assigned to any point AND point 1 is assigned — i.e.
+    /// Only rejected when the sender is not assigned to any point AND point 1 is assigned - i.e.
     /// there is no unassigned origin they could lead from. If point 1 is unassigned, any sender
     /// may act as the wildcard-origin leader (they simply stay put as the anchor).
     /// </summary>
@@ -93,7 +93,7 @@ public static class FormationAnchorRules {
     ///
     /// When the anchor is a real character pivot (anchorCid != 0) the pivot does not march to
     /// itself, so we honor the (possibly empty) march sequence. When the anchor is an origin
-    /// anchor (anchorCid == 0 — target/focus-target/unassigned-origin) there is no character
+    /// anchor (anchorCid == 0 - target/focus-target/unassigned-origin) there is no character
     /// pivot, so an assigned point-1 member at the origin participates like any member: its
     /// destination is its own point, which resolves to the origin anchor position.
     /// </summary>

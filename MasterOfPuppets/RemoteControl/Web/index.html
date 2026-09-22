@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOP Remote Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+  <div id="app">
+    <header>
+      <span class="logo">⚙ Master of Puppets</span>
+      <span class="char" id="charName">Connecting…</span>
+      <div id="wsStatus" class="connecting">
+        <div class="dot"></div>
+        <span>Connecting…</span>
+      </div>
+    </header>
+
+    <main>
+      <!--  Left panel  -->
+      <div class="left-panel">
+
+        <!-- Command input -->
+        <div class="card">
+          <div class="card-header">Command</div>
+          <div class="card-body">
+            <div class="cmd-row">
+              <select id="cmdType"
+                style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 4px;font-size:.82rem;outline:none;cursor:pointer">
+                <option value="command">Plugin</option>
+                <option value="chat">Chat</option>
+              </select>
+              <input id="cmdInput" type="text"
+                placeholder="/mop run MyMacro  •  mopbr /wait 1  •  mopbrg GroupName /emote wave" autocomplete="off"
+                spellcheck="false" />
+              <button class="btn-primary" onclick="sendCommand()">Send</button>
+            </div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:6px">
+              Supports: <code>/mop &lt;subcommand&gt;</code> · <code>mopbr</code> · <code>mopbrn</code> ·
+              <code>mopbrc</code> · <code>mopbrg</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Favourites -->
+        <div class="card">
+          <div class="card-header">Favourites</div>
+          <div class="card-body">
+            <div class="fav-list" id="favList"></div>
+            <div class="fav-new">
+              <input id="favNameInput" type="text" placeholder="Name" style="flex:0 0 110px" />
+              <select id="favTypeInput"
+                style="flex:0 0 75px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 4px;font-size:.82rem;outline:none;cursor:pointer">
+                <option value="command">Plugin</option>
+                <option value="chat">Chat</option>
+              </select>
+              <input id="favCmdInput" type="text" placeholder="/mop run MyMacro" />
+              <button class="btn-primary btn-sm" onclick="addFav()">+ Add</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Macros -->
+        <div class="card">
+          <div class="card-header">
+            Macros
+            <button class="btn-icon" style="float:right;margin-top:-2px" title="Refresh"
+              onclick="loadMacros()">↺</button>
+          </div>
+          <div class="card-body">
+            <div class="macro-filter">
+              <input id="macroFilter" type="text" placeholder="Filter by name or tag…" />
+            </div>
+            <div class="macro-list" id="macroList">
+              <div style="color:var(--muted);font-size:.82rem">Loading…</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /left-panel -->
+
+      <!--  Right panel: event log  -->
+      <div class="right-panel">
+        <div class="card-header">
+          Event Log
+          <button id="clearLog">Clear</button>
+        </div>
+        <div id="eventLog"></div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast"></div>
+  <script src="/app.js"></script>
+
+</body>
+
+</html>
