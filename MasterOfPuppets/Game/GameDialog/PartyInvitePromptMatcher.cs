@@ -68,6 +68,43 @@ public static class PartyInvitePromptMatcher {
             maxPeerAge);
     }
 
+    public static PartyInviteDecision EvaluateConfiguredInvite(
+        string promptText,
+        string addonRowText,
+        IEnumerable<Character> configuredCharacters) =>
+        EvaluateConfiguredInvite(
+            ParsePartyInvitePrompt(promptText, addonRowText),
+            configuredCharacters);
+
+    internal static PartyInviteDecision EvaluateConfiguredInvite(
+        string promptText,
+        ReadOnlySeString addonRowText,
+        IEnumerable<Character> configuredCharacters) =>
+        EvaluateConfiguredInvite(
+            ParsePartyInvitePrompt(promptText, addonRowText),
+            configuredCharacters);
+
+    private static PartyInviteDecision EvaluateConfiguredInvite(
+        PartyInvitePromptParseResult parse,
+        IEnumerable<Character> configuredCharacters) {
+        if (!parse.IsPartyInvite)
+            return PartyInviteDecision.Rejected(parse, "prompt did not match party invite expression");
+
+        var match = configuredCharacters
+            .Where(character => character != null && !string.IsNullOrWhiteSpace(character.Name))
+            .FirstOrDefault(character => MatchesCharacter(parse.InviterSegment, character.Name));
+        return match == null
+            ? PartyInviteDecision.Rejected(parse, "inviter is not in the configured character list")
+            : new PartyInviteDecision(
+                true,
+                parse,
+                0,
+                0,
+                string.Empty,
+                $"name:{match.Name}",
+                "inviter matched the configured character list");
+    }
+
     internal static PartyInviteDecision EvaluateConnectedConfiguredInvite(
         string promptText,
         ReadOnlySeString addonRowText,
@@ -372,7 +409,8 @@ public static class PartyInvitePromptMatcher {
             remainder = remainder[1..].Trim();
         remainder = remainder.Trim('(', ')', '[', ']');
 
-        return remainder.Equals(world, StringComparison.OrdinalIgnoreCase);
+        return NormalizeNameWorldSegment(remainder)
+            .Equals(NormalizeNameWorldSegment(world), StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool ContainsWorldName(string value, string world) {

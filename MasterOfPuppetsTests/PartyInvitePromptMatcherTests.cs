@@ -103,6 +103,37 @@ public class PartyInvitePromptMatcherTests {
     }
 
     [Fact]
+    public void ConfiguredInvite_Accepts_ConfiguredInviter_WithoutConnectedPeer() {
+        var decision = PartyInvitePromptMatcher.EvaluateConfiguredInvite(
+            "Join Alice@Diabolos's party?",
+            PartyInviteAddonRow,
+            [new Character { Cid = 1001, Name = "Alice@Diabolos" }]);
+
+        Assert.True(decision.ShouldAccept);
+        Assert.Equal("name:Alice@Diabolos", decision.ConfigMatch);
+    }
+
+    [Fact]
+    public void ConfiguredInvite_Accepts_SpecialWorldSeparator_WithoutConnectedPeer() {
+        var decision = PartyInvitePromptMatcher.EvaluateConfiguredInvite(
+            "Join Alice \ue0bb Diabolos's party?",
+            PartyInviteAddonRow,
+            [new Character { Cid = 1001, Name = "Alice@Diabolos" }]);
+
+        Assert.True(decision.ShouldAccept);
+    }
+
+    [Fact]
+    public void ConfiguredInvite_Rejects_DifferentWorld_WhenPromptIncludesWorld() {
+        var decision = PartyInvitePromptMatcher.EvaluateConfiguredInvite(
+            "Join Alice@Gilgamesh's party?",
+            PartyInviteAddonRow,
+            [new Character { Cid = 1001, Name = "Alice@Diabolos" }]);
+
+        Assert.False(decision.ShouldAccept);
+    }
+
+    [Fact]
     public void ConnectedConfiguredInvite_Accepts_When_Prompt_Uses_Special_World_Separator() {
         var now = DateTime.UtcNow;
 
