@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using MasterOfPuppets.Extensions.Dalamud;
+using MasterOfPuppets.Formations;
 
 namespace MasterOfPuppets;
 
@@ -15,6 +16,7 @@ public sealed class MacroRuntimeVariables {
     public string World { get; init; } = string.Empty;
     public string Leader { get; init; } = string.Empty;
     public string MopOrigin { get; init; } = string.Empty;
+    public string MopOriginName { get; init; } = string.Empty;
     public string MopOriginTarget { get; init; } = string.Empty;
     public string MopOriginFocusTarget { get; init; } = string.Empty;
     public double GlobalDelaySeconds { get; init; } = 0.5;
@@ -29,6 +31,9 @@ public sealed class MacroRuntimeVariables {
         ["world"] = World,
         ["leader"] = Leader,
         ["mop_origin"] = MopOrigin,
+        ["mop_origin_name"] = !string.IsNullOrEmpty(MopOriginName)
+            ? MopOriginName
+            : FormationCharacterName.GetBaseCharacterName(MopOrigin),
         ["mop_origin_target"] = MopOriginTarget,
         ["mop_origin_ftarget"] = MopOriginFocusTarget,
         ["globaldelay"] = GlobalDelaySeconds.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
@@ -96,6 +101,7 @@ public sealed class MacroRuntimeVariables {
             World = world,
             Leader = leader,
             MopOrigin = me,
+            MopOriginName = FormationCharacterName.GetBaseCharacterName(me),
             MopOriginTarget = GameTargetManager.GetTargetName(),
             MopOriginFocusTarget = GameTargetManager.GetFocusTargetName(),
             GlobalDelaySeconds = globalDelaySeconds,

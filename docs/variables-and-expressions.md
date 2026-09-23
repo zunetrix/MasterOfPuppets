@@ -62,6 +62,7 @@ by action-line or inline definitions.
 | `$world` | The local character's home world name. |
 | `$leader` | The local party leader's name, formatted `Name@World` when a world is known. Empty when not in a party. |
 | `$mop_origin` | The macro launching character (same as `$me` on the local client). |
+| `$mop_origin_name` | The launching character's name without the `@World` suffix. Passed to receiving clients with `$mop_origin`. |
 | `$mop_origin_target` | What the launching character was targeting. |
 | `$mop_origin_ftarget` | What the launching character had as focus target. |
 | `$globaldelay` | The plugin's configured **Delay Between Actions** in seconds (default `0.5`). Useful for validating or deriving timing against the real global delay. |
