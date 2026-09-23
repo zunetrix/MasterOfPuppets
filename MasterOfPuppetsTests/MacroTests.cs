@@ -276,6 +276,26 @@ public class MacroTests
         Assert.True(MacroHandler.CommandSkipsGlobalDelay("mopphasewait"));
     }
 
+    [Theory]
+    [InlineData("pvis", true)]
+    [InlineData("/pvis enabled on", true)]
+    [InlineData("PVIS", true)]
+    [InlineData("/pvis\tenabled", true)]
+    [InlineData("mopaction", false)]
+    [InlineData("/pvisible on", false)]
+    public void CustomGlobalDelayExclusion_MatchesCommandToken(string command, bool expected)
+    {
+        Assert.Equal(expected, MacroHandler.CommandSkipsGlobalDelay(command, new[] { "pvis" }));
+    }
+
+    [Fact]
+    public void GlobalDelayExclusion_HandlesEmptyAndLegacyEntries()
+    {
+        Assert.False(MacroHandler.CommandSkipsGlobalDelay("", new[] { "" }));
+        Assert.True(MacroHandler.CommandSkipsGlobalDelay("/pvis on", new[] { " /PVIS off " }));
+        Assert.Equal("pvis", MacroHandler.NormalizeGlobalDelayCommand(" /pvis on"));
+    }
+
     [Fact]
     public void MacroPhaseClock_Compensates_For_Elapsed_Work()
     {

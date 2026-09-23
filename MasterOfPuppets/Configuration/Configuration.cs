@@ -182,6 +182,7 @@ internal class Configuration : IPluginConfiguration {
     };
 
     public double DelayBetweenActions { get; set; } = 0.5;
+    public List<string> GlobalDelayExcludedCommands { get; set; } = new();
     public bool AutoSaveMacro { get; set; } = false;
     public string MacroExportPath { get; set; } = DalamudApi.PluginInterface.ConfigDirectory.FullName ?? string.Empty;
     public MacroImportMode MacroImportMode { get; set; } = MacroImportMode.AppendAll;

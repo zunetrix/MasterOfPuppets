@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
@@ -11,6 +12,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 namespace MasterOfPuppets;
 
 public class MacrosSettingsWidget : Widget {
+    private string _globalDelayExclusionInput = string.Empty;
     public override string Title => "Macros";
     public override FontAwesomeIcon Icon => FontAwesomeIcon.Scroll;
 
@@ -42,6 +44,32 @@ public class MacrosSettingsWidget : Widget {
             Set 0 to disable
             Be careful when disabling global delay along with loops to avoid spamming actions
             """);
+
+            if (ImGui.CollapsingHeader("Global delay exclusions")) {
+                ImGui.TextWrapped("Commands in this list skip the global delay. Enter a command name; arguments are ignored.");
+                ImGui.SetNextItemWidth(180 * ImGuiHelpers.GlobalScale);
+                ImGui.InputTextWithHint("##GlobalDelayExclusionInput", "Command name", ref _globalDelayExclusionInput, 64);
+                ImGui.SameLine();
+                if (ImGui.Button("Add##GlobalDelayExclusion")) {
+                    var command = MacroHandler.NormalizeGlobalDelayCommand(_globalDelayExclusionInput);
+                    if (command.Length > 0 && !Plugin.Config.GlobalDelayExcludedCommands.Contains(command, StringComparer.OrdinalIgnoreCase)) {
+                        Plugin.Config.GlobalDelayExcludedCommands.Add(command.ToLowerInvariant());
+                        _globalDelayExclusionInput = string.Empty;
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+                }
+
+                for (var i = 0; i < Plugin.Config.GlobalDelayExcludedCommands.Count; i++) {
+                    var command = Plugin.Config.GlobalDelayExcludedCommands[i];
+                    ImGui.TextUnformatted(command);
+                    ImGui.SameLine();
+                    if (ImGui.SmallButton($"Remove##GlobalDelayExclusion{i}")) {
+                        Plugin.Config.GlobalDelayExcludedCommands.RemoveAt(i);
+                        Plugin.IpcProvider.SyncConfiguration();
+                        break;
+                    }
+                }
+            }
         }
 
         ImGui.Spacing();
