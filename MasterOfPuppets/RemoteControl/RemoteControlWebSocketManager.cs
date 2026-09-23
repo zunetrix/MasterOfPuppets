@@ -96,6 +96,11 @@ internal sealed class RemoteControlWebSocketManager : IDisposable {
             await DalamudApi.Framework.RunOnFrameworkThread(() => {
                 cmdResult = _dispatcher.Dispatch(msg.Payload!);
             });
+
+            if (cmdResult != null && cmdResult.Ok) {
+                BroadcastPluginCommand(msg.Payload!);
+            }
+
             await SendToAsync(ws, new WsEvent { Name = "commandResult", Data = cmdResult });
             return;
         }
