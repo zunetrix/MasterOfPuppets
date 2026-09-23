@@ -132,6 +132,34 @@ public class MacroTests
     }
 
     [Fact]
+    public void MacroOriginName_OmitsWorldAndExpandsInActions()
+    {
+        var runtime = new MacroRuntimeVariables { MopOrigin = "Origin Character@World" };
+        Assert.Equal("Origin Character", runtime.ToDictionary()["mop_origin_name"]);
+
+        var macro = new Macro {
+            Commands = new List<Command> {
+                new() { Cids = new() { 1 }, Actions = "/echo $mop_origin_name" }
+            }
+        };
+        Assert.Equal("/echo Origin Character", Assert.Single(macro.GetCidActions(1, runtimeVariables: runtime)));
+    }
+
+    [Fact]
+    public void MacroOriginName_UsesSenderValueOnReceivingClient()
+    {
+        var macro = new Macro {
+            Commands = new List<Command> {
+                new() { Cids = new() { 1 }, Actions = "/echo $mop_origin_name" }
+            }
+        };
+        var action = Assert.Single(macro.GetCidActions(1,
+            inlineVars: new Dictionary<string, string> { ["mop_origin_name"] = "Remote Sender" },
+            runtimeVariables: new MacroRuntimeVariables { MopOrigin = "Local Receiver@World" }));
+        Assert.Equal("/echo Remote Sender", action);
+    }
+
+    [Fact]
     public void InlineVariables_Override_Command_Macro_And_RuntimeVariables()
     {
         var macro = new Macro

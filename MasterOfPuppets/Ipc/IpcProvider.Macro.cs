@@ -25,6 +25,7 @@ internal partial class IpcProvider {
             : new Dictionary<string, string>(inlineVars, StringComparer.OrdinalIgnoreCase);
         var runtime = MacroRuntimeVariables.FromCurrentGameState();
         result["mop_origin"] = runtime.MopOrigin;
+        result["mop_origin_name"] = runtime.MopOriginName;
         result["mop_origin_target"] = runtime.MopOriginTarget;
         result["mop_origin_ftarget"] = runtime.MopOriginFocusTarget;
         return result;
