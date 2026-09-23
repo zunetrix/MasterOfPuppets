@@ -42,33 +42,11 @@ public class MacrosSettingsWidget : Widget {
             }
             ImGuiUtil.HelpMarker("""
             Set 0 to disable
-            Be careful when disabling global delay along with loops to avoid spamming actions
+            Be careful when disabling global delay along with loops to avoid spamming server actions
             """);
 
             if (ImGui.CollapsingHeader("Global delay exclusions")) {
-                ImGui.TextWrapped("Commands in this list skip the global delay. Enter a command name; arguments are ignored.");
-                ImGui.SetNextItemWidth(180 * ImGuiHelpers.GlobalScale);
-                ImGui.InputTextWithHint("##GlobalDelayExclusionInput", "Command name", ref _globalDelayExclusionInput, 64);
-                ImGui.SameLine();
-                if (ImGui.Button("Add##GlobalDelayExclusion")) {
-                    var command = MacroHandler.NormalizeGlobalDelayCommand(_globalDelayExclusionInput);
-                    if (command.Length > 0 && !Plugin.Config.GlobalDelayExcludedCommands.Contains(command, StringComparer.OrdinalIgnoreCase)) {
-                        Plugin.Config.GlobalDelayExcludedCommands.Add(command.ToLowerInvariant());
-                        _globalDelayExclusionInput = string.Empty;
-                        Plugin.IpcProvider.SyncConfiguration();
-                    }
-                }
-
-                for (var i = 0; i < Plugin.Config.GlobalDelayExcludedCommands.Count; i++) {
-                    var command = Plugin.Config.GlobalDelayExcludedCommands[i];
-                    ImGui.TextUnformatted(command);
-                    ImGui.SameLine();
-                    if (ImGui.SmallButton($"Remove##GlobalDelayExclusion{i}")) {
-                        Plugin.Config.GlobalDelayExcludedCommands.RemoveAt(i);
-                        Plugin.IpcProvider.SyncConfiguration();
-                        break;
-                    }
-                }
+                DrawGlobalDelayExclusions(Plugin);
             }
         }
 
@@ -130,6 +108,60 @@ public class MacrosSettingsWidget : Widget {
                         }
                     }
                 }
+            }
+        }
+    }
+    private void DrawGlobalDelayExclusions(Plugin Plugin) {
+        ImGui.SetNextItemWidth(180 * ImGuiHelpers.GlobalScale);
+        ImGui.InputTextWithHint("##GlobalDelayExclusionInput", "Command name", ref _globalDelayExclusionInput, 64);
+        ImGuiUtil.HelpMarker("Commands in this list skip the global delay");
+
+        ImGui.SameLine();
+        if (ImGui.Button("Add##GlobalDelayExclusion")) {
+            var command = MacroHandler.NormalizeGlobalDelayCommand(_globalDelayExclusionInput);
+            if (command.Length > 0 && !Plugin.Config.GlobalDelayExcludedCommands.Contains(command, StringComparer.OrdinalIgnoreCase)) {
+                Plugin.Config.GlobalDelayExcludedCommands.Add(command.ToLowerInvariant());
+                _globalDelayExclusionInput = string.Empty;
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+        }
+
+        var excludedCommands = Plugin.Config.GlobalDelayExcludedCommands.ToList();
+        if (excludedCommands.Count > 0) {
+            ImGui.Spacing();
+
+            float actionsColWidth = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X;
+            if (ImGui.BeginTable("##GlobalDelayExclusionsTable", 3,
+                ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
+                ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV)) {
+
+                ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 28 * ImGuiHelpers.GlobalScale);
+                ImGui.TableSetupColumn("Command name", ImGuiTableColumnFlags.WidthStretch);
+                ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, actionsColWidth);
+                ImGui.TableHeadersRow();
+
+                for (int i = 0; i < excludedCommands.Count; i++) {
+                    var command = excludedCommands[i];
+                    ImGui.PushID(i);
+                    ImGui.TableNextRow();
+
+                    ImGui.TableNextColumn();
+                    ImGui.Text($"{i + 1:00}");
+
+                    ImGui.TableNextColumn();
+                    ImGui.TextUnformatted(command);
+
+                    ImGui.TableNextColumn();
+                    if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveExclusion_{i}", Language.DeleteInstructionTooltip)) {
+                        if (ImGui.GetIO().KeyCtrl) {
+                            Plugin.Config.GlobalDelayExcludedCommands.Remove(command);
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+                    }
+
+                    ImGui.PopID();
+                }
+                ImGui.EndTable();
             }
         }
     }
