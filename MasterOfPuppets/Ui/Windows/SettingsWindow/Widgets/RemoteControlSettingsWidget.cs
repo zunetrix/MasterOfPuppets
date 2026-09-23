@@ -266,6 +266,16 @@ public class RemoteControlSettingsWidget : Widget {
         ImGui.TableNextColumn();
         DrawUrlActions("Srv", serverUrl, accessUrl, cfg.RemoteControlToken);
 
+        // Docs row
+        var docsUrl = serverUrl + "api/docs";
+        ImGui.TableNextRow();
+        ImGui.TableNextColumn(); DrawStatusIcon(serverOk, false);
+        ImGui.TableNextColumn(); ImGui.TextUnformatted("API Docs");
+        ImGui.TableNextColumn(); ImGui.TextUnformatted(docsUrl);
+        ImGui.TableNextColumn(); ImGui.TextDisabled("-");
+        ImGui.TableNextColumn();
+        DrawUrlActions("Docs", docsUrl, docsUrl, string.Empty);
+
         // Tunnel row
         if (cfg.TunnelEnabled) {
             ImGui.TableNextRow();
@@ -348,7 +358,8 @@ public class RemoteControlSettingsWidget : Widget {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             ImGui.TableNextColumn();
-            ImGui.TextDisabled("No clients connected.");
+            ImGui.TableNextColumn();
+            ImGui.TextDisabled("No clients connected");
         }
     }
 

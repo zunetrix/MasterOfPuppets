@@ -150,7 +150,7 @@ function sendFav(i) {
     if (!fav || !fav.cmd) return;
     const type = fav.type || 'command';
     logEntry('sent', `→ [${type}] ${fav.cmd}`);
-    
+
     if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type, payload: fav.cmd }));
     } else {
@@ -228,7 +228,7 @@ function connectWs() {
 
     ws.onclose = () => {
         setWsStatus('');
-        logEntry('pong', '⚠ Disconnected – reconnecting in 4 s…');
+        logEntry('pong', '⚠ Disconnected - reconnecting in 4 s…');
         scheduleReconnect();
     };
 

@@ -82,5 +82,6 @@ Use it to trigger custom actions like emotes, minions, mounts, glamour changes, 
     <EmbeddedResource Include="RemoteControl\Web\index.html" />
     <EmbeddedResource Include="RemoteControl\Web\app.js" />
     <EmbeddedResource Include="RemoteControl\Web\styles.css" />
+    <EmbeddedResource Include="RemoteControl\Web\docs.html" />
   </ItemGroup>
 </Project>

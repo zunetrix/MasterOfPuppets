@@ -16,6 +16,7 @@ internal static class RemoteControlWebAssets {
         ["/index.html"] = "MasterOfPuppets.RemoteControl.Web.index.html",
         ["/app.js"]     = "MasterOfPuppets.RemoteControl.Web.app.js",
         ["/styles.css"] = "MasterOfPuppets.RemoteControl.Web.styles.css",
+        ["/api/docs"]   = "MasterOfPuppets.RemoteControl.Web.docs.html",
     };
 
     private static readonly Dictionary<string, string> ResourceToContentType = new(StringComparer.OrdinalIgnoreCase) {
