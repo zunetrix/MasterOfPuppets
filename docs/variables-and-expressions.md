@@ -166,6 +166,15 @@ updates re-derive dependent variables automatically** (see
 Non-arithmetic values (e.g. `/clap`, `some name`) are left untouched, so a
 variable can hold a command or a name and be referenced safely.
 
+To send a variable name literally while expanding its value, put a backslash
+before the literal reference. The backslash is removed from the emitted action:
+
+```text
+$firework="Bombard Bloom"
+/cwl2 moprun "Goodies: Firework" -var=\$firework="$firework"
+# Sent: /cwl2 moprun "Goodies: Firework" -var=$firework="Bombard Bloom"
+```
+
 ### 4.2 `{random(...)}` token
 
 Replaced at execution time by a random value; re-evaluated on **every**
