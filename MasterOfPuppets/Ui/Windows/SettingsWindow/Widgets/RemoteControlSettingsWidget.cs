@@ -240,7 +240,7 @@ public class RemoteControlSettingsWidget : Widget {
             ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
         if (!table) return;
 
-        ImGui.TableSetupColumn("Status", ImGuiTableColumnFlags.WidthFixed, 28);
+        ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, 28);
         ImGui.TableSetupColumn("Service", ImGuiTableColumnFlags.WidthFixed, 62);
         ImGui.TableSetupColumn("HTTP URL", ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableSetupColumn("WebSocket URL", ImGuiTableColumnFlags.WidthStretch);
@@ -299,9 +299,9 @@ public class RemoteControlSettingsWidget : Widget {
             new Vector2(0, 150));
         if (!table) return;
 
-        ImGui.TableSetupColumn("ID", ImGuiTableColumnFlags.WidthFixed, 28);
+        ImGui.TableSetupColumn("ID", ImGuiTableColumnFlags.WidthFixed, 30);
         // ImGui.TableSetupColumn("IP Address", ImGuiTableColumnFlags.WidthFixed, 100);
-        ImGui.TableSetupColumn("Connected At", ImGuiTableColumnFlags.WidthFixed, 80);
+        ImGui.TableSetupColumn("Connected At", ImGuiTableColumnFlags.WidthFixed, 100);
         ImGui.TableSetupColumn("Client Name", ImGuiTableColumnFlags.WidthStretch);
         // ImGui.TableSetupColumn("UA", ImGuiTableColumnFlags.WidthFixed, 28);
         ImGui.TableSetupScrollFreeze(0, 1);

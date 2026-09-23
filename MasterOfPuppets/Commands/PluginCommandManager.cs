@@ -605,6 +605,20 @@ public class PluginCommandManager : IDisposable {
                 case "mapflag":
                     Plugin.IpcProvider.BroadcastMyFlagMapMarker();
                     break;
+                case "remote":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ChatGui.PrintError("Invalid arguments.");
+                        return;
+                    }
+                    if (parsedArgs[1].Equals("connect", StringComparison.OrdinalIgnoreCase)) {
+                        Plugin.Config.RemoteControlClientEnabled = true;
+                        Plugin.RefreshRemoteControlClient();
+                    }
+                    if (parsedArgs[1].Equals("disconnect", StringComparison.OrdinalIgnoreCase)) {
+                        Plugin.Config.RemoteControlClientEnabled = false;
+                        Plugin.RefreshRemoteControlClient();
+                    }
+                    break;
                 case "resetwindow":
                     Plugin.Ui.MainWindow.Position = new Vector2(10, 10);
                     DalamudApi.Framework.RunOnTick(() => {
