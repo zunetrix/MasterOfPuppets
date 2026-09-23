@@ -131,19 +131,19 @@ public class BroadcastSettingsWidget : Widget {
 
             var selectedPrefix = Plugin.Config.DefaultChatSyncPrefix;
             ImGui.Text(Language.SettingsWindowDefaultChatSyncPrefix);
-            if (ImGui.BeginCombo("##DefaultChatPrefix", selectedPrefix)) {
-                foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes) {
-                    string prefix = chatType.ToChatPrefix();
+            using (var combo = ImRaii.Combo("##DefaultChatPrefix", selectedPrefix)) {
+                if (combo) {
+                    foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes) {
+                        string prefix = chatType.ToChatPrefix();
 
-                    bool isSelected = selectedPrefix == prefix;
-                    if (ImGui.Selectable(prefix, isSelected)) {
-                        Plugin.Config.DefaultChatSyncPrefix = prefix;
-                        Plugin.Config.Save();
-                        Plugin.IpcProvider.SyncConfiguration();
+                        bool isSelected = selectedPrefix == prefix;
+                        if (ImGui.Selectable(prefix, isSelected)) {
+                            Plugin.Config.DefaultChatSyncPrefix = prefix;
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
                     }
                 }
-
-                ImGui.EndCombo();
             }
             ImGuiUtil.HelpMarker("Default chat prefix used when running macros from the list");
 
@@ -156,53 +156,37 @@ public class BroadcastSettingsWidget : Widget {
             ImGui.Spacing();
 
             if (ImGui.CollapsingHeader("Allowed Chats")) {
-                ImGui.Indent();
-                if (ImGui.BeginCombo("##ListenedChatTypesSelectList", "Select Chat to Listen")) {
-                    foreach (var chatType in Plugin.ChatWatcher.AllowedChatTypes.Except(Plugin.Config.ListenedChatTypes)) {
-                        if (ImGui.Selectable($"{chatType}", false)) {
-                            Plugin.Config.ListenedChatTypes.Add(chatType);
-                            Plugin.IpcProvider.SyncConfiguration();
-                        }
-                    }
-                    ImGui.EndCombo();
-                }
-
-                ImGui.Spacing();
-                ImGui.Spacing();
-
-                ImGui.Text("Listened Chats");
-                if (ImGui.BeginTable("##ListenedChatTypesTable", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX | ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV)) {
-                    ImGui.TableSetupColumn("Chat Type", ImGuiTableColumnFlags.WidthStretch);
-                    ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X);
-                    ImGui.TableHeadersRow();
-
-                    foreach (var chatType in Plugin.Config.ListenedChatTypes.ToList()) {
-                        ImGui.PushID($"ChatType_{chatType}");
-                        ImGui.TableNextRow();
-                        ImGui.TableNextColumn();
-                        ImGui.AlignTextToFramePadding();
-                        ImGui.Text($"{chatType}");
-
-                        ImGui.TableNextColumn();
-                        if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, "##RemoveChatType", Language.DeleteInstructionTooltip)) {
-                            if (ImGui.GetIO().KeyCtrl) {
-                                Plugin.Config.ListenedChatTypes.Remove(chatType);
+                using var indent = ImRaii.PushIndent();
+                
+                var allChatTypes = Plugin.ChatWatcher.AllowedChatTypes.ToList();
+                using (var table = ImRaii.Table("##AllowedChatsGrid", 4, ImGuiTableFlags.None)) {
+                    if (table) {
+                        for (int i = 0; i < allChatTypes.Count; i++) {
+                            var chatType = allChatTypes[i];
+                            if (i % 4 == 0) {
+                                ImGui.TableNextRow();
+                            }
+                            ImGui.TableNextColumn();
+                            
+                            bool isEnabled = Plugin.Config.ListenedChatTypes.Contains(chatType);
+                            if (ImGui.Checkbox($"{chatType}##ChatType_{chatType}", ref isEnabled)) {
+                                if (isEnabled) {
+                                    Plugin.Config.ListenedChatTypes.Add(chatType);
+                                } else {
+                                    Plugin.Config.ListenedChatTypes.Remove(chatType);
+                                }
                                 Plugin.IpcProvider.SyncConfiguration();
                             }
                         }
-                        ImGui.PopID();
                     }
-                    ImGui.EndTable();
                 }
-
-                ImGui.Unindent();
             }
 
             ImGui.Spacing();
             ImGui.Spacing();
 
             if (ImGui.CollapsingHeader($"Allowed Chat Command Senders")) {
-                ImGui.Indent();
+                using var indent = ImRaii.PushIndent();
                 ImGui.Text("Sender Name");
                 ImGui.InputTextWithHint("##CommandSenderNameInput", "Sender name", ref _characterName, 255, ImGuiInputTextFlags.AutoSelectAll);
 
@@ -230,30 +214,29 @@ public class BroadcastSettingsWidget : Widget {
                 ImGui.Spacing();
 
                 ImGui.Text("Chat Command Sender Whitelist");
-                if (ImGui.BeginTable("##ChatCommandSenderWhitelistTable", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX | ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV)) {
-                    ImGui.TableSetupColumn("Sender Name", ImGuiTableColumnFlags.WidthStretch);
-                    ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X);
-                    ImGui.TableHeadersRow();
+                using (var table = ImRaii.Table("##ChatCommandSenderWhitelistTable", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX | ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV)) {
+                    if (table) {
+                        ImGui.TableSetupColumn("Sender Name", ImGuiTableColumnFlags.WidthStretch);
+                        ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X);
+                        ImGui.TableHeadersRow();
 
-                    foreach (var senderName in Plugin.Config.ChatCommandSenderWhitelist.ToList()) {
-                        ImGui.PushID($"Sender_{senderName}");
-                        ImGui.TableNextRow();
-                        ImGui.TableNextColumn();
-                        ImGui.AlignTextToFramePadding();
-                        ImGui.Text(senderName);
+                        foreach (var senderName in Plugin.Config.ChatCommandSenderWhitelist.ToList()) {
+                            using var id = ImRaii.PushId($"Sender_{senderName}");
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            ImGui.AlignTextToFramePadding();
+                            ImGui.Text(senderName);
 
-                        ImGui.TableNextColumn();
-                        if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, "##RemoveSender", Language.DeleteInstructionTooltip)) {
-                            if (ImGui.GetIO().KeyCtrl) {
-                                Plugin.Config.ChatCommandSenderWhitelist.Remove(senderName);
-                                Plugin.IpcProvider.SyncConfiguration();
+                            ImGui.TableNextColumn();
+                            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, "##RemoveSender", Language.DeleteInstructionTooltip)) {
+                                if (ImGui.GetIO().KeyCtrl) {
+                                    Plugin.Config.ChatCommandSenderWhitelist.Remove(senderName);
+                                    Plugin.IpcProvider.SyncConfiguration();
+                                }
                             }
                         }
-                        ImGui.PopID();
                     }
-                    ImGui.EndTable();
                 }
-                ImGui.Unindent();
             }
         }
     }
@@ -298,27 +281,27 @@ public class BroadcastSettingsWidget : Widget {
         ImGui.Spacing();
 
         // Main keyboard block
-        ImGui.BeginGroup();
-        foreach (var row in MainKeyRows) {
-            DrawRow(row);
-            ImGui.Dummy(new Vector2(0, gap));
+        using (ImRaii.Group()) {
+            foreach (var row in MainKeyRows) {
+                DrawRow(row);
+                ImGui.Dummy(new Vector2(0, gap));
+            }
         }
-        ImGui.EndGroup();
 
         // Navigation cluster + arrow keys (to the right)
         ImGui.SameLine(0, 18f * ImGuiHelpers.GlobalScale);
-        ImGui.BeginGroup();
-        KeyDef[] sysRow = [K(0x2C, "Prt"), K(0x91, "Scr"), K(0x13, "Brk")];
-        KeyDef[] navRow1 = [K(0x2D, "Ins"), K(0x24, "Home"), K(0x21, "PgUp")];
-        KeyDef[] navRow2 = [K(0x2E, "Del"), K(0x23, "End"), K(0x22, "PgDn")];
-        KeyDef[] arrowUp = [Gap(1f), K(0x26, "↑")];
-        KeyDef[] arrowLDR = [K(0x25, "←"), K(0x28, "↓"), K(0x27, "→")];
-        DrawRow(sysRow); ImGui.Dummy(new Vector2(0, gap * 4f)); // extra gap separates sys/nav
-        DrawRow(navRow1); ImGui.Dummy(new Vector2(0, gap));
-        DrawRow(navRow2); ImGui.Dummy(new Vector2(0, gap * 4f));
-        DrawRow(arrowUp); ImGui.Dummy(new Vector2(0, gap));
-        DrawRow(arrowLDR);
-        ImGui.EndGroup();
+        using (ImRaii.Group()) {
+            KeyDef[] sysRow = [K(0x2C, "Prt"), K(0x91, "Scr"), K(0x13, "Brk")];
+            KeyDef[] navRow1 = [K(0x2D, "Ins"), K(0x24, "Home"), K(0x21, "PgUp")];
+            KeyDef[] navRow2 = [K(0x2E, "Del"), K(0x23, "End"), K(0x22, "PgDn")];
+            KeyDef[] arrowUp = [Gap(1f), K(0x26, "↑")];
+            KeyDef[] arrowLDR = [K(0x25, "←"), K(0x28, "↓"), K(0x27, "→")];
+            DrawRow(sysRow); ImGui.Dummy(new Vector2(0, gap * 4f)); // extra gap separates sys/nav
+            DrawRow(navRow1); ImGui.Dummy(new Vector2(0, gap));
+            DrawRow(navRow2); ImGui.Dummy(new Vector2(0, gap * 4f));
+            DrawRow(arrowUp); ImGui.Dummy(new Vector2(0, gap));
+            DrawRow(arrowLDR);
+        }
 
         ImGui.Spacing();
         ImGui.Separator();
