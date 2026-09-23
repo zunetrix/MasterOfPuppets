@@ -230,6 +230,52 @@ public class MacroTests
     }
 
     [Fact]
+    public void EscapedVariable_StaysLiteralWhileValueIsSubstituted()
+    {
+        var macro = new Macro {
+            Variables = "$firework=\"Heavenscracker\"",
+            Commands = new List<Command> {
+                new() { Cids = new() { 1 }, Actions = "/cwl2 moprun \"Goodies: Firework\" -var=\\$firework=\"$firework\"" }
+            }
+        };
+
+        var action = Assert.Single(macro.GetCidActions(1,
+            inlineVars: new Dictionary<string, string> { ["firework"] = "Bombard Bloom" }));
+        Assert.Equal("/cwl2 moprun \"Goodies: Firework\" -var=$firework=\"Bombard Bloom\"", action);
+    }
+
+    [Fact]
+    public void EscapedVariable_ProducesValidForwardedOverride()
+    {
+        var macro = new Macro {
+            Variables = "$firework=\"Heavenscracker\"",
+            Commands = new List<Command> {
+                new() { Cids = new() { 1 }, Actions = "/cwl2 moprun \"Goodies: Firework\" -var=\\$firework=\"$firework\"" }
+            }
+        };
+
+        var action = Assert.Single(macro.GetCidActions(1));
+        var flag = Assert.Single(ArgumentParser.ParseCommandArgs(action[6..]),
+            token => token.StartsWith("-var="));
+        Assert.Equal("Heavenscracker", ArgumentParser.ParseInlineVars(flag)["firework"]);
+    }
+
+    [Fact]
+    public void EscapedVariable_RemainsLiteralAfterLiveVariableUpdate()
+    {
+        var macro = new Macro {
+            Variables = "$value=first",
+            Commands = new List<Command> {
+                new() { Cids = new() { 1 }, Actions = "/echo \\$value $value" }
+            }
+        };
+        var plan = macro.CreateCidExecutionPlan(1);
+        Assert.Equal("/echo $value first", plan.ResolveAction(plan.ActionTemplates[0]));
+        plan.UpdateVariables(new Dictionary<string, string> { ["value"] = "second" });
+        Assert.Equal("/echo $value second", plan.ResolveAction(plan.ActionTemplates[0]));
+    }
+
+    [Fact]
     public void Macro_Import_String_Deserializes_Correctly()
     {
         string b64 = "H4sIAAAAAAAC/3WVTW/bMAyG7/0VgtDDBhQZJZGiNGwDigIbctlpWPfhHrzEKQzEduE63aHof5/kxEiBUclFrx5Sfkkb1POFUvpr3TX6vdI37bjZN+qNs2/V9WEa9FWm3+r7x0R/p7VaYmaS1Odh7OqpHXqd9N0cfjPshzHFPx8jfqQlrOwp/ueswkn9mpU7qdukzAqSeJkPWm+Gfr3NIbP8Xo9t/WffZC/6crc8WH1U1WLcrGg2X+mqvxzrbXt4TBhWTPpkrevqfnuu5uhxrurVbv6ZAAYxBkIybMGaq/+Rd55DxCAiQxg9y1megKiA2GDpWQk6EYUA3loRRSYwXkIcozceJITR+eAlhwzIzmAsIXSiQyZyNkh1sU1VeZSy2DtChMKBznCUzRt2zkmdZ2NSF6mAKL9NGXkTnCllMUcZoQewJRvBFhCSj+KBnL5Fb4OMnDcAMrLpvZSyKIRYQjG6AorIpmQDqIAgpYklO2BHTKUPIMqdDzZ657CEUK4ruOQP5SxEpkAl5FG2gYTWip2PwJ7kHmYUAIvImxKKhorI+SLyJYcMBsoOzYncLSH6yzgcHtbHWXnevd7kSTwP5nfd8NDu1FSP981U9RnnrW54asZmnyb2UzMNCtJ/GdCV/jB9yhN7if1bt1O+Fqo+q6bftrvjUp2HfvXqBqi0no285Cvo4uUfq90WzdIGAAA=";

@@ -165,7 +165,7 @@ public class Command {
                 foreach (var (key, value) in variables) {
                     resolved = Regex.Replace(
                         resolved,
-                        $@"\${Regex.Escape(key)}\b",
+                        $@"(?<!\\)\${Regex.Escape(key)}\b",
                         value
                     );
                 }
@@ -174,7 +174,9 @@ public class Command {
                     break;
             }
 
-            result.Add(resolved);
+            // Remove the escape only after every substitution pass, so a literal
+            // variable reference cannot be expanded by a later pass.
+            result.Add(Regex.Replace(resolved, @"\\(\$[A-Za-z_]\w*)", "$1"));
         }
 
         return result.ToArray();
