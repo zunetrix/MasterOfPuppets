@@ -22,194 +22,198 @@ public class RemoteControlSettingsWidget : Widget {
         var Plugin = Context.Plugin;
         var cfg = Plugin.Config;
 
-        // Enable / Disable server
-        ImGui.Spacing();
-        using (ImGuiGroupPanel.BeginGroupPanel("Remote Control Server")) {
-            var enabled = cfg.RemoteControlEnabled;
-            if (ImGui.Checkbox("Enable Remote Control##RCEnabled", ref enabled)) {
-                cfg.RemoteControlEnabled = enabled;
-                cfg.Save();
-                Plugin.RefreshRemoteControlServer();
-            }
-            ImGuiUtil.HelpMarker(
-                "Starts a local HTTP server that exposes a REST API and WebSocket endpoint.\n" +
-                "Allows controlling the plugin from a web browser");
-
-            ImGui.Spacing();
-
-            // Port
-            ImGui.Text("Port");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(100);
-            var port = cfg.RemoteControlPort;
-            if (ImGui.InputInt("##RCPort", ref port))
-                cfg.RemoteControlPort = port; // live clamp on deactivate
-
-            if (ImGui.IsItemDeactivatedAfterEdit()) {
-                cfg.RemoteControlPort = Math.Clamp(cfg.RemoteControlPort, 1024, 65535);
-                cfg.Save();
-                if (cfg.RemoteControlEnabled)
-                    Plugin.RefreshRemoteControlServer();
-            }
-
-            ImGui.Spacing();
-
-            // Token
-            ImGui.Text("API Token");
-            ImGuiUtil.HelpMarker(
-                "Clients must include this token as 'Authorization: Bearer <token>' header\n" +
-                "Leave empty to allow unauthenticated access (localhost only)");
-
-            var displayToken = cfg.RemoteControlToken ?? string.Empty;
-            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - 160);
-            using (ImRaii.Disabled())
-                ImGui.InputText("##RCToken", ref displayToken, 256,
-                    ImGuiInputTextFlags.Password | ImGuiInputTextFlags.ReadOnly);
-
-            ImGui.SameLine();
-            using (ImRaii.Disabled(string.IsNullOrWhiteSpace(cfg.RemoteControlToken))) {
-                if (ImGui.Button("Copy##RCTokenCopy"))
-                    ImGui.SetClipboardText(cfg.RemoteControlToken);
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Button("Regenerate##RCTokenRegen")) {
-                Plugin.RegenerateRemoteControlToken();
-                if (cfg.RemoteControlEnabled)
-                    Plugin.RefreshRemoteControlServer();
-            }
-
-            ImGui.Spacing();
-
-            // Services table
-            if (cfg.RemoteControlEnabled) {
-                DrawServicesTable(cfg);
-                DrawConnectedClientsTable();
-            }
-        }
-
-        ImGui.Spacing();
-
-        // Tunnel
-        using (ImGuiGroupPanel.BeginGroupPanel("HTTP Tunnel")) {
-            using (ImRaii.Disabled(!cfg.RemoteControlEnabled)) {
-                var tunnelEnabled = cfg.TunnelEnabled;
-                if (ImGui.Checkbox("Enable Tunnel##TunnelEnabled", ref tunnelEnabled)) {
-                    cfg.TunnelEnabled = tunnelEnabled;
+        // Server
+        if (ImGui.CollapsingHeader("Remote Control Server", ImGuiTreeNodeFlags.DefaultOpen)) {
+            using (ImGuiGroupPanel.BeginGroupPanel("Server")) {
+                var enabled = cfg.RemoteControlEnabled;
+                if (ImGui.Checkbox("Enable Remote Control##RCEnabled", ref enabled)) {
+                    cfg.RemoteControlEnabled = enabled;
                     cfg.Save();
-                    Plugin.RefreshTunnelService();
+                    Plugin.RefreshRemoteControlServer();
+                }
+                ImGuiUtil.HelpMarker(
+                    "Starts a local HTTP server that exposes a REST API and WebSocket endpoint.\n" +
+                    "Allows controlling the plugin from a web browser");
+
+                ImGui.Spacing();
+
+                // Port
+                ImGui.Text("Port");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(100);
+                var port = cfg.RemoteControlPort;
+                if (ImGui.InputInt("##RCPort", ref port))
+                    cfg.RemoteControlPort = port; // live clamp on deactivate
+
+                if (ImGui.IsItemDeactivatedAfterEdit()) {
+                    cfg.RemoteControlPort = Math.Clamp(cfg.RemoteControlPort, 1024, 65535);
+                    cfg.Save();
+                    if (cfg.RemoteControlEnabled)
+                        Plugin.RefreshRemoteControlServer();
+                }
+
+                ImGui.Spacing();
+
+                // Token
+                ImGui.Text("API Token");
+                ImGuiUtil.HelpMarker(
+                    "Clients must include this token as 'Authorization: Bearer <token>' header\n" +
+                    "Leave empty to allow unauthenticated access (localhost only)");
+
+                var displayToken = cfg.RemoteControlToken ?? string.Empty;
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - 160);
+                using (ImRaii.Disabled())
+                    ImGui.InputText("##RCToken", ref displayToken, 256,
+                        ImGuiInputTextFlags.Password | ImGuiInputTextFlags.ReadOnly);
+
+                ImGui.SameLine();
+                using (ImRaii.Disabled(string.IsNullOrWhiteSpace(cfg.RemoteControlToken))) {
+                    if (ImGui.Button("Copy##RCTokenCopy"))
+                        ImGui.SetClipboardText(cfg.RemoteControlToken);
+                }
+
+                ImGui.SameLine();
+                if (ImGui.Button("Regenerate##RCTokenRegen")) {
+                    Plugin.RegenerateRemoteControlToken();
+                    if (cfg.RemoteControlEnabled)
+                        Plugin.RefreshRemoteControlServer();
+                }
+
+                ImGui.Spacing();
+
+                // Services table
+                if (cfg.RemoteControlEnabled) {
+                    DrawServicesTable(cfg);
+                    DrawConnectedClientsTable();
                 }
             }
-            ImGuiUtil.HelpMarker(
-                "Runs an external tunnel process (Cloudflare or ngrok) to expose the\n" +
-                "local server via a public HTTPS URL. Requires the tunnel binary to be installed.");
 
-            if (!cfg.RemoteControlEnabled) {
+            ImGui.Spacing();
+
+            // Tunnel
+            using (ImGuiGroupPanel.BeginGroupPanel("HTTP Tunnel")) {
+                using (ImRaii.Disabled(!cfg.RemoteControlEnabled)) {
+                    var tunnelEnabled = cfg.TunnelEnabled;
+                    if (ImGui.Checkbox("Enable Tunnel##TunnelEnabled", ref tunnelEnabled)) {
+                        cfg.TunnelEnabled = tunnelEnabled;
+                        cfg.Save();
+                        Plugin.RefreshTunnelService();
+                    }
+                }
+                ImGuiUtil.HelpMarker(
+                    "Runs an external tunnel process (Cloudflare or NGROK) to expose the\n" +
+                    "local server via a public HTTPS URL. Requires the tunnel binary to be installed. (if you install the tunnel while game is open you will need restart the game client)");
+
+                if (!cfg.RemoteControlEnabled) {
+                    ImGui.SameLine();
+                    ImGui.TextDisabled("(enable Remote Control first)");
+                }
+
+                ImGui.Spacing();
+                ImGui.Text("Tunnel Command");
+                ImGuiUtil.HelpMarker("Use {port} as a placeholder for the configured port.");
+
+                var tunnelCmd = cfg.TunnelCommand ?? string.Empty;
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                if (ImGui.InputText("##TunnelCmd", ref tunnelCmd, 512))
+                    cfg.TunnelCommand = tunnelCmd;
+
+                if (ImGui.IsItemDeactivatedAfterEdit()) {
+                    cfg.Save();
+                    if (cfg.TunnelEnabled && cfg.RemoteControlEnabled)
+                        Plugin.RefreshTunnelService();
+                }
+
+                ImGui.Spacing();
+
+                // Preset buttons
+                if (ImGui.Button("Cloudflare##PresetCF")) {
+                    cfg.TunnelCommand = "cloudflared tunnel --url http://localhost:{port}";
+                    cfg.Save();
+                    if (cfg.TunnelEnabled && cfg.RemoteControlEnabled)
+                        Plugin.RefreshTunnelService();
+                }
                 ImGui.SameLine();
-                ImGui.TextDisabled("(enable Remote Control first)");
-            }
-
-            ImGui.Spacing();
-            ImGui.Text("Tunnel Command");
-            ImGuiUtil.HelpMarker("Use {port} as a placeholder for the configured port.");
-
-            var tunnelCmd = cfg.TunnelCommand ?? string.Empty;
-            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-            if (ImGui.InputText("##TunnelCmd", ref tunnelCmd, 512))
-                cfg.TunnelCommand = tunnelCmd;
-
-            if (ImGui.IsItemDeactivatedAfterEdit()) {
-                cfg.Save();
-                if (cfg.TunnelEnabled && cfg.RemoteControlEnabled)
-                    Plugin.RefreshTunnelService();
-            }
-
-            ImGui.Spacing();
-
-            // Preset buttons
-            if (ImGui.Button("Cloudflare##PresetCF")) {
-                cfg.TunnelCommand = "cloudflared tunnel --url http://localhost:{port}";
-                cfg.Save();
-                if (cfg.TunnelEnabled && cfg.RemoteControlEnabled)
-                    Plugin.RefreshTunnelService();
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("ngrok##PresetNgrok")) {
-                cfg.TunnelCommand = "ngrok http {port}";
-                cfg.Save();
-                if (cfg.TunnelEnabled && cfg.RemoteControlEnabled)
-                    Plugin.RefreshTunnelService();
+                if (ImGui.Button("ngrok##PresetNgrok")) {
+                    cfg.TunnelCommand = "ngrok http {port}";
+                    cfg.Save();
+                    if (cfg.TunnelEnabled && cfg.RemoteControlEnabled)
+                        Plugin.RefreshTunnelService();
+                }
             }
         }
 
         ImGui.Spacing();
+        ImGui.Spacing();
 
-        // Client Mode
-        using (ImGuiGroupPanel.BeginGroupPanel("Client Mode")) {
-            ImGui.TextWrapped(
-                "Connect this plugin instance to a remote server" +
-                "Received pluginCommand messages will be dispatched locally");
+        // Client
+        if (ImGui.CollapsingHeader("Client")) {
+            using (ImGuiGroupPanel.BeginGroupPanel("Client Mode")) {
+                ImGui.TextWrapped(
+                    "Connect this plugin instance to a remote server" +
+                    "Received pluginCommand messages will be dispatched locally");
 
-            ImGui.Spacing();
+                ImGui.Spacing();
 
-            var clientEnabled = cfg.RemoteControlClientEnabled;
-            if (ImGui.Checkbox("Connect to server##ClientEnabled", ref clientEnabled)) {
-                cfg.RemoteControlClientEnabled = clientEnabled;
-                cfg.Save();
-                Plugin.RefreshRemoteControlClient();
-            }
-            ImGuiUtil.HelpMarker(
-                "When enabled, this instance acts as a client:\n" +
-                "it connects via WebSocket to the server and executes\n" +
-                "any 'pluginCommand' messages received from it.");
+                var clientEnabled = cfg.RemoteControlClientEnabled;
+                if (ImGui.Checkbox("Connect to server##ClientEnabled", ref clientEnabled)) {
+                    cfg.RemoteControlClientEnabled = clientEnabled;
+                    cfg.Save();
+                    Plugin.RefreshRemoteControlClient();
+                }
+                ImGuiUtil.HelpMarker(
+                    "When enabled, this instance acts as a client:\n" +
+                    "it connects via WebSocket to the server and executes\n" +
+                    "any 'pluginCommand' messages received from it.");
 
-            ImGui.Spacing();
+                ImGui.Spacing();
 
-            ImGui.Text("Remote Server URL");
-            ImGuiUtil.HelpMarker(
-                "The HTTP or HTTPS URL of the master's Remote Control Server.\n" +
-                "e.g. http://192.168.1.10:4782 or https://xxxx.trycloudflare.com");
+                ImGui.Text("Remote Server URL");
+                ImGuiUtil.HelpMarker(
+                    "The HTTP or HTTPS URL of the master's Remote Control Server.\n" +
+                    "e.g. http://192.168.1.10:4782 or https://xxxx.trycloudflare.com");
 
-            var clientUrl = cfg.RemoteControlClientUrl ?? string.Empty;
-            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-            if (ImGui.InputText("##ClientUrl", ref clientUrl, 512))
-                cfg.RemoteControlClientUrl = clientUrl;
-            if (ImGui.IsItemDeactivatedAfterEdit()) {
-                Plugin.IpcProvider.SyncConfiguration();
-                if (cfg.RemoteControlClientEnabled)
+                var clientUrl = cfg.RemoteControlClientUrl ?? string.Empty;
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                if (ImGui.InputText("##ClientUrl", ref clientUrl, 512))
+                    cfg.RemoteControlClientUrl = clientUrl;
+                if (ImGui.IsItemDeactivatedAfterEdit()) {
+                    Plugin.IpcProvider.SyncConfiguration();
+                    if (cfg.RemoteControlClientEnabled)
+                        Plugin.RefreshRemoteControlClient();
+                }
+
+                ImGui.Spacing();
+                ImGui.Text("Remote Server Token");
+                var clientToken = cfg.RemoteControlClientToken ?? string.Empty;
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - 100);
+                bool tokenChanged = ImGui.InputText("##ClientToken", ref clientToken, 256,
+                    ImGuiInputTextFlags.Password);
+                if (tokenChanged) cfg.RemoteControlClientToken = clientToken;
+                if (ImGui.IsItemDeactivatedAfterEdit()) {
+                    Plugin.IpcProvider.SyncConfiguration();
+
+                    if (cfg.RemoteControlClientEnabled)
+                        Plugin.RefreshRemoteControlClient();
+                }
+
+                ImGui.Spacing();
+
+                // Status
+                var clientStatus = Plugin.RemoteControlClientStatus;
+                var isConnected = Plugin.RemoteControlClient?.IsConnected == true;
+                var statusColor = isConnected
+                    ? new Vector4(.2f, .8f, .4f, 1f)
+                    : new Vector4(.8f, .4f, .2f, 1f);
+                ImGui.Text("Status:");
+                ImGui.SameLine();
+                using (ImRaii.PushColor(ImGuiCol.Text, statusColor))
+                    ImGui.TextUnformatted(clientStatus);
+
+                ImGui.SameLine();
+                if (ImGui.Button("Reconnect##ClientReconnect"))
                     Plugin.RefreshRemoteControlClient();
             }
-
-            ImGui.Spacing();
-            ImGui.Text("Remote Server Token");
-            var clientToken = cfg.RemoteControlClientToken ?? string.Empty;
-            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - 100);
-            bool tokenChanged = ImGui.InputText("##ClientToken", ref clientToken, 256,
-                ImGuiInputTextFlags.Password);
-            if (tokenChanged) cfg.RemoteControlClientToken = clientToken;
-            if (ImGui.IsItemDeactivatedAfterEdit()) {
-                Plugin.IpcProvider.SyncConfiguration();
-
-                if (cfg.RemoteControlClientEnabled)
-                    Plugin.RefreshRemoteControlClient();
-            }
-
-            ImGui.Spacing();
-
-            // Status
-            var clientStatus = Plugin.RemoteControlClientStatus;
-            var isConnected = Plugin.RemoteControlClient?.IsConnected == true;
-            var statusColor = isConnected
-                ? new Vector4(.2f, .8f, .4f, 1f)
-                : new Vector4(.8f, .4f, .2f, 1f);
-            ImGui.Text("Status:");
-            ImGui.SameLine();
-            using (ImRaii.PushColor(ImGuiCol.Text, statusColor))
-                ImGui.TextUnformatted(clientStatus);
-
-            ImGui.SameLine();
-            if (ImGui.Button("Reconnect##ClientReconnect"))
-                Plugin.RefreshRemoteControlClient();
         }
     }
 
@@ -342,6 +346,7 @@ public class RemoteControlSettingsWidget : Widget {
 
         if (!any) {
             ImGui.TableNextRow();
+            ImGui.TableNextColumn();
             ImGui.TableNextColumn();
             ImGui.TextDisabled("No clients connected.");
         }
