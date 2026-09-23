@@ -7,8 +7,6 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
 
-using MasterOfPuppets.Ipc;
-
 namespace MasterOfPuppets;
 
 internal static unsafe partial class GameDialogManager {
@@ -32,8 +30,7 @@ internal static unsafe partial class GameDialogManager {
         bool acceptParty,
         bool acceptTeleport,
         bool acceptPartyOnlyFromCharacters = false,
-        IEnumerable<Character>? partyInviteCharacters = null,
-        IEnumerable<PeerCharacterInfo>? connectedPeers = null) {
+        IEnumerable<Character>? partyInviteCharacters = null) {
         if (!acceptParty && !acceptTeleport) return;
         if (!IsAddonVisible(AddonName.SelectYesno)) {
             _lastPartyInviteDiagnosticKey = null;
@@ -50,11 +47,10 @@ internal static unsafe partial class GameDialogManager {
         if (string.IsNullOrEmpty(text)) return;
 
         if (acceptParty) {
-            var partyDecision = PartyInvitePromptMatcher.EvaluateConnectedConfiguredInvite(
+            var partyDecision = PartyInvitePromptMatcher.EvaluateConfiguredInvite(
                 text,
                 TextAcceptJoinParty,
-                partyInviteCharacters ?? Enumerable.Empty<Character>(),
-                connectedPeers ?? Enumerable.Empty<PeerCharacterInfo>());
+                partyInviteCharacters ?? Enumerable.Empty<Character>());
             var isPartyInvite = partyDecision.Parse.IsPartyInvite;
             var shouldAccept = isPartyInvite && (!acceptPartyOnlyFromCharacters || partyDecision.ShouldAccept);
             LogPartyInviteDiagnostic(rawText, text, partyDecision, acceptPartyOnlyFromCharacters, shouldAccept);
@@ -97,7 +93,6 @@ internal static unsafe partial class GameDialogManager {
             $"expression=\"prefix:{expression.Prefix}|suffix:{expression.Suffix}\" " +
             $"sheetExpressionAvailable={parse.SheetExpressionAvailable} sheetExpressionReason=\"{parse.SheetExpressionReason}\" " +
             $"extracted=\"{parse.InviterSegment}\" isPartyInvite={parse.IsPartyInvite} onlyFromCharacters={onlyFromCharacters} " +
-            $"connectedPeers={decision.ConnectedPeerCount} freshPeers={decision.FreshPeerCount} matchedPeer=\"{decision.MatchedPeer}\" " +
             $"configMatch=\"{decision.ConfigMatch}\" accept={shouldAccept} reason=\"{decision.Reason}\"");
     }
 

@@ -134,8 +134,7 @@ public class Plugin : IDalamudPlugin {
                 Config.AutoAcceptPartyInvite && (charConfig?.AutoAcceptPartyInvite ?? true),
                 Config.AutoAcceptTeleport && (charConfig?.AutoAcceptTeleport ?? true),
                 Config.AutoAcceptPartyInviteOnlyFromCharacters,
-                Config.Characters,
-                IpcProvider.GetFreshPeerCharacterData());
+                Config.Characters);
         }
     }
 
