@@ -92,8 +92,14 @@ public partial class MacroHandler : IDisposable {
 
     private readonly Dictionary<string, MacroCommand> _commands;
 
-    public static bool CommandSkipsGlobalDelay(string command) =>
-        command.ToLowerInvariant() switch {
+    public static bool CommandSkipsGlobalDelay(string command, IEnumerable<string>? customExclusions = null) {
+        var normalized = NormalizeGlobalDelayCommand(command);
+        if (normalized.Length == 0) return false;
+        if (customExclusions?.Any(entry =>
+                string.Equals(NormalizeGlobalDelayCommand(entry), normalized, StringComparison.OrdinalIgnoreCase)) == true)
+            return true;
+
+        return normalized.ToLowerInvariant() switch {
             "mopwait" or
             "mopphasewait" or
             "mopmacro" or
@@ -117,6 +123,14 @@ public partial class MacroHandler : IDisposable {
             "mopmovegearsets" => true,
             _ => false,
         };
+    }
+
+    public static string NormalizeGlobalDelayCommand(string? command) {
+        if (string.IsNullOrWhiteSpace(command)) return string.Empty;
+        var trimmed = command.Trim().TrimStart('/');
+        var tokenEnd = trimmed.IndexOfAny([' ', '\t', '\r', '\n']);
+        return tokenEnd < 0 ? trimmed : trimmed[..tokenEnd];
+    }
 
     public MacroHandler(Plugin plugin) {
         Plugin = plugin;
@@ -453,7 +467,7 @@ public partial class MacroHandler : IDisposable {
 
         if (command != null && _commands.TryGetValue(command, out var cmd)) {
             await cmd.Handler(macroId, args!, token);
-            if (!cmd.SkipGlobalDelay && delayBetweenActions > 0.0) {
+            if (!cmd.SkipGlobalDelay && !CommandSkipsGlobalDelay(command, Plugin.Config.GlobalDelayExcludedCommands) && delayBetweenActions > 0.0) {
                 var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
                 DalamudApi.PluginLog.Debug($"[Global Delay] {delayMs.TotalMinutes:00}:{delayMs.Seconds:00}.{delayMs.Milliseconds:00}");
                 await Task.Delay(delayMs, token);
@@ -462,7 +476,7 @@ public partial class MacroHandler : IDisposable {
             // No regex match OR unrecognised command - forward raw to chat
             DalamudApi.PluginLog.Debug($"[Execute Action] {action}");
             _ = DalamudApi.Framework.RunOnFrameworkThread(() => { Chat.SendMessage(action); });
-            if (delayBetweenActions > 0.0) {
+            if (!CommandSkipsGlobalDelay(command ?? string.Empty, Plugin.Config.GlobalDelayExcludedCommands) && delayBetweenActions > 0.0) {
                 var delayMs = TimeSpan.FromSeconds(Math.Round(delayBetweenActions, 2, MidpointRounding.AwayFromZero));
                 await Task.Delay(delayMs, token);
             }
