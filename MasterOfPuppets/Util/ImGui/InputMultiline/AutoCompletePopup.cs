@@ -210,9 +210,9 @@ public class AutoCompletePopup {
                     ImGui.SetCursorPosX(
                         ImGui.GetCursorPosX() + ImGui.GetColumnWidth() - ImGui.CalcTextSize(text).X - ImGui.GetStyle().FramePadding.X
                     );
-                    ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
-                    ImGui.Text(text);
-                    ImGui.PopStyleColor();
+                    using (ImRaii.PushColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled])) {
+                        ImGui.Text(text);
+                    }
                     ImGui.PopID();
                 }
             }
@@ -243,21 +243,18 @@ public class AutoCompletePopup {
                             ImGui.SetNextWindowPos(new Vector2(tooltipX, min.Y));
                         }
 
-                        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-                        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-
-                        ImGui.BeginTooltip();
-                        var drawResult = ImGuiHelpers.SeStringWrapped(
-                            completionTooltip.HelpText.Value,
-                            new SeStringDrawParams() {
-                                WrapWidth = 640 * ImGuiHelpers.GlobalScale
+                        using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor))
+                        using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
+                            using (ImRaii.Tooltip()) {
+                                var drawResult = ImGuiHelpers.SeStringWrapped(
+                                    completionTooltip.HelpText.Value,
+                                    new SeStringDrawParams() {
+                                        WrapWidth = 640 * ImGuiHelpers.GlobalScale
+                                    }
+                                );
+                                LastCompletionTooltipSize = drawResult.Size;
                             }
-                        );
-                        LastCompletionTooltipSize = drawResult.Size;
-                        ImGui.EndTooltip();
-
-                        ImGui.PopStyleVar();
-                        ImGui.PopStyleColor();
+                        }
                     }
                 }
             }

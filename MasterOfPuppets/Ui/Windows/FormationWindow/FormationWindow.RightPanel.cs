@@ -219,18 +219,18 @@ public partial class FormationWindow {
                     .Select(c => c.Name)
                     .ToList();
 
-                ImGui.BeginDisabled(availChars.Count == 0);
-                ImGui.SetNextItemWidth(-1);
-                if (_charCombo.Draw("##ficharcombo", availChars, ref _charSelected)) {
-                    var found = Plugin.Config.Characters.FirstOrDefault(c => c.Name == _charSelected);
-                    if (found != null) {
-                        pt2.Cids.Add(found.Cid);
-                        Plugin.Config.Save();
-                        Plugin.IpcProvider.SyncConfiguration();
+                using (ImRaii.Disabled(availChars.Count == 0)) {
+                    ImGui.SetNextItemWidth(-1);
+                    if (_charCombo.Draw("##ficharcombo", availChars, ref _charSelected)) {
+                        var found = Plugin.Config.Characters.FirstOrDefault(c => c.Name == _charSelected);
+                        if (found != null) {
+                            pt2.Cids.Add(found.Cid);
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+                        _charSelected = string.Empty;
                     }
-                    _charSelected = string.Empty;
                 }
-                ImGui.EndDisabled();
 
                 ImGui.Spacing();
                 ImGui.Separator();
@@ -277,20 +277,20 @@ public partial class FormationWindow {
                     .Select(g => g.Name)
                     .ToList();
 
-                ImGui.BeginDisabled(availGroups.Count == 0);
-                float buttonWidth = ImGui.GetFrameHeight();
-                float spacing = ImGui.GetStyle().ItemSpacing.X;
-                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - buttonWidth - spacing);
+                using (ImRaii.Disabled(availGroups.Count == 0)) {
+                    float buttonWidth = ImGui.GetFrameHeight();
+                    float spacing = ImGui.GetStyle().ItemSpacing.X;
+                    ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - buttonWidth - spacing);
 
-                if (_groupCombo.Draw("##figrpcombo", availGroups, ref _groupSelected)) {
-                    if (!string.IsNullOrEmpty(_groupSelected)) {
-                        pt2.GroupIds.Add(_groupSelected);
-                        Plugin.Config.Save();
-                        Plugin.IpcProvider.SyncConfiguration();
+                    if (_groupCombo.Draw("##figrpcombo", availGroups, ref _groupSelected)) {
+                        if (!string.IsNullOrEmpty(_groupSelected)) {
+                            pt2.GroupIds.Add(_groupSelected);
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
+                        }
+                        _groupSelected = string.Empty;
                     }
-                    _groupSelected = string.Empty;
                 }
-                ImGui.EndDisabled();
 
                 ImGui.SameLine();
                 if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Users, ImGuiUtil.IconButtonStyle.Primary, $"##CharactersMenu", "Characters/Groups")) {

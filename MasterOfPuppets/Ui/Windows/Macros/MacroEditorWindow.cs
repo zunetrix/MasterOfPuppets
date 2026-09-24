@@ -477,20 +477,19 @@ public partial class MacroEditorWindow : Window {
 
         float removeAllBtnWidth = ImGui.CalcTextSize(Language.RemoveAllBtn).X + ImGui.GetStyle().FramePadding.X * 2;
 
-        ImGui.BeginDisabled(charNames.Count == 0);
-        ImGui.SetNextItemWidth(-removeAllBtnWidth - ImGui.GetStyle().ItemSpacing.X);
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (_charCombo.Draw($"##CharSearch_{commandIndex}", charNames, ref CharSelected)) {
-            var found = availableCharacters.FirstOrDefault(c => c.Name == CharSelected);
-            if (found != null) {
-                MacroItem.Commands[commandIndex].Cids.AddUnique(found.Cid);
-                CharSelected = string.Empty;
+        using (ImRaii.Disabled(charNames.Count == 0)) {
+            ImGui.SetNextItemWidth(-removeAllBtnWidth - ImGui.GetStyle().ItemSpacing.X);
+            using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor))
+            using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
+                if (_charCombo.Draw($"##CharSearch_{commandIndex}", charNames, ref CharSelected)) {
+                    var found = availableCharacters.FirstOrDefault(c => c.Name == CharSelected);
+                    if (found != null) {
+                        MacroItem.Commands[commandIndex].Cids.AddUnique(found.Cid);
+                        CharSelected = string.Empty;
+                    }
+                }
             }
         }
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
-        ImGui.EndDisabled();
 
         ImGui.SameLine();
         using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)
@@ -551,19 +550,18 @@ public partial class MacroEditorWindow : Window {
 
         float removeAllBtnWidth = ImGui.CalcTextSize(Language.RemoveAllBtn).X + ImGui.GetStyle().FramePadding.X * 2;
 
-        ImGui.BeginDisabled(groupNames.Count == 0);
-        ImGui.SetNextItemWidth(-removeAllBtnWidth - ImGui.GetStyle().ItemSpacing.X);
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (_groupCombo.Draw($"##GroupSearch_{commandIndex}", groupNames, ref GroupSelected)) {
-            if (!string.IsNullOrEmpty(GroupSelected)) {
-                assignedGroupIds.AddUnique(GroupSelected);
-                GroupSelected = string.Empty;
+        using (ImRaii.Disabled(groupNames.Count == 0)) {
+            ImGui.SetNextItemWidth(-removeAllBtnWidth - ImGui.GetStyle().ItemSpacing.X);
+            using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor))
+            using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
+                if (_groupCombo.Draw($"##GroupSearch_{commandIndex}", groupNames, ref GroupSelected)) {
+                    if (!string.IsNullOrEmpty(GroupSelected)) {
+                        assignedGroupIds.AddUnique(GroupSelected);
+                        GroupSelected = string.Empty;
+                    }
+                }
             }
         }
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
-        ImGui.EndDisabled();
 
         ImGui.SameLine();
         using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonDangerNormal)

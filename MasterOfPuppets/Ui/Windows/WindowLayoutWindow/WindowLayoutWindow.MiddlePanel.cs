@@ -17,38 +17,36 @@ public partial class WindowLayoutWindow {
         var layout = SelectedLayout;
 
         //  Toolbar
-        ImGui.BeginDisabled(layout == null);
-
-        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Plus, ImGuiUtil.IconButtonStyle.Primary, "##wladdslot", "Add slot")) {
-            var slot = new WindowLayoutSlot { X = 0, Y = 0, Width = 960, Height = 540 };
-            layout.Slots.Add(slot);
-            _selSlot = layout.Slots.Count - 1;
-            Plugin.Config.Save();
-            Plugin.IpcProvider.SyncConfiguration();
-        }
-
-        ImGui.SameLine();
-
-        using (ImRaii.PushColor(ImGuiCol.Button, _captureInProgress
-            ? new Vector4(0.6f, 0.4f, 0f, 1f)
-            : ImGui.GetStyle().Colors[(int)ImGuiCol.Button])) {
-            if (ImGui.Button(_captureInProgress
-                ? $"Capturing... ({_captureCooldown:F1}s)##wlcapture"
-                : "Capture From Screen##wlcapture")) {
-                if (!_captureInProgress && layout != null)
-                    BeginCapture();
+        using (ImRaii.Disabled(layout == null)) {
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Plus, ImGuiUtil.IconButtonStyle.Primary, "##wladdslot", "Add slot")) {
+                var slot = new WindowLayoutSlot { X = 0, Y = 0, Width = 960, Height = 540 };
+                layout.Slots.Add(slot);
+                _selSlot = layout.Slots.Count - 1;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
             }
+
+            ImGui.SameLine();
+
+            using (ImRaii.PushColor(ImGuiCol.Button, _captureInProgress
+                ? new Vector4(0.6f, 0.4f, 0f, 1f)
+                : ImGui.GetStyle().Colors[(int)ImGuiCol.Button])) {
+                if (ImGui.Button(_captureInProgress
+                    ? $"Capturing... ({_captureCooldown:F1}s)##wlcapture"
+                    : "Capture From Screen##wlcapture")) {
+                    if (!_captureInProgress && layout != null)
+                        BeginCapture();
+                }
+            }
+            ImGuiUtil.ToolTip("Ask all connected clients to report their current window position and size, then populate slots automatically.");
+
+            ImGui.SameLine();
+
+            if (ImGui.Button("Generate...##wlgenerate")) {
+                ImGui.OpenPopup("Generate Layout##wlgenpop");
+            }
+            ImGuiUtil.ToolTip("Generate a layout pattern like Tile, Stack, or Titlebar.");
         }
-        ImGuiUtil.ToolTip("Ask all connected clients to report their current window position and size, then populate slots automatically.");
-
-        ImGui.SameLine();
-
-        if (ImGui.Button("Generate...##wlgenerate")) {
-            ImGui.OpenPopup("Generate Layout##wlgenpop");
-        }
-        ImGuiUtil.ToolTip("Generate a layout pattern like Tile, Stack, or Titlebar.");
-
-        ImGui.EndDisabled();
         // DrawGeneratePopup must stay outside tabs - popups are global
         DrawGeneratePopup();
 

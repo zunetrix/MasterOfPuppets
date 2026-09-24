@@ -199,18 +199,18 @@ public partial class WindowLayoutWindow {
                 .Select(c => c.Name)
                 .ToList();
 
-            ImGui.BeginDisabled(availChars.Count == 0);
-            ImGui.SetNextItemWidth(-1);
-            if (_charCombo.Draw("##wlcharcombo", availChars, ref _charSelected)) {
-                var found = Plugin.Config.Characters.FirstOrDefault(c => c.Name == _charSelected);
-                if (found != null) {
-                    slot.Cids.Add(found.Cid);
-                    Plugin.Config.Save();
-                    Plugin.IpcProvider.SyncConfiguration();
+            using (ImRaii.Disabled(availChars.Count == 0)) {
+                ImGui.SetNextItemWidth(-1);
+                if (_charCombo.Draw("##wlcharcombo", availChars, ref _charSelected)) {
+                    var found = Plugin.Config.Characters.FirstOrDefault(c => c.Name == _charSelected);
+                    if (found != null) {
+                        slot.Cids.Add(found.Cid);
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+                    _charSelected = string.Empty;
                 }
-                _charSelected = string.Empty;
             }
-            ImGui.EndDisabled();
 
             if (ImGui.BeginTable("##wlchartbl", 3,
                     ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,
@@ -250,17 +250,17 @@ public partial class WindowLayoutWindow {
                 .Select(g => g.Name)
                 .ToList();
 
-            ImGui.BeginDisabled(availGroups.Count == 0);
-            ImGui.SetNextItemWidth(-1);
-            if (_groupCombo.Draw("##wlgrpcombo", availGroups, ref _groupSelected)) {
-                if (!string.IsNullOrEmpty(_groupSelected)) {
-                    slot.GroupIds.Add(_groupSelected);
-                    Plugin.Config.Save();
-                    Plugin.IpcProvider.SyncConfiguration();
+            using (ImRaii.Disabled(availGroups.Count == 0)) {
+                ImGui.SetNextItemWidth(-1);
+                if (_groupCombo.Draw("##wlgrpcombo", availGroups, ref _groupSelected)) {
+                    if (!string.IsNullOrEmpty(_groupSelected)) {
+                        slot.GroupIds.Add(_groupSelected);
+                        Plugin.Config.Save();
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+                    _groupSelected = string.Empty;
                 }
-                _groupSelected = string.Empty;
             }
-            ImGui.EndDisabled();
 
             if (ImGui.BeginTable("##wlgrptbl", 3,
                     ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings,

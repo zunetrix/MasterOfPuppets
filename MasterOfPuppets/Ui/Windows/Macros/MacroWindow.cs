@@ -44,19 +44,17 @@ public partial class MacroWindow : Window {
     }
 
     public override void Draw() {
-        ImGui.BeginDisabled(Ui.MacroEditorWindow.IsOpen);
+        using (ImRaii.Disabled(Ui.MacroEditorWindow.IsOpen)) {
+            DrawMacroToolbar();
 
-        DrawMacroToolbar();
+            ImGui.BeginGroup();
+            DrawMacroHeader();
+            ImGui.EndGroup();
 
-        ImGui.BeginGroup();
-        DrawMacroHeader();
-        ImGui.EndGroup();
-
-        ImGui.BeginChild("##MopMacroListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
-        DrawMacroPanels();
-        ImGui.EndChild();
-
-        ImGui.EndDisabled();
+            ImGui.BeginChild("##MopMacroListScrollableContent", new Vector2(-1, 0), false, ImGuiWindowFlags.HorizontalScrollbar);
+            DrawMacroPanels();
+            ImGui.EndChild();
+        }
     }
 
     private void ImportMacroFromClipboard() {
@@ -166,31 +164,29 @@ public partial class MacroWindow : Window {
 
         ImGui.OpenPopupOnItemClick("ContextMenuMacro", ImGuiPopupFlags.MouseButtonRight);
 
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginPopup("ContextMenuMacro")) {
-            if (ImGui.MenuItem($"{Language.CloneMacroBtn}##CloneMacro_{macroIdx}")) {
-                Plugin.MacroManager.CloneMacro(macroIdx);
-                Plugin.IpcProvider.SyncConfiguration();
-                DalamudApi.ShowNotification("Macro cloned", NotificationType.Info, 5000);
-            }
+        using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor))
+        using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
+            using var popup = ImRaii.Popup("ContextMenuMacro");
+            if (popup) {
+                if (ImGui.MenuItem($"{Language.CloneMacroBtn}##CloneMacro_{macroIdx}")) {
+                    Plugin.MacroManager.CloneMacro(macroIdx);
+                    Plugin.IpcProvider.SyncConfiguration();
+                    DalamudApi.ShowNotification("Macro cloned", NotificationType.Info, 5000);
+                }
 
-            if (ImGui.MenuItem($"{Language.ExportMacroBtn}##ExportMacro_{macroIdx}")) {
-                var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: false);
-                ImGui.SetClipboardText(macroExportData);
-                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-            }
+                if (ImGui.MenuItem($"{Language.ExportMacroBtn}##ExportMacro_{macroIdx}")) {
+                    var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: false);
+                    ImGui.SetClipboardText(macroExportData);
+                    DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                }
 
-            if (ImGui.MenuItem($"{Language.ExportMacroBtn} (include CIDs)##ExportMacroCids_{macroIdx}")) {
-                var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: true);
-                ImGui.SetClipboardText(macroExportData);
-                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                if (ImGui.MenuItem($"{Language.ExportMacroBtn} (include CIDs)##ExportMacroCids_{macroIdx}")) {
+                    var macroExportData = Plugin.MacroManager.ExportMacroToString(macroIdx, includeCids: true);
+                    ImGui.SetClipboardText(macroExportData);
+                    DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                }
             }
-
-            ImGui.EndPopup();
         }
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
 
         ImGuiUtil.ToolTip("""
         Right click for more options
@@ -200,9 +196,9 @@ public partial class MacroWindow : Window {
         if (ImGui.BeginDragDropSource()) {
             unsafe {
                 ImGui.SetDragDropPayload("DND_MACROS_TABLE", new ReadOnlySpan<byte>(&macroIdx, sizeof(int)), ImGuiCond.None);
-                ImGui.PushStyleColor(ImGuiCol.Text, macro.Color);
-                ImGui.Button($"({macroIdx + 1}) {macro.Name}");
-                ImGui.PopStyleColor();
+                using (ImRaii.PushColor(ImGuiCol.Text, macro.Color)) {
+                    ImGui.Button($"({macroIdx + 1}) {macro.Name}");
+                }
             }
             ImGui.EndDragDropSource();
         }
@@ -253,28 +249,27 @@ public partial class MacroWindow : Window {
         }
         ImGui.OpenPopupOnItemClick("ContextMenuRunMacro", ImGuiPopupFlags.MouseButtonRight);
 
-        ImGui.PushStyleColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1);
-        if (ImGui.BeginPopup("ContextMenuRunMacro")) {
-            if (ImGui.MenuItem("Copy Run Command")) {
-                ImGui.SetClipboardText($"/mop run \"{macro.Name}\"");
-                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-            }
+        using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor))
+        using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1)) {
+            using var popup = ImRaii.Popup("ContextMenuRunMacro");
+            if (popup) {
+                if (ImGui.MenuItem("Copy Run Command")) {
+                    ImGui.SetClipboardText($"/mop run \"{macro.Name}\"");
+                    DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                }
 
-            if (ImGui.MenuItem("Copy Chat Sync Command")) {
-                var macroRunMessage = $"{Plugin.Config.DefaultChatSyncPrefix} moprun \"{macro.Name}\"";
-                ImGui.SetClipboardText(macroRunMessage);
-                DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
-            }
+                if (ImGui.MenuItem("Copy Chat Sync Command")) {
+                    var macroRunMessage = $"{Plugin.Config.DefaultChatSyncPrefix} moprun \"{macro.Name}\"";
+                    ImGui.SetClipboardText(macroRunMessage);
+                    DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
+                }
 
-            if (ImGui.MenuItem("Run Chat Sync Command")) {
-                var macroRunMessage = $"{Plugin.Config.DefaultChatSyncPrefix} moprun \"{macro.Name}\"";
-                Chat.SendMessage(macroRunMessage);
+                if (ImGui.MenuItem("Run Chat Sync Command")) {
+                    var macroRunMessage = $"{Plugin.Config.DefaultChatSyncPrefix} moprun \"{macro.Name}\"";
+                    Chat.SendMessage(macroRunMessage);
+                }
             }
-            ImGui.EndPopup();
         }
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor();
 
         ImGui.PopID();
     }
@@ -456,17 +451,17 @@ public partial class MacroWindow : Window {
 
         var splitterId = "##MacroTagsSplitter";
         var splitterWidth = 6f * ImGuiHelpers.GlobalScale;
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
-        ImGui.InvisibleButton(splitterId, new Vector2(splitterWidth, -1));
-        if (ImGui.IsItemHovered())
-            ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(0, 0))) {
+            ImGui.InvisibleButton(splitterId, new Vector2(splitterWidth, -1));
+            if (ImGui.IsItemHovered())
+                ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
 
-        if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
-            var io = ImGui.GetIO();
-            _leftPanelWidth += io.MouseDelta.X;
-            _leftPanelWidth = MathF.Max(minPanelPx, MathF.Min(_leftPanelWidth, maxPanelPx));
+            if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+                var io = ImGui.GetIO();
+                _leftPanelWidth += io.MouseDelta.X;
+                _leftPanelWidth = MathF.Max(minPanelPx, MathF.Min(_leftPanelWidth, maxPanelPx));
+            }
         }
-        ImGui.PopStyleVar();
     }
 
     private void DrawRightPanel() {

@@ -5,6 +5,7 @@ using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Interface.Utility.Raii;
 
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Formations;
@@ -127,12 +128,12 @@ public partial class MacroEditorWindow {
             ImGui.TextDisabled($"{preview.Warnings.Count} warning(s). Insert will show details.");
 
         var disableInsert = !preview.CanInsert;
-        if (disableInsert) ImGui.BeginDisabled();
-        if (ImGui.Button("Insert Commands##macroGenInsert", new Vector2(140, 0))) {
-            InsertGeneratedMacroCommands(selectedFormation, originPointIndex);
-            ImGui.CloseCurrentPopup();
+        using (ImRaii.Disabled(disableInsert)) {
+            if (ImGui.Button("Insert Commands##macroGenInsert", new Vector2(140, 0))) {
+                InsertGeneratedMacroCommands(selectedFormation, originPointIndex);
+                ImGui.CloseCurrentPopup();
+            }
         }
-        if (disableInsert) ImGui.EndDisabled();
 
         ImGui.SameLine();
         DrawMacroGeneratorCancelButton();

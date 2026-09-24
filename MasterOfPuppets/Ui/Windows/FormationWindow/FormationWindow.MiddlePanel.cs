@@ -5,6 +5,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Bindings.ImPlot;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Interface.Utility.Raii;
 
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Extensions.Dalamud;
@@ -253,12 +254,12 @@ public partial class FormationWindow {
 
         ImGui.Separator();
         bool disabled = formation == null;
-        if (disabled) ImGui.BeginDisabled();
-        if (ImGui.Button("Generate##shapeGenerate", new Vector2(120, 0)) && formation != null) {
-            GenerateShape(formation);
-            ImGui.CloseCurrentPopup();
+        using (ImRaii.Disabled(disabled)) {
+            if (ImGui.Button("Generate##shapeGenerate", new Vector2(120, 0)) && formation != null) {
+                GenerateShape(formation);
+                ImGui.CloseCurrentPopup();
+            }
         }
-        if (disabled) ImGui.EndDisabled();
 
         ImGui.SameLine();
         if (ImGui.Button("Cancel##shapeCancel", new Vector2(100, 0))) {
@@ -277,19 +278,19 @@ public partial class FormationWindow {
         ImGui.Text("Assign from group");
         ImGui.SameLine();
         ImGui.SetNextItemWidth(240);
-        ImGui.BeginDisabled(groupNames.Count == 0);
-        if (_shapeGroupCombo.Draw("##shapeAssignGroup", groupNames, ref _shapeAssignGroupSelected)) {
-            var group = GetShapeAssignmentGroup();
-            if (group != null)
-                _shapeN = Math.Clamp(group.Cids.Count, 1, 64);
+        using (ImRaii.Disabled(groupNames.Count == 0)) {
+            if (_shapeGroupCombo.Draw("##shapeAssignGroup", groupNames, ref _shapeAssignGroupSelected)) {
+                var group = GetShapeAssignmentGroup();
+                if (group != null)
+                    _shapeN = Math.Clamp(group.Cids.Count, 1, 64);
+            }
         }
-        ImGui.EndDisabled();
 
         ImGui.SameLine();
-        ImGui.BeginDisabled(string.IsNullOrWhiteSpace(_shapeAssignGroupSelected));
-        if (ImGui.Button("Clear##shapeAssignGroupClear"))
-            _shapeAssignGroupSelected = string.Empty;
-        ImGui.EndDisabled();
+        using (ImRaii.Disabled(string.IsNullOrWhiteSpace(_shapeAssignGroupSelected))) {
+            if (ImGui.Button("Clear##shapeAssignGroupClear"))
+                _shapeAssignGroupSelected = string.Empty;
+        }
 
         var selectedGroup = GetShapeAssignmentGroup();
         if (selectedGroup != null) {
