@@ -17,8 +17,9 @@ public class ImGuiComboSearch {
 
     public bool Draw(string label, IList<string> options, ref string selected, int maxVisible = 8) {
         bool changed = false;
-        ImGui.PushID(label);
-        if (ImGui.BeginCombo(label, selected, ImGuiComboFlags.HeightLargest)) {
+        using var id = ImRaii.PushId(label);
+        using var combo = ImRaii.Combo(label, selected, ImGuiComboFlags.HeightLargest);
+        if (combo) {
             ImGui.SetNextItemWidth(-1);
             ImGui.InputTextWithHint("##search", "Search...", ref _filter, 64);
 
@@ -30,8 +31,8 @@ public class ImGuiComboSearch {
             var itemHeight = ImGui.GetTextLineHeightWithSpacing();
             var visibleRows = Math.Max(3, Math.Min(filtered.Count, maxVisible));
             bool shouldClose = false;
-            {
-                using var child = ImRaii.Child("##cs_list", new Vector2(-1, visibleRows * itemHeight), false);
+            
+            using (var child = ImRaii.Child("##cs_list", new Vector2(-1, visibleRows * itemHeight), false)) {
                 if (child) {
                     foreach (var option in filtered) {
                         if (ImGui.Selectable(option, option == selected)) {
@@ -43,11 +44,9 @@ public class ImGuiComboSearch {
                 }
             }
             if (shouldClose) ImGui.CloseCurrentPopup();
-            ImGui.EndCombo();
         } else {
             _filter = string.Empty;
         }
-        ImGui.PopID();
         return changed;
     }
 }

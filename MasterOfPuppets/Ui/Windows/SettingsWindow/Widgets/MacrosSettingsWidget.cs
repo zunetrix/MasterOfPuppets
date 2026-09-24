@@ -13,6 +13,7 @@ namespace MasterOfPuppets;
 
 public class MacrosSettingsWidget : Widget {
     private string _globalDelayExclusionInput = string.Empty;
+    private readonly ImGuiComboSearch _loginMacroCombo = new();
     public override string Title => "Macros";
     public override FontAwesomeIcon Icon => FontAwesomeIcon.Scroll;
 
@@ -92,19 +93,12 @@ public class MacrosSettingsWidget : Widget {
                     using (ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor, true))
                     using (ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1, true))
                     using (ImRaii.PushFont(UiBuilder.DefaultFont)) {
-                        if (ImGui.BeginCombo("##OnLoginMacroCombo", currentMacro)) {
-                            foreach (var macro in Plugin.Config.Macros) {
-                                bool isSelected = Plugin.Config.LoginMacro == macro.Name;
-                                if (ImGui.Selectable(macro.Name, isSelected)) {
-                                    Plugin.Config.LoginMacro = macro.Name;
-                                    Plugin.Config.Save();
-                                    Plugin.IpcProvider.SyncConfiguration();
-                                }
-                                if (isSelected) {
-                                    ImGui.SetItemDefaultFocus();
-                                }
-                            }
-                            ImGui.EndCombo();
+                        var macroNames = Plugin.Config.Macros.Select(m => m.Name).ToList();
+                        var selected = currentMacro;
+                        if (_loginMacroCombo.Draw("##OnLoginMacroCombo", macroNames, ref selected)) {
+                            Plugin.Config.LoginMacro = selected;
+                            Plugin.Config.Save();
+                            Plugin.IpcProvider.SyncConfiguration();
                         }
                     }
                 }
