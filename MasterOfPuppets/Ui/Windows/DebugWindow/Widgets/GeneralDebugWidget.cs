@@ -152,7 +152,7 @@ public sealed class GeneralDebugWidget : Widget {
         }
     }
 
-    void FixUnloadError() {
+    public static void FixPluginLoadError() {
         try {
             var pi = DalamudApi.PluginInterface;
             var pluginManager = Exposed.From(pi.GetType().Assembly.

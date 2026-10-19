@@ -1,0 +1,7 @@
+<Solution>
+    <Configurations>
+        <BuildType Name="Debug" />
+        <BuildType Name="Release" />
+    </Configurations>
+    <Project Path="MasterOfPuppets/MasterOfPuppets.csproj" />
+</Solution>

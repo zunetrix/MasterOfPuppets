@@ -36,8 +36,8 @@ public class CommandsSettingsWidget : Widget {
     public override void Draw() {
         var Plugin = Context.Plugin;
 
-        ImGui.TextWrapped("Enable and rename aliases for built-in commands. Changes are synced to all clients.");
-        ImGuiUtil.HelpMarker("Example: enable '/br' as alias for '/mopbr', or rename it to '/broadcast'.");
+        ImGui.TextWrapped("Enable and rename aliases for built-in commands");
+        ImGuiUtil.HelpMarker("Example: enable '/br' as alias for '/mopbr', or rename it to '/broadcast'");
 
         ImGui.Spacing();
         ImGui.Separator();
