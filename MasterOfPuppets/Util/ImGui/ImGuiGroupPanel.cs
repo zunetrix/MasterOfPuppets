@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
 
 namespace MasterOfPuppets.Util.ImGuiExt;
 
@@ -35,9 +36,8 @@ public static class ImGuiGroupPanel {
         ImGui.BeginGroup();
         var cursorPos = ImGui.GetCursorScreenPos();
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0.0f, 0.0f));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0.0f, 0.0f));
 
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero).Push(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
         var frameHeight = ImGui.GetFrameHeight();
         ImGui.BeginGroup();
 
@@ -59,10 +59,7 @@ public static class ImGuiGroupPanel {
         ImGui.SameLine(0.0f, 0.0f);
         ImGui.Dummy(new Vector2(0.0f, frameHeight + itemSpacing.Y));
         ImGui.BeginGroup();
-
         //ImGui.GetWindowDrawList()->AddRect(labelMin, labelMax, IM_COL32(255, 0, 255, 255));
-
-        ImGui.PopStyleVar(2);
 
         var itemWidth = ImGui.CalcItemWidth();
         ImGui.PushItemWidth(Math.Max(0.0f, itemWidth - frameHeight));
@@ -85,8 +82,7 @@ public static class ImGuiGroupPanel {
 
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
 
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0.0f, 0.0f));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0.0f, 0.0f));
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero).Push(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
 
         var frameHeight = ImGui.GetFrameHeight();
 
@@ -133,9 +129,7 @@ public static class ImGuiGroupPanel {
             ImGui.PopClipRect();
         }
 
-        ImGui.PopStyleVar(2);
-
-        ImGui.Dummy(new Vector2(0.0f, 0.0f));
+        ImGui.Dummy(Vector2.Zero);
 
         ImGui.EndGroup();
     }

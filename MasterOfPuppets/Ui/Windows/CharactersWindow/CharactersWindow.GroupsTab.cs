@@ -42,14 +42,14 @@ public partial class CharactersWindow {
         ImGui.SameLine();
 
         // Splitter
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
-        ImGui.InvisibleButton("##grpsplit", new Vector2(splitterW, h));
-        if (ImGui.IsItemHovered()) ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
-        if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
-            _groupLeftPanelWidth += ImGui.GetIO().MouseDelta.X;
-            _groupLeftPanelWidth = Math.Clamp(_groupLeftPanelWidth, minLeftW, maxLeftW);
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero)) {
+            ImGui.InvisibleButton("##grpsplit", new Vector2(splitterW, h));
+            if (ImGui.IsItemHovered()) ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
+            if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+                _groupLeftPanelWidth += ImGui.GetIO().MouseDelta.X;
+                _groupLeftPanelWidth = Math.Clamp(_groupLeftPanelWidth, minLeftW, maxLeftW);
+            }
         }
-        ImGui.PopStyleVar();
         ImGui.SameLine();
 
         // Right panel

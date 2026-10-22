@@ -108,8 +108,8 @@ public sealed class GeneralDebugWidget : Widget {
             PrintHotbar();
         }
 
-        if (ImGui.Button("Fix Unload Error")) {
-            FixUnloadError();
+        if (ImGui.Button("Fix Plugin Load Error")) {
+            FixPluginLoadError();
         }
 
         if (ImGuiUtil.ButtonStyled("Free Process Memory", ImGuiUtil.ButtonStyle.Success)) {

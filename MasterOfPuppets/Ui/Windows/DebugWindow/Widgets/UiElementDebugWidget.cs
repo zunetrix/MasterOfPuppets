@@ -5,6 +5,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.ImGuiSeStringRenderer;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Util;
@@ -97,9 +98,9 @@ public sealed class UiElementDebugWidget : Widget {
             ImGui.Separator();
 
             bool dontAskNextTime = false;
-            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
-            ImGui.Checkbox("Don't ask me next time", ref dontAskNextTime);
-            ImGui.PopStyleVar();
+            using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero)) {
+                ImGui.Checkbox("Don't ask me next time", ref dontAskNextTime);
+            }
 
             if (ImGui.Button("OK", new Vector2(120, 0)))
                 ImGui.CloseCurrentPopup();

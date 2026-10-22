@@ -5,6 +5,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Formations;
@@ -110,14 +111,14 @@ public partial class FormationWindow : Window {
         ImGui.SameLine();
 
         // Left splitter
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
-        ImGui.InvisibleButton("##fwisplitl", new Vector2(splitterW, h));
-        if (ImGui.IsItemHovered()) ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
-        if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
-            _leftPanelWidth += ImGui.GetIO().MouseDelta.X;
-            _leftPanelWidth = Math.Clamp(_leftPanelWidth, minLeftW, maxLeftW);
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero)) {
+            ImGui.InvisibleButton("##fwisplitl", new Vector2(splitterW, h));
+            if (ImGui.IsItemHovered()) ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
+            if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+                _leftPanelWidth += ImGui.GetIO().MouseDelta.X;
+                _leftPanelWidth = Math.Clamp(_leftPanelWidth, minLeftW, maxLeftW);
+            }
         }
-        ImGui.PopStyleVar();
         ImGui.SameLine();
 
         // Middle panel
@@ -127,14 +128,14 @@ public partial class FormationWindow : Window {
         ImGui.SameLine();
 
         // Right splitter
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
-        ImGui.InvisibleButton("##fwisplit", new Vector2(splitterW, h));
-        if (ImGui.IsItemHovered()) ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
-        if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
-            _rightPanelWidth -= ImGui.GetIO().MouseDelta.X;
-            _rightPanelWidth = Math.Clamp(_rightPanelWidth, minRightW, maxRightW);
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero)) {
+            ImGui.InvisibleButton("##fwisplit", new Vector2(splitterW, h));
+            if (ImGui.IsItemHovered()) ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
+            if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+                _rightPanelWidth -= ImGui.GetIO().MouseDelta.X;
+                _rightPanelWidth = Math.Clamp(_rightPanelWidth, minRightW, maxRightW);
+            }
         }
-        ImGui.PopStyleVar();
         ImGui.SameLine();
 
         // Right panel

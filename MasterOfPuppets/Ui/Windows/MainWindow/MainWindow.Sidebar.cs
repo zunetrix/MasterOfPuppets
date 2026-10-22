@@ -183,16 +183,16 @@ public partial class MainWindow : Window {
         const float maxSidebarPx = 400f;
 
         var splitterWidth = 6f * ImGuiHelpers.GlobalScale;
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
-        ImGui.InvisibleButton("##SidebarSplitter", new Vector2(splitterWidth, -1));
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero)) {
+            ImGui.InvisibleButton("##SidebarSplitter", new Vector2(splitterWidth, -1));
 
-        if (ImGui.IsItemHovered())
-            ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
+            if (ImGui.IsItemHovered())
+                ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
 
-        if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left) && !_sidebarCollapsed) {
-            _sidebarWidth += ImGui.GetIO().MouseDelta.X / ImGuiHelpers.GlobalScale;
-            _sidebarWidth = MathF.Max(minSidebarPx, MathF.Min(_sidebarWidth, maxSidebarPx));
+            if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left) && !_sidebarCollapsed) {
+                _sidebarWidth += ImGui.GetIO().MouseDelta.X / ImGuiHelpers.GlobalScale;
+                _sidebarWidth = MathF.Max(minSidebarPx, MathF.Min(_sidebarWidth, maxSidebarPx));
+            }
         }
-        ImGui.PopStyleVar();
     }
 }
