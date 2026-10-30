@@ -13,6 +13,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 
 using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
@@ -114,35 +115,22 @@ public unsafe partial class GearSetGridWidget : Widget {
 
     private void DrawHeader() {
         ImGui.SetNextItemWidth(220 * ImGuiHelpers.GlobalScale);
-        ImGui.InputTextWithHint("##GearGridSearch", "Search…", ref _searchText, 128, ImGuiInputTextFlags.AutoSelectAll);
-
-        ImGui.SameLine();
-        ImGui.TextDisabled("in:");
-
-        ImGui.SameLine();
-        ImGui.Checkbox("Gearset", ref _searchByGearset);
-        ImGui.SameLine();
-        ImGui.Checkbox("Item", ref _searchByItem);
-        ImGui.SameLine();
-        ImGui.Checkbox("Dye", ref _searchByDye);
-
-        ImGui.SameLine();
-        ImGui.Spacing();
-        ImGui.SameLine();
+        ImGui.InputTextWithHint("##GearGridSearch", "Search...", ref _searchText, 128, ImGuiInputTextFlags.AutoSelectAll);
 
         // Try-On on hover toggle
+        ImGui.SameLine();
         if (ImGui.Checkbox("Try On Hover", ref _tryOnOnHover)) {
             _lastTryOnItemId = 0;
             _lastTryOnGsIdx = -1;
         }
-        ImGuiUtil.ToolTip("When enabled, hovering over an item icon will preview it (Try On).\nThrottled to avoid repeated calls.");
+        ImGuiUtil.ToolTip("When enabled, hovering over an item icon will preview it (Try On)");
 
         // Keep outfit: controls AgentTryon.SaveDeleteOutfit so each new
         // Try-On doesn't replace the previous previewed pieces.
         if (_tryOnOnHover) {
             ImGui.SameLine();
             ImGui.Checkbox("Keep Outfit", ref _tryOnKeepOutfit);
-            ImGuiUtil.ToolTip("When enabled, trying on a new item keeps previously previewed items visible\n(sets SaveDeleteOutfit on the game's Try-On agent).");
+            ImGuiUtil.ToolTip("When enabled, trying on a new item keeps previously previewed items visible");
         }
 
         ImGui.SameLine();
@@ -157,6 +145,18 @@ public unsafe partial class GearSetGridWidget : Widget {
                 _showMoveSettings = !_showMoveSettings;
             }
         }
+
+        ImGui.TextDisabled("in:");
+
+        ImGui.SameLine();
+        ImGui.Checkbox("Gearset", ref _searchByGearset);
+        ImGui.SameLine();
+        ImGui.Checkbox("Item", ref _searchByItem);
+        ImGui.SameLine();
+        ImGui.Checkbox("Dye", ref _searchByDye);
+
+        ImGui.SameLine();
+        ImGui.Spacing();
 
         ImGui.Separator();
 
@@ -178,7 +178,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         var armLabel = _armouryMoveMode switch {
             ArmouryMoveMode.FirstEmpty => "First Empty Slot",
             ArmouryMoveMode.MatchGearsetIndex => "Match Gearset Index",
-            ArmouryMoveMode.SwapWithGearset => "Swap with Gearset…",
+            ArmouryMoveMode.SwapWithGearset => "Swap with Gearset...",
             _ => "?"
         };
         using (var combo = ImRaii.Combo("##ArmouryMode", armLabel)) {
@@ -189,9 +189,9 @@ public unsafe partial class GearSetGridWidget : Widget {
 
                 if (ImGui.Selectable("Match Gearset Index", _armouryMoveMode == ArmouryMoveMode.MatchGearsetIndex))
                     _armouryMoveMode = ArmouryMoveMode.MatchGearsetIndex;
-                ImGuiUtil.ToolTip("Moves to armoury slot N where N = gearset number − 1.\nKeeps each gearset in its own numbered armoury slot.");
+                ImGuiUtil.ToolTip("Moves to armoury slot N where N = gearset number - 1.\nKeeps each gearset in its own numbered armoury slot.");
 
-                if (ImGui.Selectable("Swap with Gearset…", _armouryMoveMode == ArmouryMoveMode.SwapWithGearset))
+                if (ImGui.Selectable("Swap with Gearset...", _armouryMoveMode == ArmouryMoveMode.SwapWithGearset))
                     _armouryMoveMode = ArmouryMoveMode.SwapWithGearset;
                 ImGuiUtil.ToolTip("Moves to the armoury slot used by a second chosen gearset,\npushing that gearset's item to the inventory.");
             }
@@ -261,8 +261,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         ImGuiUtil.ToolTip("When moving whole gearsets, skip the Soul Crystal.");
     }
 
-    //  Table
-
+    // Table
     private void DrawTable() {
         var slotIndices = Enum.GetValues<GearsetItemIndex>();
 
@@ -299,7 +298,7 @@ public unsafe partial class GearSetGridWidget : Widget {
             ImGui.TableSetupColumn($"##Slot{(int)slot}", ImGuiTableColumnFlags.WidthFixed, IconSize.X * ImGuiHelpers.GlobalScale);
         }
 
-        // Last col: action buttons (with small spacing before buttons)
+        // Last col: action buttons
         float actionColW = 160f * ImGuiHelpers.GlobalScale;
         ImGui.TableSetupColumn("##Actions", ImGuiTableColumnFlags.WidthFixed, actionColW);
 
@@ -463,7 +462,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         string displayName = name;
         var textSize = ImGui.CalcTextSize(name);
         if (textSize.X > availWidth && availWidth > 0) {
-            const string ellipsis = "…";
+            const string ellipsis = "...";
             float ellipsisW = ImGui.CalcTextSize(ellipsis).X;
             int lo = 0, hi = name.Length;
             while (lo < hi) {
@@ -501,7 +500,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         var slots = slotIndices;
 
         // Equip
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, $"##BtnEquip_{gsIdx}", $"Equip [{gsId + 1}] {gsName}")) {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, $"##BtnEquip_{gsIdx}", $"Equip Gearset [{gsId + 1}] {gsName}")) {
             _pendingAction = () => {
                 UIGlobals.PlaySoundEffect(8);
                 RaptureGearsetModule.Instance()->EquipGearset(gsIdx);
@@ -531,7 +530,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         }
     }
 
-    //  Item Icon Cell
+    // Item Icon Cell
     public void DrawItemIcon(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex slotIndex, GearsetItem slotItem, ItemHandle item) {
         var startPos = ImGui.GetCursorPos();
         var screenBase = ImGui.GetCursorScreenPos();
@@ -570,8 +569,8 @@ public unsafe partial class GearSetGridWidget : Widget {
         // Reset cursor to bottom of icon cell
         ImGui.SetCursorPos(startPos + new Vector2(0, (IconSize.Y - 3) * ImGuiHelpers.GlobalScale));
 
-        // Try-On on hover
-        if (_tryOnOnHover && ImGui.IsItemHovered()) {
+        // Try-On on hover (ignore Soul Crystal)
+        if (_tryOnOnHover && slotIndex != GearsetItemIndex.SoulStone && ImGui.IsItemHovered()) {
             TryOnItemThrottled(gearsetIndex, slotItem.ItemId, slotItem.Stain0Id, slotItem.Stain1Id, slotItem.GlamourId);
         }
 
@@ -605,7 +604,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         return false;
     }
 
-    //  Dye Dots
+    // Dye Dots
     private void DrawDyeDots(Vector2 screenBase, byte stain0Id, byte stain1Id) {
         if (stain0Id == 0 && stain1Id == 0) return;
 
@@ -641,7 +640,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         return (uint)((0xFF << 24) | (b << 16) | (g << 8) | r); // ABGR
     }
 
-    //  Item Context Menu
+    // Item Context Menu
     private void DrawItemContextMenu(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex slotIndex, GearsetItem slotItem, ItemHandle item, bool inArmoury, bool inInventory) {
         using var popup = ImRaii.ContextPopupItem($"##ItemCtx_{gearsetIndex}_{(int)slotIndex}");
         if (!popup) return;
@@ -658,22 +657,24 @@ public unsafe partial class GearSetGridWidget : Widget {
         var capturedSlotItem = slotItem;
 
         // Equip entire gearset
-        if (ImGui.MenuItem($"Equip [{gsId + 1}] {gsName}")) {
-            _pendingAction = () => {
-                UIGlobals.PlaySoundEffect(8);
-                RaptureGearsetModule.Instance()->EquipGearset(gsIdx);
-            };
-        }
+        // if (ImGui.MenuItem($"Equip [{gsId + 1}] {gsName}")) {
+        //     _pendingAction = () => {
+        //         UIGlobals.PlaySoundEffect(8);
+        //         RaptureGearsetModule.Instance()->EquipGearset(gsIdx);
+        //     };
+        // }
 
-        ImGui.Separator();
+        // ImGui.Separator();
 
-        // Try On this item
-        if (ImGui.MenuItem("Try On")) {
-            var keep = _tryOnKeepOutfit;
-            _pendingAction = () => TryOnViaAgent(itemId, s0, s1, glamId, keep);
+        // Try On this item (Soul Crystal cannot be previewed)
+        using (ImRaii.Disabled(slotIndex == GearsetItemIndex.SoulStone)) {
+            if (ImGui.MenuItem("Try On")) {
+                var keep = _tryOnKeepOutfit;
+                _pendingAction = () => TryOnViaAgent(itemId, s0, s1, glamId, keep);
+            }
+            ImGui.SameLine();
+            ImGui.TextDisabled(_tryOnKeepOutfit ? "(Keep Outfit ON)" : "(Keep Outfit OFF)");
         }
-        ImGui.SameLine();
-        ImGui.TextDisabled(_tryOnKeepOutfit ? "(Keep Outfit ON)" : "(Keep Outfit OFF)");
 
         ImGui.Separator();
 
@@ -701,7 +702,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         }
     }
 
-    //  Item Tooltip
+    // Item Tooltip
     private void DrawItemTooltip(
         GearsetEntry* gearset,
         GearsetItemIndex slotIndex,
@@ -770,25 +771,34 @@ public unsafe partial class GearSetGridWidget : Widget {
         ImGui.Text(TextService.GetStainName(stainId));
     }
 
-    // Also-used-in gearsets list (compact 2-column layout)
+    // Also-used-in gearsets list (compact 3-column layout)
     private static void DrawSharedGearsetsList(byte currentGearsetId, List<ItemInGearsetEntry> usedInGearsets) {
         var others = usedInGearsets.FindAll(e => e.Id != currentGearsetId);
         if (others.Count == 0) return;
 
         ImGui.Text($"Also used in {others.Count} gearset(s):");
 
-        using var tbl = ImRaii.Table("##UsedInGS", 2, ImGuiTableFlags.None);
+        using var tbl = ImRaii.Table("##UsedInGS", 3, ImGuiTableFlags.None);
         if (!tbl) {
             foreach (var e in others)
                 ImGui.Text($"  [{e.Id + 1}] {e.Name}");
             return;
         }
 
-        ImGui.TableSetupColumn("##Col1", ImGuiTableColumnFlags.WidthFixed, 140 * ImGuiHelpers.GlobalScale);
-        ImGui.TableSetupColumn("##Col2", ImGuiTableColumnFlags.WidthFixed, 140 * ImGuiHelpers.GlobalScale);
+        // Calculate dynamic column width based on the longest gearset name, min 140 scaled
+        float maxTextW = 120f;
+        foreach (var e in others) {
+            var tw = ImGui.CalcTextSize($"[{e.Id + 1}] {e.Name}").X;
+            if (tw > maxTextW) maxTextW = tw;
+        }
+        float colW = MathF.Max(140f * ImGuiHelpers.GlobalScale, maxTextW + 16f * ImGuiHelpers.GlobalScale);
+
+        ImGui.TableSetupColumn("##Col1", ImGuiTableColumnFlags.WidthFixed, colW);
+        ImGui.TableSetupColumn("##Col2", ImGuiTableColumnFlags.WidthFixed, colW);
+        ImGui.TableSetupColumn("##Col3", ImGuiTableColumnFlags.WidthFixed, colW);
 
         for (int i = 0; i < others.Count; i++) {
-            if (i % 2 == 0) ImGui.TableNextRow();
+            if (i % 3 == 0) ImGui.TableNextRow();
             ImGui.TableNextColumn();
             ImGui.Text($"[{others[i].Id + 1}] {others[i].Name}");
         }
@@ -837,14 +847,20 @@ public unsafe partial class GearSetGridWidget : Widget {
     // Try-On
     private void TryOnItemThrottled(int gearsetIndex, uint rawItemId, byte stain0, byte stain1, uint glamId) {
         var baseId = ItemUtil.GetBaseId(rawItemId).ItemId;
+        if (baseId == 0) return;
 
-        if (baseId == _lastTryOnItemId && gearsetIndex == _lastTryOnGsIdx) return;
+        var previewId = glamId != 0 ? glamId : baseId;
+        if (ExcelService.TryGetRow<Item>(previewId, out var itemRow)) {
+            if (itemRow.EquipSlotCategory.RowId is 0 or 6 or 17) return;
+        }
+
+        if (previewId == _lastTryOnItemId && gearsetIndex == _lastTryOnGsIdx) return;
         if (!EzThrottler.Throttle("GearGridTryOn", 400)) return;
 
-        _lastTryOnItemId = baseId;
+        _lastTryOnItemId = previewId;
         _lastTryOnGsIdx = gearsetIndex;
 
-        var iid = baseId;
+        var iid = previewId;
         var s0 = stain0;
         var s1 = stain1;
         var gl = glamId;
@@ -855,24 +871,28 @@ public unsafe partial class GearSetGridWidget : Widget {
     /// <summary>
     /// Calls AgentTryon.TryOn, optionally setting SaveDeleteOutfit so the game keeps
     /// previously previewed pieces visible when trying on a new item.
+    /// Prioritizes glamourItemId if present so the previewed appearance is accurate.
     /// </summary>
     private static void TryOnViaAgent(uint itemId, byte stain0, byte stain1, uint glamourId, bool keepOutfit) {
         var agent = AgentTryon.Instance();
         if (agent != null)
             agent->SaveDeleteOutfit = keepOutfit;
 
-        AgentTryon.TryOn(0, itemId, stain0, stain1, glamourId);
+        var previewId = glamourId != 0 ? glamourId : itemId;
+        AgentTryon.TryOn(0, previewId, stain0, stain1, glamourId);
     }
 
     /// <summary>
     /// Previews the entire gearset in the Try-On window, slot by slot.
     /// Uses keepOutfit=true for all slots except the first so previously added items stay.
+    /// Skips Belt and SoulStone (which cannot be previewed in Fitting Room).
+    /// Prioritizes glamour item ID so appearance is accurate.
     /// </summary>
     private static void TryOnGearset(GearsetEntry* gearset, GearsetItemIndex[] slotIndices, bool keepOutfit) {
         var agent = AgentTryon.Instance();
         bool first = true;
         foreach (var slotIndex in slotIndices) {
-            if (slotIndex == GearsetItemIndex.Belt) continue;
+            if (slotIndex == GearsetItemIndex.Belt || slotIndex == GearsetItemIndex.SoulStone) continue;
 
             var slotItem = gearset->GetItem(slotIndex);
             if (slotItem.ItemId == 0) continue;
@@ -880,12 +900,19 @@ public unsafe partial class GearSetGridWidget : Widget {
             var baseId = ItemUtil.GetBaseId(slotItem.ItemId).ItemId;
             if (baseId == 0) continue;
 
+            var previewId = slotItem.GlamourId != 0 ? slotItem.GlamourId : baseId;
+
+            if (ExcelService.TryGetRow<Item>(previewId, out var itemRow)) {
+                var slotCat = itemRow.EquipSlotCategory.RowId;
+                if (slotCat is 0 or 6 or 17) continue;
+            }
+
             // For the first item respect the user's keepOutfit preference.
             // For subsequent items in this batch always keep so they stack.
             if (agent != null)
                 agent->SaveDeleteOutfit = !first || keepOutfit;
 
-            AgentTryon.TryOn(0, baseId, slotItem.Stain0Id, slotItem.Stain1Id, slotItem.GlamourId);
+            AgentTryon.TryOn(0, previewId, slotItem.Stain0Id, slotItem.Stain1Id, slotItem.GlamourId);
             first = false;
         }
     }
@@ -1067,8 +1094,38 @@ public unsafe partial class GearSetGridWidget : Widget {
         return list;
     }
 
-    public uint GetItemRarityColor(ItemHandle item, bool isEdgeColor = false)
-        => ItemUtil.GetItemRarityColorType(item, isEdgeColor);
+    public Vector4 GetItemRarityColor(ItemHandle item, bool isEdgeColor = false) {
+        if (item.ItemId == 0) return Vector4.One;
+
+        try {
+            var colorType = ItemUtil.GetItemRarityColorType(item.ItemId, isEdgeColor);
+            var atkStage = AtkStage.Instance();
+            if (atkStage != null && atkStage->AtkUIColorHolder != null) {
+                var rawColor = atkStage->AtkUIColorHolder->GetColor(false, colorType);
+                if (rawColor != 0) {
+                    var col = ImGui.ColorConvertU32ToFloat4(rawColor);
+                    // Ensure not completely transparent or dark
+                    if (col.W > 0.05f && (col.X > 0.05f || col.Y > 0.05f || col.Z > 0.05f))
+                        return new Vector4(col.X, col.Y, col.Z, 1f);
+                }
+            }
+        } catch {
+            // ignore and fallback
+        }
+
+        // Secondary fallback by Item.Rarity from Lumina sheet
+        if (ExcelService.TryGetRow<Item>(item.ItemId, out var itemRow)) {
+            return itemRow.Rarity switch {
+                2 => new Vector4(0.51f, 0.94f, 0.35f, 1f), // Green / Uncommon
+                3 => new Vector4(0.35f, 0.68f, 1f, 1f),   // Blue / Rare
+                4 => new Vector4(0.78f, 0.52f, 1f, 1f),   // Purple / Relic
+                7 => new Vector4(1f, 0.55f, 0.8f, 1f),    // Pink / Aetherial
+                _ => Vector4.One                          // Common / White
+            };
+        }
+
+        return Vector4.One;
+    }
 
     public ReadOnlySeString GetItemName(ItemHandle item, bool includeIcon = false)
         => ItemUtil.GetItemName(item.ItemId, includeIcon, DalamudApi.ClientState.ClientLanguage);
