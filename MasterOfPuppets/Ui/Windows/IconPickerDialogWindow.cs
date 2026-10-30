@@ -13,11 +13,10 @@ using MasterOfPuppets.Util.ImGuiIconPicker;
 
 namespace MasterOfPuppets;
 
-/// Class to pick the icon for a macro.
-///
-/// Inspirations:
-/// - QoLBar's IconBrowser: https://github.com/UnknownX7/QoLBar/blob/f80d64ab064e4e7574a42b2efc678beebdcb1af9/UI/IconBrowserUI.cs
-/// - Dalamud's IconBrowserWidget: https://github.com/goatcorp/Dalamud/blob/deef16cdd742ca9faa403e388602795e9d3b54e9/Dalamud/Interface/Internal/Windows/Data/Widgets/IconBrowserWidget.cs#L16
+// Class to pick the icon for a macro
+// based on:
+// QoLBar IconBrowser: https://github.com/UnknownX7/QoLBar/blob/f80d64ab064e4e7574a42b2efc678beebdcb1af9/UI/IconBrowserUI.cs
+// Dalamud IconBrowserWidget: https://github.com/goatcorp/Dalamud/blob/deef16cdd742ca9faa403e388602795e9d3b54e9/Dalamud/Interface/Internal/Windows/Data/Widgets/IconBrowserWidget.cs#L16
 public class IconPickerDialogWindow : Window {
     private uint? CurrentIconId { get; set; }
     private string searchText = string.Empty;
@@ -34,16 +33,16 @@ public class IconPickerDialogWindow : Window {
         }
     }
 
+    private float _sidebarWidth = 220f;
+
     public IconPickerDialogWindow() : base("Icon Picker###IconPIckerDialogWindow") {
-        Size = ImGuiHelpers.ScaledVector2(450, 400);
+        Size = ImGuiHelpers.ScaledVector2(650, 480);
         SizeCondition = ImGuiCond.FirstUseEver;
-        // SizeCondition = ImGuiCond.Always;
 
         Flags = ImGuiWindowFlags.NoScrollbar;
-        // SizeConstraints = new WindowSizeConstraints
-        // {
-        //     MinimumSize = ImGuiHelpers.ScaledVector2(375, 330),
-        //     MaximumSize = ImGuiHelpers.ScaledVector2(float.MaxValue, float.MaxValue)
+        // SizeConstraints = new WindowSizeConstraints {
+        //     MinimumSize = ImGuiHelpers.ScaledVector2(450, 300),
+        //     MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         // };
 
         iconInfoIndex.StartIndexing(() => {
@@ -79,55 +78,76 @@ public class IconPickerDialogWindow : Window {
     public override void Draw() {
         float iconSize = 48 * ImGuiHelpers.GlobalScale;
 
-        if (ImGui.BeginTable("icon_picker_layout_table", 2, ImGuiTableFlags.Resizable)) {
-            ImGui.TableSetupColumn("CategoryTree", ImGuiTableColumnFlags.WidthFixed, 150.0f);
-            ImGui.TableSetupColumn("Icons", ImGuiTableColumnFlags.WidthStretch);
+        DrawCategorySidebar();
+        ImGui.SameLine();
+        DrawSidebarSplitter();
+        ImGui.SameLine();
+        DrawContentPane(iconSize);
+    }
 
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            ImGui.TableNextColumn();
+    private void DrawCategorySidebar() {
+        float width = _sidebarWidth * ImGuiHelpers.GlobalScale;
+        using var child = ImRaii.Child("Search##CategoryTree", new Vector2(width, -1), true);
+        if (!child) return;
 
-            var searchHint = selectedCategory == null ? "Search" : $"Search {selectedCategory}";
-            if (ImGui.InputTextWithHint("###iconsearch", searchHint, ref searchText, 255)) {
-                RefreshSearch();
+        var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick
+            | ImGuiTreeNodeFlags.SpanAvailWidth | ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
+        if (selectedCategory == null) { flags |= ImGuiTreeNodeFlags.Selected; }
+        ImGui.TreeNodeEx("All", flags);
+        if (ImGui.IsItemClicked()) {
+            selectedCategory = null;
+            ImGui.CloseCurrentPopup();
+        }
+        foreach (var categoryTree in iconInfoIndex.CategoryRoots()) {
+            DrawCategoryGroupTree(categoryTree);
+        }
+    }
+
+    private void DrawSidebarSplitter() {
+        const float minSidebarPx = 120f;
+        const float maxSidebarPx = 500f;
+
+        var splitterWidth = 6f * ImGuiHelpers.GlobalScale;
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero)) {
+            ImGui.InvisibleButton("##CategorySplitter", new Vector2(splitterWidth, -1));
+
+            if (ImGui.IsItemHovered())
+                ImGui.SetMouseCursor(ImGuiMouseCursor.ResizeEw);
+
+            if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) {
+                _sidebarWidth += ImGui.GetIO().MouseDelta.X / ImGuiHelpers.GlobalScale;
+                _sidebarWidth = MathF.Max(minSidebarPx, MathF.Min(_sidebarWidth, maxSidebarPx));
             }
+        }
+    }
 
-            ImGui.SameLine();
-            ImGui.Checkbox("Show Icon Tags", ref showIconNames);
+    private void DrawContentPane(float iconSize) {
+        using var rightChild = ImRaii.Child("RightSide##IconPicker", new Vector2(0, -1), false);
+        if (!rightChild) return;
 
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
+        var searchHint = selectedCategory == null ? "Search" : $"Search {selectedCategory}";
 
-            using (var child = ImRaii.Child("Search##CategoryTree")) {
-                if (child) {
-                    var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick
-                        | ImGuiTreeNodeFlags.SpanAvailWidth | ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
-                    if (selectedCategory == null) { flags |= ImGuiTreeNodeFlags.Selected; }
-                    ImGui.TreeNodeEx("All", flags);
-                    if (ImGui.IsItemClicked()) {
-                        selectedCategory = null;
-                        ImGui.CloseCurrentPopup();
-                    }
-                    foreach (var categoryTree in iconInfoIndex.CategoryRoots()) {
-                        DrawCategoryGroupTree(categoryTree);
-                    }
+        float checkboxWidth = ImGui.CalcTextSize("Show Icon Tags").X + ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X * 3;
+        float inputWidth = MathF.Max(100f * ImGuiHelpers.GlobalScale, ImGui.GetContentRegionAvail().X - checkboxWidth);
+
+        ImGui.SetNextItemWidth(inputWidth);
+        if (ImGui.InputTextWithHint("###iconsearch", searchHint, ref searchText, 255)) {
+            RefreshSearch();
+        }
+
+        ImGui.SameLine();
+        ImGui.Checkbox("Show Icon Tags", ref showIconNames);
+
+        using (var child = ImRaii.Child("Search##IconList", new Vector2(0, -1), false)) {
+            if (child) {
+                var columns = Math.Max(1, (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X)));
+                if (iconInfoIndex.State == IconPickerIndex.IndexState.INDEXED) {
+                    DrawSearchResults(iconSize, columns);
+                } else {
+                    var spinner = "|/-\\"[(int)(ImGui.GetTime() / 0.05f) % 3];
+                    ImGui.Text($"Indexing... {spinner}");
                 }
             }
-
-            ImGui.TableNextColumn();
-            using (var child = ImRaii.Child("Search##IconList")) {
-                if (child) {
-                    var columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X));
-                    if (iconInfoIndex.State == IconPickerIndex.IndexState.INDEXED) {
-                        DrawSearchResults(iconSize, columns);
-                    } else {
-                        var spinner = "|/-\\"[(int)(ImGui.GetTime() / 0.05f) % 3];
-                        ImGui.Text($"Indexing... {spinner}");
-                    }
-                }
-            }
-
-            ImGui.EndTable();
         }
     }
 
