@@ -109,9 +109,9 @@ internal class Language {
             return ResourceManager.GetString("EditMacroBtn", resourceCulture);
         }
     }
-    internal static string DeleteInstructionTooltip {
+    internal static string CtrlGuardProceedInstructionTooltip {
         get {
-            return ResourceManager.GetString("DeleteInstructionTooltip", resourceCulture);
+            return ResourceManager.GetString("CtrlGuardProceedInstructionTooltip", resourceCulture);
         }
     }
     internal static string DeleteSelectedMacrosBtn {

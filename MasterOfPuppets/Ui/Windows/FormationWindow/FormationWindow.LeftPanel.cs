@@ -222,7 +222,7 @@ public partial class FormationWindow {
 
             // Col 2: actions
             ImGui.TableNextColumn();
-            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidel{i}", Language.DeleteInstructionTooltip)
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidel{i}", Language.CtrlGuardProceedInstructionTooltip)
                 && ImGui.GetIO().KeyCtrl) {
                 Plugin.Config.Formations.RemoveAt(i);
                 if (_selFormation == i)

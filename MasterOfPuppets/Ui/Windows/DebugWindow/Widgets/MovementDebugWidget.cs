@@ -210,7 +210,7 @@ public sealed class MovementDebugWidget : Widget {
                     }
 
                 }
-                ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                ImGuiUtil.ToolTip(Language.CtrlGuardProceedInstructionTooltip);
             }
 
             ImGui.EndListBox();
@@ -229,7 +229,7 @@ public sealed class MovementDebugWidget : Widget {
                     }
 
                 }
-                ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                ImGuiUtil.ToolTip(Language.CtrlGuardProceedInstructionTooltip);
             }
 
             ImGui.EndListBox();

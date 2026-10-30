@@ -146,7 +146,7 @@ public class MacrosSettingsWidget : Widget {
                     ImGui.TextUnformatted(command);
 
                     ImGui.TableNextColumn();
-                    if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveExclusion_{i}", Language.DeleteInstructionTooltip)) {
+                    if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveExclusion_{i}", Language.CtrlGuardProceedInstructionTooltip)) {
                         if (ImGui.GetIO().KeyCtrl) {
                             Plugin.Config.GlobalDelayExcludedCommands.Remove(command);
                             Plugin.IpcProvider.SyncConfiguration();

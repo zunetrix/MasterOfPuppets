@@ -179,7 +179,7 @@ public partial class FormationWindow {
                             _selPoint = i;
 
                         ImGui.SameLine();
-                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidp{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidp{i}", Language.CtrlGuardProceedInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
 
                         ImGui.PopID();
@@ -249,7 +249,7 @@ public partial class FormationWindow {
                         ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
                         ImGui.TableNextColumn(); ImGui.Text(cn);
                         ImGui.TableNextColumn();
-                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidc{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidc{i}", Language.CtrlGuardProceedInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
                     }
                     ImGui.EndTable();
@@ -314,7 +314,7 @@ public partial class FormationWindow {
                         ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
                         ImGui.TableNextColumn(); ImGui.Text(gn);
                         ImGui.TableNextColumn();
-                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidg{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##fidg{i}", Language.CtrlGuardProceedInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
                     }
                     ImGui.EndTable();

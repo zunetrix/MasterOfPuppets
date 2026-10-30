@@ -231,7 +231,7 @@ public partial class MacroWindow : Window {
         }
 
         ImGui.TableNextColumn();
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteMacro_{macroIdx}", Language.DeleteInstructionTooltip)) {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##DeleteMacro_{macroIdx}", Language.CtrlGuardProceedInstructionTooltip)) {
             if (ImGui.GetIO().KeyCtrl) {
                 Plugin.MacroManager.DeleteMacro(macroIdx);
                 Plugin.IpcProvider.SyncConfiguration();

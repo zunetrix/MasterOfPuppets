@@ -150,7 +150,7 @@ public partial class WindowLayoutWindow {
 
                         // Col 5: Delete
                         ImGui.TableNextColumn();
-                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldslt{i}", Language.DeleteInstructionTooltip)
+                        if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldslt{i}", Language.CtrlGuardProceedInstructionTooltip)
                             && ImGui.GetIO().KeyCtrl)
                             delIdx = i;
 
@@ -225,7 +225,7 @@ public partial class WindowLayoutWindow {
                     ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
                     ImGui.TableNextColumn(); ImGui.Text(cn);
                     ImGui.TableNextColumn();
-                    if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldc{i}", Language.DeleteInstructionTooltip)
+                    if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldc{i}", Language.CtrlGuardProceedInstructionTooltip)
                         && ImGui.GetIO().KeyCtrl)
                         delIdx = i;
                 }
@@ -274,7 +274,7 @@ public partial class WindowLayoutWindow {
                     ImGui.TableNextColumn(); ImGui.Text($"{i + 1}");
                     ImGui.TableNextColumn(); ImGui.Text(gn);
                     ImGui.TableNextColumn();
-                    if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldg{i}", Language.DeleteInstructionTooltip)
+                    if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldg{i}", Language.CtrlGuardProceedInstructionTooltip)
                         && ImGui.GetIO().KeyCtrl)
                         delIdx = i;
                 }

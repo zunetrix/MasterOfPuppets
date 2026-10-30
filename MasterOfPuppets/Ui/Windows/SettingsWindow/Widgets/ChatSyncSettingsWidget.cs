@@ -111,7 +111,7 @@ public class ChatSyncSettingsWidget : Widget {
                             Plugin.IpcProvider.SyncConfiguration();
                         }
                     }
-                    ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                    ImGuiUtil.ToolTip(Language.CtrlGuardProceedInstructionTooltip);
                 }
                 ImGui.EndListBox();
             }
@@ -159,7 +159,7 @@ public class ChatSyncSettingsWidget : Widget {
                             Plugin.IpcProvider.SyncConfiguration();
                         }
                     }
-                    ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+                    ImGuiUtil.ToolTip(Language.CtrlGuardProceedInstructionTooltip);
                 }
                 ImGui.EndListBox();
             }

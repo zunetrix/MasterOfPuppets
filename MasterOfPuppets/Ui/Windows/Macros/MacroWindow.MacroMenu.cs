@@ -28,7 +28,7 @@ public partial class MacroWindow : Window {
                 }
             }
         }
-        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+        ImGuiUtil.ToolTip(Language.CtrlGuardProceedInstructionTooltip);
 
         ImGui.SameLine();
         if (ImGuiUtil.IconButton(FontAwesomeIcon.ExchangeAlt, "##MacroToolbarImportExport", "Import / Export Macros")) {

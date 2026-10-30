@@ -164,7 +164,7 @@ public partial class WindowLayoutWindow {
 
             // Col 2: actions - Delete | Rename | Apply
             ImGui.TableNextColumn();
-            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldel{i}", Language.DeleteInstructionTooltip)
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##wldel{i}", Language.CtrlGuardProceedInstructionTooltip)
                 && ImGui.GetIO().KeyCtrl) {
                 Plugin.Config.WindowLayouts.RemoveAt(i);
                 if (_selLayout == i)

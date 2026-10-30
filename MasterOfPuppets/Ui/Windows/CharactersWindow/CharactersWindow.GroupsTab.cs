@@ -199,7 +199,7 @@ public partial class CharactersWindow {
 
             // Col 2: actions
             ImGui.TableNextColumn();
-            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##grpdel{i}", Language.DeleteInstructionTooltip)
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##grpdel{i}", Language.CtrlGuardProceedInstructionTooltip)
                 && ImGui.GetIO().KeyCtrl) {
                 DeleteGroupAt(i);
                 ImGui.PopID();
@@ -334,7 +334,7 @@ public partial class CharactersWindow {
 
             // col 2: delete button
             ImGui.TableNextColumn();
-            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##del_{i}", Language.DeleteInstructionTooltip))
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##del_{i}", Language.CtrlGuardProceedInstructionTooltip))
                 deleteIndex = i;
 
             ImGui.PopID();

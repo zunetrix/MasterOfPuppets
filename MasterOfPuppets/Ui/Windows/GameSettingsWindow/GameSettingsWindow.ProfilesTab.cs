@@ -176,7 +176,7 @@ public partial class GameSettingsWindow {
             ImGui.TableNextColumn();
 
             if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger,
-                    "##GscPDel", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl) {
+                    "##GscPDel", Language.CtrlGuardProceedInstructionTooltip) && ImGui.GetIO().KeyCtrl) {
                 profiles.RemoveAt(i);
                 if (_renamingProfileIdx == i) _renamingProfileIdx = -1;
                 else if (_renamingProfileIdx > i) _renamingProfileIdx--;

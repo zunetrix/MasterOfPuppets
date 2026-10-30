@@ -311,7 +311,7 @@ public partial class MacroEditorWindow : Window {
                     ImGui.TableNextColumn();
                     ImGui.Text(MacroItem.Tags[i]);
                     ImGui.TableNextColumn();
-                    if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##DeleteTag_{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                    if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##DeleteTag_{i}", Language.CtrlGuardProceedInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                         deleteTagIndex = i;
                 }
 
@@ -410,7 +410,7 @@ public partial class MacroEditorWindow : Window {
         // left pane
         ImGui.BeginChild("##CommandList", ImGuiHelpers.ScaledVector2(150, 0), true);
         for (var commandIndex = 0; commandIndex < MacroItem.Commands.Count; commandIndex++) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCommand_{commandIndex}", Language.DeleteInstructionTooltip)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCommand_{commandIndex}", Language.CtrlGuardProceedInstructionTooltip)) {
                 if (ImGui.GetIO().KeyCtrl) {
                     MacroItem.Commands.RemoveAt(commandIndex);
                 }
@@ -498,7 +498,7 @@ public partial class MacroEditorWindow : Window {
             if (ImGui.Button($"{Language.RemoveAllBtn}##RemoveAllChars_{commandIndex}") && ImGui.GetIO().KeyCtrl)
                 MacroItem.Commands[commandIndex].Cids = new();
         }
-        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+        ImGuiUtil.ToolTip(Language.CtrlGuardProceedInstructionTooltip);
 
         ImGui.Separator();
 
@@ -526,7 +526,7 @@ public partial class MacroEditorWindow : Window {
                     FontAwesomeIcon.Trash,
                     ImGuiUtil.IconButtonStyle.Danger,
                     $"##DeleteChar_{commandIndex}_{i}",
-                    Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                    Language.CtrlGuardProceedInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                     deleteIndex = i;
             }
 
@@ -570,7 +570,7 @@ public partial class MacroEditorWindow : Window {
             if (ImGui.Button($"{Language.RemoveAllBtn}##RemoveAllGroups_{commandIndex}") && ImGui.GetIO().KeyCtrl)
                 MacroItem.Commands[commandIndex].GroupIds = new();
         }
-        ImGuiUtil.ToolTip(Language.DeleteInstructionTooltip);
+        ImGuiUtil.ToolTip(Language.CtrlGuardProceedInstructionTooltip);
 
         ImGui.Separator();
 
@@ -593,7 +593,7 @@ public partial class MacroEditorWindow : Window {
                 ImGui.Text(displayName);
 
                 ImGui.TableNextColumn();
-                if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##DeleteGroup_{commandIndex}_{i}", Language.DeleteInstructionTooltip) && ImGui.GetIO().KeyCtrl)
+                if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##DeleteGroup_{commandIndex}_{i}", Language.CtrlGuardProceedInstructionTooltip) && ImGui.GetIO().KeyCtrl)
                     deleteIndex = i;
             }
 

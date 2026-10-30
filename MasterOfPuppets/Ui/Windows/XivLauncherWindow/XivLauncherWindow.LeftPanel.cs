@@ -161,7 +161,7 @@ public partial class XivLauncherWindow {
             // Col 2: Actions
             ImGui.TableNextColumn();
 
-            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##xldel{i}", Language.DeleteInstructionTooltip)
+            if (ImGuiUtil.IconButtonStyled(FontAwesomeIcon.Trash, ImGuiUtil.IconButtonStyle.Danger, $"##xldel{i}", Language.CtrlGuardProceedInstructionTooltip)
                 && ImGui.GetIO().KeyCtrl) {
                 config.XivLaunchEntries.RemoveAt(i);
                 if (_selEntry == i) _selEntry = -1;

@@ -157,7 +157,7 @@ public class BroadcastSettingsWidget : Widget {
 
             if (ImGui.CollapsingHeader("Allowed Chats")) {
                 using var indent = ImRaii.PushIndent();
-                
+
                 var allChatTypes = Plugin.ChatWatcher.AllowedChatTypes.ToList();
                 using (var table = ImRaii.Table("##AllowedChatsGrid", 4, ImGuiTableFlags.None)) {
                     if (table) {
@@ -167,7 +167,7 @@ public class BroadcastSettingsWidget : Widget {
                                 ImGui.TableNextRow();
                             }
                             ImGui.TableNextColumn();
-                            
+
                             bool isEnabled = Plugin.Config.ListenedChatTypes.Contains(chatType);
                             if (ImGui.Checkbox($"{chatType}##ChatType_{chatType}", ref isEnabled)) {
                                 if (isEnabled) {
@@ -228,7 +228,7 @@ public class BroadcastSettingsWidget : Widget {
                             ImGui.Text(senderName);
 
                             ImGui.TableNextColumn();
-                            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, "##RemoveSender", Language.DeleteInstructionTooltip)) {
+                            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, "##RemoveSender", Language.CtrlGuardProceedInstructionTooltip)) {
                                 if (ImGui.GetIO().KeyCtrl) {
                                     Plugin.Config.ChatCommandSenderWhitelist.Remove(senderName);
                                     Plugin.IpcProvider.SyncConfiguration();

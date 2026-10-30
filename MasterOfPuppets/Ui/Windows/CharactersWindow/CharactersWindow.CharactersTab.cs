@@ -208,7 +208,7 @@ public partial class CharactersWindow {
                 DalamudApi.ShowNotification(Language.ClipboardCopyMessage, NotificationType.Info, 5000);
             }
             ImGui.SameLine();
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{allCharacters[i].Cid}", Language.DeleteInstructionTooltip)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Trash, $"##RemoveCharacter_{allCharacters[i].Cid}", Language.CtrlGuardProceedInstructionTooltip)) {
                 if (ImGui.GetIO().KeyCtrl) {
                     Plugin.Config.RemoveCharacter(allCharacters[i].Cid);
                     Plugin.IpcProvider.SyncConfiguration();
