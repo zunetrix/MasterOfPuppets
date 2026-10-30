@@ -78,17 +78,43 @@ public unsafe class ItemMover : IDisposable {
         }
 
         if (!expectedItem.HasValue && EzThrottler.Throttle("ItemMover", 250)) {
+            var targetInventory = toInventory;
+            int targetSlot = toSlot;
+
+            if (IsInventoryBag(toInventory)) {
+                // If moving to general inventory bags:
+                // Find the first empty slot across Inventory1..Inventory4 dynamically
+                if (targetSlot < 0 || !IsSlotEmpty(targetInventory, targetSlot)) {
+                    var empty = InventoryHelper.FindFirstEmptyInventorySlot();
+                    if (empty == null) {
+                        DalamudApi.PluginLog.Warning("[ItemMover] No empty inventory slots available. Stopping item move.");
+                        ItemsToMove.Clear();
+                        Finish();
+                        return;
+                    }
+                    targetInventory = empty.Value.Type;
+                    targetSlot = empty.Value.Slot;
+                }
+            } else if (targetSlot < 0) {
+                // Moving to Armoury Chest dynamically
+                var empty = InventoryHelper.FindFirstEmptyArmourySlot(toInventory);
+                if (empty == null) {
+                    DalamudApi.PluginLog.Warning($"[ItemMover] No empty armoury slots available in {toInventory}. Skipping item.");
+                    ItemsToMove.Dequeue();
+                    return;
+                }
+                targetSlot = empty.Value.Slot;
+            }
+
             expectedItem = CaptureItemSignature(slot);
 
-            var targetSlot = toSlot >= 0 ? toSlot : (InventoryHelper.FindFirstEmptyArmourySlot(toInventory)?.Slot ?? 0);
-
             var itemName = ItemHelper.GetItem(expectedItem.Value.ItemId % 1_000_000u)?.Name.ToString() ?? expectedItem.Value.ItemId.ToString();
-            DalamudApi.PluginLog.Debug($"[ItemMover] Moving \"{itemName}\" (id:{expectedItem.Value.ItemId}) {fromInventory.Type}[{fromInventory.Slot}] → {toInventory}[{targetSlot}]. {ItemsToMove.Count} queued.");
+            DalamudApi.PluginLog.Debug($"[ItemMover] Moving \"{itemName}\" (id:{expectedItem.Value.ItemId}) {fromInventory.Type}[{fromInventory.Slot}] → {targetInventory}[{targetSlot}]. {ItemsToMove.Count} queued.");
 
             InventoryManager.Instance()->MoveItemSlot(
                 fromInventory.Type,
                 (ushort)fromInventory.Slot,
-                toInventory,
+                targetInventory,
                 (ushort)targetSlot,
                 true
             );
@@ -152,6 +178,19 @@ public unsafe class ItemMover : IDisposable {
         }
 
         return true;
+    }
+
+    public static bool IsInventoryBag(InventoryType type) => type is
+        InventoryType.Inventory1 or
+        InventoryType.Inventory2 or
+        InventoryType.Inventory3 or
+        InventoryType.Inventory4;
+
+    public static unsafe bool IsSlotEmpty(InventoryType type, int slotIndex) {
+        var container = InventoryManager.Instance()->GetInventoryContainer(type);
+        if (container == null || slotIndex < 0 || slotIndex >= container->Size) return false;
+        var slot = container->GetInventorySlot(slotIndex);
+        return slot == null || slot->ItemId == 0;
     }
 
     private struct ItemSignature {

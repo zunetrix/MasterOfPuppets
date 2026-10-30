@@ -96,6 +96,7 @@ public static class InventoryHelper {
 
         foreach (var inventory in inventories) {
             var inventoryContainer = InventoryManager.Instance()->GetInventoryContainer(inventory);
+            if (inventoryContainer == null) continue;
             for (int i = 0; i < inventoryContainer->GetSize(); i++) {
                 if (inventoryContainer->GetInventorySlot(i)->ItemId == 0) {
                     return new(inventoryContainer->Type, i);
@@ -103,6 +104,27 @@ public static class InventoryHelper {
             }
         }
         return null;
+    }
+
+    public static unsafe int GetEmptyInventorySlotCount() {
+        ReadOnlySpan<InventoryType> inventories = [
+            InventoryType.Inventory1,
+            InventoryType.Inventory2,
+            InventoryType.Inventory3,
+            InventoryType.Inventory4
+        ];
+
+        int count = 0;
+        foreach (var inventory in inventories) {
+            var inventoryContainer = InventoryManager.Instance()->GetInventoryContainer(inventory);
+            if (inventoryContainer == null) continue;
+            for (int i = 0; i < inventoryContainer->GetSize(); i++) {
+                if (inventoryContainer->GetInventorySlot(i)->ItemId == 0) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     public static unsafe InventoryDescriptor? FindFirstEmptyArmourySlot(InventoryType inventoryType) {

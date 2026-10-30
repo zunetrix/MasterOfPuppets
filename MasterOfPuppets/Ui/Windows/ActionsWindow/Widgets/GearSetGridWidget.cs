@@ -150,13 +150,12 @@ public unsafe partial class GearSetGridWidget : Widget {
         using (ImRaii.PushColor(ImGuiCol.Button,
             _showMoveSettings ? new Vector4(0.3f, 0.5f, 0.8f, 1f) : default,
             _showMoveSettings)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.Cog, "##MoveSettingsBtn", "Move Settings")) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Cog, "##MoveSettingsBtn", "Item Move Settings")) {
                 _showMoveSettings = !_showMoveSettings;
             }
         }
 
         ImGui.TextDisabled("in:");
-
         ImGui.SameLine();
         ImGui.Checkbox("Gearset", ref _searchByGearset);
         ImGui.SameLine();
@@ -1012,13 +1011,22 @@ public unsafe partial class GearSetGridWidget : Widget {
         var armourySrc = InventoryHelper.FindGearsetItemInArmoury(slotItem, container);
         if (armourySrc == null) return;
 
-        var emptySlot = InventoryHelper.FindFirstEmptyInventorySlot();
-        if (emptySlot == null) return;
+        if (InventoryHelper.GetEmptyInventorySlotCount() <= 0) {
+            DalamudApi.ChatGui.PrintError("[MasterOfPuppets] Cannot move item: Inventory is full.");
+            return;
+        }
 
-        Context.Plugin.ItemMover.Enqueue(armourySrc.Value, emptySlot.Value.Type, emptySlot.Value.Slot);
+        Context.Plugin.ItemMover.Enqueue(armourySrc.Value, InventoryType.Inventory1);
     }
 
     private void MoveGearsetArmouryItemsToInventory(GearsetEntry* gearset, GearsetItemIndex[] slotIndices) {
+        int freeSlots = InventoryHelper.GetEmptyInventorySlotCount();
+        if (freeSlots <= 0) {
+            DalamudApi.ChatGui.PrintError("[MasterOfPuppets] Cannot move items: Inventory is full.");
+            return;
+        }
+
+        int enqueuedCount = 0;
         foreach (var slotIndex in slotIndices) {
             if (ShouldSkipSlotForMove(slotIndex)) continue;
 
@@ -1033,10 +1041,13 @@ public unsafe partial class GearSetGridWidget : Widget {
             var armourySrc = InventoryHelper.FindGearsetItemInArmoury(slotItem, container);
             if (armourySrc == null) continue;
 
-            var emptySlot = InventoryHelper.FindFirstEmptyInventorySlot();
-            if (emptySlot == null) break; // no more inventory space
+            if (enqueuedCount >= freeSlots) {
+                DalamudApi.ChatGui.Print("[MasterOfPuppets] Some items were not moved because the inventory became full.");
+                break;
+            }
 
-            Context.Plugin.ItemMover.Enqueue(armourySrc.Value, emptySlot.Value.Type, emptySlot.Value.Slot);
+            Context.Plugin.ItemMover.Enqueue(armourySrc.Value, InventoryType.Inventory1);
+            enqueuedCount++;
         }
     }
 

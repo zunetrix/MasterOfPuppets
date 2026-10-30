@@ -21,7 +21,6 @@ public class GearSetWidget : Widget {
     private readonly List<ExecutableAction> UnlockedActions = new();
     private string _searchString = string.Empty;
     private readonly List<int> ListSearchedIndexes = new();
-    private bool _showEmptyGearsets = false;
     private int _selectedGersetId = -1;
     private string _gersetName = string.Empty;
     private bool _openRenamePopup = false;
@@ -70,11 +69,6 @@ public class GearSetWidget : Widget {
             UnlockedActions
                 .Select((item, index) => new { item, index })
                 .Where(x => {
-                    bool isEmpty = x.item.Category == "0";
-
-                    if (!_showEmptyGearsets && isEmpty)
-                        return false;
-
                     if (!string.IsNullOrWhiteSpace(_searchString))
                         return x.item.ActionName.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
 
@@ -101,16 +95,6 @@ public class GearSetWidget : Widget {
         ImGui.SetNextItemWidth(400 * ImGuiHelpers.GlobalScale);
         if (ImGui.InputTextWithHint("##GearSetSearchInput", Language.SearchInputLabel, ref _searchString, 255, ImGuiInputTextFlags.AutoSelectAll)) {
             Search();
-        }
-
-        ImGui.SameLine();
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, _showEmptyGearsets)
-        .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered, _showEmptyGearsets)
-        .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive, _showEmptyGearsets)) {
-            if (ImGuiUtil.IconButton(FontAwesomeIcon.BoxOpen, $"##ShowEmptyGearSetsBtn", "Show Empty Gear Sets")) {
-                _showEmptyGearsets = !_showEmptyGearsets;
-                Search();
-            }
         }
 
         ImGui.Spacing();
