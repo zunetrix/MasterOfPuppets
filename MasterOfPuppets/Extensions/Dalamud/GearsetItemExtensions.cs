@@ -126,6 +126,7 @@ public static class GearsetItemExtensions {
             EquipSlotCategoryEnum.Neck => InventoryType.ArmoryNeck,
             EquipSlotCategoryEnum.Wrists => InventoryType.ArmoryWrist,
             EquipSlotCategoryEnum.Ring => InventoryType.ArmoryRings,
+            EquipSlotCategoryEnum.SoulCrystal => InventoryType.ArmorySoulCrystal,
             _ => default,
         };
     }
@@ -149,6 +150,7 @@ public static class GearsetItemExtensions {
             EquipSlotCategoryEnum.Neck => 60132,
             EquipSlotCategoryEnum.Wrists => 60134,
             EquipSlotCategoryEnum.Ring => 60135,
+            EquipSlotCategoryEnum.SoulCrystal => 61762,
             _ => 0,
         };
     }
@@ -172,6 +174,7 @@ public static class GearsetItemExtensions {
             EquipSlotCategoryEnum.Neck => InventoryType.ArmoryNeck,
             EquipSlotCategoryEnum.Wrists => InventoryType.ArmoryWrist,
             EquipSlotCategoryEnum.Ring => InventoryType.ArmoryRings,
+            EquipSlotCategoryEnum.SoulCrystal => InventoryType.ArmorySoulCrystal,
             _ => default,
         };
     }
