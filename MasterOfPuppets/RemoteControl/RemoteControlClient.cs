@@ -59,7 +59,7 @@ internal sealed class RemoteControlClient : IDisposable {
             });
             _ws.Options.SetRequestHeader("User-Agent", $"MasterOfPuppets / {charName}");
 
-            StatusMessage = "Connecting…";
+            StatusMessage = "Connecting...";
 
             try {
                 await _ws.ConnectAsync(new Uri(wsUrl), ct);
@@ -74,7 +74,7 @@ internal sealed class RemoteControlClient : IDisposable {
             }
 
             if (!ct.IsCancellationRequested) {
-                StatusMessage = "Reconnecting in 4 s…";
+                StatusMessage = "Reconnecting in 4 s...";
                 DalamudApi.PluginLog.Debug("[RemoteClient] Reconnecting in 4 s.");
                 try { await Task.Delay(4000, ct); } catch (OperationCanceledException) { break; }
             }

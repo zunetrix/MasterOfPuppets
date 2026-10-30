@@ -193,7 +193,7 @@ function buildWsUrl() {
 function connectWs() {
     const wsUrl = buildWsUrl();
     setWsStatus('connecting');
-    logEntry('pong', `⚡ Connecting to ${wsUrl.replace(/\?token=.*/, '?token=…')}`);
+    logEntry('pong', `⚡ Connecting to ${wsUrl.replace(/\?token=.*/, '?token=...')}`);
 
     try {
         ws = new WebSocket(wsUrl);
@@ -228,7 +228,7 @@ function connectWs() {
 
     ws.onclose = () => {
         setWsStatus('');
-        logEntry('pong', '⚠ Disconnected - reconnecting in 4 s…');
+        logEntry('pong', '⚠ Disconnected - reconnecting in 4 s...');
         scheduleReconnect();
     };
 
@@ -245,7 +245,7 @@ function setWsStatus(cls) {
     el.className = cls;
     el.querySelector('span').textContent =
         cls === 'connected' ? 'Connected'
-            : cls === 'connecting' ? 'Connecting…'
+            : cls === 'connecting' ? 'Connecting...'
                 : 'Disconnected';
 }
 

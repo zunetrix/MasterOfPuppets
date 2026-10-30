@@ -49,10 +49,10 @@ public class Plugin : IDalamudPlugin {
     public string RemoteControlStatus => RemoteControlServer?.StatusMessage ?? "Stopped";
     public string TunnelStatus => TunnelService == null ? "Stopped"
         : TunnelService.Status switch {
-            RemoteControl.TunnelStatus.Starting => "Starting…",
-            RemoteControl.TunnelStatus.Running  => $"Running: {TunnelService.PublicUrl}",
-            RemoteControl.TunnelStatus.Error    => $"Error: {TunnelService.LastError}",
-            _                                   => "Stopped",
+            RemoteControl.TunnelStatus.Starting => "Starting...",
+            RemoteControl.TunnelStatus.Running => $"Running: {TunnelService.PublicUrl}",
+            RemoteControl.TunnelStatus.Error => $"Error: {TunnelService.LastError}",
+            _ => "Stopped",
         };
     public string RemoteControlClientStatus => RemoteControlClient?.StatusMessage ?? "Stopped";
 

@@ -255,7 +255,7 @@ public partial class MacroHandler : IDisposable {
             state.ActionIndex = -1;
             condStack.Clear();
 
-            // State for /moploopstart … /moploopend block (reset each outer loop pass).
+            // State for /moploopstart ... /moploopend block (reset each outer loop pass).
             int loopBlockStart = -1;
             int? loopBlockIterLeft = null;
 
