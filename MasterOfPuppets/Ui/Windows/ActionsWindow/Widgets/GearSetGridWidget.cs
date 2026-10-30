@@ -19,6 +19,7 @@ using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
 
 using MasterOfPuppets.Extensions.Dalamud;
+using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 
@@ -526,16 +527,18 @@ public unsafe partial class GearSetGridWidget : Widget {
         ImGui.SameLine(0, 4f * ImGuiHelpers.GlobalScale);
 
         // Move Inventory → Armoury
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.BoxOpen, $"##BtnInv2Arm_{gsIdx}", $"Move Inventory items → Armoury [{gsId + 1}] {gsName}")) {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.BoxOpen, $"##BtnInv2Arm_{gsIdx}", $"Move Inventory items → Armoury [{gsId + 1}] {gsName}") && ImGui.GetIO().KeyCtrl) {
             _pendingAction = () => MoveGearsetInventoryItemsToArmoury(gearset, slots);
         }
+        ImGuiUtil.ToolTip(Language.CtrlGuardProceedInstructionTooltip);
 
         ImGui.SameLine(0, 4f * ImGuiHelpers.GlobalScale);
 
         // Move Armoury → Inventory
-        if (ImGuiUtil.IconButton(FontAwesomeIcon.ShoppingBag, $"##BtnArm2Inv_{gsIdx}", $"Move Armoury items → Inventory [{gsId + 1}] {gsName}")) {
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.ShoppingBag, $"##BtnArm2Inv_{gsIdx}", $"Move Armoury items → Inventory [{gsId + 1}] {gsName}") && ImGui.GetIO().KeyCtrl) {
             _pendingAction = () => MoveGearsetArmouryItemsToInventory(gearset, slots);
         }
+        ImGuiUtil.ToolTip(Language.CtrlGuardProceedInstructionTooltip);
     }
 
     // Item Icon Cell
@@ -897,7 +900,7 @@ public unsafe partial class GearSetGridWidget : Widget {
             agent->SaveDeleteOutfit = keepOutfit;
 
         var previewId = glamourId != 0 ? glamourId : itemId;
-        AgentTryon.TryOn(0, previewId, stain0, stain1, glamourId);
+        AgentTryon.TryOn(0, previewId, stain0, stain1, 0);
     }
 
     /// <summary>
@@ -905,10 +908,13 @@ public unsafe partial class GearSetGridWidget : Widget {
     /// Uses keepOutfit=true for all slots except the first so previously added items stay.
     /// Skips Belt and SoulStone (which cannot be previewed in Fitting Room).
     /// Prioritizes glamour item ID so appearance is accurate.
+    /// Staggers calls across framework ticks so the game's AgentTryon command buffer
+    /// doesn't overflow (preventing shoes and accessories from being dropped).
     /// </summary>
     private static void TryOnGearset(GearsetEntry* gearset, GearsetItemIndex[] slotIndices, bool keepOutfit) {
-        var agent = AgentTryon.Instance();
+        var itemsToTryOn = new List<(uint previewId, byte stain0, byte stain1, bool keep)>();
         bool first = true;
+
         foreach (var slotIndex in slotIndices) {
             if (slotIndex == GearsetItemIndex.Belt || slotIndex == GearsetItemIndex.SoulStone) continue;
 
@@ -925,13 +931,26 @@ public unsafe partial class GearSetGridWidget : Widget {
                 if (slotCat is 0 or 6 or 17) continue;
             }
 
-            // For the first item respect the user's keepOutfit preference.
-            // For subsequent items in this batch always keep so they stack.
-            if (agent != null)
-                agent->SaveDeleteOutfit = !first || keepOutfit;
-
-            AgentTryon.TryOn(0, previewId, slotItem.Stain0Id, slotItem.Stain1Id, slotItem.GlamourId);
+            // For the first item respect user's keepOutfit; subsequent items in batch stack.
+            bool keep = !first || keepOutfit;
+            itemsToTryOn.Add((previewId, slotItem.Stain0Id, slotItem.Stain1Id, keep));
             first = false;
+        }
+
+        if (itemsToTryOn.Count == 0) return;
+
+        // Dispatch with tick delays so AgentTryon buffer processes all slots
+        // without dropping Feet and Accessories.
+        for (int i = 0; i < itemsToTryOn.Count; i++) {
+            var item = itemsToTryOn[i];
+            int delayTicks = i == 0 ? 0 : (i * 2 + 1);
+            DalamudApi.Framework.RunOnTick(() => {
+                var agent = AgentTryon.Instance();
+                if (agent != null)
+                    agent->SaveDeleteOutfit = item.keep;
+
+                AgentTryon.TryOn(0, item.previewId, item.stain0, item.stain1, 0);
+            }, delayTicks: delayTicks);
         }
     }
 
