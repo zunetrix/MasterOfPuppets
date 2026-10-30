@@ -42,4 +42,45 @@ internal partial class IpcProvider {
 
         GearsetManager.ReorderGearset(data.GearsetIndex, data.NewGearsetIndex);
     }
+
+    public struct MoveGearsetData {
+        public int GearsetIndex;
+        public bool IgnoreWeapons;
+        public bool IgnoreAccessories;
+        public bool IgnoreSoulCrystal;
+    }
+
+    public void MoveGearsetToArmoury(int gearsetIndex, bool ignoreWeapons = false, bool ignoreAccessories = false, bool ignoreSoulCrystal = false) {
+        var payload = new MoveGearsetData {
+            GearsetIndex = gearsetIndex,
+            IgnoreWeapons = ignoreWeapons,
+            IgnoreAccessories = ignoreAccessories,
+            IgnoreSoulCrystal = ignoreSoulCrystal,
+        };
+
+        BroadCast(IpcMessage.Create(IpcMessageType.MoveGearsetToArmoury, payload).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.MoveGearsetToArmoury)]
+    private void HandleMoveGearsetToArmoury(IpcMessage message) {
+        var data = message.DataStruct<MoveGearsetData>();
+        GearsetManager.MoveGearsetItemsToArmoury(Plugin, data.GearsetIndex, data.IgnoreWeapons, data.IgnoreAccessories, data.IgnoreSoulCrystal);
+    }
+
+    public void MoveGearsetToInventory(int gearsetIndex, bool ignoreWeapons = false, bool ignoreAccessories = false, bool ignoreSoulCrystal = false) {
+        var payload = new MoveGearsetData {
+            GearsetIndex = gearsetIndex,
+            IgnoreWeapons = ignoreWeapons,
+            IgnoreAccessories = ignoreAccessories,
+            IgnoreSoulCrystal = ignoreSoulCrystal,
+        };
+
+        BroadCast(IpcMessage.Create(IpcMessageType.MoveGearsetToInventory, payload).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.MoveGearsetToInventory)]
+    private void HandleMoveGearsetToInventory(IpcMessage message) {
+        var data = message.DataStruct<MoveGearsetData>();
+        GearsetManager.MoveGearsetItemsToInventory(Plugin, data.GearsetIndex, data.IgnoreWeapons, data.IgnoreAccessories, data.IgnoreSoulCrystal);
+    }
 }

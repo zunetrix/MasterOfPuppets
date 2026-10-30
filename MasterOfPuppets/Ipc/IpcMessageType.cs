@@ -34,6 +34,8 @@ public enum IpcMessageType {
     ChangeGearset,
     RenameGearset,
     ReorderGearset,
+    MoveGearsetToArmoury,
+    MoveGearsetToInventory,
 
     // formation
     ExecuteFormation,

@@ -26,7 +26,7 @@ public partial class MainWindow : Window {
         FashionAccessories,
         Items,
         GearSets,
-        GearSetsGrid,
+        // GearSetListWidget,
         Commands,
         Teleport,
     }
@@ -40,8 +40,8 @@ public partial class MainWindow : Window {
         (NavSection.Facewear,           FontAwesomeIcon.Glasses,           "Facewear",             false),
         (NavSection.FashionAccessories, FontAwesomeIcon.Umbrella,          "Fashion Accessories",  false),
         (NavSection.Items,              FontAwesomeIcon.ShoppingBag,       "Items",                false),
-        (NavSection.GearSets,           FontAwesomeIcon.Briefcase,         "Gear Sets",            false),
-        // (NavSection.GearSetsGrid,       FontAwesomeIcon.Briefcase,         "Gear Sets Grid",       false),
+        (NavSection.GearSets,           FontAwesomeIcon.Tshirt,            "Gear Sets",            false),
+        // (NavSection.GearSets,           FontAwesomeIcon.Briefcase,         "Gear Sets###GearSetList", false),
 
     ];
 
@@ -71,7 +71,7 @@ public partial class MainWindow : Window {
         _widgetManager.Add(() => new FashionAccessoriesWidget(_widgetContext));  // idx 4 → FashionAccessories
         _widgetManager.Add(() => new ItemsWidget(_widgetContext));               // idx 5 → Items
         _widgetManager.Add(() => new GearSetWidget(_widgetContext));             // idx 6 → GearSets
-        _widgetManager.Add(() => new GearSetGridWidget(_widgetContext));         // idx 7 → GearSetsGrid
+        // _widgetManager.Add(() => new GearSetListWidget(_widgetContext));         // idx 7 → GearSetList
 
         UpdateWindowConfig();
     }
@@ -118,7 +118,6 @@ public partial class MainWindow : Window {
         NavSection.FashionAccessories => 4,
         NavSection.Items => 5,
         NavSection.GearSets => 6,
-        NavSection.GearSetsGrid => 7,
         _ => -1,
     };
 

@@ -43,8 +43,8 @@ public class ActionsBroadcastWindow : Window {
         _widgetManager.Add(() => new MountsWidget(_widgetContext));
         _widgetManager.Add(() => new MinionsWidget(_widgetContext));
         _widgetManager.Add(() => new ItemsWidget(_widgetContext));
+        _widgetManager.Add(() => new GearSetListWidget(_widgetContext));
         _widgetManager.Add(() => new GearSetWidget(_widgetContext));
-        _widgetManager.Add(() => new GearSetGridWidget(_widgetContext));
     }
 
     public override void Draw() {

@@ -11,7 +11,7 @@ namespace MasterOfPuppets;
 public static class GearsetManager {
     // try move gearset items to armoury before equip
     public static void ChangeGearset(Plugin plugin, int gearsetIndex) {
-        if (!EnqueueGearsetItemsToArmoury(plugin, gearsetIndex)) {
+        if (!MoveGearsetItemsToArmoury(plugin, gearsetIndex)) {
             EquipGearset(gearsetIndex);
             return;
         }
@@ -101,7 +101,37 @@ public static class GearsetManager {
         }
     }
 
-    private static unsafe bool EnqueueGearsetItemsToArmoury(Plugin plugin, int gearsetIndex) {
+    public static bool ShouldSkipSlotForMove(
+        int slotIndex,
+        bool ignoreWeapons,
+        bool ignoreAccessories,
+        bool ignoreSoulCrystal) {
+        var slot = (RaptureGearsetModule.GearsetItemIndex)slotIndex;
+        if (slot == RaptureGearsetModule.GearsetItemIndex.Belt)
+            return true;
+
+        if (ignoreWeapons && (slot == RaptureGearsetModule.GearsetItemIndex.MainHand || slot == RaptureGearsetModule.GearsetItemIndex.OffHand))
+            return true;
+
+        if (ignoreAccessories && (slot == RaptureGearsetModule.GearsetItemIndex.Ears
+                               || slot == RaptureGearsetModule.GearsetItemIndex.Neck
+                               || slot == RaptureGearsetModule.GearsetItemIndex.Wrists
+                               || slot == RaptureGearsetModule.GearsetItemIndex.RingRight
+                               || slot == RaptureGearsetModule.GearsetItemIndex.RingLeft))
+            return true;
+
+        if (ignoreSoulCrystal && slot == RaptureGearsetModule.GearsetItemIndex.SoulStone)
+            return true;
+
+        return false;
+    }
+
+    public static unsafe bool MoveGearsetItemsToArmoury(
+        Plugin plugin,
+        int gearsetIndex,
+        bool ignoreWeapons = false,
+        bool ignoreAccessories = false,
+        bool ignoreSoulCrystal = false) {
         var rapture = RaptureGearsetModule.Instance();
         if (!rapture->IsValidGearset(gearsetIndex))
             return false;
@@ -109,19 +139,81 @@ public static class GearsetManager {
         var gearset = rapture->GetGearset(gearsetIndex);
         bool any = false;
 
-        foreach (var item in gearset->Items) {
+        for (int i = 0; i < gearset->Items.Length; i++) {
+            if (ShouldSkipSlotForMove(i, ignoreWeapons, ignoreAccessories, ignoreSoulCrystal))
+                continue;
+
+            var item = gearset->Items[i];
             if (item.ItemId == 0)
+                continue;
+
+            if (item.IsInArmoury())
                 continue;
 
             var inventoryItem = item.FindGearsetItemInInventory();
             if (inventoryItem == null)
                 continue;
 
-            plugin.ItemMover.Enqueue(inventoryItem.Value, item.GetInventoryType());
+            var armouryType = item.GetInventoryType();
+            if (armouryType == default)
+                continue;
+
+            plugin.ItemMover.Enqueue(inventoryItem.Value, armouryType);
             any = true;
         }
 
         return any;
+    }
+
+    public static unsafe bool MoveGearsetItemsToInventory(
+        Plugin plugin,
+        int gearsetIndex,
+        bool ignoreWeapons = false,
+        bool ignoreAccessories = false,
+        bool ignoreSoulCrystal = false) {
+        var rapture = RaptureGearsetModule.Instance();
+        if (!rapture->IsValidGearset(gearsetIndex))
+            return false;
+
+        int freeSlots = InventoryHelper.GetEmptyInventorySlotCount();
+        if (freeSlots <= 0) {
+            DalamudApi.ChatGui.PrintError("[MasterOfPuppets] Cannot move items: Inventory is full.");
+            return false;
+        }
+
+        var gearset = rapture->GetGearset(gearsetIndex);
+        int enqueuedCount = 0;
+
+        for (int i = 0; i < gearset->Items.Length; i++) {
+            if (ShouldSkipSlotForMove(i, ignoreWeapons, ignoreAccessories, ignoreSoulCrystal))
+                continue;
+
+            var item = gearset->Items[i];
+            if (item.ItemId == 0)
+                continue;
+
+            if (!item.IsInArmoury())
+                continue;
+
+            var armouryType = item.GetInventoryType();
+            if (armouryType == default)
+                continue;
+
+            var container = InventoryManager.Instance()->GetInventoryContainer(armouryType);
+            var armourySrc = InventoryHelper.FindGearsetItemInArmoury(item, container);
+            if (armourySrc == null)
+                continue;
+
+            if (enqueuedCount >= freeSlots) {
+                DalamudApi.ChatGui.Print("[MasterOfPuppets] Some items were not moved because the inventory became full.");
+                break;
+            }
+
+            plugin.ItemMover.Enqueue(armourySrc.Value, InventoryType.Inventory1);
+            enqueuedCount++;
+        }
+
+        return enqueuedCount > 0;
     }
 
     public static void EquipGearset(int gearsetIndex) {
