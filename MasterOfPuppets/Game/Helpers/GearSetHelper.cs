@@ -5,6 +5,8 @@ using System.Linq;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
+using GearsetFlag = FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureGearsetModule.GearsetFlag;
+
 namespace MasterOfPuppets;
 
 public static class GearsetHelper {
@@ -16,6 +18,11 @@ public static class GearsetHelper {
 
         for (var gearsetIndex = 0; gearsetIndex < gearsetCount; gearsetIndex++) {
             var gearset = raptureGearSetModule->GetGearset(gearsetIndex);
+
+            // ignore deleted gearsets
+            if (!gearset->Flags.HasFlag(GearsetFlag.Exists))
+                continue;
+
             var gearsetEntry = new ExecutableAction {
                 ActionId = gearset->Id,
                 ActionName = gearset->NameString,
