@@ -29,6 +29,7 @@ using GearsetItemIndex = FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureGearsetM
 namespace MasterOfPuppets.Actions;
 
 // https://github.com/Haselnussbomber/HaselTweaks/blob/main/HaselTweaks/Windows/GearSetGridWindow.cs
+// https://github.com/Critical-Impact/InventoryTools
 public unsafe partial class GearSetGridWidget : Widget {
     public override string Title => "Gear Set Grid";
     public override FontAwesomeIcon Icon => FontAwesomeIcon.Briefcase;
@@ -53,12 +54,42 @@ public unsafe partial class GearSetGridWidget : Widget {
     private bool _tryOnOnHover = false;
     // When true, each new Try-On keeps the previously previewed items visible
     // (sets AgentTryon.SaveDeleteOutfit = true before the TryOn call).
-    private bool _tryOnKeepOutfit = false;
+    private bool _tryOnKeepOutfit = true;
     private uint _lastTryOnItemId = 0;
     private int _lastTryOnGsIdx = -1;
 
-    //  Deferred action (avoids modifying game state inside table draw)
+    // Deferred action (avoids modifying game state inside table draw)
     private System.Action? _pendingAction = null;
+
+    //  Move mode configuration
+    /// <summary>How to resolve the target slot when moving a gearset item → Armoury.</summary>
+    private enum ArmouryMoveMode {
+        /// <summary>Move to the first empty armoury slot for this item type.</summary>
+        FirstEmpty = 0,
+        /// <summary>Move to the armoury slot matching the gearset order index (GS 1 → slot 0).</summary>
+        MatchGearsetIndex = 1,
+        /// <summary>Swap with the slot occupied by a second chosen gearset in the armoury.</summary>
+        SwapWithGearset = 2,
+    }
+
+    /// <summary>How to resolve the destination when moving an armoury item → Inventory.</summary>
+    private enum InventoryMoveMode {
+        /// <summary>Move to the first empty inventory bag slot.</summary>
+        FirstEmpty = 0,
+        /// <summary>Swap with the inventory copy of this item if one exists; otherwise first empty.</summary>
+        SwapWithArmoury = 1,
+    }
+
+    private ArmouryMoveMode _armouryMoveMode = ArmouryMoveMode.FirstEmpty;
+    private InventoryMoveMode _inventoryMoveMode = InventoryMoveMode.FirstEmpty;
+    // Index (0-based) of the "other" gearset used in SwapWithGearset mode.
+    private int _swapTargetGearsetIdx = 0;
+    private bool _showMoveSettings = false;
+
+    // Filter slots when moving gearset items
+    private bool _moveIgnoreWeapons = true;
+    private bool _moveIgnoreAccessories = true;
+    private bool _moveIgnoreSoulCrystal = true;
 
     public GearSetGridWidget(WidgetContext ctx) : base(ctx) { }
 
@@ -68,6 +99,7 @@ public unsafe partial class GearSetGridWidget : Widget {
     }
 
     //  Main Draw
+
     public override void Draw() {
         DrawHeader();
         DrawTable();
@@ -78,7 +110,8 @@ public unsafe partial class GearSetGridWidget : Widget {
         _pendingAction = null;
     }
 
-    //  Header: search bar + category checkboxes + try-on toggle
+    //  Header
+
     private void DrawHeader() {
         ImGui.SetNextItemWidth(220 * ImGuiHelpers.GlobalScale);
         ImGui.InputTextWithHint("##GearGridSearch", "Search…", ref _searchText, 128, ImGuiInputTextFlags.AutoSelectAll);
@@ -112,19 +145,134 @@ public unsafe partial class GearSetGridWidget : Widget {
             ImGuiUtil.ToolTip("When enabled, trying on a new item keeps previously previewed items visible\n(sets SaveDeleteOutfit on the game's Try-On agent).");
         }
 
+        ImGui.SameLine();
+        ImGui.Spacing();
+        ImGui.SameLine();
+
+        // Move settings toggle button
+        using (ImRaii.PushColor(ImGuiCol.Button,
+            _showMoveSettings ? new Vector4(0.3f, 0.5f, 0.8f, 1f) : default,
+            _showMoveSettings)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Cog, "##MoveSettingsBtn", "Move Settings")) {
+                _showMoveSettings = !_showMoveSettings;
+            }
+        }
+
         ImGui.Separator();
+
+        if (_showMoveSettings)
+            DrawMoveSettingsPanel();
     }
 
-    // Table
+    //  Move Settings Panel
+
+    private void DrawMoveSettingsPanel() {
+        using var bg = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.10f, 0.10f, 0.16f, 1f));
+        using var child = ImRaii.Child("##MoveSettings", new Vector2(-1, 104 * ImGuiHelpers.GlobalScale), true);
+        if (!child) return;
+
+        // Inventory → Armoury
+        ImGui.TextColored(new Vector4(0.7f, 0.85f, 1f, 1f), "Inventory → Armoury:");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(180 * ImGuiHelpers.GlobalScale);
+        var armLabel = _armouryMoveMode switch {
+            ArmouryMoveMode.FirstEmpty => "First Empty Slot",
+            ArmouryMoveMode.MatchGearsetIndex => "Match Gearset Index",
+            ArmouryMoveMode.SwapWithGearset => "Swap with Gearset…",
+            _ => "?"
+        };
+        using (var combo = ImRaii.Combo("##ArmouryMode", armLabel)) {
+            if (combo) {
+                if (ImGui.Selectable("First Empty Slot", _armouryMoveMode == ArmouryMoveMode.FirstEmpty))
+                    _armouryMoveMode = ArmouryMoveMode.FirstEmpty;
+                ImGuiUtil.ToolTip("Moves the item to the first empty slot in the correct armoury section.");
+
+                if (ImGui.Selectable("Match Gearset Index", _armouryMoveMode == ArmouryMoveMode.MatchGearsetIndex))
+                    _armouryMoveMode = ArmouryMoveMode.MatchGearsetIndex;
+                ImGuiUtil.ToolTip("Moves to armoury slot N where N = gearset number − 1.\nKeeps each gearset in its own numbered armoury slot.");
+
+                if (ImGui.Selectable("Swap with Gearset…", _armouryMoveMode == ArmouryMoveMode.SwapWithGearset))
+                    _armouryMoveMode = ArmouryMoveMode.SwapWithGearset;
+                ImGuiUtil.ToolTip("Moves to the armoury slot used by a second chosen gearset,\npushing that gearset's item to the inventory.");
+            }
+        }
+
+        // Sub-picker for swap target gearset
+        if (_armouryMoveMode == ArmouryMoveMode.SwapWithGearset) {
+            ImGui.SameLine();
+            ImGui.TextDisabled("↔");
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(170 * ImGuiHelpers.GlobalScale);
+            var rapture = RaptureGearsetModule.Instance();
+            var gearsetCount = InventoryManager.Instance()->GetPermittedGearsetCount();
+            var swapGs = rapture->IsValidGearset(_swapTargetGearsetIdx)
+                ? rapture->GetGearset(_swapTargetGearsetIdx) : null;
+            var swapLabel = swapGs != null
+                ? $"[{_swapTargetGearsetIdx + 1}] {swapGs->NameString}" : "(pick)";
+            using (var combo2 = ImRaii.Combo("##SwapGs", swapLabel)) {
+                if (combo2) {
+                    for (int i = 0; i < gearsetCount; i++) {
+                        var gs = rapture->GetGearset(i);
+                        if (!gs->Flags.HasFlag(GearsetFlag.Exists)) continue;
+                        if (ImGui.Selectable($"[{i + 1}] {gs->NameString}", _swapTargetGearsetIdx == i))
+                            _swapTargetGearsetIdx = i;
+                    }
+                }
+            }
+        }
+
+        ImGui.Spacing();
+
+        // Armoury → Inventory
+        ImGui.TextColored(new Vector4(0.7f, 1f, 0.8f, 1f), "Armoury → Inventory:");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(220 * ImGuiHelpers.GlobalScale);
+        var invLabel = _inventoryMoveMode switch {
+            InventoryMoveMode.FirstEmpty => "First Empty Slot",
+            InventoryMoveMode.SwapWithArmoury => "Swap (inv copy → armoury)",
+            _ => "?"
+        };
+        using (var combo3 = ImRaii.Combo("##InventoryMode", invLabel)) {
+            if (combo3) {
+                if (ImGui.Selectable("First Empty Slot", _inventoryMoveMode == InventoryMoveMode.FirstEmpty))
+                    _inventoryMoveMode = InventoryMoveMode.FirstEmpty;
+                ImGuiUtil.ToolTip("Moves the armoury item to the first empty slot in your inventory bags.");
+
+                if (ImGui.Selectable("Swap (inv copy → armoury)", _inventoryMoveMode == InventoryMoveMode.SwapWithArmoury))
+                    _inventoryMoveMode = InventoryMoveMode.SwapWithArmoury;
+                ImGuiUtil.ToolTip("If the same item is already in your inventory, moves it to the armoury\nand the armoury copy to the inventory (swap). Falls back to first empty.");
+            }
+        }
+
+        ImGui.Spacing();
+
+        // Ignore Slots Checkboxes
+        ImGui.TextColored(new Vector4(0.9f, 0.9f, 0.7f, 1f), "Ignore Slots:");
+        ImGui.SameLine();
+        ImGui.Checkbox("Weapons (Main/Off)", ref _moveIgnoreWeapons);
+        ImGuiUtil.ToolTip("When moving whole gearsets, skip Main Hand and Off Hand items.");
+
+        ImGui.SameLine();
+        ImGui.Checkbox("Accessories", ref _moveIgnoreAccessories);
+        ImGuiUtil.ToolTip("When moving whole gearsets, skip Ears, Neck, Wrists, and Rings.");
+
+        ImGui.SameLine();
+        ImGui.Checkbox("Soul Crystal", ref _moveIgnoreSoulCrystal);
+        ImGuiUtil.ToolTip("When moving whole gearsets, skip the Soul Crystal.");
+    }
+
+    //  Table
+
     private void DrawTable() {
         var slotIndices = Enum.GetValues<GearsetItemIndex>();
 
         using var padding = ImRaii.PushStyle(ImGuiStyleVar.CellPadding, Vector2.Zero)
                                   .Push(ImGuiStyleVar.FramePadding, Vector2.Zero);
 
+        // Columns: [num] [icon] [name] [slot x N] [actions]
         using var table = ImRaii.Table(
             "##TableGearsets",
-            1 + slotIndices.Length,
+            3 + slotIndices.Length,
             ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings);
 
         if (!table) return;
@@ -134,17 +282,26 @@ public unsafe partial class GearSetGridWidget : Widget {
             _resetScrollPosition = false;
         }
 
-        // First column: ID / class icon
-        ImGui.TableSetupColumn(
-            "##ID",
-            ImGuiTableColumnFlags.WidthFixed,
-            (24 + 14 + ImGui.GetStyle().ItemInnerSpacing.X * 2f + ImGui.GetStyle().ItemSpacing.X * 2f)
-            * ImGuiHelpers.GlobalScale);
+        // Col 0: gearset number (narrow)
+        float numColW = ImGui.CalcTextSize("99").X + ImGui.GetStyle().ItemInnerSpacing.X * 2f;
+        ImGui.TableSetupColumn("##Num", ImGuiTableColumnFlags.WidthFixed, numColW * ImGuiHelpers.GlobalScale);
 
+        // Col 1: class icon
+        float iconColW = 28 + ImGui.GetStyle().ItemInnerSpacing.X * 2f;
+        ImGui.TableSetupColumn("##Icon", ImGuiTableColumnFlags.WidthFixed, iconColW * ImGuiHelpers.GlobalScale);
+
+        // Col 2: gearset name
+        ImGui.TableSetupColumn("##Name", ImGuiTableColumnFlags.WidthFixed, 120 * ImGuiHelpers.GlobalScale);
+
+        // Item slot columns
         foreach (var slot in slotIndices) {
             if (slot == GearsetItemIndex.Belt) continue;
             ImGui.TableSetupColumn($"##Slot{(int)slot}", ImGuiTableColumnFlags.WidthFixed, IconSize.X * ImGuiHelpers.GlobalScale);
         }
+
+        // Last col: action buttons (with small spacing before buttons)
+        float actionColW = 160f * ImGuiHelpers.GlobalScale;
+        ImGui.TableSetupColumn("##Actions", ImGuiTableColumnFlags.WidthFixed, actionColW);
 
         var raptureGearsetModule = RaptureGearsetModule.Instance();
         var gearsetCount = InventoryManager.Instance()->GetPermittedGearsetCount();
@@ -154,16 +311,26 @@ public unsafe partial class GearSetGridWidget : Widget {
             if (!gearset->Flags.HasFlag(GearsetFlag.Exists))
                 continue;
 
-            //  global search filter
             if (!GearsetPassesFilter(gearset))
                 continue;
 
-            using var id = ImRaii.PushId($"Gearset_{gearsetIndex}");
+            using var rowId = ImRaii.PushId($"GS_{gearsetIndex}");
 
             ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            DrawGearsetIdColumn(gearset, gearsetIndex, slotIndices);
 
+            // Col 0: gearset number
+            ImGui.TableNextColumn();
+            DrawGearsetNumberColumn(gearset, gearsetIndex, slotIndices);
+
+            // Col 1: class icon (clickable to equip)
+            ImGui.TableNextColumn();
+            DrawGearsetIconColumn(gearset, gearsetIndex, slotIndices);
+
+            // Col 2: gearset name
+            ImGui.TableNextColumn();
+            DrawGearsetNameColumn(gearset, gearsetIndex);
+
+            // Item slot columns
             foreach (var slotIndex in slotIndices) {
                 if (slotIndex == GearsetItemIndex.Belt) continue;
 
@@ -174,7 +341,6 @@ public unsafe partial class GearSetGridWidget : Widget {
 
                 var itemId = ItemUtil.GetBaseId(slotItem.ItemId).ItemId;
                 if (itemId == 0) {
-                    // Empty slot placeholder
                     DrawEmptySlotPlaceholder(slotIndex);
                     continue;
                 }
@@ -194,100 +360,178 @@ public unsafe partial class GearSetGridWidget : Widget {
                     - ImGui.CalcTextSize(itemLevelText).X / 2f);
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 2f * ImGuiHelpers.GlobalScale);
             }
+
+            // Last col: action buttons
+            ImGui.TableNextColumn();
+            DrawGearsetActionButtons(gearset, gearsetIndex, slotIndices);
         }
     }
 
-    // Gearset ID column
-    private void DrawGearsetIdColumn(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex[] slotIndices) {
+    // Gearset Number Column (col 0) — plain text number + inventory warning dot
+    private void DrawGearsetNumberColumn(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex[] slotIndices) {
         var startPos = ImGui.GetCursorPos();
         var region = ImGui.GetContentRegionAvail();
         var rowHeight = IconSize.Y * ImGuiHelpers.GlobalScale + ImGui.GetFrameHeight();
 
+        // Draw gearset number centred (plain text, no selectable)
+        var text = $"{gearsetIndex + 1}";
+        var textSz = ImGui.CalcTextSize(text);
+        ImGui.SetCursorPos(startPos + new Vector2(
+            MathF.Max(0, (region.X - textSz.X) * 0.5f),
+            (rowHeight - textSz.Y) * 0.5f));
+        ImGui.TextUnformatted(text);
+    }
+
+    // Gearset Class Icon Column (col 1) — clicking equips gearset, shows tooltip on hover
+    private void DrawGearsetIconColumn(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex[] slotIndices) {
+        var startPos = ImGui.GetCursorPos();
+        var region = ImGui.GetContentRegionAvail();
+        var rowHeight = IconSize.Y * ImGuiHelpers.GlobalScale + ImGui.GetFrameHeight();
+        var iconSize = 28 * ImGuiHelpers.GlobalScale;
+
+        // Selectable covering the icon cell — clicking equips the gearset (as it was before)
+        bool isEquipped = gearsetIndex == RaptureGearsetModule.Instance()->CurrentGearsetIndex;
         if (ImGui.Selectable(
-                "##Equip",
-                gearsetIndex == RaptureGearsetModule.Instance()->CurrentGearsetIndex,
+                $"##Equip_{gearsetIndex}",
+                isEquipped,
                 ImGuiSelectableFlags.None,
                 new Vector2(region.X, rowHeight))) {
             UIGlobals.PlaySoundEffect(8);
             RaptureGearsetModule.Instance()->EquipGearset(gearsetIndex);
         }
 
-        // Gearset tooltip
+        // Gearset tooltip on hover over the class icon
         if (ImGui.IsItemHovered()) {
-            using var tooltip = ImRaii.Tooltip();
-            ImGui.Text($"[{gearset->Id + 1}] {gearset->NameString}");
-
-            if (gearset->GlamourSetLink != 0)
-                ImGui.Text($"{TextService.GetAddonText(3185)}: {gearset->GlamourSetLink}");
-
-            // items-in-inventory summary
-            var (_, inInventory, missing) = GetGearsetItemStatus(gearset, slotIndices);
-            if (inInventory > 0 || missing > 0) {
-                ImGui.Separator();
-                if (inInventory > 0)
-                    ImGui.TextColored(new Vector4(1f, 0.65f, 0f, 1f),
-                        $"⚠ {inInventory} item(s) in Inventory (not Armoury)");
-                if (missing > 0)
-                    ImGui.TextColored(new Vector4(1f, 0.3f, 0.3f, 1f),
-                        $"✖ {missing} item(s) not found anywhere");
-            } else {
-                ImGui.TextColored(new Vector4(0.4f, 0.9f, 0.4f, 1f), "✔ All items in Armoury Chest");
-            }
+            DrawGearsetTooltip(gearset, slotIndices);
         }
 
-        // Right-click context menu on gearset row
-        DrawGearsetContextMenu(gearset, gearsetIndex, slotIndices);
-
-        // Class icon
-        var iconSize = 28 * ImGuiHelpers.GlobalScale;
-        var itemStartPos = startPos + new Vector2(region.X / 2f - iconSize / 2f, ImGui.GetStyle().ItemInnerSpacing.Y);
+        // Class icon drawn centered inside the selectable
+        var itemStartPos = startPos + new Vector2(
+            MathF.Max(0, (region.X - iconSize) * 0.5f),
+            (rowHeight - iconSize) * 0.5f);
 
         ImGui.SetCursorPos(itemStartPos);
         DalamudApi.TextureProvider.DrawIcon(62100 + gearset->ClassJob, new Vector2(iconSize));
 
-        // Gearset number
-        var text = $"{gearsetIndex + 1}";
-        ImGui.SetCursorPos(itemStartPos + new Vector2(iconSize / 2f - ImGui.CalcTextSize(text).X / 2f, iconSize));
-        ImGui.Text(text);
-
-        // orange dot indicator when items are in inventory
-        var (_, invCount, _) = GetGearsetItemStatus(gearset, slotIndices);
-        if (invCount > 0) {
-            var drawList = ImGui.GetWindowDrawList();
-            var screenPos = ImGui.GetCursorScreenPos(); // current cursor in screen space
-            var cursorPos = ImGui.GetCursorPos();       // current cursor in window space
+        // Indicator dot on the class icon if any item is in inventory or missing
+        var (_, invCount, missingCount) = GetGearsetItemStatus(gearset, slotIndices);
+        if (invCount > 0 || missingCount > 0) {
+            var screenPos = ImGui.GetCursorScreenPos();
+            var cursorPos = ImGui.GetCursorPos();
             var dotCenter = new Vector2(
-                screenPos.X - cursorPos.X + itemStartPos.X + iconSize,
-                screenPos.Y - cursorPos.Y + itemStartPos.Y);
-            drawList.AddCircleFilled(dotCenter, 5f * ImGuiHelpers.GlobalScale, 0xFF0088FFu); // amber
+                screenPos.X - cursorPos.X + itemStartPos.X + iconSize - 2f * ImGuiHelpers.GlobalScale,
+                screenPos.Y - cursorPos.Y + itemStartPos.Y + 2f * ImGuiHelpers.GlobalScale);
+            uint dotColor = missingCount > 0 ? 0xFF2222FFu : 0xFF0088FFu; // Red if missing, Amber if in inventory
+            var drawList = ImGui.GetWindowDrawList();
+            drawList.AddCircleFilled(dotCenter, 4f * ImGuiHelpers.GlobalScale, dotColor);
+            drawList.AddCircle(dotCenter, 4f * ImGuiHelpers.GlobalScale, 0xAA000000u);
         }
     }
 
-    // Gearset context menu (right-click on ID column)
-    private void DrawGearsetContextMenu(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex[] slotIndices) {
-        using var popup = ImRaii.ContextPopupItem($"##GearsetCtx_{gearsetIndex}");
-        if (!popup) return;
+    private static void DrawGearsetTooltip(GearsetEntry* gearset, GearsetItemIndex[] slotIndices) {
+        using var tooltip = ImRaii.Tooltip();
+        ImGui.Text($"[{gearset->Id + 1}] {gearset->NameString}");
 
-        if (ImGui.MenuItem($"Equip [{gearset->Id + 1}] {gearset->NameString}")) {
-            var idx = gearsetIndex;
+        if (gearset->GlamourSetLink != 0)
+            ImGui.Text($"{TextService.GetAddonText(3185)}: {gearset->GlamourSetLink}");
+
+        var (_, inInventory, missing) = GetGearsetItemStatus(gearset, slotIndices);
+        if (inInventory > 0 || missing > 0) {
+            ImGui.Separator();
+            if (inInventory > 0)
+                ImGui.TextColored(new Vector4(1f, 0.65f, 0f, 1f),
+                    $"{inInventory} item(s) in Inventory (not Armoury)");
+            if (missing > 0)
+                ImGui.TextColored(new Vector4(1f, 0.3f, 0.3f, 1f),
+                    $"{missing} item(s) not found anywhere");
+        } else {
+            ImGui.TextColored(new Vector4(0.4f, 0.9f, 0.4f, 1f), "All items in Armoury / Equipped");
+        }
+    }
+
+    // Gearset Name Column (col 2)
+    private static void DrawGearsetNameColumn(GearsetEntry* gearset, int gearsetIndex) {
+        var name = gearset->NameString;
+        var availWidth = ImGui.GetContentRegionAvail().X;
+        var rowHeight = IconSize.Y * ImGuiHelpers.GlobalScale + ImGui.GetFrameHeight();
+
+        // Centre vertically
+        var cursorY = ImGui.GetCursorPosY() + (rowHeight - ImGui.GetTextLineHeight()) * 0.5f;
+        ImGui.SetCursorPosY(cursorY);
+
+        // Truncate with ellipsis if too wide
+        string displayName = name;
+        var textSize = ImGui.CalcTextSize(name);
+        if (textSize.X > availWidth && availWidth > 0) {
+            const string ellipsis = "…";
+            float ellipsisW = ImGui.CalcTextSize(ellipsis).X;
+            int lo = 0, hi = name.Length;
+            while (lo < hi) {
+                int mid = (lo + hi + 1) / 2;
+                if (ImGui.CalcTextSize(name[..mid]).X + ellipsisW <= availWidth) lo = mid;
+                else hi = mid - 1;
+            }
+            displayName = lo > 0 ? name[..lo] + ellipsis : ellipsis;
+        }
+
+        ImGui.TextUnformatted(displayName);
+
+        if (ImGui.IsItemHovered() && displayName != name) {
+            using var tt = ImRaii.Tooltip();
+            ImGui.TextUnformatted($"[{gearsetIndex + 1}] {name}");
+        }
+    }
+
+    // Gearset Action Buttons (last col)
+    private void DrawGearsetActionButtons(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex[] slotIndices) {
+        var rowHeight = IconSize.Y * ImGuiHelpers.GlobalScale + ImGui.GetFrameHeight();
+
+        // Small space between item icons columns and action buttons
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 10f * ImGuiHelpers.GlobalScale);
+
+        // Restore standard FramePadding so action buttons have default size (table had pushed FramePadding to zero)
+        using var fp = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, ImGuiHelpers.ScaledVector2(5, 4));
+
+        var btnHeight = ImGui.GetFontSize() + ImGuiHelpers.GlobalScale * 8f;
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (rowHeight - btnHeight) * 0.5f);
+
+        var gsId = gearset->Id;
+        var gsName = gearset->NameString;
+        var gsIdx = gearsetIndex;
+        var slots = slotIndices;
+
+        // Equip
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Play, $"##BtnEquip_{gsIdx}", $"Equip [{gsId + 1}] {gsName}")) {
             _pendingAction = () => {
                 UIGlobals.PlaySoundEffect(8);
-                RaptureGearsetModule.Instance()->EquipGearset(idx);
+                RaptureGearsetModule.Instance()->EquipGearset(gsIdx);
             };
         }
 
-        ImGui.Separator();
+        ImGui.SameLine(0, 4f * ImGuiHelpers.GlobalScale);
 
-        // move all inventory items of this gearset to armoury
-        if (ImGui.MenuItem("Move Inventory Items → Armoury")) {
-            var gs = gearset;
-            var slots = slotIndices;
-            _pendingAction = () => MoveGearsetInventoryItemsToArmoury(gs, slots);
+        // Try On all items in this gearset
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.Tshirt, $"##BtnTryOn_{gsIdx}", $"Try On entire gearset [{gsId + 1}] {gsName}")) {
+            var keep = _tryOnKeepOutfit;
+            _pendingAction = () => TryOnGearset(gearset, slots, keep);
         }
-        ImGuiUtil.ToolTip("Moves items belonging to this gearset that are currently in your Inventory to the Armoury Chest.");
+
+        ImGui.SameLine(0, 4f * ImGuiHelpers.GlobalScale);
+
+        // Move Inventory → Armoury
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.BoxOpen, $"##BtnInv2Arm_{gsIdx}", $"Move Inventory items → Armoury [{gsId + 1}] {gsName}")) {
+            _pendingAction = () => MoveGearsetInventoryItemsToArmoury(gearset, slots);
+        }
+
+        ImGui.SameLine(0, 4f * ImGuiHelpers.GlobalScale);
+
+        // Move Armoury → Inventory
+        if (ImGuiUtil.IconButton(FontAwesomeIcon.ShoppingBag, $"##BtnArm2Inv_{gsIdx}", $"Move Armoury items → Inventory [{gsId + 1}] {gsName}")) {
+            _pendingAction = () => MoveGearsetArmouryItemsToInventory(gearset, slots);
+        }
     }
 
-    // Item icon cell
+    //  Item Icon Cell
     public void DrawItemIcon(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex slotIndex, GearsetItem slotItem, ItemHandle item) {
         var startPos = ImGui.GetCursorPos();
         var screenBase = ImGui.GetCursorScreenPos();
@@ -298,19 +542,21 @@ public unsafe partial class GearSetGridWidget : Widget {
             new GameIconLookup(GetItemIcon(item), ItemUtil.IsHighQuality(slotItem.ItemId)),
             (IconSize - IconInset * 2f) * ImGuiHelpers.GlobalScale);
 
-        // border to indicate item is in inventory not armoury
+        // Determine item location — equipped counts as "accessible" (no warning border)
         bool inArmoury = slotItem.IsInArmoury();
-        bool inInventory = !inArmoury && slotItem.IsInInventory();
+        bool isEquipped = !inArmoury && IsItemEquipped(slotItem);
+        bool inInventory = !inArmoury && !isEquipped && slotItem.IsInInventory();
+        bool isMissing = slotItem.ItemId != 0 && !inArmoury && !isEquipped && !inInventory;
 
         if (inInventory) {
-            // Orange border
+            // Orange border — item is in inventory bag, not armoury
             var drawList = ImGui.GetWindowDrawList();
             drawList.AddRect(
                 screenBase,
                 screenBase + IconSize * ImGuiHelpers.GlobalScale,
                 0xFF0088FFu, 2f, ImDrawFlags.None, 2f * ImGuiHelpers.GlobalScale);
-        } else if (slotItem.ItemId != 0 && !inArmoury) {
-            // Red border - item not found anywhere
+        } else if (isMissing) {
+            // Red border — item not found anywhere
             var drawList = ImGui.GetWindowDrawList();
             drawList.AddRect(
                 screenBase,
@@ -318,28 +564,48 @@ public unsafe partial class GearSetGridWidget : Widget {
                 0xFF2222FFu, 2f, ImDrawFlags.None, 2f * ImGuiHelpers.GlobalScale);
         }
 
-        // dye color dots
+        // Dye color dots
         DrawDyeDots(screenBase, slotItem.Stain0Id, slotItem.Stain1Id);
 
         // Reset cursor to bottom of icon cell
         ImGui.SetCursorPos(startPos + new Vector2(0, (IconSize.Y - 3) * ImGuiHelpers.GlobalScale));
 
-        // try-On on hover
+        // Try-On on hover
         if (_tryOnOnHover && ImGui.IsItemHovered()) {
             TryOnItemThrottled(gearsetIndex, slotItem.ItemId, slotItem.Stain0Id, slotItem.Stain1Id, slotItem.GlamourId);
         }
 
         // Right-click context menu
-        DrawItemContextMenu(gearset, gearsetIndex, slotIndex, slotItem, item);
+        DrawItemContextMenu(gearset, gearsetIndex, slotIndex, slotItem, item, inArmoury, inInventory);
 
         // Tooltip
         if (!ImGui.IsItemHovered() || !ExcelService.TryGetRow<Item>(item.ItemId, out var itemRow))
             return;
 
-        DrawItemTooltip(gearset, slotIndex, slotItem, item, itemRow, inArmoury, inInventory);
+        DrawItemTooltip(gearset, slotIndex, slotItem, item, itemRow, inArmoury, isEquipped, inInventory);
     }
 
-    // Dye dot indicators (drawn with ImDrawList)
+    /// <summary>
+    /// Returns true when <paramref name="slotItem"/> is currently equipped by the local player
+    /// (present in the EquippedItems container). Equipped = accessible, no missing border.
+    /// </summary>
+    private static bool IsItemEquipped(in GearsetItem slotItem) {
+        var container = InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems);
+        if (container == null) return false;
+
+        var targetId = slotItem.ItemId;
+        for (int i = 0; i < container->Size; i++) {
+            var slot = container->GetInventorySlot(i);
+            if (slot == null) continue;
+            if (slot->GetItemId() != targetId) continue;
+            if (slot->GlamourId != slotItem.GlamourId) continue;
+            if (slot->Stains[0] != slotItem.Stain0Id || slot->Stains[1] != slotItem.Stain1Id) continue;
+            return true;
+        }
+        return false;
+    }
+
+    //  Dye Dots
     private void DrawDyeDots(Vector2 screenBase, byte stain0Id, byte stain1Id) {
         if (stain0Id == 0 && stain1Id == 0) return;
 
@@ -351,7 +617,6 @@ public unsafe partial class GearSetGridWidget : Widget {
 
         if (stain0Id != 0 && ExcelService.TryGetRow<Stain>(stain0Id, out var stain0)) {
             var color = StainColorToImGui(stain0.Color);
-            // shift left if two dyes so they sit side by side
             float dot0X = screenBase.X + iconPx.X - margin - dotR
                           - (stain1Id != 0 ? dotR * 2 + margin : 0f);
             drawList.AddCircleFilled(new Vector2(dot0X, dotY), dotR, color);
@@ -366,17 +631,18 @@ public unsafe partial class GearSetGridWidget : Widget {
         }
     }
 
-    // Lumina Stain.Color is packed as 0xRRGGBB00 (big-endian, alpha unused)
-    // ImGui wants ABGR uint.
+    // Lumina Stain.Color is packed as 0x00RRGGBB (uint: alpha=0 at MSB, R=bits16, G=bits8, B=bits0).
+    // Reference: HaselCommon StainExtensions: ReverseEndianness(row.Color)>>8 extracts R from bits16-23, G from bits8-15, B from bits0-7.
+    // ImGui DrawList/PushColor expect ABGR uint (A=MSB bits24-31, R=LSB bits0-7).
     private static uint StainColorToImGui(uint stainColor) {
-        byte r = (byte)((stainColor >> 24) & 0xFF);
-        byte g = (byte)((stainColor >> 16) & 0xFF);
-        byte b = (byte)((stainColor >> 8) & 0xFF);
+        byte r = (byte)((stainColor >> 16) & 0xFF);
+        byte g = (byte)((stainColor >> 8) & 0xFF);
+        byte b = (byte)((stainColor) & 0xFF);
         return (uint)((0xFF << 24) | (b << 16) | (g << 8) | r); // ABGR
     }
 
-    // Item context menu
-    private void DrawItemContextMenu(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex slotIndex, GearsetItem slotItem, ItemHandle item) {
+    //  Item Context Menu
+    private void DrawItemContextMenu(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex slotIndex, GearsetItem slotItem, ItemHandle item, bool inArmoury, bool inInventory) {
         using var popup = ImRaii.ContextPopupItem($"##ItemCtx_{gearsetIndex}_{(int)slotIndex}");
         if (!popup) return;
 
@@ -386,10 +652,10 @@ public unsafe partial class GearSetGridWidget : Widget {
         var s0 = slotItem.Stain0Id;
         var s1 = slotItem.Stain1Id;
         var glamId = slotItem.GlamourId;
-        var isInInv = slotItem.IsInInventory();
         var itemName = GetItemName(item).ToString();
         var gsId = gearset->Id;
         var gsName = gearset->NameString;
+        var capturedSlotItem = slotItem;
 
         // Equip entire gearset
         if (ImGui.MenuItem($"Equip [{gsId + 1}] {gsName}")) {
@@ -401,7 +667,7 @@ public unsafe partial class GearSetGridWidget : Widget {
 
         ImGui.Separator();
 
-        // Try On
+        // Try On this item
         if (ImGui.MenuItem("Try On")) {
             var keep = _tryOnKeepOutfit;
             _pendingAction = () => TryOnViaAgent(itemId, s0, s1, glamId, keep);
@@ -411,26 +677,31 @@ public unsafe partial class GearSetGridWidget : Widget {
 
         ImGui.Separator();
 
-        // Move to Armoury
-        using (ImRaii.Disabled(!isInInv)) {
+        // Move to Armoury (only when item is in inventory bag)
+        using (ImRaii.Disabled(!inInventory)) {
             if (ImGui.MenuItem("Move to Armoury Chest")) {
-                // capture a copy of slotItem for the lambda
-                var capturedSlotItem = slotItem;
                 _pendingAction = () => MoveSingleItemToArmoury(capturedSlotItem);
             }
         }
-        if (!isInInv)
-            ImGuiUtil.ToolTip("Item is not in your Inventory.");
+        if (!inInventory) ImGuiUtil.ToolTip("Item is not in your Inventory.");
+
+        // Move to Inventory (only when item is in armoury)
+        using (ImRaii.Disabled(!inArmoury)) {
+            if (ImGui.MenuItem("Move to Inventory")) {
+                _pendingAction = () => MoveSingleItemToInventory(capturedSlotItem);
+            }
+        }
+        if (!inArmoury) ImGuiUtil.ToolTip("Item is not in the Armoury Chest.");
 
         ImGui.Separator();
 
         // Copy item name
-        if (ImGui.MenuItem($"Copy Name")) {
+        if (ImGui.MenuItem("Copy Name")) {
             ImGui.SetClipboardText(itemName);
         }
     }
 
-    // Item tooltip (Features 1, 2, 7)
+    //  Item Tooltip
     private void DrawItemTooltip(
         GearsetEntry* gearset,
         GearsetItemIndex slotIndex,
@@ -438,6 +709,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         ItemHandle item,
         Item itemRow,
         bool inArmoury,
+        bool isEquipped,
         bool inInventory) {
 
         using var _ = ImRaii.Tooltip();
@@ -445,29 +717,25 @@ public unsafe partial class GearSetGridWidget : Widget {
         // Item name
         ImGui.TextColored(GetItemRarityColor(item), GetItemName(item).ToString());
 
-        var holdingShift = ImGui.IsKeyDown(ImGuiKey.LeftShift) || ImGui.IsKeyDown(ImGuiKey.RightShift);
-        if (holdingShift) {
-            ImGui.SameLine();
-            ImGui.Text($"[{item.ItemId}]");
-        }
-
         if (itemRow.ItemUICategory.IsValid) {
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ImGui.GetStyle().ItemSpacing.Y);
             ImGui.Text(itemRow.ItemUICategory.Value.Name.ToString() ?? string.Empty);
         }
 
-        // location indicator
+        // Location indicator
         ImGui.Separator();
         if (inArmoury) {
-            ImGui.TextColored(new Vector4(0.4f, 0.9f, 0.4f, 1f), "✔ In Armoury Chest");
+            ImGui.TextColored(new Vector4(0.4f, 0.9f, 0.4f, 1f), "In Armoury Chest");
+        } else if (isEquipped) {
+            ImGui.TextColored(new Vector4(0.4f, 0.9f, 0.4f, 1f), "Currently Equipped");
         } else if (inInventory) {
-            ImGui.TextColored(new Vector4(1f, 0.65f, 0f, 1f), "⚠ In Inventory (not in Armoury Chest)");
+            ImGui.TextColored(new Vector4(1f, 0.65f, 0f, 1f), "In Inventory (not in Armoury Chest)");
             ImGui.TextDisabled("Right-click → Move to Armoury Chest");
         } else {
-            ImGui.TextColored(new Vector4(1f, 0.3f, 0.3f, 1f), "✖ Item not found in Inventory or Armoury");
+            ImGui.TextColored(new Vector4(1f, 0.3f, 0.3f, 1f), "Item not found in Inventory or Armoury");
         }
 
-        //  Glamour + dye info (Feature 2 tooltip)
+        // Glamour + dye info
         var glamourItem = new ItemHandle(slotItem.GlamourId);
         bool hasGlamourOrDye = !glamourItem.IsEmpty || slotItem.Stain0Id != 0 || slotItem.Stain1Id != 0;
         if (hasGlamourOrDye) ImGui.Separator();
@@ -476,16 +744,12 @@ public unsafe partial class GearSetGridWidget : Widget {
             ImGui.Text("Glamour:");
             ImGui.SameLine();
             ImGui.TextColored(GetItemRarityColor(glamourItem), GetItemName(glamourItem).ToString());
-            if (holdingShift) {
-                ImGui.SameLine();
-                ImGui.Text($"[{slotItem.GlamourId}]");
-            }
         }
 
-        DrawDyeTooltipLine("Dye 1:", slotItem.Stain0Id, holdingShift);
-        DrawDyeTooltipLine("Dye 2:", slotItem.Stain1Id, holdingShift);
+        DrawDyeTooltipLine("Dye 1:", slotItem.Stain0Id);
+        DrawDyeTooltipLine("Dye 2:", slotItem.Stain1Id);
 
-        //  also used in list
+        // "Also used in" gearset list
         var usedInGearsets = GetItemInGearsetsList(slotItem.ItemId, slotIndex);
         if (usedInGearsets.Count > 1) {
             ImGui.Separator();
@@ -494,7 +758,7 @@ public unsafe partial class GearSetGridWidget : Widget {
     }
 
     // Helper: one dye line in the tooltip
-    private static void DrawDyeTooltipLine(string label, byte stainId, bool holdingShift) {
+    private static void DrawDyeTooltipLine(string label, byte stainId) {
         if (stainId == 0) return;
         if (!ExcelService.TryGetRow<Stain>(stainId, out var stain)) return;
 
@@ -504,13 +768,9 @@ public unsafe partial class GearSetGridWidget : Widget {
             ImGui.Bullet();
         ImGui.SameLine(0, 0);
         ImGui.Text(TextService.GetStainName(stainId));
-        if (holdingShift) {
-            ImGui.SameLine();
-            ImGui.Text($"[{stainId}]");
-        }
     }
 
-    // Also used in list
+    // Also-used-in gearsets list (compact 2-column layout)
     private static void DrawSharedGearsetsList(byte currentGearsetId, List<ItemInGearsetEntry> usedInGearsets) {
         var others = usedInGearsets.FindAll(e => e.Id != currentGearsetId);
         if (others.Count == 0) return;
@@ -534,7 +794,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         }
     }
 
-    // Global search / filter
+    // Search / Filter
     private bool GearsetPassesFilter(GearsetEntry* gearset) {
         var text = _searchText.Trim();
         if (string.IsNullOrEmpty(text)) return true;
@@ -574,18 +834,16 @@ public unsafe partial class GearSetGridWidget : Widget {
         return false;
     }
 
-    // Try-On with throttle
+    // Try-On
     private void TryOnItemThrottled(int gearsetIndex, uint rawItemId, byte stain0, byte stain1, uint glamId) {
         var baseId = ItemUtil.GetBaseId(rawItemId).ItemId;
 
-        // Only fire when hovering a new item or after enough time passes
         if (baseId == _lastTryOnItemId && gearsetIndex == _lastTryOnGsIdx) return;
         if (!EzThrottler.Throttle("GearGridTryOn", 400)) return;
 
         _lastTryOnItemId = baseId;
         _lastTryOnGsIdx = gearsetIndex;
 
-        // Copy values to avoid closure problems; set as pending action
         var iid = baseId;
         var s0 = stain0;
         var s1 = stain1;
@@ -595,8 +853,8 @@ public unsafe partial class GearSetGridWidget : Widget {
     }
 
     /// <summary>
-    /// Calls AgentTryon.TryOn, optionally setting SaveDeleteOutfit so the
-    /// game keeps previously previewed pieces visible when trying on a new item.
+    /// Calls AgentTryon.TryOn, optionally setting SaveDeleteOutfit so the game keeps
+    /// previously previewed pieces visible when trying on a new item.
     /// </summary>
     private static void TryOnViaAgent(uint itemId, byte stain0, byte stain1, uint glamourId, bool keepOutfit) {
         var agent = AgentTryon.Instance();
@@ -606,7 +864,33 @@ public unsafe partial class GearSetGridWidget : Widget {
         AgentTryon.TryOn(0, itemId, stain0, stain1, glamourId);
     }
 
-    // Move items to Armoury
+    /// <summary>
+    /// Previews the entire gearset in the Try-On window, slot by slot.
+    /// Uses keepOutfit=true for all slots except the first so previously added items stay.
+    /// </summary>
+    private static void TryOnGearset(GearsetEntry* gearset, GearsetItemIndex[] slotIndices, bool keepOutfit) {
+        var agent = AgentTryon.Instance();
+        bool first = true;
+        foreach (var slotIndex in slotIndices) {
+            if (slotIndex == GearsetItemIndex.Belt) continue;
+
+            var slotItem = gearset->GetItem(slotIndex);
+            if (slotItem.ItemId == 0) continue;
+
+            var baseId = ItemUtil.GetBaseId(slotItem.ItemId).ItemId;
+            if (baseId == 0) continue;
+
+            // For the first item respect the user's keepOutfit preference.
+            // For subsequent items in this batch always keep so they stack.
+            if (agent != null)
+                agent->SaveDeleteOutfit = !first || keepOutfit;
+
+            AgentTryon.TryOn(0, baseId, slotItem.Stain0Id, slotItem.Stain1Id, slotItem.GlamourId);
+            first = false;
+        }
+    }
+
+    // Move: Inventory → Armoury
     private void MoveSingleItemToArmoury(GearsetItem slotItem) {
         var invSrc = slotItem.FindGearsetItemInInventory();
         if (invSrc == null) return;
@@ -617,9 +901,29 @@ public unsafe partial class GearSetGridWidget : Widget {
         Context.Plugin.ItemMover.Enqueue(invSrc.Value, armouryType);
     }
 
+    private bool ShouldSkipSlotForMove(GearsetItemIndex slotIndex) {
+        if (slotIndex == GearsetItemIndex.Belt)
+            return true;
+
+        if (_moveIgnoreWeapons && (slotIndex == GearsetItemIndex.MainHand || slotIndex == GearsetItemIndex.OffHand))
+            return true;
+
+        if (_moveIgnoreAccessories && (slotIndex == GearsetItemIndex.Ears
+                                    || slotIndex == GearsetItemIndex.Neck
+                                    || slotIndex == GearsetItemIndex.Wrists
+                                    || slotIndex == GearsetItemIndex.RingRight
+                                    || slotIndex == GearsetItemIndex.RingLeft))
+            return true;
+
+        if (_moveIgnoreSoulCrystal && slotIndex == GearsetItemIndex.SoulStone)
+            return true;
+
+        return false;
+    }
+
     private void MoveGearsetInventoryItemsToArmoury(GearsetEntry* gearset, GearsetItemIndex[] slotIndices) {
         foreach (var slotIndex in slotIndices) {
-            if (slotIndex == GearsetItemIndex.Belt) continue;
+            if (ShouldSkipSlotForMove(slotIndex)) continue;
 
             var slotItem = gearset->GetItem(slotIndex);
             if (slotItem.ItemId == 0) continue;
@@ -635,39 +939,88 @@ public unsafe partial class GearSetGridWidget : Widget {
         }
     }
 
-    //  Empty slot placeholder (slot sem item atribuído no gearset)
+    // Move: Armoury → Inventory
+    private void MoveSingleItemToInventory(GearsetItem slotItem) {
+        var armouryType = slotItem.GetInventoryType();
+        if (armouryType == default) return;
+
+        var container = InventoryManager.Instance()->GetInventoryContainer(armouryType);
+        var armourySrc = InventoryHelper.FindGearsetItemInArmoury(slotItem, container);
+        if (armourySrc == null) return;
+
+        var emptySlot = InventoryHelper.FindFirstEmptyInventorySlot();
+        if (emptySlot == null) return;
+
+        Context.Plugin.ItemMover.Enqueue(armourySrc.Value, emptySlot.Value.Type, emptySlot.Value.Slot);
+    }
+
+    private void MoveGearsetArmouryItemsToInventory(GearsetEntry* gearset, GearsetItemIndex[] slotIndices) {
+        foreach (var slotIndex in slotIndices) {
+            if (ShouldSkipSlotForMove(slotIndex)) continue;
+
+            var slotItem = gearset->GetItem(slotIndex);
+            if (slotItem.ItemId == 0) continue;
+            if (!slotItem.IsInArmoury()) continue;
+
+            var armouryType = slotItem.GetInventoryType();
+            if (armouryType == default) continue;
+
+            var container = InventoryManager.Instance()->GetInventoryContainer(armouryType);
+            var armourySrc = InventoryHelper.FindGearsetItemInArmoury(slotItem, container);
+            if (armourySrc == null) continue;
+
+            var emptySlot = InventoryHelper.FindFirstEmptyInventorySlot();
+            if (emptySlot == null) break; // no more inventory space
+
+            Context.Plugin.ItemMover.Enqueue(armourySrc.Value, emptySlot.Value.Type, emptySlot.Value.Slot);
+        }
+    }
+
+    // Empty Slot Placeholder
     private static void DrawEmptySlotPlaceholder(GearsetItemIndex slotIndex) {
-        var cursorPos = ImGui.GetCursorPos();
+        var startPos = ImGui.GetCursorPos();
         var screenBase = ImGui.GetCursorScreenPos();
         var scaledIcon = IconSize * ImGuiHelpers.GlobalScale;
         var scaledInset = IconInset * ImGuiHelpers.GlobalScale;
         var drawList = ImGui.GetWindowDrawList();
 
-        // Dark translucent background mimicking the HaselTweaks ULD background
-        drawList.AddRectFilled(
-            screenBase,
-            screenBase + scaledIcon,
-            0x44000000u,  // very dark semi-transparent
-            2f);
+        // Dark translucent background
+        drawList.AddRectFilled(screenBase, screenBase + scaledIcon, 0x44000000u, 2f);
 
-        // Subtle slot-type icon drawn as a thin outlined square with a slot glyph
-        var innerMin = screenBase + scaledInset;
-        var innerMax = screenBase + scaledIcon - scaledInset;
-        drawList.AddRect(innerMin, innerMax, 0x55FFFFFFu, 1f); // faint white border
+        // Subtle slot outline
+        drawList.AddRect(screenBase + scaledInset, screenBase + scaledIcon - scaledInset, 0x33FFFFFFu, 1f);
 
-        // Draw a small "empty" symbol (dash) centred inside
-        var center = screenBase + scaledIcon * 0.5f;
-        float dashHalf = 4f * ImGuiHelpers.GlobalScale;
-        drawList.AddLine(
-            new Vector2(center.X - dashHalf, center.Y),
-            new Vector2(center.X + dashHalf, center.Y),
-            0x55FFFFFFu, 1f);
+        // Faint placeholder icon for this slot type
+        var placeholderIconId = GetSlotPlaceholderIconId(slotIndex);
+        if (placeholderIconId != 0) {
+            ImGui.SetCursorPos(startPos + scaledInset);
+            DalamudApi.TextureProvider.DrawIcon(
+                new GameIconLookup(placeholderIconId),
+                (IconSize - IconInset * 2f) * ImGuiHelpers.GlobalScale,
+                tintCol: new Vector4(1f, 1f, 1f, 0.25f));
+        }
 
-        // Advance the cursor past the icon cell so layout is not broken
-        ImGui.SetCursorPos(cursorPos + new Vector2(0, scaledIcon.Y));
+        ImGui.SetCursorPos(startPos + new Vector2(0, (IconSize.Y - 3) * ImGuiHelpers.GlobalScale));
     }
 
-    //  aggregate item status for a whole gearset
+    private static uint GetSlotPlaceholderIconId(GearsetItemIndex slotIndex) => slotIndex switch {
+        GearsetItemIndex.MainHand => 60011,
+        GearsetItemIndex.OffHand => 60110,
+        GearsetItemIndex.Head => 60124,
+        GearsetItemIndex.Body => 60126,
+        GearsetItemIndex.Hands => 60129,
+        GearsetItemIndex.Legs => 60128,
+        GearsetItemIndex.Feet => 60130,
+        GearsetItemIndex.Ears => 60133,
+        GearsetItemIndex.Neck => 60132,
+        GearsetItemIndex.Wrists => 60134,
+        GearsetItemIndex.RingRight => 60135,
+        GearsetItemIndex.RingLeft => 60135,
+        GearsetItemIndex.SoulStone => 61762,
+        _ => 0,
+    };
+
+    // Aggregate Status
     private static (int inArmoury, int inInventory, int missing) GetGearsetItemStatus(
         GearsetEntry* gearset,
         GearsetItemIndex[] slotIndices) {
@@ -682,7 +1035,7 @@ public unsafe partial class GearSetGridWidget : Widget {
             var slotItem = gearset->GetItem(slotIndex);
             if (slotItem.ItemId == 0) continue;
 
-            if (slotItem.IsInArmoury())
+            if (slotItem.IsInArmoury() || IsItemEquipped(slotItem))
                 armoury++;
             else if (slotItem.IsInInventory())
                 inventory++;
@@ -693,7 +1046,7 @@ public unsafe partial class GearSetGridWidget : Widget {
         return (armoury, inventory, missing);
     }
 
-    //  Shared helpers
+    // Shared Helpers
     private record ItemInGearsetEntry(byte Id, string Name);
 
     private static List<ItemInGearsetEntry> GetItemInGearsetsList(uint itemId, GearsetItemIndex slotIndex) {
