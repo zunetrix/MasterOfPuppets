@@ -1,6 +1,5 @@
 using System;
 
-using Dalamud.Game.Gui.Dtr;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Debug;
@@ -14,7 +13,7 @@ public class PluginUi : IDisposable {
     public MainWindow MainWindow { get; }
     public MacroWindow MacroWindow { get; }
     public SettingsWindow SettingsWindow { get; }
-    public ActionsBroadcastWindow ActionsBroadcastWindow { get; }
+    // public ActionsBroadcastWindow ActionsBroadcastWindow { get; }
     public MacroEditorWindow MacroEditorWindow { get; }
     public MacroBatchEditorWindow MacroBatchEditorWindow { get; }
     public MacroQueueWindow MacroQueueWindow { get; }
@@ -39,7 +38,7 @@ public class PluginUi : IDisposable {
         MacroBatchEditorWindow = AddWindow(new MacroBatchEditorWindow(Plugin));
         MacroQueueWindow = AddWindow(new MacroQueueWindow(Plugin));
         CharactersWindow = AddWindow(new CharactersWindow(Plugin));
-        ActionsBroadcastWindow = AddWindow(new ActionsBroadcastWindow(Plugin));
+        // ActionsBroadcastWindow = AddWindow(new ActionsBroadcastWindow(Plugin));
         HelpWindow = AddWindow(new HelpWindow(Plugin));
         MacroImportExportWindow = AddWindow(new MacroImportExportWindow(Plugin));
         IconPickerDialogWindow = AddWindow(new IconPickerDialogWindow());

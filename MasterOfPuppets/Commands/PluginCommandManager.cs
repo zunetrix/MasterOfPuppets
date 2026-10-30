@@ -206,9 +206,9 @@ public class PluginCommandManager : IDisposable {
                 case "queue":
                     Plugin.Ui.MacroQueueWindow.Toggle();
                     break;
-                case "actions":
-                    Plugin.Ui.ActionsBroadcastWindow.Toggle();
-                    break;
+                // case "actions":
+                //     Plugin.Ui.ActionsBroadcastWindow.Toggle();
+                // break;
                 case "item": {
                         if (parsedArgs.Count < 2) {
                             DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop item <id|name>");
