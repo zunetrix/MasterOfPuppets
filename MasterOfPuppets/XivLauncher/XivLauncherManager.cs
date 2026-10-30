@@ -214,7 +214,7 @@ internal static class XivLauncherManager {
         args.Append($"--account={accountArgs}");
 
         if (!entry.AutoLogin)
-            args.Append(" --noautologin");
+            args.Append(" --autologin");
 
         if (!string.IsNullOrWhiteSpace(entry.RoamingPath))
             args.Append($" --roamingPath=\"{entry.RoamingPath}\"");
@@ -244,7 +244,7 @@ internal static class XivLauncherManager {
         args.Append($"--account={accountArgs}");
 
         if (!entry.AutoLogin)
-            args.Append(" --noautologin");
+            args.Append(" --autologin");
 
         if (!string.IsNullOrWhiteSpace(entry.RoamingPath))
             args.Append($" --roamingPath=\"{entry.RoamingPath}\"");

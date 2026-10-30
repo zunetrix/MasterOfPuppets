@@ -63,8 +63,6 @@ public partial class XivLauncherWindow {
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
-            ImGui.SameLine();
-            ImGuiUtil.HelpMarker("In order for it to work properly, you need to enable Auto Login in the launcher and have your password saved");
 
             var steamAccount = entry.UseSteamServiceAccount;
             if (ImGui.Checkbox("Steam account", ref steamAccount)) {
