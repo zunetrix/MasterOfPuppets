@@ -59,6 +59,9 @@ public unsafe partial class GearSetGridWidget : Widget {
     private uint _lastTryOnItemId = 0;
     private int _lastTryOnGsIdx = -1;
 
+    // Display glamour icons instead of base equipment icons
+    private bool _showGlamourIcons = false;
+
     // Deferred action (avoids modifying game state inside table draw)
     private System.Action? _pendingAction = null;
 
@@ -132,6 +135,11 @@ public unsafe partial class GearSetGridWidget : Widget {
             ImGui.Checkbox("Keep Outfit", ref _tryOnKeepOutfit);
             ImGuiUtil.ToolTip("When enabled, trying on a new item keeps previously previewed items visible");
         }
+
+        // Glamour icon toggle
+        ImGui.SameLine();
+        ImGui.Checkbox("Glamour Icons", ref _showGlamourIcons);
+        ImGuiUtil.ToolTip("When enabled, displays glamour item icons instead of base equipment icons when available.");
 
         ImGui.SameLine();
         ImGui.Spacing();
@@ -535,10 +543,14 @@ public unsafe partial class GearSetGridWidget : Widget {
         var startPos = ImGui.GetCursorPos();
         var screenBase = ImGui.GetCursorScreenPos();
 
-        // Item icon
+        // Item icon (optionally show glamour appearance instead of base item)
+        var displayItem = (_showGlamourIcons && slotItem.GlamourId != 0)
+            ? new ItemHandle(slotItem.GlamourId)
+            : item;
+
         ImGui.SetCursorPos(startPos + IconInset * ImGuiHelpers.GlobalScale);
         DalamudApi.TextureProvider.DrawIcon(
-            new GameIconLookup(GetItemIcon(item), ItemUtil.IsHighQuality(slotItem.ItemId)),
+            new GameIconLookup(GetItemIcon(displayItem), ItemUtil.IsHighQuality(slotItem.ItemId)),
             (IconSize - IconInset * 2f) * ImGuiHelpers.GlobalScale);
 
         // Determine item location — equipped counts as "accessible" (no warning border)
@@ -822,9 +834,15 @@ public unsafe partial class GearSetGridWidget : Widget {
             var itemId = ItemUtil.GetBaseId(slotItem.ItemId).ItemId;
             if (itemId == 0) continue;
 
-            if (_searchByItem && ExcelService.TryGetRow<Item>(itemId, out var itemRow)) {
-                if (itemRow.Name.ToString().Contains(text, StringComparison.OrdinalIgnoreCase))
-                    return true;
+            if (_searchByItem) {
+                if (ExcelService.TryGetRow<Item>(itemId, out var itemRow)) {
+                    if (itemRow.Name.ToString().Contains(text, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+                if (slotItem.GlamourId != 0 && ExcelService.TryGetRow<Item>(slotItem.GlamourId, out var glamRow)) {
+                    if (glamRow.Name.ToString().Contains(text, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
             }
 
             if (_searchByDye) {
