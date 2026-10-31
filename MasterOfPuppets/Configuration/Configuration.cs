@@ -238,6 +238,7 @@ internal class Configuration : IPluginConfiguration {
     // public bool ApplyGameSettingsProfileOnLogin { get; set; } = false;
     public string LoginGameSettingsProfile { get; set; } = string.Empty;
     // Interface
+    public List<MainMenuItemConfig> MainMenuItems { get; set; } = new();
     public bool OpenOnStartup { get; set; } = false;
 
     // public Vector4 ThemeColour { get; set; } = new(0f, 1f, 0f, 1f);
@@ -289,6 +290,7 @@ internal class Configuration : IPluginConfiguration {
         WindowLayouts = new();
         GameSettingsProfiles = new();
         ListenedChatTypes = new();
+        MainMenuItems = new();
     }
 
     private void UpdateFrom(Configuration other) {
@@ -395,6 +397,54 @@ internal class Configuration : IPluginConfiguration {
         Characters.MoveItemToIndex(itemIndex, targetIndex);
         this.Save();
     }
+
+    public void Migrate() {
+        MigrateMainMenuItems();
+    }
+
+    private void MigrateMainMenuItems() {
+        if (MainMenuItems == null || MainMenuItems.Count == 0) {
+            MainMenuItems = MainMenuRegistry.CreateDefaultConfigList();
+            this.Save();
+            return;
+        }
+
+        bool modified = false;
+
+        // 1. Remove obsolete items that no longer exist in the registry
+        int removed = MainMenuItems.RemoveAll(i => !MainMenuRegistry.TryGetDef(i.Id, out _));
+        if (removed > 0) modified = true;
+
+        // 2. Add newly introduced items to the end
+        var existingIds = new HashSet<string>(MainMenuItems.Select(i => i.Id), StringComparer.OrdinalIgnoreCase);
+        foreach (var def in MainMenuRegistry.AllItems) {
+            if (!existingIds.Contains(def.Id)) {
+                MainMenuItems.Add(new MainMenuItemConfig { Id = def.Id, Enabled = true });
+                modified = true;
+            }
+        }
+
+        if (modified) {
+            this.Save();
+        }
+    }
+
+    public List<MainMenuItemConfig> GetOrCreateMainMenuItems() => MainMenuItems;
+
+    public void MoveMainMenuItemToIndex(int itemIndex, int targetIndex) {
+        MainMenuItems.MoveItemToIndex(itemIndex, targetIndex);
+        this.Save();
+    }
+
+    public void ResetMainMenuItems() {
+        MainMenuItems = MainMenuRegistry.CreateDefaultConfigList();
+        this.Save();
+    }
+}
+
+public class MainMenuItemConfig {
+    public string Id { get; set; } = string.Empty;
+    public bool Enabled { get; set; } = true;
 }
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]

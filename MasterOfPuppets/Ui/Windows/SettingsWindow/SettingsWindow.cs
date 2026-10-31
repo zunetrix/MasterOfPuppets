@@ -27,6 +27,7 @@ public class SettingsWindow : Window {
         SizeConstraints = new WindowSizeConstraints { MinimumSize = ImGuiHelpers.ScaledVector2(500, 300) };
 
         _widgetManager.Add(() => new GeneralSettingsWidget(_widgetContext));
+        _widgetManager.Add(() => new InterfaceSettingsWidget(_widgetContext));
         _widgetManager.Add(() => new MultiboxSettingsWidget(_widgetContext));
         _widgetManager.Add(() => new BroadcastSettingsWidget(_widgetContext));
         _widgetManager.Add(() => new MacrosSettingsWidget(_widgetContext));

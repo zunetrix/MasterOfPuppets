@@ -18,25 +18,15 @@ public partial class MainWindow : Window {
         float expandedWidth = _sidebarWidth * ImGuiHelpers.GlobalScale;
         float width = _sidebarCollapsed ? collapsedWidth * ImGuiHelpers.GlobalScale : expandedWidth;
 
-        var extraActions = new (FontAwesomeIcon Icon, string Label, Action Action)[] {
-            (FontAwesomeIcon.Users, "Characters", () => Ui.CharactersWindow.Toggle()),
-            (FontAwesomeIcon.ArrowsDownToPeople, "Formation", () => Ui.FormationWindow.Toggle()),
-            (FontAwesomeIcon.Display, "Windows Layout", () => Ui.WindowLayoutWindow.Toggle()),
-            (FontAwesomeIcon.SlidersH, "Game Settings Profile", () => Ui.GameSettingsWindow.Toggle()),
-            (FontAwesomeIcon.UsersViewfinder, "Peer Monitor", () => Ui.PeerMonitorWindow.Toggle()),
-            (FontAwesomeIcon.Rocket, "XIV Launcher", () => Ui.XivLauncherWindow.Toggle()),
-            (FontAwesomeIcon.Cog, "Settings", () => Ui.SettingsWindow.Toggle()),
-            (FontAwesomeIcon.QuestionCircle, "Help", () => Ui.HelpWindow.Toggle()),
-        };
-
         var childFlags = _sidebarCollapsed ? ImGuiWindowFlags.NoScrollbar : ImGuiWindowFlags.None;
         using (ImRaii.Child("##MopNavSidebar", new Vector2(width, -1), true, childFlags)) {
 
             // Toggle collapse button
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Bars, "##SidebarToggleBtn", _sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar")) {
                 _sidebarCollapsed = !_sidebarCollapsed;
-                // hide widget when collapsing to avoid invisible draw
             }
+
+            var items = Plugin.Config.MainMenuItems;
 
             if (!_sidebarCollapsed) {
                 // Search bar
@@ -48,85 +38,49 @@ public partial class MainWindow : Window {
                 ImGui.Separator();
                 ImGui.Spacing();
 
-                // Macros shortcut (opens separate window)
-                if (string.IsNullOrEmpty(_sidebarSearch) || "Macros".Contains(_sidebarSearch, StringComparison.OrdinalIgnoreCase)) {
-                    DrawNavAction(FontAwesomeIcon.Scroll, "Macros", () => Ui.MacroWindow.Toggle(), false);
+                foreach (var cfg in items) {
+                    if (!cfg.Enabled) continue;
+                    if (!MainMenuRegistry.TryGetDef(cfg.Id, out var def)) continue;
 
-                    ImGui.Separator();
-                    ImGui.Spacing();
-                }
-
-                // Sections
-                bool anyNavDrawn = false;
-                foreach (var (section, icon, label, hasSeparatorBefore) in NavItems) {
                     if (!string.IsNullOrEmpty(_sidebarSearch) &&
-                        !label.Contains(_sidebarSearch, StringComparison.OrdinalIgnoreCase))
+                        !def.Label.Contains(_sidebarSearch, StringComparison.OrdinalIgnoreCase))
                         continue;
 
-                    if (hasSeparatorBefore && anyNavDrawn) {
-                        ImGui.Separator();
-                        ImGui.Spacing();
+                    if (def.Kind == MenuItemKind.View) {
+                        DrawNavItem(def.Id, def.Icon, def.Label);
+                    } else {
+                        DrawNavAction(def.Icon, def.Label, () => def.OnClick?.Invoke(Ui), false);
                     }
-
-                    DrawNavItem(section, icon, label);
-                    anyNavDrawn = true;
-                }
-
-                bool extraSeparatorDrawn = false;
-                foreach (var (icon, label, action) in extraActions) {
-                    if (!string.IsNullOrEmpty(_sidebarSearch) &&
-                        !label.Contains(_sidebarSearch, StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    if (!extraSeparatorDrawn && anyNavDrawn) {
-                        ImGui.Separator();
-                        ImGui.Spacing();
-                        extraSeparatorDrawn = true;
-                    }
-
-                    DrawNavAction(icon, label, action, false);
                 }
             } else {
                 // Collapsed: icons only
                 ImGui.Spacing();
 
-                DrawNavActionIconOnly(FontAwesomeIcon.Scroll, "Macros", () => Ui.MacroWindow.Toggle());
+                foreach (var cfg in items) {
+                    if (!cfg.Enabled) continue;
+                    if (!MainMenuRegistry.TryGetDef(cfg.Id, out var def)) continue;
 
-                ImGui.Spacing();
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                foreach (var (section, icon, label, hasSeparatorBefore) in NavItems) {
-                    if (hasSeparatorBefore) {
-                        ImGui.Spacing();
-                        ImGui.Separator();
-                        ImGui.Spacing();
+                    if (def.Kind == MenuItemKind.View) {
+                        DrawNavItemIconOnly(def.Id, def.Icon, def.Label);
+                    } else {
+                        DrawNavActionIconOnly(def.Icon, def.Label, () => def.OnClick?.Invoke(Ui));
                     }
-                    DrawNavItemIconOnly(section, icon, label);
-                }
-
-                ImGui.Spacing();
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                foreach (var (icon, label, action) in extraActions) {
-                    DrawNavActionIconOnly(icon, label, action);
                 }
             }
         }
     }
 
-    private void DrawNavItem(NavSection section, FontAwesomeIcon icon, string label) {
-        bool isSelected = _selectedSection == section;
+    private void DrawNavItem(string sectionId, FontAwesomeIcon icon, string label) {
+        bool isSelected = _selectedSection.Equals(sectionId, StringComparison.OrdinalIgnoreCase);
 
         using var headerSel = ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
                                     .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
                                     .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
 
-        ImGuiUtil.IconButton(icon, $"##NavIcon_{section}");
+        ImGuiUtil.IconButton(icon, $"##NavIcon_{sectionId}");
         ImGui.SameLine();
         if (ImGui.Selectable(label, isSelected)) {
-            SelectSection(section);
+            SelectSection(sectionId);
         }
     }
 
@@ -142,15 +96,15 @@ public partial class MainWindow : Window {
         }
     }
 
-    private void DrawNavItemIconOnly(NavSection section, FontAwesomeIcon icon, string tooltip) {
-        bool isSelected = _selectedSection == section;
+    private void DrawNavItemIconOnly(string sectionId, FontAwesomeIcon icon, string tooltip) {
+        bool isSelected = _selectedSection.Equals(sectionId, StringComparison.OrdinalIgnoreCase);
 
         using var col = ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, isSelected)
                                .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered)
                                .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
 
-        if (ImGuiUtil.IconButton(icon, $"##NavIconOnly_{section}", tooltip)) {
-            SelectSection(section);
+        if (ImGuiUtil.IconButton(icon, $"##NavIconOnly_{sectionId}", tooltip)) {
+            SelectSection(sectionId);
         }
     }
 
@@ -160,21 +114,13 @@ public partial class MainWindow : Window {
         }
     }
 
-    private void SelectSection(NavSection section) {
-        if (_selectedSection == section) return;
+    private void SelectSection(string sectionId) {
+        if (_selectedSection.Equals(sectionId, StringComparison.OrdinalIgnoreCase)) return;
 
-        // Hide current widget if switching away from a widget section
-        int prevIndex = GetWidgetIndex(_selectedSection);
-        if (prevIndex >= 0) {
-            // WidgetManager.Show on the new one will hide the old one
-        }
+        _selectedSection = sectionId;
 
-        _selectedSection = section;
-
-        // Immediately show/init widget for the new section
-        int newIndex = GetWidgetIndex(section);
-        if (newIndex >= 0) {
-            _widgetManager.Show(newIndex);
+        if (MainMenuRegistry.TryGetDef(sectionId, out var def) && def.WidgetIndex.HasValue) {
+            _widgetManager.Show(def.WidgetIndex.Value);
         }
     }
 

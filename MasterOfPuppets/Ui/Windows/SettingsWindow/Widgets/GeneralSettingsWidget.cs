@@ -54,13 +54,6 @@ public class GeneralSettingsWidget : Widget {
                 Plugin.Config.OpenOnLogin = openOnLogin;
                 Plugin.IpcProvider.SyncConfiguration();
             }
-
-            var allowCloseWithEscape = Plugin.Config.AllowCloseWithEscape;
-            if (ImGui.Checkbox(Language.SettingsWindowAllowCloseWithEscape, ref allowCloseWithEscape)) {
-                Plugin.Config.AllowCloseWithEscape = allowCloseWithEscape;
-                Plugin.IpcProvider.SyncConfiguration();
-                Plugin.Ui.MainWindow.UpdateWindowConfig();
-            }
         }
 
         ImGui.Spacing();

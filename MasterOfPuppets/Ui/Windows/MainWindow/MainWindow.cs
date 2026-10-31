@@ -18,34 +18,7 @@ public partial class MainWindow : Window {
 
     private static readonly Version Version = typeof(MainWindow).Assembly.GetName().Version;
 
-    internal enum NavSection {
-        Emotes,
-        Mounts,
-        Minions,
-        Facewear,
-        FashionAccessories,
-        Items,
-        GearSets,
-        // GearSetListWidget,
-        Commands,
-        Teleport,
-    }
-
-    private static readonly (NavSection Section, FontAwesomeIcon Icon, string Label, bool IsSeparatorBefore)[] NavItems = [
-        (NavSection.Commands,           FontAwesomeIcon.Terminal,          "Commands",             false),
-        (NavSection.Teleport,           FontAwesomeIcon.MapMarkerAlt,      "Teleport",             false),
-        (NavSection.Emotes,             FontAwesomeIcon.SmileWink,         "Emotes",               true),
-        (NavSection.Mounts,             FontAwesomeIcon.Horse,             "Mounts",               false),
-        (NavSection.Minions,            FontAwesomeIcon.Cat,               "Minions",              false),
-        (NavSection.Facewear,           FontAwesomeIcon.Glasses,           "Facewear",             false),
-        (NavSection.FashionAccessories, FontAwesomeIcon.Umbrella,          "Fashion Accessories",  false),
-        (NavSection.Items,              FontAwesomeIcon.ShoppingBag,       "Items",                false),
-        (NavSection.GearSets,           FontAwesomeIcon.Tshirt,            "Gear Sets",            false),
-        // (NavSection.GearSets,           FontAwesomeIcon.Briefcase,         "Gear Sets###GearSetList", false),
-
-    ];
-
-    private NavSection _selectedSection = NavSection.Commands;
+    private string _selectedSection = "Commands";
     private string _sidebarSearch = string.Empty;
     private bool _sidebarCollapsed = false;
     private float _sidebarWidth = 200f;
@@ -80,6 +53,7 @@ public partial class MainWindow : Window {
         Flags = ImGuiWindowFlags.None;
         if (!Plugin.Config.AllowMovement) Flags |= ImGuiWindowFlags.NoMove;
         if (!Plugin.Config.AllowResize) Flags |= ImGuiWindowFlags.NoResize;
+        EnsureValidSelectedSection();
         base.PreDraw();
     }
 
@@ -94,32 +68,31 @@ public partial class MainWindow : Window {
     private void DrawContent() {
         ImGui.BeginChild("##MopHubContent", new Vector2(0, -1), false);
 
-        int widgetIndex = GetWidgetIndex(_selectedSection);
-        if (widgetIndex >= 0) {
-            // Show/switch widget when section changes
-            _widgetManager.Show(widgetIndex);
-            _widgetManager.Draw();
-        } else {
-            switch (_selectedSection) {
-                case NavSection.Commands: DrawCommandsSection(); break;
-                case NavSection.Teleport: DrawTeleportSection(); break;
+        if (MainMenuRegistry.TryGetDef(_selectedSection, out var def) && def.Kind == MenuItemKind.View) {
+            if (def.WidgetIndex.HasValue) {
+                _widgetManager.Show(def.WidgetIndex.Value);
+                _widgetManager.Draw();
+            } else {
+                switch (def.Id) {
+                    case "Commands": DrawCommandsSection(); break;
+                    case "Teleport": DrawTeleportSection(); break;
+                }
             }
         }
 
         ImGui.EndChild();
     }
 
-    /// <summary>Maps NavSection to widget index (0-based). Returns -1 for non-widget sections.</summary>
-    private static int GetWidgetIndex(NavSection section) => section switch {
-        NavSection.Emotes => 0,
-        NavSection.Mounts => 1,
-        NavSection.Minions => 2,
-        NavSection.Facewear => 3,
-        NavSection.FashionAccessories => 4,
-        NavSection.Items => 5,
-        NavSection.GearSets => 6,
-        _ => -1,
-    };
+    private void EnsureValidSelectedSection() {
+        var items = Plugin.Config.MainMenuItems;
+        var currentItem = items.Find(i => i.Id.Equals(_selectedSection, StringComparison.OrdinalIgnoreCase));
+        if (currentItem == null || !currentItem.Enabled) {
+            var firstEnabledView = items.Find(i => i.Enabled && MainMenuRegistry.TryGetDef(i.Id, out var d) && d.Kind == MenuItemKind.View);
+            if (firstEnabledView != null) {
+                SelectSection(firstEnabledView.Id);
+            }
+        }
+    }
 
     internal void UpdateWindowConfig() {
         RespectCloseHotkey = Plugin.Config.AllowCloseWithEscape;
