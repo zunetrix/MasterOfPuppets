@@ -24,6 +24,7 @@ internal static unsafe partial class GameDialogManager {
         public const string WorldTravelSelect = "WorldTravelSelect";
         public const string TeleportHousingFriend = "TeleportHousingFriend";
         public const string TeleportTown = "TeleportTown";
+        public const string TelepotTown = "TelepotTown"; // aethernet list (game typo)
         // events
         public const string EasterMowingResult = "EasterMowingResult";
         public const string FGSEnterDialog = "FGSEnterDialog";
@@ -72,6 +73,34 @@ internal static unsafe partial class GameDialogManager {
                 return FireCallback(addonName, i);
         }
         return false;
+    }
+
+    /// <summary>
+    /// Clicks the SelectString entry matching <paramref name="text"/> (exact first, then contains).
+    /// Falls back to <paramref name="fallbackIndex"/> when no text matches.
+    /// </summary>
+    public static bool SelectStringByTextOrIndex(string? text, int fallbackIndex, string addonName = AddonName.SelectString) {
+        var addon = (AddonSelectString*)GetAddonByName(addonName);
+        if (addon == null) return false;
+        var count = addon->PopupMenu.PopupMenu.EntryCount;
+        if (count == 0) return false;
+
+        if (!string.IsNullOrWhiteSpace(text)) {
+            var needle = text.Trim();
+            var entries = new string[count];
+            for (var i = 0; i < count; i++) {
+                var ptr = addon->PopupMenu.PopupMenu.EntryNames[i].Value;
+                entries[i] = ptr == null ? string.Empty : new ReadOnlySeStringSpan(ptr).ExtractText().Trim();
+            }
+            for (var i = 0; i < count; i++)
+                if (string.Equals(entries[i], needle, System.StringComparison.OrdinalIgnoreCase))
+                    return FireCallback(addonName, i);
+            for (var i = 0; i < count; i++)
+                if (entries[i].Contains(needle, System.StringComparison.OrdinalIgnoreCase))
+                    return FireCallback(addonName, i);
+        }
+
+        return count > fallbackIndex && FireCallback(addonName, fallbackIndex);
     }
 
     /// <summary>Clicks the entry at zero-based <paramref name="index"/> in <paramref name="addonName"/>. Locale-independent.</summary>

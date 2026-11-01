@@ -47,6 +47,15 @@ internal partial class IpcProvider {
         WorldTravelManager.TravelToWorld(message.StringData[0], Plugin);
     }
 
+    public void ExecuteTeleportToAethernet(string destination) {
+        BroadCast(IpcMessage.Create(IpcMessageType.TeleportToAethernet, destination).Serialize(), includeSelf: true);
+    }
+
+    [IpcHandle(IpcMessageType.TeleportToAethernet)]
+    private void HandleExecuteTeleportToAethernet(IpcMessage message) {
+        AethernetTeleportManager.TeleportToAethernet(message.StringData[0], Plugin);
+    }
+
     public void ExecuteTeleportToEstate(string contentIdOrFriendName, string teleportOptionIndex) {
         BroadCast(IpcMessage.Create(IpcMessageType.TeleportToEstate, contentIdOrFriendName, teleportOptionIndex).Serialize(), includeSelf: true);
     }

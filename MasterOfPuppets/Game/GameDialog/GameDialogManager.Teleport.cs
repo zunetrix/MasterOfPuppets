@@ -1,3 +1,5 @@
+using Lumina.Text.ReadOnly;
+
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
 
@@ -54,7 +56,75 @@ internal static unsafe partial class GameDialogManager {
         // if (addon == null) return false;
         // return addon->FireCallbackInt(index + 2);
 
-        return FireCallback(AddonName.WorldTravelSelect, 0, index + 2); // Ls: Callback.Fire(addon, true, index + 2)
+        return FireCallback(AddonName.WorldTravelSelect, 0, index + 2); // Ls: Callback.Fire(addon, true, 0, index + 2)
+    }
+
+    /// <summary>
+    /// Switches the datacenter tab of <c>WorldTravelSelect</c>
+    /// Ls 2.6: Callback.Fire(addon, true, 1, tab)
+    /// </summary>
+    public static bool SelectWorldTravelTab(int tab) {
+        if (!IsAddonVisible(AddonName.WorldTravelSelect)) return false;
+        return FireCallback(AddonName.WorldTravelSelect, 1, tab);
+    }
+
+    //  TelepotTown (aethernet list)
+    //  AtkValues layout (from Lifestream ReaderTelepotTown):
+    //    [0] entry count, [6 + 4*i .. 9 + 4*i] = type/state/icon/callbackData, [262 + i] = destination name
+    private const int TelepotTownDataOffset = 6;
+    private const int TelepotTownNameOffset = 262;
+    private const int TelepotTownMaxEntries = 20;
+
+    internal readonly record struct AethernetDestination(string Name, uint CallbackData);
+
+    /// <summary>Reads the destinations listed in the open <c>TelepotTown</c> addon.</summary>
+    internal static System.Collections.Generic.List<AethernetDestination> GetTelepotTownDestinations() {
+        var list = new System.Collections.Generic.List<AethernetDestination>();
+        if (!TryGetAddonByName<AtkUnitBase>(AddonName.TelepotTown, out var addon) || !IsAddonReady(addon)) return list;
+
+        var values = addon->AtkValues;
+        var valuesCount = addon->AtkValuesCount;
+        if (values == null || valuesCount == 0) return list;
+
+        // [0] = number of entries; slots past it hold stale data (reading them as strings crashes)
+        var entries = values[0].Type == AtkValueType.UInt ? (int)values[0].UInt : TelepotTownMaxEntries;
+        entries = System.Math.Min(entries, TelepotTownMaxEntries);
+
+        for (var i = 0; i < entries; i++) {
+            var nameIdx = TelepotTownNameOffset + i;
+            var dataIdx = TelepotTownDataOffset + 4 * i + 3;
+            if (nameIdx >= valuesCount || dataIdx >= valuesCount) break;
+
+            var name = ReadAtkString(values[nameIdx]);
+            if (string.IsNullOrEmpty(name)) continue;
+
+            var data = values[dataIdx];
+            if (data.Type != AtkValueType.UInt) continue;
+
+            list.Add(new AethernetDestination(name, data.UInt));
+        }
+        return list;
+    }
+
+    /// <summary>Reads an AtkValue as text only when it actually holds a string (ECommons AtkReader rule).</summary>
+    private static string? ReadAtkString(AtkValue value) {
+        if (value.Type is not (AtkValueType.String or AtkValueType.ManagedString or AtkValueType.ConstString or AtkValueType.WideString))
+            return null;
+        if (value.String.Value == null) return null;
+        return new ReadOnlySeStringSpan(value.String.Value).ExtractText().Trim();
+    }
+
+    /// <summary>Teleports to the aethernet destination in <c>TelepotTown</c> (Ls: Callback.Fire(addon, true, 11, callbackData)).</summary>
+    public static bool SelectTelepotTownDestination(uint callbackData) {
+        return FireCallback(AddonName.TelepotTown, 11, callbackData);
+    }
+
+    /// <summary>Closes the addon if it is open.</summary>
+    public static bool CloseAddon(string addonName) {
+        var addon = GetAddonByName(addonName);
+        if (addon == null) return false;
+        addon->Close(true);
+        return true;
     }
 
     // town aetheryte

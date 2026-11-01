@@ -142,56 +142,29 @@ public partial class MainWindow : Window {
 
         ImGui.Spacing();
 
-        using (ImGuiGroupPanel.BeginGroupPanel("Teleport to Ward")) {
+        using (ImGuiGroupPanel.BeginGroupPanel("Residential Travel")) {
             ImGuiUtil.ToolTip("/mop ward <1-30>");
-            if (ImGui.BeginTable("##WardTable", 6, ImGuiTableFlags.SizingStretchSame)) {
-                for (var ward = 1; ward <= 30; ward++) {
-                    ImGui.TableNextColumn();
-                    if (ImGui.Button($"W{ward:D2}##Ward{ward}", new Vector2(-1, 0))) {
-                        Plugin.IpcProvider.ExecuteTeleportToWard(ward);
-                    }
-                }
-                ImGui.EndTable();
-            }
+            AetheryteTravelPanel.DrawResidential(Plugin, 6);
         }
 
         ImGui.Spacing();
 
-        DrawTravelToWorldSection();
+        using (ImGuiGroupPanel.BeginGroupPanel("World Visit")) {
+            ImGuiUtil.ToolTip("/mop world <WorldName>");
+            AetheryteTravelPanel.DrawWorldVisit(Plugin);
+        }
+
+        // ImGui.Spacing();
+
+        // using (ImGuiGroupPanel.BeginGroupPanel("Aethernet")) {
+        //     AethernetCatalog.TryGetContext(out var ctx);
+        //     AetheryteTravelPanel.DrawAethernet(Plugin, ctx.Object != null ? ctx : null);
+        // }
 
         if (HasTravelPlugin()) {
             ImGui.Spacing();
             ImGui.Spacing();
             DrawLifestreamDataCenterTravelSection();
-        }
-    }
-
-    private void DrawTravelToWorldSection() {
-        using var group = ImGuiGroupPanel.BeginGroupPanel("Travel to World");
-
-        var localPlayer = DalamudApi.PlayerState;
-        var dcId = localPlayer.IsLoaded ? localPlayer.CurrentWorld.ValueNullable?.DataCenter.RowId : null;
-
-        if (dcId == null) {
-            ImGui.TextDisabled("Not logged in");
-            return;
-        }
-
-        var worlds = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.Sheets.World>()
-            .Where(w => w.IsPublic && w.DataCenter.RowId == dcId.Value)
-            .OrderBy(w => w.Name.ToString())
-            .Select(w => w.Name.ToString())
-            .ToList();
-
-        if (ImGui.BeginTable("##WorldTable", 2, ImGuiTableFlags.SizingStretchSame)) {
-            foreach (var world in worlds) {
-                ImGui.TableNextColumn();
-                float btnWidth = ImGui.GetContentRegionAvail().X;
-                if (ImGui.Button($"{world}##World{world}", new Vector2(btnWidth, 0))) {
-                    Plugin.IpcProvider.ExecuteTravelToWorld(world);
-                }
-            }
-            ImGui.EndTable();
         }
     }
 
@@ -206,37 +179,25 @@ public partial class MainWindow : Window {
             return;
         }
 
-        var currentDcg = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.Sheets.WorldDCGroupType>().GetRowOrDefault(currentWorld.Value.DataCenter.RowId);
-        if (currentDcg == null) return;
-
-        var currentRegionId = currentDcg.Value.Region.RowId;
-
-        // JP = 1, NA = 2, EU = 3, OC = 4
-        var datacenters = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.Sheets.WorldDCGroupType>()
-            .Where(dc => dc.Region.RowId == currentRegionId || dc.Region.RowId == 4)
-            .OrderBy(dc => dc.Region.RowId == 4 ? 1 : 0)
-            .ThenBy(dc => dc.Name.ToString())
-            .ToList();
-
-        var worlds = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.Sheets.World>()
-            .Where(w => w.IsPublic)
-            .ToList();
-
+        // JP = 1, NA = 2, EU = 3, OC = 4 - grouped by display DC
+        var currentRegionId = currentWorld.Value.DataCenter.ValueNullable?.Region.RowId ?? 0;
+        var datacenters = WorldCatalog.GetDataCenterTravelGroups(currentRegionId);
         if (datacenters.Count == 0) return;
+
+        var currentDisplayDc = WorldCatalog.GetDisplayDataCenterId(currentWorld.Value);
 
         if (ImGui.BeginTable("##DCTravelTable", datacenters.Count, ImGuiTableFlags.SizingStretchSame | ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuter | ImGuiTableFlags.NoSavedSettings)) {
             foreach (var dc in datacenters) {
-                var isCurrentDc = currentWorld.Value.DataCenter.RowId == dc.RowId;
-                ImGui.TableSetupColumn($"{(isCurrentDc ? "> " : "")}{dc.Name.ToString()}");
+                var isCurrentDc = currentDisplayDc == dc.Id;
+                ImGui.TableSetupColumn($"{(isCurrentDc ? "> " : "")}{dc.Name}##dc{dc.Id}");
             }
             ImGui.TableHeadersRow();
             ImGui.TableNextRow();
 
             foreach (var dc in datacenters) {
                 ImGui.TableNextColumn();
-                var dcWorlds = worlds.Where(w => w.DataCenter.RowId == dc.RowId).OrderBy(w => w.Name.ToString()).ToList();
 
-                foreach (var world in dcWorlds) {
+                foreach (var world in dc.Worlds) {
                     var isCurrentWorld = currentWorld.Value.RowId == world.RowId;
                     var btnText = $"{(isCurrentWorld ? "> " : "")}{world.Name}";
 

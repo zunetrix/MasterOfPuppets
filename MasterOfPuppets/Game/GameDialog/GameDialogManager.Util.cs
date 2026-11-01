@@ -10,7 +10,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Text.ReadOnly;
 namespace MasterOfPuppets;
 
-// from: Lifestream Utils
+// based on: Lifestream Utils
 internal static unsafe partial class GameDialogManager {
 
     internal static List<string> GetAddonEntries(AddonSelectString* addon) {
@@ -22,11 +22,17 @@ internal static unsafe partial class GameDialogManager {
         return list;
     }
 
+    // WorldTranslate string array: world names start at 3, or at 6 on a tabbed merged DC (JP today). Ls 2.6
+    private const int WorldNamesOffset = 3;
+    private const int WorldNamesOffsetMerged = 6;
+    private const int WorldNamesCount = 8;
+
     internal static List<string> GetAvailableWorldDestinations() {
         var ret = new List<string>();
         var stringArray = RaptureAtkModule.Instance()->AtkArrayDataHolder.StringArrays[(int)StringArrayType.WorldTranslate];
         if (stringArray != null) {
-            for (var i = 3; i <= 10; i++) {
+            var start = WorldCatalog.IsCurrentDataCenterMerged() ? WorldNamesOffsetMerged : WorldNamesOffset;
+            for (var i = start; i < start + WorldNamesCount; i++) {
                 var str = stringArray->StringArray[i];
                 if (str.HasValue) {
                     var worldName = MemoryHelper.ReadStringNullTerminated((nint)str.Value).Trim();

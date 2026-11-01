@@ -15,9 +15,6 @@ namespace MasterOfPuppets;
 /// </summary>
 internal static class ResidentialTeleportManager {
 
-    // Aetheryte menu list index: "Residential District Aethernet."
-    private const int IndexResidentialDistrict = 1;
-
     // Row 6349 in the Addon sheet contains "Go to specified ward. (Review Tabs)" localised
     // to the client language automatically by DataManager.
     private static string TextGoToWard =>
@@ -95,14 +92,13 @@ internal static class ResidentialTeleportManager {
     }
 
     //  Step 2
-    //  Poll every frame until SelectString entry at index 1 ("Residential District Aethernet.") is visible and clicked.
-    //  Index-based to be locale-independent.
+    //  Poll every frame until "Residential District Aethernet." is visible and clicked.
+    //  Text from quest dialogue transport/Aetheryte (locale-aware), index as fallback.
     private static void Step_WaitForSelectStringMenu1(int ward) {
         var ok = false;
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
-            stopWhen: () => ok = GameDialogManager.SelectStringAtIndex(IndexResidentialDistrict),
-            // stopWhen: () => GameDialogManager.SelectStringByText(TextGoToWard),
+            stopWhen: () => ok = GameDialogManager.SelectStringByTextOrIndex(AetheryteMenuText.ResidentialDistrict, AetheryteMenuText.IndexResidentialDistrict),
             callback: () => {
                 if (!ok) { DalamudApi.PluginLog.Warning("[TeleportToWard] step2 timeout: SelectString1 not clicked"); return; }
                 Step_WaitForSelectStringMenu2(ward);

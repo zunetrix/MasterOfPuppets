@@ -566,6 +566,25 @@ public static partial class MopCommandsHelper {
             Requires the player to be near a main-city aetheryte. World must be in the same data center.
             """
         },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            SubCategory = MopActionSubCategory.HousingAndTravel,
+            TextCommand = "/mop aethernet \"Destination\"",
+            SuggestionCommand = "/mop aethernet ",
+            Example = """
+            /mop aethernet "The Aftcastle"
+            /mop aethernet "Arcanists' Guild"
+
+            Broadcast:
+            /mopbr /mop aethernet "The Aftcastle"
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Teleports to the specified aethernet destination of the current city via the aetheryte menu.
+            Destination name uses the client language and supports partial match (case-insensitive).
+            Requires the player to be near an aetheryte or aethernet shard of the same city.
+            """
+        },
 
         //  Broadcast
         new MopAction {

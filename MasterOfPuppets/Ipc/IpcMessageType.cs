@@ -102,4 +102,7 @@ public enum IpcMessageType {
     RidePillion,
     ExecuteUnequipGlasses,
     UpdateMacroVariables,
+
+    // teleport (appended to keep existing values stable)
+    TeleportToAethernet,
 }

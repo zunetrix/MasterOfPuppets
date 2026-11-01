@@ -449,6 +449,16 @@ public class PluginCommandManager : IDisposable {
                         WorldTravelManager.TravelToWorld(parsedArgs[1], Plugin);
                     }
                     break;
+                case "aethernet":
+                case "aethernettravel":
+                case "at": {
+                        if (parsedArgs.Count < 2 || string.IsNullOrWhiteSpace(parsedArgs[1])) {
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop aethernet \"Destination\"");
+                            return;
+                        }
+                        AethernetTeleportManager.TeleportToAethernet(parsedArgs[1], Plugin);
+                    }
+                    break;
                 case "objectquantity": {
                         if (parsedArgs.Count <= 1) {
                             DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop objectquantity <0-5>");

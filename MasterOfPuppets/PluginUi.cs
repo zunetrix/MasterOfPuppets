@@ -27,6 +27,7 @@ public class PluginUi : IDisposable {
     public XivLauncherWindow XivLauncherWindow { get; }
     public WindowLayoutWindow WindowLayoutWindow { get; }
     public GameSettingsWindow GameSettingsWindow { get; }
+    public AetheryteOverlayWindow AetheryteOverlayWindow { get; }
 
     public PluginUi(Plugin plugin) {
         Plugin = plugin;
@@ -48,6 +49,7 @@ public class PluginUi : IDisposable {
         XivLauncherWindow = AddWindow(new XivLauncherWindow(Plugin));
         WindowLayoutWindow = AddWindow(new WindowLayoutWindow(Plugin));
         GameSettingsWindow = AddWindow(new GameSettingsWindow(Plugin));
+        AetheryteOverlayWindow = AddWindow(new AetheryteOverlayWindow(Plugin));
     }
 
     private T AddWindow<T>(T window) where T : Window {

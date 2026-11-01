@@ -20,7 +20,7 @@ public class InterfaceSettingsWidget : Widget {
     public override void Draw() {
         var Plugin = Context.Plugin;
 
-        using (ImGuiGroupPanel.BeginGroupPanel("Main Window Menu Options")) {
+        if (ImGui.CollapsingHeader("Main Window Menu Options##MainWindowMenuOptions")) {
             ImGui.TextDisabled("Drag items to reorder the sidebar menu. Check or uncheck to display or hide options.");
             ImGui.Spacing();
 
@@ -138,6 +138,66 @@ public class InterfaceSettingsWidget : Widget {
                 Plugin.Config.ShowSettingsButton = showSettingsButton;
                 Plugin.IpcProvider.SyncConfiguration();
                 Plugin.Ui.MainWindow.UpdateWindowConfig();
+            }
+        }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        using (ImGuiGroupPanel.BeginGroupPanel("Aetheryte Overlay")) {
+            var showOverlay = Plugin.Config.ShowAetheryteOverlay;
+            if (ImGui.Checkbox("Show overlay when standing near an aetheryte", ref showOverlay)) {
+                Plugin.Config.ShowAetheryteOverlay = showOverlay;
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+
+            using (ImRaii.Disabled(!showOverlay)) {
+                ImGui.Indent();
+
+                var showAethernet = Plugin.Config.AetheryteOverlayShowAethernet;
+                if (ImGui.Checkbox("Aethernet##OverlayAethernet", ref showAethernet)) {
+                    Plugin.Config.AetheryteOverlayShowAethernet = showAethernet;
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                var showResidential = Plugin.Config.AetheryteOverlayShowResidential;
+                if (ImGui.Checkbox("Residential Travel##OverlayResidential", ref showResidential)) {
+                    Plugin.Config.AetheryteOverlayShowResidential = showResidential;
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                var showWorldVisit = Plugin.Config.AetheryteOverlayShowWorldVisit;
+                if (ImGui.Checkbox("World Visit##OverlayWorldVisit", ref showWorldVisit)) {
+                    Plugin.Config.AetheryteOverlayShowWorldVisit = showWorldVisit;
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                ImGui.Spacing();
+
+                var iconsOnly = Plugin.Config.AetheryteOverlayIconsOnly;
+                if (ImGui.Checkbox("Show category icons only (no text)##OverlayIconsOnly", ref iconsOnly)) {
+                    Plugin.Config.AetheryteOverlayIconsOnly = iconsOnly;
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                var dock = (int)Plugin.Config.AetheryteOverlayDock;
+                ImGui.SetNextItemWidth(150f * ImGuiHelpers.GlobalScale);
+                if (ImGui.Combo("Position##OverlayDock", ref dock, ["Left side", "Right side", "Free (drag)"])) {
+                    Plugin.Config.AetheryteOverlayDock = (AetheryteOverlayDock)dock;
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                using (ImRaii.Disabled(Plugin.Config.AetheryteOverlayDock == AetheryteOverlayDock.Free)) {
+                    var offsetY = Plugin.Config.AetheryteOverlayOffsetY * 100f;
+                    ImGui.SetNextItemWidth(150f * ImGuiHelpers.GlobalScale);
+                    if (ImGui.SliderFloat("Vertical offset##OverlayOffsetY", ref offsetY, -50f, 50f, "%.0f%%")) {
+                        Plugin.Config.AetheryteOverlayOffsetY = offsetY / 100f;
+                    }
+                    if (ImGui.IsItemDeactivatedAfterEdit())
+                        Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                ImGui.Unindent();
             }
         }
     }

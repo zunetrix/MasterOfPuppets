@@ -252,6 +252,15 @@ internal class Configuration : IPluginConfiguration {
     public float ActionIconSize { get; set; } = 48;
     public uint PreferredMultiRiderMountId { get; set; } = 0;
 
+    // Aetheryte travel overlay
+    public bool ShowAetheryteOverlay { get; set; } = false;
+    public bool AetheryteOverlayShowAethernet { get; set; } = true;
+    public bool AetheryteOverlayShowResidential { get; set; } = true;
+    public bool AetheryteOverlayShowWorldVisit { get; set; } = true;
+    public AetheryteOverlayDock AetheryteOverlayDock { get; set; } = AetheryteOverlayDock.Left;
+    public float AetheryteOverlayOffsetY { get; set; } = 0f; // fraction of screen height from the middle (-0.5 .. 0.5)
+    public bool AetheryteOverlayIconsOnly { get; set; } = false;
+
     // Client Launcher
     public string XivLauncherPath { get; set; } = XivLauncherManager.GetDefaultLauncherPath();
     public int XivLaunchDelaySeconds { get; set; } = 20;
