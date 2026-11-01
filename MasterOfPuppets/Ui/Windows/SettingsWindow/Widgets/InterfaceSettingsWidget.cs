@@ -20,7 +20,7 @@ public class InterfaceSettingsWidget : Widget {
     public override void Draw() {
         var Plugin = Context.Plugin;
 
-        if (ImGui.CollapsingHeader("Main Window Menu Options##MainWindowMenuOptions")) {
+        if (ImGui.CollapsingHeader("Main Window Menu Options##MainWindowMenuOptions", ImGuiTreeNodeFlags.DefaultOpen)) {
             ImGui.TextDisabled("Drag items to reorder the sidebar menu. Check or uncheck to display or hide options.");
             ImGui.Spacing();
 

@@ -9,9 +9,6 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Util.ImGuiExt;
 
-using ExposedObject;
-using System;
-using System.Reflection;
 using MasterOfPuppets.Util;
 
 namespace MasterOfPuppets.Debug;
@@ -108,10 +105,6 @@ public sealed class GeneralDebugWidget : Widget {
             PrintHotbar();
         }
 
-        if (ImGui.Button("Fix Plugin Load Error")) {
-            FixPluginLoadError();
-        }
-
         if (ImGuiUtil.ButtonStyled("Free Process Memory", ImGuiUtil.ButtonStyle.Success)) {
             WindowsApi.FreeProcessWorkingMemory();
         }
@@ -149,37 +142,6 @@ public sealed class GeneralDebugWidget : Widget {
                 var slot = hotbar.Slots[slotIndex];
                 DalamudApi.PluginLog.Debug($" bar[{hotbarIndex},{slotIndex}] {slot.CommandType} - ({slot.ApparentSlotType}) - {slot.CommandId} - ({slot.ApparentActionId})");
             }
-        }
-    }
-
-    public static void FixPluginLoadError() {
-        try {
-            var pi = DalamudApi.PluginInterface;
-            var pluginManager = Exposed.From(pi.GetType().Assembly.
-                GetType("Dalamud.Service`1", true)
-                .MakeGenericType(pi.GetType().Assembly.GetType("Dalamud.Plugin.Internal.PluginManager", true)))
-                .Get();
-
-            var installedPlugins = Exposed.From(pluginManager).InstalledPlugins;
-            Type stateEnum = pi.GetType().Assembly.GetType("Dalamud.Plugin.Internal.Types.PluginState");
-
-            foreach (var t in installedPlugins) {
-                var localPlugin = (object)t;
-                var state = localPlugin.GetType().GetProperty("State", BindingFlags.Public | BindingFlags.Instance).GetValue(localPlugin).ToString();
-                DalamudApi.PluginLog.Information($"Plugin {localPlugin.GetType().GetProperty("Name", BindingFlags.Public | BindingFlags.Instance).GetValue(localPlugin)}, state {state}");
-
-                if (state == "UnloadError" || state == "LoadError" || state == "DependencyResolutionFailed") {
-                    DalamudApi.PluginLog.Warning("Detected error state");
-                    localPlugin.GetType().GetProperty("State", BindingFlags.Public | BindingFlags.Instance).SetValue(localPlugin, stateEnum.GetEnumValues().GetValue(0));
-                    var manifest = localPlugin.GetType().GetProperty("Manifest", BindingFlags.Public | BindingFlags.Instance).GetValue(localPlugin);
-                    manifest.GetType().GetProperty("Disabled", BindingFlags.Public | BindingFlags.Instance).SetValue(manifest, true);
-                    state = localPlugin.GetType().GetProperty("State", BindingFlags.Public | BindingFlags.Instance).GetValue(localPlugin).ToString();
-                    DalamudApi.PluginLog.Information($"Plugin {localPlugin.GetType().GetProperty("Name", BindingFlags.Public | BindingFlags.Instance).GetValue(localPlugin)}, state {state}");
-                }
-
-            }
-        } catch (Exception e) {
-            DalamudApi.PluginLog.Error($"{e.Message}\n{e.StackTrace}");
         }
     }
 }

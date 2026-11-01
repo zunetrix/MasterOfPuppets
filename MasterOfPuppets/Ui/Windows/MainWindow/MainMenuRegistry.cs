@@ -38,6 +38,7 @@ public static class MainMenuRegistry {
         new("GameSettings", "Game Settings Profile", FontAwesomeIcon.SlidersH, MenuItemKind.Action, OnClick: ui => ui.GameSettingsWindow.Toggle()),
         new("PeerMonitor", "Peer Monitor", FontAwesomeIcon.UsersViewfinder, MenuItemKind.Action, OnClick: ui => ui.PeerMonitorWindow.Toggle()),
         new("XivLauncher", "XIV Launcher", FontAwesomeIcon.Rocket, MenuItemKind.Action, OnClick: ui => ui.XivLauncherWindow.Toggle()),
+        new("Plugins", "Plugins", FontAwesomeIcon.PuzzlePiece, MenuItemKind.View, WidgetIndex: 7),
         new("Settings", "Settings", FontAwesomeIcon.Cog, MenuItemKind.Action, OnClick: ui => ui.SettingsWindow.Toggle()),
         new("Help", "Help", FontAwesomeIcon.QuestionCircle, MenuItemKind.Action, OnClick: ui => ui.HelpWindow.Toggle()),
     ];

@@ -700,6 +700,23 @@ public static partial class MopCommandsHelper {
         },
         new MopAction {
             Category = MopActionCategory.PluginCommand,
+            SubCategory = MopActionSubCategory.Settings,
+            TextCommand = "/mop fixplugins",
+            SuggestionCommand = "/mop fixplugins",
+            Example = """
+            /mop fixplugins
+
+            Broadcast:
+            /mopbr /mop fixplugins
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Resets Dalamud plugins stuck in a load error state (LoadError, UnloadError, DependencyResolutionFailed)
+            so they can be enabled again without restarting the game.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
             SubCategory = MopActionSubCategory.RenderAndCamera,
             TextCommand = "/mop camhack on|off|toggle",
             SuggestionCommand = "/mop camhack ",

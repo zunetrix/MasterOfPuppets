@@ -472,6 +472,14 @@ public class PluginCommandManager : IDisposable {
                         GameSettingsManager.SetDisplayObjectLimit(displayObjectLimitType);
                     }
                     break;
+                case "fixplugins": {
+                        var fixedCount = DalamudPluginHelper.FixPluginLoadError();
+                        DalamudApi.ShowNotification(
+                            fixedCount > 0 ? $"Fixed {fixedCount} plugin(s) with load error" : "No plugins with load error found",
+                            fixedCount > 0 ? NotificationType.Success : NotificationType.Info,
+                            5000);
+                    }
+                    break;
                 case "sound": {
                         if (parsedArgs.Count < 2) {
                             DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop sound <on|off|toggle>");

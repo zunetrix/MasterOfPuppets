@@ -44,6 +44,7 @@ public partial class MainWindow : Window {
         _widgetManager.Add(() => new FashionAccessoriesWidget(_widgetContext));  // idx 4 → FashionAccessories
         _widgetManager.Add(() => new ItemsWidget(_widgetContext));               // idx 5 → Items
         _widgetManager.Add(() => new GearSetWidget(_widgetContext));             // idx 6 → GearSets
+        _widgetManager.Add(() => new DalamudPluginsWidget(_widgetContext));             // idx 7 → Plugins
         // _widgetManager.Add(() => new GearSetListWidget(_widgetContext));         // idx 7 → GearSetList
 
         UpdateWindowConfig();

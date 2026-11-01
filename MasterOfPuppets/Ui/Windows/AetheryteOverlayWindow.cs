@@ -124,7 +124,7 @@ public class AetheryteOverlayWindow : Window {
         if (_context is not { } ctx) return;
         var now = Environment.TickCount64;
 
-        //  category bar
+        // category bar
         var iconsOnly = Plugin.Config.AetheryteOverlayIconsOnly;
         foreach (var def in GetVisibleCategories(ctx)) {
             var clicked = iconsOnly
@@ -148,10 +148,7 @@ public class AetheryteOverlayWindow : Window {
         _lastHoverMs = now;
     }
 
-    //  submenu
-    //  A separate ImGui window, not a popup: an open popup blocks hovering the bar,
-    //  which would break switching category by hover.
-
+    // submenu
     private void DrawSubmenu(AethernetCatalog.AetheryteContext ctx, long now) {
         if (_openCategory == Category.None) return;
 
@@ -202,7 +199,6 @@ public class AetheryteOverlayWindow : Window {
     }
 
     //  helpers
-
     /// <summary>Square icon-only category button, same look as <see cref="ImGuiUtil.DrawCmdButton"/>.</summary>
     private bool DrawIconOnlyButton(CategoryDef def) {
         var size = new Vector2(CategoryIconButtonSize, CategoryIconButtonSize);

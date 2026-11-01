@@ -40,7 +40,6 @@ public class DebugWindow : Window {
         _widgetManager.Add(() => new HotbarPetDebugWidget(_widgetContext));
         _widgetManager.Add(() => new MovementDebugWidget(_widgetContext));
         _widgetManager.Add(() => new TargetDebugWidget(_widgetContext));
-        _widgetManager.Add(() => new TravelDebugWidget(_widgetContext));
         _widgetManager.Add(() => new InventoryDebugWidget(_widgetContext));
         _widgetManager.Add(() => new UiElementDebugWidget(_widgetContext));
         _widgetManager.Add(() => new UiAnimationDebugWidget(_widgetContext));

@@ -43,6 +43,19 @@ internal sealed class IpcBus : IDisposable {
         _channel.Writer.TryWrite((serialized, includeSelf));
     }
 
+    /// <summary>
+    /// Publishes immediately, bypassing the queue, and blocks up to <paramref name="timeout"/>.
+    /// Used during shutdown, when the queue worker is about to be cancelled.
+    /// </summary>
+    public void PublishNow(byte[] serialized, TimeSpan timeout) {
+        if (!IsAvailable) return;
+        try {
+            _transport.PublishAsync(new BinaryData(serialized)).Wait(timeout);
+        } catch (Exception ex) {
+            DalamudApi.PluginLog.Warning(ex, "IpcBus: error publishing message immediately");
+        }
+    }
+
     private void OnTransportMessageReceived(BinaryData payload) {
         try {
             var message = payload.ToArray().Decompress().ProtoDeserialize<IpcMessage>();

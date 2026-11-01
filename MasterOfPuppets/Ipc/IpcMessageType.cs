@@ -105,4 +105,10 @@ public enum IpcMessageType {
 
     // teleport (appended to keep existing values stable)
     TeleportToAethernet,
+
+    // dalamud plugins / collections
+    ExecutePluginCommandStaggered,
+
+    // peers
+    PeerDisconnected,
 }
