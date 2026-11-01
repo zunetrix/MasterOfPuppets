@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
@@ -83,6 +84,10 @@ public class AetheryteOverlayWindow : Window {
         var config = Plugin.Config;
         if (!config.ShowAetheryteOverlay) return CloseSubmenu();
         if (!DalamudApi.PlayerState.IsLoaded) return CloseSubmenu();
+
+        // per-character toggle (unknown characters default to shown, like the other per-character options)
+        var charConfig = config.Characters.FirstOrDefault(c => c.Cid == DalamudApi.PlayerState.ContentId);
+        if (charConfig != null && !charConfig.ShowAetheryteOverlay) return CloseSubmenu();
 
         var condition = DalamudApi.Condition;
         if (condition[ConditionFlag.InCombat]

@@ -151,6 +151,13 @@ public class InterfaceSettingsWidget : Widget {
                 Plugin.IpcProvider.SyncConfiguration();
             }
 
+            ImGui.SameLine();
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.Users, $"##ShowCharactersBtn", Language.ShowCharactersBtn)) {
+                Plugin.Ui.CharactersWindow.Toggle();
+            }
+            ImGuiUtil.ToolTip("Global toggle. Each character can also be enabled/disabled in the Characters settings");
+
+
             using (ImRaii.Disabled(!showOverlay)) {
                 ImGui.Indent();
 

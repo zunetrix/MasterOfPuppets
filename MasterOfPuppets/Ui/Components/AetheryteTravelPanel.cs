@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 
 using MasterOfPuppets.Util.ImGuiExt;
@@ -46,15 +47,18 @@ internal static class AetheryteTravelPanel {
         }
 
         foreach (var entry in entries) {
+            // never disabled: the click is broadcast and other clients may be elsewhere;
+            // AethernetTeleportManager skips the travel on clients already at the destination
             var isCurrent = ctx?.CurrentRowId == entry.RowId;
-            using (ImRaii.Disabled(isCurrent)) {
+            using (PushCurrentLocationColors(isCurrent)) {
                 var label = $"{GetAethernetLabel(entry)}##Aethernet{entry.RowId}";
                 if (ImGui.Button(label, new Vector2(buttonWidth, 0))) {
                     plugin.IpcProvider.ExecuteTeleportToAethernet(entry.Name);
                     MarkActionTriggered();
                 }
             }
-            ImGuiUtil.ToolTip($"/mop aethernet \"{entry.Name}\"");
+            var command = $"/mop aethernet \"{entry.Name}\"";
+            ImGuiUtil.ToolTip(isCurrent ? $"Current location\n{command}" : command);
         }
     }
 
@@ -85,7 +89,7 @@ internal static class AetheryteTravelPanel {
     }
 
     private static void DrawWardButton(Plugin plugin, int ward, float buttonWidth) {
-        if (ImGui.Button($"W{ward:D2}##Ward{ward}", new Vector2(buttonWidth, 0))) {
+        if (ImGui.Button($"{ward:D2}##Ward{ward}", new Vector2(buttonWidth, 0))) {
             plugin.IpcProvider.ExecuteTeleportToWard(ward);
             MarkActionTriggered();
         }
@@ -121,7 +125,7 @@ internal static class AetheryteTravelPanel {
             var padding = ImGui.GetStyle().FramePadding.X * 2;
             foreach (var group in groups)
                 foreach (var world in group.Worlds)
-                    buttonWidth = Math.Max(buttonWidth, ImGui.CalcTextSize(GetWorldLabel(world, current.Value.RowId, homeWorldId)).X + padding);
+                    buttonWidth = Math.Max(buttonWidth, ImGui.CalcTextSize(GetWorldLabel(world)).X + padding);
 
             for (var i = 0; i < groups.Count; i++) {
                 var group = groups[i];
@@ -152,8 +156,8 @@ internal static class AetheryteTravelPanel {
         }
     }
 
-    private static string GetWorldLabel(Lumina.Excel.Sheets.World world, uint currentWorldId, uint homeWorldId) =>
-        $"{(world.RowId == currentWorldId ? "> " : "")}{world.Name.ExtractText()}{(world.RowId == homeWorldId ? " *" : "")}";
+    // current world = button color, home world = border (no text markers)
+    private static string GetWorldLabel(Lumina.Excel.Sheets.World world) => world.Name.ExtractText();
 
     private static void DrawWorldButtons(Plugin plugin, IReadOnlyList<Lumina.Excel.Sheets.World> worlds, uint currentWorldId, uint homeWorldId, float buttonWidth) {
         foreach (var world in worlds) {
@@ -161,14 +165,45 @@ internal static class AetheryteTravelPanel {
             var isCurrent = world.RowId == currentWorldId;
             var isHome = world.RowId == homeWorldId;
 
-            using (ImRaii.Disabled(isCurrent)) {
-                var label = $"{GetWorldLabel(world, currentWorldId, homeWorldId)}##World{world.RowId}";
+            // never disabled: the click is broadcast and other clients may be on another world;
+            // WorldTravelManager skips the travel on clients already on the destination
+            using (PushCurrentLocationColors(isCurrent))
+            using (PushHomeWorldBorder(isHome)) {
+                var label = $"{GetWorldLabel(world)}##World{world.RowId}";
                 if (ImGui.Button(label, new Vector2(buttonWidth, 0))) {
                     plugin.IpcProvider.ExecuteTravelToWorld(name);
                     MarkActionTriggered();
                 }
             }
-            ImGuiUtil.ToolTip(isHome ? $"Home world\n/mop world {name}" : $"/mop world {name}");
+
+            var tooltip = $"/mop world {name}";
+            if (isHome) tooltip = $"Home world\n{tooltip}";
+            if (isCurrent) tooltip = $"Current world\n{tooltip}";
+            ImGuiUtil.ToolTip(tooltip);
+        }
+    }
+
+    //  Location styles
+
+    private static IDisposable PushCurrentLocationColors(bool isCurrent) =>
+        ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonSuccessNormal, isCurrent)
+            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonSuccessHovered, isCurrent)
+            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonSuccessActive, isCurrent);
+
+    private static HomeWorldBorder PushHomeWorldBorder(bool isHome) => new(isHome);
+
+    private readonly struct HomeWorldBorder : IDisposable {
+        private readonly IDisposable _color;
+        private readonly IDisposable _style;
+
+        public HomeWorldBorder(bool isHome) {
+            _color = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor, isHome);
+            _style = ImRaii.PushStyle(ImGuiStyleVar.FrameBorderSize, 1.5f * ImGuiHelpers.GlobalScale, isHome);
+        }
+
+        public void Dispose() {
+            _style.Dispose();
+            _color.Dispose();
         }
     }
 }

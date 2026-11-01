@@ -97,19 +97,21 @@ public partial class CharactersWindow {
             .ToList();
 
         float actionsColWidth = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.X;
-        float kbColWidth = ImGui.GetFrameHeight();
+        // checkbox columns fit their header text (min = checkbox size); checkboxes are centered in the cell
+        static float CheckColWidth(string header) => Math.Max(ImGui.GetFrameHeight(), ImGui.CalcTextSize(header).X);
 
-        if (!ImGui.BeginTable("##CharactersTable", 7,
+        if (!ImGui.BeginTable("##CharactersTable", 8,
             ImGuiTableFlags.RowBg | ImGuiTableFlags.PadOuterX |
             ImGuiTableFlags.NoSavedSettings | ImGuiTableFlags.BordersInnerV))
             return;
 
         ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 28 * ImGuiHelpers.GlobalScale);
         ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn("Login", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
-        ImGui.TableSetupColumn("KB", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
-        ImGui.TableSetupColumn("Party", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
-        ImGui.TableSetupColumn("TP", ImGuiTableColumnFlags.WidthFixed, kbColWidth);
+        ImGui.TableSetupColumn("Login", ImGuiTableColumnFlags.WidthFixed, CheckColWidth("Login"));
+        ImGui.TableSetupColumn("Broadcast", ImGuiTableColumnFlags.WidthFixed, CheckColWidth("Broadcast"));
+        ImGui.TableSetupColumn("Party", ImGuiTableColumnFlags.WidthFixed, CheckColWidth("Party"));
+        ImGui.TableSetupColumn("Teleport", ImGuiTableColumnFlags.WidthFixed, CheckColWidth("Teleport"));
+        ImGui.TableSetupColumn("Overlay", ImGuiTableColumnFlags.WidthFixed, CheckColWidth("Overlay"));
         ImGui.TableSetupColumn("Actions", ImGuiTableColumnFlags.WidthFixed, actionsColWidth);
         ImGui.TableHeadersRow();
 
@@ -157,6 +159,7 @@ public partial class CharactersWindow {
             // col 2: auto-login toggle
             ImGui.TableNextColumn();
             bool loginEnabled = allCharacters[i].AutoLoginEnabled;
+            CenterCheckboxInCell();
             if (ImGui.Checkbox($"##Login_{allCharacters[i].Cid}", ref loginEnabled)) {
                 allCharacters[i].AutoLoginEnabled = loginEnabled;
                 Plugin.Config.Save();
@@ -171,6 +174,7 @@ public partial class CharactersWindow {
             // col 3: keyboard broadcast toggle
             ImGui.TableNextColumn();
             bool kbEnabled = allCharacters[i].KeyboardBroadcastEnabled;
+            CenterCheckboxInCell();
             if (ImGui.Checkbox($"##KB_{allCharacters[i].Cid}", ref kbEnabled)) {
                 allCharacters[i].KeyboardBroadcastEnabled = kbEnabled;
                 Plugin.Config.Save();
@@ -181,6 +185,7 @@ public partial class CharactersWindow {
             // col 4: auto accept party invite toggle
             ImGui.TableNextColumn();
             bool partyEnabled = allCharacters[i].AutoAcceptPartyInvite;
+            CenterCheckboxInCell();
             if (ImGui.Checkbox($"##Party_{allCharacters[i].Cid}", ref partyEnabled)) {
                 allCharacters[i].AutoAcceptPartyInvite = partyEnabled;
                 Plugin.Config.Save();
@@ -191,6 +196,7 @@ public partial class CharactersWindow {
             // col 5: auto accept teleport toggle
             ImGui.TableNextColumn();
             bool tpEnabled = allCharacters[i].AutoAcceptTeleport;
+            CenterCheckboxInCell();
             if (ImGui.Checkbox($"##TP_{allCharacters[i].Cid}", ref tpEnabled)) {
                 allCharacters[i].AutoAcceptTeleport = tpEnabled;
                 Plugin.Config.Save();
@@ -198,7 +204,18 @@ public partial class CharactersWindow {
             }
             ImGuiUtil.ToolTip("Allow this character to auto-accept teleport requests (requires global toggle in Settings)");
 
-            // col 6: action buttons (right-aligned by column sizing)
+            // col 6: aetheryte overlay toggle
+            ImGui.TableNextColumn();
+            bool overlayEnabled = allCharacters[i].ShowAetheryteOverlay;
+            CenterCheckboxInCell();
+            if (ImGui.Checkbox($"##Overlay_{allCharacters[i].Cid}", ref overlayEnabled)) {
+                allCharacters[i].ShowAetheryteOverlay = overlayEnabled;
+                Plugin.Config.Save();
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.ToolTip("Show the aetheryte travel overlay on this character (requires global toggle in Settings > Interface)");
+
+            // col 7: action buttons (right-aligned by column sizing)
             ImGui.TableNextColumn();
             bool alreadyCopied = _copiedCids.Contains(allCharacters[i].Cid);
             var copyColor = alreadyCopied ? Style.Colors.Green : Style.Colors.White;
@@ -221,6 +238,11 @@ public partial class CharactersWindow {
         ImGui.EndTable();
         ImGui.Spacing();
         ImGui.Spacing();
+    }
+
+    private static void CenterCheckboxInCell() {
+        var offset = (ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight()) * 0.5f;
+        if (offset > 0) ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
     }
 
     private void ResetCopiedCids() {

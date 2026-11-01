@@ -45,7 +45,7 @@ internal static class WorldTravelManager {
                 .OrderBy(x => Vector3.DistanceSquared(player.Position, x.Position))
                 .FirstOrDefault();
 
-            if (aetheryte != null && Vector3.Distance(aetheryte.Position, player.Position) > 10f) {
+            if (aetheryte != null && !AethernetCatalog.IsInInteractRange(player.Position, aetheryte)) {
                 plugin.MovementManager.MoveTo(aetheryte.GameObjectId);
                 Step_WaitUntilCloseAndTargetAetheryte(world, aetheryte, plugin);
             } else {
@@ -62,12 +62,12 @@ internal static class WorldTravelManager {
             stopWhen: () => {
                 var player = DalamudApi.ObjectTable.LocalPlayer;
                 if (player == null || aetheryte == null) return false;
-                ok = Vector3.Distance(aetheryte.Position, player.Position) <= 10f;
+                ok = AethernetCatalog.IsInInteractRange(player.Position, aetheryte);
                 return ok;
             },
             callback: () => {
                 if (!ok) {
-                    DalamudApi.PluginLog.Warning("[TravelToWorld] move timeout: Aetheryte distance still > 10");
+                    DalamudApi.PluginLog.Warning("[TravelToWorld] move timeout: aetheryte still out of interact range");
                     plugin.MovementManager.StopMove();
                     return;
                 }

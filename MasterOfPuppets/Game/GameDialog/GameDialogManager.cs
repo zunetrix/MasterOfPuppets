@@ -25,9 +25,6 @@ internal static unsafe partial class GameDialogManager {
         public const string TeleportHousingFriend = "TeleportHousingFriend";
         public const string TeleportTown = "TeleportTown";
         public const string TelepotTown = "TelepotTown"; // aethernet list (game typo)
-        // events
-        public const string EasterMowingResult = "EasterMowingResult";
-        public const string FGSEnterDialog = "FGSEnterDialog";
         public const string ContentsFinderConfirm = "ContentsFinderConfirm";
     }
 

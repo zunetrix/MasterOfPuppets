@@ -61,6 +61,15 @@ internal static class AethernetCatalog {
         return GetGroup(territory?.Aetheryte.ValueNullable?.AethernetGroup ?? 0);
     }
 
+    /// <summary>
+    /// True when <paramref name="aetheryte"/> can be interacted with from <paramref name="playerPosition"/>.
+    /// Shared by the overlay and the travel managers (the aetheryte crystal sits high, so a plain 3D
+    /// distance check overestimates the range).
+    /// </summary>
+    public static bool IsInInteractRange(Vector3 playerPosition, IGameObject aetheryte) =>
+        Vector2.Distance(new(playerPosition.X, playerPosition.Z), new(aetheryte.Position.X, aetheryte.Position.Z)) < MaxDistance2D
+        && Vector3.Distance(playerPosition, aetheryte.Position) < MaxDistance3D;
+
     /// <summary>Nearest targetable aetheryte object within interaction range, or null.</summary>
     public static IGameObject? GetNearbyAetheryteObject() {
         var player = DalamudApi.ObjectTable.LocalPlayer;
@@ -68,8 +77,7 @@ internal static class AethernetCatalog {
 
         return DalamudApi.ObjectTable
             .Where(o => o != null && o.ObjectKind == ObjectKind.Aetheryte && o.IsTargetable)
-            .Where(o => Vector2.Distance(new(player.Position.X, player.Position.Z), new(o.Position.X, o.Position.Z)) < MaxDistance2D
-                     && Vector3.Distance(player.Position, o.Position) < MaxDistance3D)
+            .Where(o => IsInInteractRange(player.Position, o))
             .OrderBy(o => Vector3.DistanceSquared(player.Position, o.Position))
             .FirstOrDefault();
     }
