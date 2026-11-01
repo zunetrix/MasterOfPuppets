@@ -16,14 +16,29 @@ public record PeerCharacterInfo(
     DateTime LastSeen = default
 );
 
+public enum PeerStatus {
+    Online,
+    Stale
+}
+
 internal partial class IpcProvider {
     private static readonly TimeSpan CharacterDataBroadcastInterval = TimeSpan.FromSeconds(5);
-    public static readonly TimeSpan PeerCharacterDataMaxAge = TimeSpan.FromSeconds(15);
+
+    /// <summary>Peers seen within this window are considered online (≈3 missed heartbeats).</summary>
+    public static readonly TimeSpan PeerOnlineMaxAge = TimeSpan.FromSeconds(15);
+
+    /// <summary>Stale peers are kept (for display) until this age, then removed.</summary>
+    public static readonly TimeSpan PeerRemoveMaxAge = TimeSpan.FromSeconds(60);
+
     private DateTime _nextCharacterDataBroadcast = DateTime.MinValue;
+
+    // last ContentId announced by this client, still valid during logout/unload when PlayerState may be cleared
+    private ulong _lastAnnouncedContentId;
 
     /// <summary>
     /// Character info received from each peer. Key = ContentId.
-    /// Populated when peers respond to <see cref="RequestCharacterData"/>
+    /// Populated by the heartbeat and when peers respond to <see cref="RequestCharacterData"/>.
+    /// Includes stale peers; use <see cref="GetOnlinePeers"/> to act on peers.
     /// </summary>
     public ConcurrentDictionary<long, PeerCharacterInfo> PeerCharacterData { get; } = new();
 
@@ -34,10 +49,16 @@ internal partial class IpcProvider {
         BroadCast(IpcMessage.Create(IpcMessageType.RequestCharacterData).Serialize(), includeSelf: true);
     }
 
+    /// <summary>Forces the heartbeat to be sent on the next frame (e.g. right after login).</summary>
+    public void SendCharacterDataNow() {
+        _nextCharacterDataBroadcast = DateTime.MinValue;
+    }
+
     public void UpdateCharacterDataHeartbeat() {
         var now = DateTime.UtcNow;
 
-        if (now < _nextCharacterDataBroadcast)
+        // don't consume the interval while player data isn't available yet (e.g. right after login)
+        if (now < _nextCharacterDataBroadcast || !DalamudApi.PlayerState.IsLoaded)
             return;
 
         _nextCharacterDataBroadcast = now + CharacterDataBroadcastInterval;
@@ -45,13 +66,38 @@ internal partial class IpcProvider {
         BroadcastCharacterData(IpcMessageType.CharacterData);
     }
 
-    public IReadOnlyList<PeerCharacterInfo> GetFreshPeerCharacterData() {
+    /// <summary>
+    /// Online peers (including self) ordered by ContentId, so every client computes the same order.
+    /// </summary>
+    public IReadOnlyList<PeerCharacterInfo> GetOnlinePeers() {
         var now = DateTime.UtcNow;
         PruneStaleCharacterData(now);
         return PeerCharacterData.Values
-            .Where(peer => IsFreshPeer(peer, now))
+            .Where(peer => GetPeerStatus(peer, now) == PeerStatus.Online)
             .OrderBy(peer => peer.ContentId)
             .ToList();
+    }
+
+    public static PeerStatus GetPeerStatus(PeerCharacterInfo peer, DateTime now) =>
+        peer.LastSeen != default && now - peer.LastSeen <= PeerOnlineMaxAge ? PeerStatus.Online : PeerStatus.Stale;
+
+    /// <summary>
+    /// Notifies peers that this client is leaving (logout / plugin unload) so they drop it right away
+    /// instead of waiting for it to go stale.
+    /// </summary>
+    public void BroadcastPeerDisconnected(bool immediate = false) {
+        if (_lastAnnouncedContentId == 0) return;
+
+        var serialized = IpcMessage.Create(IpcMessageType.PeerDisconnected, _lastAnnouncedContentId).Serialize();
+        if (immediate) {
+            // queue worker is about to be cancelled on dispose, publish synchronously
+            if (Plugin.Config.SyncClients) _bus.PublishNow(serialized, TimeSpan.FromMilliseconds(500));
+        } else {
+            BroadCast(serialized);
+        }
+
+        PeerCharacterData.TryRemove((long)_lastAnnouncedContentId, out _);
+        _lastAnnouncedContentId = 0;
     }
 
     [IpcHandle(IpcMessageType.RequestCharacterData)]
@@ -64,18 +110,21 @@ internal partial class IpcProvider {
         PeerCharacterData[message.BroadcasterId] = ParseCharacterInfo(message) with { LastSeen = DateTime.UtcNow };
     }
 
+    [IpcHandle(IpcMessageType.PeerDisconnected)]
+    private void HandlePeerDisconnected(IpcMessage message) {
+        PeerCharacterData.TryRemove((long)message.DataStruct<ulong>(), out _);
+    }
+
     private void PruneStaleCharacterData(DateTime now) {
         foreach (var pair in PeerCharacterData) {
-            if (!IsFreshPeer(pair.Value, now))
+            if (now - pair.Value.LastSeen > PeerRemoveMaxAge)
                 PeerCharacterData.TryRemove(pair.Key, out _);
         }
     }
 
-    private static bool IsFreshPeer(PeerCharacterInfo peer, DateTime now) =>
-        peer.LastSeen != default && now - peer.LastSeen <= PeerCharacterDataMaxAge;
-
     internal void BroadcastCharacterData(IpcMessageType type) {
         if (!DalamudApi.PlayerState.IsLoaded) return;
+        _lastAnnouncedContentId = DalamudApi.PlayerState.ContentId;
 
         BroadCast(IpcMessage.Create(
             type,

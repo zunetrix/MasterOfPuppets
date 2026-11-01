@@ -5,10 +5,6 @@ namespace MasterOfPuppets.Ipc;
 
 internal partial class IpcProvider {
 
-    /// <summary>Returns a snapshot of currently known connected peers (from PeerCharacterData).</summary>
-    public IReadOnlyList<PeerCharacterInfo> GetConnectedPeers()
-        => GetFreshPeerCharacterData();
-
     //  Apply Layout
 
     /// <summary>

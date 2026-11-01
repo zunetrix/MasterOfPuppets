@@ -151,6 +151,7 @@ public class Plugin : IDalamudPlugin {
 
     private void OnLogin() {
         AutoLoginManager.Stop();
+        IpcProvider.SendCharacterDataNow();
 
         if (Config.OpenOnLogin) {
             Ui.MainWindow.IsOpen = true;
@@ -175,6 +176,7 @@ public class Plugin : IDalamudPlugin {
     }
 
     private void OnLogout(int type, int code) {
+        IpcProvider.BroadcastPeerDisconnected();
         Ui.MainWindow.IsOpen = false;
     }
 

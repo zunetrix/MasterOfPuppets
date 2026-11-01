@@ -9,17 +9,12 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Ipc;
+using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
 public class PeerMonitorWindow : Window {
     private Plugin Plugin { get; }
-
-    private bool _autoRefresh;
-    private int _refreshMinutes = 0;
-    private int _refreshSeconds = 30;
-    private int RefreshTotalSeconds => _refreshMinutes * 60 + _refreshSeconds;
-    private DateTime _nextRefresh = DateTime.MinValue;
 
     public PeerMonitorWindow(Plugin plugin) : base("Peer Monitor###PeerMonitorWindow") {
         Plugin = plugin;
@@ -28,15 +23,22 @@ public class PeerMonitorWindow : Window {
     }
 
     public override void Draw() {
-        // Auto-refresh tick
-        if (_autoRefresh && DateTime.UtcNow >= _nextRefresh) {
-            Plugin.IpcProvider.RequestCharacterData();
-            _nextRefresh = DateTime.UtcNow.AddSeconds(RefreshTotalSeconds);
-        }
+        var now = DateTime.UtcNow;
+        var selfCid = DalamudApi.PlayerState.ContentId;
+        var characterOrder = Plugin.Config.Characters.Select(c => c.Cid).ToList();
+
+        // stable order: Characters list order, then name (dictionary enumeration order isn't stable)
+        var peers = Plugin.IpcProvider.PeerCharacterData.Values
+            .OrderBy(p => characterOrder.IndexOf(p.ContentId) is var idx && idx >= 0 ? idx : int.MaxValue)
+            .ThenBy(p => p.CharacterName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var onlineCount = peers.Count(p => IpcProvider.GetPeerStatus(p, now) == PeerStatus.Online);
 
         //  Toolbar
         if (ImGui.Button("Request Data"))
             Plugin.IpcProvider.RequestCharacterData();
+        ImGuiUtil.ToolTip("Peers already send a heartbeat every few seconds, use this to force an update");
 
         ImGui.SameLine();
 
@@ -48,78 +50,53 @@ public class PeerMonitorWindow : Window {
         }
 
         ImGui.SameLine();
-
-        if (ImGui.Checkbox("Auto Refresh", ref _autoRefresh) && !_autoRefresh)
-            _nextRefresh = DateTime.MinValue;
-
-        if (_autoRefresh) {
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(ImGuiHelpers.ScaledVector2(40, 0).X);
-            if (ImGui.InputInt("m##min", ref _refreshMinutes, 0))
-                _refreshMinutes = Math.Max(0, _refreshMinutes);
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(ImGuiHelpers.ScaledVector2(40, 0).X);
-            if (ImGui.InputInt("s##sec", ref _refreshSeconds, 0))
-                _refreshSeconds = Math.Clamp(_refreshSeconds, _refreshMinutes == 0 ? 1 : 0, 59);
-        }
+        ImGui.Text($"{onlineCount}/{peers.Count} online");
+        ImGui.SameLine();
+        ImGuiUtil.HelpMarker($"""
+        Online: heartbeat received in the last {IpcProvider.PeerOnlineMaxAge.TotalSeconds:0}s
+        Stale: no heartbeat, not used by broadcasts/auto-accept (removed after {IpcProvider.PeerRemoveMaxAge.TotalSeconds:0}s)
+        """);
 
         ImGui.Separator();
 
         //  Table
-        var inviteFilterFreshThreshold = IpcProvider.PeerCharacterDataMaxAge;
-
         using var table = ImRaii.Table(
-            "##peers", 6,
+            "##peers", 5,
             ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.SizingFixedFit,
             new Vector2(0, 0));
         if (!table) return;
 
         ImGui.TableSetupScrollFreeze(0, 1);
         ImGui.TableSetupColumn("#", ImGuiTableColumnFlags.WidthFixed, 20);
-        ImGui.TableSetupColumn("Fresh", ImGuiTableColumnFlags.WidthFixed, 45);
+        ImGui.TableSetupColumn("Status", ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("Status").X);
         ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableSetupColumn("Home World", ImGuiTableColumnFlags.WidthFixed, 120);
         ImGui.TableSetupColumn("Current World", ImGuiTableColumnFlags.WidthFixed, 120);
-        ImGui.TableSetupColumn("Last Seen", ImGuiTableColumnFlags.WidthFixed, 90);
         ImGui.TableHeadersRow();
 
-        foreach (var (pair, index) in Plugin.IpcProvider.PeerCharacterData.Select((x, i) => (x, i))) {
-            var (_, info) = pair;
+        for (int i = 0; i < peers.Count; i++) {
+            var info = peers[i];
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            ImGui.Text($"{index + 1:00}");
+            ImGui.Text($"{i + 1:00}");
 
-            // Freshness uses the same threshold as auto-accept invite filtering.
+            // last seen only in the tooltip: online peers refresh every heartbeat, so a visible counter would flicker
             ImGui.TableNextColumn();
-            var isFreshForInviteFilter = DateTime.UtcNow - info.LastSeen <= inviteFilterFreshThreshold;
-            var (icon, color) = isFreshForInviteFilter
-                ? (FontAwesomeIcon.Check, Style.Colors.Green)
-                : (FontAwesomeIcon.Times, Style.Colors.Red);
-            using (ImRaii.PushColor(ImGuiCol.Text, color)) {
-                using (ImRaii.PushFont(UiBuilder.IconFont)) {
-                    ImGui.Text(icon.ToIconString());
-                }
-            }
+            var isOnline = IpcProvider.GetPeerStatus(info, now) == PeerStatus.Online;
+            ImGuiUtil.TextIcon(FontAwesomeIcon.Circle, isOnline ? Style.Colors.Green : Style.Colors.Red);
+            ImGuiUtil.ToolTip(isOnline ? "Online" : $"Stale\nLast seen {FormatElapsed(now - info.LastSeen)} ago");
 
             ImGui.TableNextColumn();
-            ImGui.Text(info.CharacterName);
+            ImGui.Text(info.ContentId == selfCid ? $"{info.CharacterName} (you)" : info.CharacterName);
 
             ImGui.TableNextColumn();
             ImGui.Text(info.HomeWorld);
 
             ImGui.TableNextColumn();
             ImGui.Text(info.CurrentWorld);
-
-            ImGui.TableNextColumn();
-            var elapsed = DateTime.UtcNow - info.LastSeen;
-            var lastSeenText = elapsed.TotalSeconds <= 5
-                ? "Just now"
-                : elapsed.TotalSeconds < 60
-                    ? $"{(int)elapsed.TotalSeconds}s ago"
-                    : elapsed.TotalMinutes < 60
-                        ? $"{(int)elapsed.TotalMinutes}m ago"
-                        : info.LastSeen.ToLocalTime().ToString("HH:mm:ss");
-            ImGui.Text(lastSeenText);
         }
     }
+
+    private static string FormatElapsed(TimeSpan elapsed) =>
+        elapsed.TotalSeconds < 60 ? $"{(int)elapsed.TotalSeconds}s" : $"{(int)elapsed.TotalMinutes}m";
 }

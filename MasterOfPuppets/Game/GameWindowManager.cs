@@ -97,7 +97,7 @@ internal unsafe class GameWindowManager : IDisposable {
     }
 
     public void ApplyAutoTiledLayoutInternal(bool keepAspectRatio) {
-        var peers = _plugin.IpcProvider.GetConnectedPeers().ToList();
+        var peers = _plugin.IpcProvider.GetOnlinePeers().ToList();
         int count = peers.Count;
         if (count == 0) return;
 

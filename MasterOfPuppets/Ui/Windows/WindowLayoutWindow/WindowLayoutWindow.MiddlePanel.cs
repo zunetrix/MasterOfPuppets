@@ -344,7 +344,7 @@ public partial class WindowLayoutWindow {
         if (screenW <= 0) screenW = 1920;
         if (screenH <= 0) screenH = 1080;
 
-        var peers = Plugin.IpcProvider.GetConnectedPeers();
+        var peers = Plugin.IpcProvider.GetOnlinePeers();
         int count = peers.Count;
         if (count == 0) return;
 
