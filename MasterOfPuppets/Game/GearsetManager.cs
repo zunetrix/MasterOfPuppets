@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -214,6 +215,202 @@ public static class GearsetManager {
         }
 
         return enqueuedCount > 0;
+    }
+
+    // EquippedItems container slots: 0 MainHand, 1 OffHand, 2 Head, 3 Body, 4 Hands, 5 Waist,
+    // 6 Legs, 7 Feet, 8 Ears, 9 Neck, 10 Wrists, 11 RingRight, 12 RingLeft, 13 SoulCrystal
+    private const int EquippedMainHandSlot = 0;
+    private const int EquippedOffHandSlot = 1;
+    private const int EquippedSoulCrystalSlot = 13;
+
+    private static readonly InventoryType[] EquipSourceInventories = [
+        InventoryType.ArmoryMainHand,
+        InventoryType.ArmoryOffHand,
+        InventoryType.ArmoryHead,
+        InventoryType.ArmoryBody,
+        InventoryType.ArmoryHands,
+        InventoryType.ArmoryLegs,
+        InventoryType.ArmoryFeets,
+        InventoryType.ArmoryEar,
+        InventoryType.ArmoryNeck,
+        InventoryType.ArmoryWrist,
+        InventoryType.ArmoryRings,
+        InventoryType.ArmorySoulCrystal,
+        InventoryType.Inventory1,
+        InventoryType.Inventory2,
+        InventoryType.Inventory3,
+        InventoryType.Inventory4,
+    ];
+
+    /// <summary>Equips a single item by name or item id, searching the armoury chest then inventory bags.</summary>
+    public static unsafe bool EquipItem(Plugin plugin, string itemNameOrId) {
+        var item = uint.TryParse(itemNameOrId, out var itemId)
+            ? ItemHelper.GetItem(itemId % 1_000_000u)
+            : ItemHelper.GetItem(itemNameOrId);
+
+        if (item == null || item.Value.RowId == 0) {
+            DalamudApi.ChatGui.PrintError($"[MasterOfPuppets] Item \"{itemNameOrId}\" not found.");
+            return false;
+        }
+
+        var itemRow = item.Value;
+        var itemName = itemRow.Name.ToString();
+        var equipSlots = GetEquipSlots(itemRow.EquipSlotCategory.RowId);
+        if (equipSlots == null) {
+            DalamudApi.ChatGui.PrintError($"[MasterOfPuppets] \"{itemName}\" is not a piece of equipment.");
+            return false;
+        }
+
+        var invManager = InventoryManager.Instance();
+        var equipped = invManager->GetInventoryContainer(InventoryType.EquippedItems);
+        if (equipped == null) return false;
+
+        foreach (var slot in equipSlots) {
+            var equippedSlot = equipped->GetInventorySlot(slot);
+            if (equippedSlot != null && equippedSlot->ItemId == itemRow.RowId) {
+                DalamudApi.PluginLog.Debug($"[EquipItem] \"{itemName}\" already equipped - skip");
+                return false;
+            }
+        }
+
+        var src = FindItemForEquip(itemRow.RowId);
+        if (src == null) {
+            DalamudApi.ChatGui.PrintError($"[MasterOfPuppets] \"{itemName}\" not found in Armoury Chest or Inventory.");
+            return false;
+        }
+
+        // Prefer an empty target slot (rings), otherwise replace the first one
+        int targetSlot = equipSlots[0];
+        foreach (var slot in equipSlots) {
+            var equippedSlot = equipped->GetInventorySlot(slot);
+            if (equippedSlot == null || equippedSlot->ItemId == 0) {
+                targetSlot = slot;
+                break;
+            }
+        }
+
+        plugin.ItemMover.Enqueue(src.Value, InventoryType.EquippedItems, targetSlot);
+        return true;
+    }
+
+    /// <summary>
+    /// Equips the exact gearset item copy (matching materia/dyes/glamour) from armoury or inventory
+    /// into its gearset slot. GearsetItemIndex values match the EquippedItems container slots.
+    /// </summary>
+    public static unsafe bool EquipGearsetItem(Plugin plugin, RaptureGearsetModule.GearsetItem item, RaptureGearsetModule.GearsetItemIndex slotIndex) {
+        if (item.ItemId == 0 || slotIndex == RaptureGearsetModule.GearsetItemIndex.Belt)
+            return false;
+
+        var armouryType = item.GetInventoryType();
+        if (armouryType == default)
+            return false;
+
+        var armouryContainer = InventoryManager.Instance()->GetInventoryContainer(armouryType);
+        var src = InventoryHelper.FindGearsetItemInArmoury(item, armouryContainer) ?? item.FindGearsetItemInInventory();
+        if (src == null) {
+            DalamudApi.ChatGui.PrintError("[MasterOfPuppets] Item not found in Armoury Chest or Inventory.");
+            return false;
+        }
+
+        plugin.ItemMover.Enqueue(src.Value, InventoryType.EquippedItems, (int)slotIndex);
+        return true;
+    }
+
+    /// <summary>
+    /// Moves every equipped item to the armoury chest except Main Hand, Off Hand and Soul Crystal.
+    /// Moves are queued in ItemMover and executed one at a time (each waits for the previous to be confirmed).
+    /// </summary>
+    public static unsafe bool UnequipAll(Plugin plugin) {
+        var equipped = InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems);
+        if (equipped == null) return false;
+
+        bool any = false;
+        for (int i = 0; i < equipped->Size; i++) {
+            if (i is EquippedMainHandSlot or EquippedOffHandSlot or EquippedSoulCrystalSlot)
+                continue;
+
+            var slot = equipped->GetInventorySlot(i);
+            if (slot == null || slot->ItemId == 0)
+                continue;
+
+            var armouryType = GetArmouryType(slot->ItemId);
+            if (armouryType == default)
+                continue;
+
+            var src = new InventoryDescriptor(InventoryType.EquippedItems, i);
+            if (plugin.ItemMover.ItemsToMove.Any(m => m.from.Type == src.Type && m.from.Slot == src.Slot))
+                continue;
+
+            plugin.ItemMover.Enqueue(src, armouryType);
+            any = true;
+        }
+
+        return any;
+    }
+
+    private static unsafe InventoryDescriptor? FindItemForEquip(uint baseItemId) {
+        var invManager = InventoryManager.Instance();
+        foreach (var type in EquipSourceInventories) {
+            var container = invManager->GetInventoryContainer(type);
+            if (container == null) continue;
+
+            for (int i = 0; i < container->Size; i++) {
+                var slot = container->GetInventorySlot(i);
+                if (slot != null && slot->ItemId == baseItemId)
+                    return new(type, i);
+            }
+        }
+        return null;
+    }
+
+    private static int[]? GetEquipSlots(uint equipSlotCategory) => (EquipSlotCategoryEnum)equipSlotCategory switch {
+        EquipSlotCategoryEnum.WeaponMainHand or EquipSlotCategoryEnum.WeaponTwoHand => [0],
+        EquipSlotCategoryEnum.OffHand => [1],
+        EquipSlotCategoryEnum.Head => [2],
+        EquipSlotCategoryEnum.Body
+            or EquipSlotCategoryEnum.BodyHead
+            or EquipSlotCategoryEnum.BodyGlovesLegsFeet
+            or EquipSlotCategoryEnum.BodyHeadGlovesLegsFeet
+            or EquipSlotCategoryEnum.BodyGlovesLegs
+            or EquipSlotCategoryEnum.BodyLegsFeet
+            or EquipSlotCategoryEnum.BodyGloves => [3],
+        EquipSlotCategoryEnum.Gloves => [4],
+        EquipSlotCategoryEnum.Legs or EquipSlotCategoryEnum.LegsFeet => [6],
+        EquipSlotCategoryEnum.Feet => [7],
+        EquipSlotCategoryEnum.Ears => [8],
+        EquipSlotCategoryEnum.Neck => [9],
+        EquipSlotCategoryEnum.Wrists => [10],
+        EquipSlotCategoryEnum.Ring => [11, 12],
+        EquipSlotCategoryEnum.SoulCrystal => [13],
+        _ => null,
+    };
+
+    private static InventoryType GetArmouryType(uint itemId) {
+        var itemInfo = ItemHelper.GetItem(itemId % 1_000_000u);
+        if (itemInfo == null)
+            return default;
+
+        return (EquipSlotCategoryEnum)itemInfo.Value.EquipSlotCategory.RowId switch {
+            EquipSlotCategoryEnum.WeaponTwoHand or EquipSlotCategoryEnum.WeaponMainHand => InventoryType.ArmoryMainHand,
+            EquipSlotCategoryEnum.OffHand => InventoryType.ArmoryOffHand,
+            EquipSlotCategoryEnum.Head => InventoryType.ArmoryHead,
+            EquipSlotCategoryEnum.Body
+                or EquipSlotCategoryEnum.BodyHead
+                or EquipSlotCategoryEnum.BodyGlovesLegsFeet
+                or EquipSlotCategoryEnum.BodyHeadGlovesLegsFeet
+                or EquipSlotCategoryEnum.BodyGlovesLegs
+                or EquipSlotCategoryEnum.BodyLegsFeet
+                or EquipSlotCategoryEnum.BodyGloves => InventoryType.ArmoryBody,
+            EquipSlotCategoryEnum.Gloves => InventoryType.ArmoryHands,
+            EquipSlotCategoryEnum.Legs or EquipSlotCategoryEnum.LegsFeet => InventoryType.ArmoryLegs,
+            EquipSlotCategoryEnum.Feet => InventoryType.ArmoryFeets,
+            EquipSlotCategoryEnum.Ears => InventoryType.ArmoryEar,
+            EquipSlotCategoryEnum.Neck => InventoryType.ArmoryNeck,
+            EquipSlotCategoryEnum.Wrists => InventoryType.ArmoryWrist,
+            EquipSlotCategoryEnum.Ring => InventoryType.ArmoryRings,
+            EquipSlotCategoryEnum.SoulCrystal => InventoryType.ArmorySoulCrystal,
+            _ => default,
+        };
     }
 
     public static void EquipGearset(int gearsetIndex) {

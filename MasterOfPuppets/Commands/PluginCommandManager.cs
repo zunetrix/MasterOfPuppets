@@ -392,6 +392,18 @@ public class PluginCommandManager : IDisposable {
                         GearsetManager.SwapGearsets(Plugin, gearset1 - 1, gearset2 - 1);
                     }
                     break;
+                case "equip": {
+                        if (parsedArgs.Count < 2) {
+                            DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop equip <itemId|\"Item Name\">");
+                            return;
+                        }
+                        GearsetManager.EquipItem(Plugin, string.Join(' ', parsedArgs.Skip(1)));
+                    }
+                    break;
+                case "unequipall": {
+                        GearsetManager.UnequipAll(Plugin);
+                    }
+                    break;
                 case "facewearoff": {
                         GameActionManager.UnequipGlasses();
                     }

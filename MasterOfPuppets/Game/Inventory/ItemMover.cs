@@ -17,6 +17,10 @@ public unsafe class ItemMover : IDisposable {
 
     private bool isWorking;
     private ItemSignature? expectedItem;
+    private DateTime expectedSince;
+
+    // Max time to wait for the game to confirm a move (e.g. destination full → move silently rejected)
+    private const int MoveConfirmTimeoutMs = 3000;
 
     public ItemMover(Plugin plugin) {
         Plugin = plugin;
@@ -77,6 +81,21 @@ public unsafe class ItemMover : IDisposable {
             return;
         }
 
+        if (expectedItem.HasValue && (DateTime.Now - expectedSince).TotalMilliseconds > MoveConfirmTimeoutMs) {
+            var stuckName = ItemHelper.GetItem(expectedItem.Value.ItemId % 1_000_000u)?.Name.ToString() ?? expectedItem.Value.ItemId.ToString();
+            DalamudApi.PluginLog.Warning($"[ItemMover] Move of \"{stuckName}\" not confirmed after {MoveConfirmTimeoutMs}ms - skipping.");
+            expectedItem = null;
+            ItemsToMove.Dequeue();
+            return;
+        }
+
+        // Source emptied since it was queued (duplicate/stale entry) - nothing to move
+        if (!expectedItem.HasValue && slot->ItemId == 0) {
+            DalamudApi.PluginLog.Debug($"[ItemMover] {fromInventory.Type}[{fromInventory.Slot}] is empty - skip.");
+            ItemsToMove.Dequeue();
+            return;
+        }
+
         if (!expectedItem.HasValue && EzThrottler.Throttle("ItemMover", 250)) {
             var targetInventory = toInventory;
             int targetSlot = toSlot;
@@ -107,6 +126,7 @@ public unsafe class ItemMover : IDisposable {
             }
 
             expectedItem = CaptureItemSignature(slot);
+            expectedSince = DateTime.Now;
 
             var itemName = ItemHelper.GetItem(expectedItem.Value.ItemId % 1_000_000u)?.Name.ToString() ?? expectedItem.Value.ItemId.ToString();
             DalamudApi.PluginLog.Debug($"[ItemMover] Moving \"{itemName}\" (id:{expectedItem.Value.ItemId}) {fromInventory.Type}[{fromInventory.Slot}] → {targetInventory}[{targetSlot}]. {ItemsToMove.Count} queued.");

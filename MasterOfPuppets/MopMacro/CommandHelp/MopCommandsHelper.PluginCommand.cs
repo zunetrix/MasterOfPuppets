@@ -451,6 +451,40 @@ public static partial class MopCommandsHelper {
             inventory bags up to the armoury chest. It does not equip any gearset.
             """
         },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop equip <itemId|\"Item Name\">",
+            SuggestionCommand = "/mop equip ",
+            Example = """
+            /mop equip 41763
+            /mop equip "Weathered Cohort Helm"
+
+            Broadcast:
+            /mopbr /mop equip "Weathered Cohort Helm"
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Equips a single item by item id or exact name. The item is searched in the
+            armoury chest first, then in the inventory bags. Rings go to the empty ring slot
+            if there is one, otherwise replace the right ring.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            TextCommand = "/mop unequipall",
+            SuggestionCommand = "/mop unequipall",
+            Example = """
+            /mop unequipall
+
+            Broadcast:
+            /mopbr /mop unequipall
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Moves every equipped item to the armoury chest one at a time, except
+            Main Hand, Off Hand and Soul Crystal.
+            """
+        },
 
         //  Housing & Travel
         new MopAction {

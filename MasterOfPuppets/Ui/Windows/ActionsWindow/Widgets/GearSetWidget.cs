@@ -10,7 +10,6 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -158,8 +157,7 @@ public unsafe partial class GearSetWidget : Widget {
             ImGui.CloseCurrentPopup();
     }
 
-    //  Header
-
+    // Header
     private void DrawHeader() {
         ImGui.SetNextItemWidth(300 * ImGuiHelpers.GlobalScale);
         ImGui.InputTextWithHint("##GearGridSearch", "Search...", ref _searchText, 128, ImGuiInputTextFlags.AutoSelectAll);
@@ -204,6 +202,24 @@ public unsafe partial class GearSetWidget : Widget {
             _showMoveSettings)) {
             if (ImGuiUtil.IconButton(FontAwesomeIcon.Cog, "##MoveSettingsBtn", "Item Move Settings")) {
                 _showMoveSettings = !_showMoveSettings;
+            }
+        }
+
+        // Unequip all (keeps Main Hand, Off Hand and Soul Crystal)
+        ImGui.SameLine();
+        bool unequipBc = IsBroadcastActive;
+        var unequipTooltip = unequipBc
+            ? "[Broadcast] Unequip all items on all clients\n(Keeps Main Hand, Off Hand and Soul Crystal)"
+            : "Unequip all items Locally\n(Keeps Main Hand, Off Hand and Soul Crystal)";
+        using (ImRaii.PushColor(ImGuiCol.Button, new Vector4(0.2f, 0.65f, 0.35f, 1f), unequipBc)) {
+            if (ImGuiUtil.IconButton(FontAwesomeIcon.UserSlash, "##UnequipAllBtn", unequipTooltip)) {
+                _pendingAction = () => {
+                    if (unequipBc) {
+                        Context.Plugin.IpcProvider.ExecuteTextCommand("/mop unequipall");
+                    } else {
+                        GearsetManager.UnequipAll(Context.Plugin);
+                    }
+                };
             }
         }
 
@@ -847,6 +863,27 @@ public unsafe partial class GearSetWidget : Widget {
             ImGui.SameLine();
             ImGui.TextDisabled(_tryOnKeepOutfit ? "(Keep Outfit ON)" : "(Keep Outfit OFF)");
         }
+
+        ImGui.Separator();
+
+        // Equip this item (local: exact gearset copy into its slot / broadcast: by item id on all clients)
+        bool isBc = IsBroadcastActive;
+        bool isEquipped = IsItemEquipped(capturedSlotItem);
+        using (ImRaii.Disabled(isEquipped || (!isBc && !inArmoury && !inInventory))) {
+            if (ImGui.MenuItem(isBc ? "Equip Item (Broadcast)" : "Equip Item")) {
+                var rawItemId = capturedSlotItem.ItemId;
+                var capturedSlot = slotIndex;
+                _pendingAction = () => {
+                    if (isBc) {
+                        Context.Plugin.IpcProvider.ExecuteTextCommand($"/mop equip {rawItemId}");
+                    } else {
+                        GearsetManager.EquipGearsetItem(Context.Plugin, capturedSlotItem, capturedSlot);
+                    }
+                };
+            }
+        }
+        if (isEquipped) ImGuiUtil.ToolTip("Item is already equipped.");
+        else if (!isBc && !inArmoury && !inInventory) ImGuiUtil.ToolTip("Item is not in your Armoury Chest or Inventory.");
 
         ImGui.Separator();
 
