@@ -132,8 +132,11 @@ public sealed class DalamudPluginsWidget : Widget {
             if (ImGui.DragFloat("##PluginBroadcastDelay", ref _pluginBroadcastDelaySeconds, 0.1f, 0f, 60f, "%.1fs")) {
                 _pluginBroadcastDelaySeconds = Math.Clamp(_pluginBroadcastDelaySeconds, 0f, 60f);
             }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+                _pluginBroadcastDelaySeconds = 0f;
+            }
         }
-        ImGuiUtil.ToolTip("Delay between each client when broadcasting (drag or double-click to type)");
+        ImGuiUtil.ToolTip("Delay between each client when broadcasting (drag or double-click to type, right-click to reset)");
 
         if (_broadcastMode) {
             ImGui.SameLine();
