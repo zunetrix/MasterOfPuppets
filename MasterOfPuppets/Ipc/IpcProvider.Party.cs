@@ -66,16 +66,19 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.RequestPartyLeader)]
     private void HandleRequestPartyLeader(IpcMessage message) {
-        if (!DalamudApi.PartyList.IsPartyLeader()) return;
-
         var requesterCid = message.DataStruct<ulong>();
-        var partyMember = DalamudApi.PartyList.GetPartyMemberFromCid(requesterCid);
-        if (partyMember == null) return;
 
-        PartyManager.Promote(partyMember.Name.ToString(), (ulong)requesterCid);
-        Coroutine.StartRunOnFramework(
-            runFunction: () => { },
-            timeoutMs: 500,
-            callback: () => DalamudApi.Framework.RunOnTick(GameDialogManager.ClickYes));
+        DalamudApi.Framework.RunOnFrameworkThread(() => {
+            if (!DalamudApi.PartyList.IsPartyLeader()) return;
+
+            var partyMember = DalamudApi.PartyList.GetPartyMemberFromCid(requesterCid);
+            if (partyMember == null) return;
+
+            PartyManager.Promote(partyMember.Name.ToString(), requesterCid);
+            Coroutine.StartRunOnFramework(
+                runFunction: () => { },
+                timeoutMs: 500,
+                callback: () => DalamudApi.Framework.RunOnTick(GameDialogManager.ClickYes));
+        });
     }
 }
