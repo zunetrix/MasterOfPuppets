@@ -1,14 +1,13 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class MacroBatchEditorWindow : Window {
+public class MacroBatchEditorWindow : ThemedWindow {
     private Plugin Plugin { get; }
     private string _findActionInput = string.Empty;
     private string _replaceActionInput = string.Empty;

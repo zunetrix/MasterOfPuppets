@@ -13,7 +13,7 @@ using MasterOfPuppets.WindowLayouts;
 
 namespace MasterOfPuppets;
 
-public partial class WindowLayoutWindow : Window {
+public partial class WindowLayoutWindow : ThemedWindow {
     private Plugin Plugin { get; }
 
     // Left panel state

@@ -7,7 +7,6 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Actions;
 using MasterOfPuppets.Resources;
@@ -15,7 +14,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class ActionsBroadcastWindow : Window {
+public class ActionsBroadcastWindow : ThemedWindow {
     private Plugin Plugin { get; }
 
     private int SelectedItemIndex = 0;
@@ -74,9 +73,7 @@ public class ActionsBroadcastWindow : Window {
             var widget = _widgetManager.Widgets[realIndex];
             bool isSelected = SelectedItemIndex == realIndex;
 
-            using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
-            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, isSelected)
-            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, isSelected)) {
+            using (ThemeManager.PushSelectionColors(isSelected)) {
                 ImGuiUtil.IconButton(widget.Instance.Icon, $"##ActionsBroadcastWidget_{realIndex}");
                 ImGui.SameLine();
                 if (ImGui.Selectable(widget.Instance.Title, isSelected)) {

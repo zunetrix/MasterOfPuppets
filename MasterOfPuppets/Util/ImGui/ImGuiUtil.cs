@@ -29,6 +29,12 @@ public static class ImGuiUtil {
         }
     }
 
+    /// <summary>Width <see cref="IconButton"/> takes for <paramref name="icon"/> (icons are wider than the frame height).</summary>
+    public static float GetIconButtonWidth(FontAwesomeIcon icon) {
+        using (ImRaii.PushFont(UiBuilder.IconFont))
+            return ImGui.CalcTextSize(icon.ToIconString()).X + ImGui.GetStyle().FramePadding.X * 2;
+    }
+
     public static void TextIcon(FontAwesomeIcon icon, Vector4? color = null) {
         using (ImRaii.PushFont(UiBuilder.IconFont)) {
             if (color.HasValue)
@@ -147,6 +153,17 @@ public static class ImGuiUtil {
         ImGuiComponents.IconButtonWithText(icon, text, size);
     }
 
+    /// <summary>Command button background: dark on the Dalamud style, the theme's button colors otherwise (the label uses the theme's text color).</summary>
+    public static ImRaii.ColorDisposable PushCmdButtonColors() =>
+        ImRaii.PushColor(ImGuiCol.Button, ThemeManager.Resolve(ImGuiCol.Button, Style.Components.ButtonCmdNormal))
+            .Push(ImGuiCol.ButtonHovered, ThemeManager.Resolve(ImGuiCol.ButtonHovered, Style.Components.ButtonCmdHovered))
+            .Push(ImGuiCol.ButtonActive, ThemeManager.Resolve(ImGuiCol.ButtonActive, Style.Components.ButtonCmdActive));
+
+    public static uint GetCmdButtonBorderColor(bool hovered) {
+        var color = ThemeManager.Resolve(ImGuiCol.Text, hovered ? new Vector4(0.45f, 0.60f, 1.00f, 1f) : Vector4.One);
+        return ImGui.ColorConvertFloat4ToU32(color with { W = hovered ? 0.55f : 0.08f });
+    }
+
     public static bool DrawCmdButton(FontAwesomeIcon icon, string label, string? tooltip = null, Vector4? iconColor = null, float width = 100) {
         float iconBoxSize = 28f * ImGuiHelpers.GlobalScale;
         float btnPadH = 8f * ImGuiHelpers.GlobalScale;
@@ -164,16 +181,14 @@ public static class ImGuiUtil {
         var size = new Vector2(width, height);
 
         bool clicked;
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonCmdNormal)
-                   .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonCmdHovered)
-                   .Push(ImGuiCol.ButtonActive, Style.Components.ButtonCmdActive))
+        using (PushCmdButtonColors())
         using (ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 6f * ImGuiHelpers.GlobalScale)
                    .Push(ImGuiStyleVar.FramePadding, Vector2.Zero)) {
             clicked = ImGui.Button($"##cmdBtn_{label}", size);
         }
 
         bool hovered = ImGui.IsItemHovered();
-        uint borderCol = ImGui.ColorConvertFloat4ToU32(hovered ? new Vector4(0.45f, 0.60f, 1.00f, 0.55f) : new Vector4(1f, 1f, 1f, 0.08f));
+        uint borderCol = GetCmdButtonBorderColor(hovered);
 
         drawList.AddRect(pos, pos + size, borderCol, 6f * ImGuiHelpers.GlobalScale, ImDrawFlags.None, hovered ? 1.2f : 0.5f);
 
@@ -195,7 +210,7 @@ public static class ImGuiUtil {
             iconBoxMin.X + (iconBoxSize - iconGlyphSize.X) * 0.5f,
             iconBoxMin.Y + (iconBoxSize - iconGlyphSize.Y) * 0.5f);
 
-        uint effectiveIconColor = iconColor.HasValue ? iconColor.Value.ToUintColor() : Vector4.One.ToUintColor();
+        uint effectiveIconColor = iconColor.HasValue ? ThemeManager.ReadableIconColor(iconColor.Value).ToUintColor() : ImGui.GetColorU32(ImGuiCol.Text);
         drawList.AddText(iconFont, ImGui.GetFontSize(), iconPos, effectiveIconColor, iconStr);
 
         float textX = iconBoxMax.X + iconTextGap;

@@ -8,7 +8,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.EnterHouse)]
     private void HandleExecuteEnterHouse(IpcMessage message) {
-        GameHousingManager.InteractWithNearestHouseEntrance();
+        GameHousingManager.InteractWithNearestHouseEntrance(Plugin);
     }
 
     public void ExecuteExitHouse() {
@@ -17,7 +17,7 @@ internal partial class IpcProvider {
 
     [IpcHandle(IpcMessageType.ExitHouse)]
     private void HandleExecuteExitHouse(IpcMessage message) {
-        GameHousingManager.InteractWithNearestHouseExit();
+        GameHousingManager.InteractWithNearestHouseExit(Plugin);
     }
 
     public void ExecuteMoveToFrontDoor() {

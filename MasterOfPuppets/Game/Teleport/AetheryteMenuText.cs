@@ -18,13 +18,16 @@ internal static class AetheryteMenuText {
     public static string? ResidentialDistrict => Read(2);
     public static string? VisitAnotherWorld => Read(3);
 
-    private static string? Read(uint row) {
+    private static string? Read(uint row) => ReadDialogue(Sheet, row);
+
+    /// <summary>Reads column 1 (the text) of a quest dialogue sheet row in the client language.</summary>
+    internal static string? ReadDialogue(string sheetName, uint row) {
         try {
-            var sheet = DalamudApi.DataManager.GetExcelSheet<RawRow>(DalamudApi.ClientState.ClientLanguage, Sheet);
+            var sheet = DalamudApi.DataManager.GetExcelSheet<RawRow>(DalamudApi.ClientState.ClientLanguage, sheetName);
             var text = sheet?.GetRowOrDefault(row)?.ReadStringColumn(1).ExtractText().Trim();
             return string.IsNullOrEmpty(text) ? null : text;
         } catch (System.Exception ex) {
-            DalamudApi.PluginLog.Debug($"[AetheryteMenuText] failed to read {Sheet}#{row}: {ex.Message}");
+            DalamudApi.PluginLog.Debug($"[AetheryteMenuText] failed to read {sheetName}#{row}: {ex.Message}");
             return null;
         }
     }

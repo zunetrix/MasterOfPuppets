@@ -130,9 +130,7 @@ public partial class GameSettingsWindow {
                     CommitProfileRename(i);
             } else {
                 bool isSelected = _selectedProfileIdx == i;
-                using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
-                            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
-                            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered)) {
+                using (ThemeManager.PushSelectionColors(isSelected, accentHover: true)) {
                     if (ImGui.Selectable(profile.Name, isSelected)) {
                         _selectedProfileIdx = isSelected ? -1 : i;
                     }

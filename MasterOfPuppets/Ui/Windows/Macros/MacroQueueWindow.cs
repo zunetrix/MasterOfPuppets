@@ -8,14 +8,13 @@ using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class MacroQueueWindow : Window {
+public class MacroQueueWindow : ThemedWindow {
     private Plugin Plugin { get; }
 
     private readonly record struct QueueControls(bool IsPaused, Action OnPause, Action OnResume, Action OnStop);

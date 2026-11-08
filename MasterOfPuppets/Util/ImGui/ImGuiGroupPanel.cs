@@ -12,6 +12,12 @@ public static class ImGuiGroupPanel {
     static readonly Stack<RectF> s_GroupPanelLabelStack = new Stack<RectF>();
 
     /// <summary>
+    /// Width left for items inside a panel. GetContentRegionAvail and width -1 ignore the panel's right margin,
+    /// so items sized with them push the panel past the window edge.
+    /// </summary>
+    public static float AvailableWidth => ImGui.GetContentRegionAvail().X - ImGui.GetFontSize() * 0.5f;
+
+    /// <summary>
     /// Begin a group panel with automatic disposal.
     /// Usage: using (ImGuiGroupPanel.BeginGroupPanel("My Panel")) { ... }
     /// </summary>

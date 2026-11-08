@@ -147,9 +147,7 @@ public partial class CharactersWindow {
                 if (ImGui.IsItemDeactivated() && _groupRenamingIdx == i)
                     CommitGroupRename(i);
             } else {
-                using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, i == _selectedCidGroupIndex)
-                            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, i == _selectedCidGroupIndex)
-                            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, i == _selectedCidGroupIndex)) {
+                using (ThemeManager.PushSelectionColors(i == _selectedCidGroupIndex)) {
                     bool clicked = ImGui.Selectable(
                         g.Name.Length > 0 ? g.Name : "(unnamed)",
                         i == _selectedCidGroupIndex);

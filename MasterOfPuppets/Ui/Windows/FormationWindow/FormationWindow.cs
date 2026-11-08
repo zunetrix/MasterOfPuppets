@@ -6,17 +6,16 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Formations;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class FormationWindow : Window {
+public partial class FormationWindow : ThemedWindow {
     private Plugin Plugin { get; }
 
-    //  Left panel
+    // Left panel
     private readonly FileDialogManager _fileDialogManager = new();
     private string _searchFilter = string.Empty;
     private int _selFormation = -1;
@@ -25,10 +24,10 @@ public partial class FormationWindow : Window {
     private string _renameBuffer = string.Empty;
     private bool _renamingFocusPending;
 
-    //  Plot
+    // Plot
     private int _selPoint = -1;
 
-    //  Shape generator
+    // Shape generator
     private FormationShapeType _shapeType = FormationShapeType.Circle;
     private int _shapeN = 8;
     private float _shapeRadius = 5f;
@@ -44,12 +43,12 @@ public partial class FormationWindow : Window {
     private readonly ImGuiComboSearch _shapeGroupCombo = new();
     private string _shapeAssignGroupSelected = string.Empty;
 
-    //  World overlay
+    // World overlay
     private bool _worldOverlay;
     private float _arrowSize = 0.5f;
     private float _markerSizeWorld = 1.0f;
 
-    //  Right panel
+    // Right panel
     private float _leftPanelWidth;
     private float _rightPanelWidth = 300f;
     private readonly ImGuiComboSearch _charCombo = new();

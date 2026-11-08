@@ -110,9 +110,7 @@ public partial class WindowLayoutWindow {
                 if (ImGui.IsItemDeactivated() && _renamingIdx == i)
                     CommitRename(i);
             } else {
-                using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, i == _selLayout)
-                            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, i == _selLayout)
-                            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, i == _selLayout)) {
+                using (ThemeManager.PushSelectionColors(i == _selLayout)) {
                     bool clicked = ImGui.Selectable(
                         layout.Name.Length > 0 ? layout.Name : "(unnamed)",
                         i == _selLayout);

@@ -167,9 +167,7 @@ public partial class FormationWindow {
                     CommitRename(i);
             } else {
 
-                using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, i == _selFormation)
-                            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, i == _selFormation)
-                            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, i == _selFormation)) {
+                using (ThemeManager.PushSelectionColors(i == _selFormation)) {
                     bool clicked = ImGui.Selectable(
                         f.Name.Length > 0 ? f.Name : "(unnamed)",
                         i == _selFormation);

@@ -1,16 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
-using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
@@ -26,7 +22,7 @@ public enum AetheryteOverlayDock {
 /// Hovering a category opens a submenu next to the bar (towards the screen center) with its destinations.
 /// Categories: Aethernet / Residential (main cities) / World Visit (Gridania, Limsa, Ul'dah).
 /// </summary>
-public class AetheryteOverlayWindow : Window {
+public class AetheryteOverlayWindow : ThemedWindow {
     private enum Category {
         None,
         Aethernet,
@@ -45,10 +41,6 @@ public class AetheryteOverlayWindow : Window {
     private const string SubmenuWindowName = "##MopAetheryteOverlaySubmenu";
     private const long SubmenuCloseDelayMs = 350;
 
-    private const ImGuiWindowFlags BaseFlags =
-        ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize |
-        ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoScrollbar;
-
     private const ImGuiWindowFlags SubmenuFlags =
         ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize |
         ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoMove |
@@ -64,15 +56,12 @@ public class AetheryteOverlayWindow : Window {
     private Vector2 _submenuSize;
 
     private static float Scale => ImGuiHelpers.GlobalScale;
-    private float CategoryButtonWidth => 150f * Scale;
-    private float CategoryIconButtonSize => 44f * Scale;
     private float AethernetButtonWidth => 170f * Scale;
     private float WardButtonWidth => 48f * Scale;
     private float WorldButtonWidth => 110f * Scale;
-    private float ScreenMargin => 8f * Scale;
     private float SubmenuGap => 4f * Scale;
 
-    public AetheryteOverlayWindow(Plugin plugin) : base("Aetheryte Travel###MopAetheryteOverlay", BaseFlags) {
+    public AetheryteOverlayWindow(Plugin plugin) : base("Aetheryte Travel###MopAetheryteOverlay", OverlayBar.BaseFlags) {
         Plugin = plugin;
         IsOpen = true;
         RespectCloseHotkey = false;
@@ -85,9 +74,7 @@ public class AetheryteOverlayWindow : Window {
         if (!config.ShowAetheryteOverlay) return CloseSubmenu();
         if (!DalamudApi.PlayerState.IsLoaded) return CloseSubmenu();
 
-        // per-character toggle (unknown characters default to shown, like the other per-character options)
-        var charConfig = config.Characters.FirstOrDefault(c => c.Cid == DalamudApi.PlayerState.ContentId);
-        if (charConfig != null && !charConfig.ShowAetheryteOverlay) return CloseSubmenu();
+        if (!OverlayBar.IsEnabledForCurrentCharacter(config)) return CloseSubmenu();
 
         var condition = DalamudApi.Condition;
         if (condition[ConditionFlag.InCombat]
@@ -108,16 +95,8 @@ public class AetheryteOverlayWindow : Window {
     }
 
     public override void PreDraw() {
-        var dock = Plugin.Config.AetheryteOverlayDock;
-        Flags = dock == AetheryteOverlayDock.Free ? BaseFlags : BaseFlags | ImGuiWindowFlags.NoMove;
-        if (dock == AetheryteOverlayDock.Free) return;
-
-        var viewport = ImGui.GetMainViewport();
-        var y = viewport.Pos.Y + viewport.Size.Y * (0.5f + Math.Clamp(Plugin.Config.AetheryteOverlayOffsetY, -0.5f, 0.5f));
-        var (x, pivotX) = dock == AetheryteOverlayDock.Left
-            ? (viewport.Pos.X + ScreenMargin, 0f)
-            : (viewport.Pos.X + viewport.Size.X - ScreenMargin, 1f);
-        ImGui.SetNextWindowPos(new Vector2(x, y), ImGuiCond.Always, new Vector2(pivotX, 0.5f));
+        Flags = OverlayBar.ApplyDock(Plugin.Config.AetheryteOverlayDock, Plugin.Config.AetheryteOverlayOffsetY);
+        base.PreDraw();
     }
 
     public override void Draw() {
@@ -127,10 +106,7 @@ public class AetheryteOverlayWindow : Window {
         // category bar
         var iconsOnly = Plugin.Config.AetheryteOverlayIconsOnly;
         foreach (var def in GetVisibleCategories(ctx)) {
-            var clicked = iconsOnly
-                ? DrawIconOnlyButton(def)
-                : ImGuiUtil.DrawCmdButton(def.Icon, def.Label, null, def.IconColor, CategoryButtonWidth);
-            if (clicked)
+            if (OverlayBar.DrawButton($"category_{def.Id}", def.Icon, def.Label, def.IconColor, iconsOnly))
                 OpenSubmenu(def.Id, now);
             if (ImGui.IsItemHovered())
                 OpenSubmenu(def.Id, now);
@@ -161,8 +137,8 @@ public class AetheryteOverlayWindow : Window {
         var x = opensLeft ? barPos.X - SubmenuGap : barPos.X + barSize.X + SubmenuGap;
 
         // keep inside the screen vertically (submenu size from the previous frame)
-        var maxY = viewport.Pos.Y + viewport.Size.Y - _submenuSize.Y - ScreenMargin;
-        var y = Math.Max(viewport.Pos.Y + ScreenMargin, Math.Min(_submenuAnchorY, maxY));
+        var maxY = viewport.Pos.Y + viewport.Size.Y - _submenuSize.Y - OverlayBar.ScreenMargin;
+        var y = Math.Max(viewport.Pos.Y + OverlayBar.ScreenMargin, Math.Min(_submenuAnchorY, maxY));
 
         ImGui.SetNextWindowPos(new Vector2(x, y), ImGuiCond.Always, new Vector2(opensLeft ? 1f : 0f, 0f));
 
@@ -199,34 +175,6 @@ public class AetheryteOverlayWindow : Window {
     }
 
     //  helpers
-    /// <summary>Square icon-only category button, same look as <see cref="ImGuiUtil.DrawCmdButton"/>.</summary>
-    private bool DrawIconOnlyButton(CategoryDef def) {
-        var size = new Vector2(CategoryIconButtonSize, CategoryIconButtonSize);
-        var rounding = 6f * Scale;
-        var pos = ImGui.GetCursorScreenPos();
-
-        bool clicked;
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonCmdNormal)
-                   .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonCmdHovered)
-                   .Push(ImGuiCol.ButtonActive, Style.Components.ButtonCmdActive))
-        using (ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, rounding)) {
-            clicked = ImGui.Button($"##overlayCategory_{def.Id}", size);
-        }
-
-        var hovered = ImGui.IsItemHovered();
-        var drawList = ImGui.GetWindowDrawList();
-        var borderCol = ImGui.ColorConvertFloat4ToU32(hovered ? new Vector4(0.45f, 0.60f, 1.00f, 0.55f) : new Vector4(1f, 1f, 1f, 0.08f));
-        drawList.AddRect(pos, pos + size, borderCol, rounding, ImDrawFlags.None, hovered ? 1.2f : 0.5f);
-
-        using (ImRaii.PushFont(UiBuilder.IconFont)) {
-            var iconStr = def.Icon.ToIconString();
-            var glyphSize = ImGui.CalcTextSize(iconStr);
-            drawList.AddText(pos + (size - glyphSize) * 0.5f, ImGui.ColorConvertFloat4ToU32(def.IconColor), iconStr);
-        }
-
-        return clicked;
-    }
-
     private List<CategoryDef> GetVisibleCategories(AethernetCatalog.AetheryteContext ctx) {
         var config = Plugin.Config;
         var list = new List<CategoryDef>(Categories.Length);

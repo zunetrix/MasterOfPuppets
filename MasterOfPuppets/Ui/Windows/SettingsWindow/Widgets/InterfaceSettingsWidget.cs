@@ -207,5 +207,61 @@ public class InterfaceSettingsWidget : Widget {
                 ImGui.Unindent();
             }
         }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        using (ImGuiGroupPanel.BeginGroupPanel("Housing Overlay")) {
+            var showOverlay = Plugin.Config.ShowHousingOverlay;
+            if (ImGui.Checkbox("Show overlay when standing near a house entrance or exit", ref showOverlay)) {
+                Plugin.Config.ShowHousingOverlay = showOverlay;
+                Plugin.IpcProvider.SyncConfiguration();
+            }
+            ImGuiUtil.ToolTip("Only in residential districts and house interiors. Uses the same per-character overlay toggle as the aetheryte overlay");
+
+            using (ImRaii.Disabled(!showOverlay)) {
+                ImGui.Indent();
+
+                var range = Plugin.Config.HousingOverlayRange;
+                ImGui.SetNextItemWidth(150f * ImGuiHelpers.GlobalScale);
+                if (ImGui.SliderFloat("Detection range##HousingOverlayRange", ref range, 1f, 6f, "%.0f"))
+                    Plugin.Config.HousingOverlayRange = range;
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                    Plugin.IpcProvider.SyncConfiguration();
+                ImGuiUtil.ToolTip("Distance from the door at which the overlay appears. The action walks into interact range by itself");
+
+                var anywhereInside = Plugin.Config.HousingOverlayShowAnywhereInside;
+                if (ImGui.Checkbox("Show anywhere inside a house (Exit / Front Door)##HousingOverlayInside", ref anywhereInside)) {
+                    Plugin.Config.HousingOverlayShowAnywhereInside = anywhereInside;
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                ImGui.Spacing();
+
+                var iconsOnly = Plugin.Config.HousingOverlayIconsOnly;
+                if (ImGui.Checkbox("Show icons only (no text)##HousingOverlayIconsOnly", ref iconsOnly)) {
+                    Plugin.Config.HousingOverlayIconsOnly = iconsOnly;
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                var dock = (int)Plugin.Config.HousingOverlayDock;
+                ImGui.SetNextItemWidth(150f * ImGuiHelpers.GlobalScale);
+                if (ImGui.Combo("Position##HousingOverlayDock", ref dock, ["Left side", "Right side", "Free (drag)"])) {
+                    Plugin.Config.HousingOverlayDock = (AetheryteOverlayDock)dock;
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                using (ImRaii.Disabled(Plugin.Config.HousingOverlayDock == AetheryteOverlayDock.Free)) {
+                    var offsetY = Plugin.Config.HousingOverlayOffsetY * 100f;
+                    ImGui.SetNextItemWidth(150f * ImGuiHelpers.GlobalScale);
+                    if (ImGui.SliderFloat("Vertical offset##HousingOverlayOffsetY", ref offsetY, -50f, 50f, "%.0f%%"))
+                        Plugin.Config.HousingOverlayOffsetY = offsetY / 100f;
+                    if (ImGui.IsItemDeactivatedAfterEdit())
+                        Plugin.IpcProvider.SyncConfiguration();
+                }
+
+                ImGui.Unindent();
+            }
+        }
     }
 }

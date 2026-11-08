@@ -52,9 +52,7 @@ public partial class WindowLayoutWindow {
 
                         // Col 0: row selector
                         ImGui.TableNextColumn();
-                        using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered)
-                                     .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
-                                     .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered)) {
+                        using (ThemeManager.PushSelectionColors()) {
                             if (ImGui.Selectable($"{i + 1:00}##wlsrow{i}", i == _selSlot))
                                 _selSlot = i;
                         }

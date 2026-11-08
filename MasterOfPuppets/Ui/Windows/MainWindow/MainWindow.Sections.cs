@@ -6,13 +6,12 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class MainWindow : Window {
+public partial class MainWindow : ThemedWindow {
 
     private record CmdEntry(
        FontAwesomeIcon Icon,
@@ -119,8 +118,7 @@ public partial class MainWindow : Window {
         }
     }
 
-
-    //  Teleport
+    // Teleport
     private void DrawTeleportSection() {
         using var scroll = ImRaii.Child("##TeleportSectionScroll", new Vector2(-1, -1), false);
 

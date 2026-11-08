@@ -122,9 +122,7 @@ public partial class XivLauncherWindow {
                 if (ImGui.IsItemDeactivated() && _renamingIdx == i)
                     CommitRename(i);
             } else {
-                using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, i == _selEntry)
-                            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, i == _selEntry)
-                            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, i == _selEntry)) {
+                using (ThemeManager.PushSelectionColors(i == _selEntry)) {
 
                     var displayName = !string.IsNullOrWhiteSpace(entry.Name) ? entry.Name :
                                       !string.IsNullOrWhiteSpace(entry.UserName) ? entry.UserName : "(unnamed)";

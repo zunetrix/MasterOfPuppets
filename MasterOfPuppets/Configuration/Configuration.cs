@@ -253,13 +253,25 @@ internal class Configuration : IPluginConfiguration {
     public uint PreferredMultiRiderMountId { get; set; } = 0;
 
     // Aetheryte travel overlay
-    public bool ShowAetheryteOverlay { get; set; } = false;
+    public bool ShowAetheryteOverlay { get; set; } = true;
     public bool AetheryteOverlayShowAethernet { get; set; } = true;
     public bool AetheryteOverlayShowResidential { get; set; } = true;
     public bool AetheryteOverlayShowWorldVisit { get; set; } = true;
     public AetheryteOverlayDock AetheryteOverlayDock { get; set; } = AetheryteOverlayDock.Left;
     public float AetheryteOverlayOffsetY { get; set; } = 0f; // fraction of screen height from the middle (-0.5 .. 0.5)
-    public bool AetheryteOverlayIconsOnly { get; set; } = false;
+    public bool AetheryteOverlayIconsOnly { get; set; } = true;
+
+    // Housing entrance overlay
+    public bool ShowHousingOverlay { get; set; } = true;
+    public AetheryteOverlayDock HousingOverlayDock { get; set; } = AetheryteOverlayDock.Left;
+    public float HousingOverlayOffsetY { get; set; } = 0f; // fraction of screen height from the middle (-0.5 .. 0.5)
+    public bool HousingOverlayIconsOnly { get; set; } = true;
+    public float HousingOverlayRange { get; set; } = 5f; // max 5 from the door
+    public bool HousingOverlayShowAnywhereInside { get; set; } = false;
+
+    // Theme
+    public string SelectedThemeId { get; set; } = ThemeManager.DefaultThemeId;
+    public List<UiTheme> CustomThemes { get; set; } = new();
 
     // Client Launcher
     public string XivLauncherPath { get; set; } = XivLauncherManager.GetDefaultLauncherPath();

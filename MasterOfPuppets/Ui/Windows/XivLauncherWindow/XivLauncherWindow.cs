@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 
@@ -15,7 +16,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class XivLauncherWindow : Window {
+public partial class XivLauncherWindow : ThemedWindow {
     private readonly Plugin Plugin;
     private readonly FileDialogManager _fileDialogManager = new();
 
@@ -27,7 +28,7 @@ public partial class XivLauncherWindow : Window {
     private int _renamingIdx = -1;
     private string _renameBuffer = string.Empty;
     private bool _renamingFocusPending;
-    private readonly System.Collections.Generic.HashSet<XivLaunchEntry> _selectedForLaunch = new();
+    private readonly HashSet<XivLaunchEntry> _selectedForLaunch = new();
 
     private XivLaunchEntry? SelectedEntry {
         get {

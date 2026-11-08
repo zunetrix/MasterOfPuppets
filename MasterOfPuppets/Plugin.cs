@@ -60,6 +60,7 @@ public class Plugin : IDalamudPlugin {
         pluginInterface.Create<DalamudApi>();
         Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(DalamudApi.PluginInterface);
+        ThemeManager.Initialize(Config);
         Config.Migrate();
         GameCameraManager.Initialize();
 

@@ -6,14 +6,13 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Ipc;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class PeerMonitorWindow : Window {
+public class PeerMonitorWindow : ThemedWindow {
     private Plugin Plugin { get; }
 
     public PeerMonitorWindow(Plugin plugin) : base("Peer Monitor###PeerMonitorWindow") {

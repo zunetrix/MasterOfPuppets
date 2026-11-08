@@ -5,13 +5,12 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class MainWindow : Window {
+public partial class MainWindow : ThemedWindow {
 
     private void DrawSidebar() {
         const float collapsedWidth = 38f;
@@ -73,9 +72,7 @@ public partial class MainWindow : Window {
     private void DrawNavItem(string sectionId, FontAwesomeIcon icon, string label) {
         bool isSelected = _selectedSection.Equals(sectionId, StringComparison.OrdinalIgnoreCase);
 
-        using var headerSel = ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
-                                    .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
-                                    .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
+        using var headerSel = ThemeManager.PushSelectionColors(isSelected, accentHover: true);
 
         ImGuiUtil.IconButton(icon, $"##NavIcon_{sectionId}");
         ImGui.SameLine();
@@ -85,9 +82,7 @@ public partial class MainWindow : Window {
     }
 
     private void DrawNavAction(FontAwesomeIcon icon, string label, Action action, bool isActive) {
-        using var headerSel = ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isActive)
-                                    .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
-                                    .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered);
+        using var headerSel = ThemeManager.PushSelectionColors(isActive, accentHover: true);
 
         ImGuiUtil.IconButton(icon, $"##NavActionIcon_{label}");
         ImGui.SameLine();
@@ -99,9 +94,9 @@ public partial class MainWindow : Window {
     private void DrawNavItemIconOnly(string sectionId, FontAwesomeIcon icon, string tooltip) {
         bool isSelected = _selectedSection.Equals(sectionId, StringComparison.OrdinalIgnoreCase);
 
-        using var col = ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonBlueNormal, isSelected)
-                               .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonBlueHovered)
-                               .Push(ImGuiCol.ButtonActive, Style.Components.ButtonBlueActive);
+        using var col = ImRaii.PushColor(ImGuiCol.Button, ThemeManager.Resolve(ImGuiCol.Header, Style.Components.ButtonBlueNormal), isSelected)
+                               .Push(ImGuiCol.ButtonHovered, ThemeManager.Resolve(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered))
+                               .Push(ImGuiCol.ButtonActive, ThemeManager.Resolve(ImGuiCol.HeaderActive, Style.Components.ButtonBlueActive));
 
         if (ImGuiUtil.IconButton(icon, $"##NavIconOnly_{sectionId}", tooltip)) {
             SelectSection(sectionId);

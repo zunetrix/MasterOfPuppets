@@ -6,7 +6,7 @@ using Dalamud.Interface.Windowing;
 
 namespace MasterOfPuppets;
 
-public partial class GameSettingsWindow : Window {
+public partial class GameSettingsWindow : ThemedWindow {
     private readonly Plugin Plugin;
 
     // Split panel state

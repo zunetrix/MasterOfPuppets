@@ -22,8 +22,8 @@ public class Character {
     [JsonPropertyName("autoLogin")]
     public bool AutoLoginEnabled = false;
 
-    [JsonPropertyName("showAetheryteOverlay")]
-    public bool ShowAetheryteOverlay = true;
+    [JsonPropertyName("showTeleportOverlay")]
+    public bool ShowTeleportOverlay = true;
 }
 
 public class CidGroup {

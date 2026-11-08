@@ -6,7 +6,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 using Dalamud.Utility;
 
 using MasterOfPuppets.Extensions;
@@ -16,7 +15,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class MacroImportExportWindow : Window {
+public class MacroImportExportWindow : ThemedWindow {
     private Plugin Plugin { get; }
     private FileDialogManager FileDialogManager { get; }
 

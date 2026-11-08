@@ -11,7 +11,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class SettingsWindow : Window {
+public class SettingsWindow : ThemedWindow {
     private Plugin Plugin { get; }
     private readonly WidgetContext _widgetContext;
     private readonly WidgetManager _widgetManager = new();
@@ -28,6 +28,7 @@ public class SettingsWindow : Window {
 
         _widgetManager.Add(() => new GeneralSettingsWidget(_widgetContext));
         _widgetManager.Add(() => new InterfaceSettingsWidget(_widgetContext));
+        _widgetManager.Add(() => new AppearanceSettingsWidget(_widgetContext));
         _widgetManager.Add(() => new MultiboxSettingsWidget(_widgetContext));
         _widgetManager.Add(() => new BroadcastSettingsWidget(_widgetContext));
         _widgetManager.Add(() => new MacrosSettingsWidget(_widgetContext));
@@ -58,9 +59,7 @@ public class SettingsWindow : Window {
 
             bool isSelected = _selectedIndex == i;
 
-            using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonPurpleHovered, isSelected)
-                         .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonPurpleHovered, isSelected)
-                         .Push(ImGuiCol.HeaderActive, Style.Components.ButtonPurpleHovered, isSelected)) {
+            using (ThemeManager.PushSelectionColors(isSelected)) {
                 if (ImGui.Selectable(widget.Instance.Title, isSelected)) {
                     _selectedIndex = i;
                     _widgetManager.Show(i);
@@ -92,7 +91,7 @@ public class SettingsWindow : Window {
         using var contentChild = ImRaii.Child("##Content", new Vector2(0, 0));
         if (!contentChild) return;
 
-        ImGuiUtil.DrawColoredBanner(widget.Instance.Title, Style.Components.ButtonPurpleHovered);
+        ImGuiUtil.DrawColoredBanner(widget.Instance.Title, ThemeManager.Resolve(ImGuiCol.Header, Style.Components.ButtonBlueHovered));
         ImGui.Spacing();
         _widgetManager.Draw();
     }

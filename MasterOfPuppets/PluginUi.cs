@@ -28,6 +28,7 @@ public class PluginUi : IDisposable {
     public WindowLayoutWindow WindowLayoutWindow { get; }
     public GameSettingsWindow GameSettingsWindow { get; }
     public AetheryteOverlayWindow AetheryteOverlayWindow { get; }
+    public HousingOverlayWindow HousingOverlayWindow { get; }
 
     public PluginUi(Plugin plugin) {
         Plugin = plugin;
@@ -50,6 +51,7 @@ public class PluginUi : IDisposable {
         WindowLayoutWindow = AddWindow(new WindowLayoutWindow(Plugin));
         GameSettingsWindow = AddWindow(new GameSettingsWindow(Plugin));
         AetheryteOverlayWindow = AddWindow(new AetheryteOverlayWindow(Plugin));
+        HousingOverlayWindow = AddWindow(new HousingOverlayWindow(Plugin));
     }
 
     private T AddWindow<T>(T window) where T : Window {

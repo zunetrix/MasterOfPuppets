@@ -5,7 +5,6 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Util;
@@ -17,7 +16,7 @@ namespace MasterOfPuppets;
 // based on:
 // QoLBar IconBrowser: https://github.com/UnknownX7/QoLBar/blob/f80d64ab064e4e7574a42b2efc678beebdcb1af9/UI/IconBrowserUI.cs
 // Dalamud IconBrowserWidget: https://github.com/goatcorp/Dalamud/blob/deef16cdd742ca9faa403e388602795e9d3b54e9/Dalamud/Interface/Internal/Windows/Data/Widgets/IconBrowserWidget.cs#L16
-public class IconPickerDialogWindow : Window {
+public class IconPickerDialogWindow : ThemedWindow {
     private uint? CurrentIconId { get; set; }
     private string searchText = string.Empty;
     private bool showIconNames = false;

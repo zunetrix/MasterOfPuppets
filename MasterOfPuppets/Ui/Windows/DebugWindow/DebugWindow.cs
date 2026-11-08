@@ -6,14 +6,13 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets.Debug;
 
-public class DebugWindow : Window {
+public class DebugWindow : ThemedWindow {
     private Plugin Plugin { get; }
 
     private int SelectedItemIndex = 0;
@@ -73,9 +72,7 @@ public class DebugWindow : Window {
             var widget = _widgetManager.Widgets[realIndex];
             bool isSelected = SelectedItemIndex == realIndex;
 
-            using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
-            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, isSelected)
-            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, isSelected)) {
+            using (ThemeManager.PushSelectionColors(isSelected)) {
                 if (ImGui.Selectable(widget.Instance.Title, isSelected)) {
                     SelectedItemIndex = realIndex;
                     _widgetManager.Show(realIndex);
@@ -96,7 +93,7 @@ public class DebugWindow : Window {
 
         ImGui.BeginGroup();
         ImGui.BeginChild("##DebugContent", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()));
-        ImGuiUtil.DrawColoredBanner($"{widget.Instance.Title}", Style.Components.ButtonBlueHovered);
+        ImGuiUtil.DrawColoredBanner($"{widget.Instance.Title}", ThemeManager.Resolve(ImGuiCol.Header, Style.Components.ButtonBlueHovered));
 
         ImGui.Spacing();
 

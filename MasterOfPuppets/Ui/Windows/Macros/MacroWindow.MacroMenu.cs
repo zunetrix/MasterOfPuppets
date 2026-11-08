@@ -1,14 +1,13 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class MacroWindow : Window {
+public partial class MacroWindow : ThemedWindow {
     private void DrawMacroToolbar() {
         using var color = ImRaii.PushColor(ImGuiCol.Border, Style.Components.TooltipBorderColor);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1);

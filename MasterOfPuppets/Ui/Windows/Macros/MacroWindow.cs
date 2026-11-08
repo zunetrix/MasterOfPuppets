@@ -8,16 +8,14 @@ using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Resources;
-using MasterOfPuppets.Util;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class MacroWindow : Window {
+public partial class MacroWindow : ThemedWindow {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
 
@@ -412,9 +410,7 @@ public partial class MacroWindow : Window {
         ImGui.Separator();
         ImGui.Spacing();
 
-        using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered)
-            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered)
-            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered)) {
+        using (ThemeManager.PushSelectionColors()) {
             int noTagCount = Plugin.Config.Macros.Count(m => m.Tags == null || m.Tags.Count == 0);
 
             bool isNoTagSelected = _filterNoTags;

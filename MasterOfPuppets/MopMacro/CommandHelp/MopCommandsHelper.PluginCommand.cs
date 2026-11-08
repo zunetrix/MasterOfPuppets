@@ -500,7 +500,7 @@ public static partial class MopCommandsHelper {
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
-            Interacts with the nearest house entrance and confirms entry.
+            Walks to the nearest house entrance (dismounting if needed), interacts and confirms entry.
             """
         },
         new MopAction {
@@ -517,6 +517,7 @@ public static partial class MopCommandsHelper {
             Notes = """
             * This is a plugin command (works only on local clients)
             Interacts with the nearest house exit and confirms.
+            If the exit is not in range, moves to the front door first.
             """
         },
         new MopAction {

@@ -12,7 +12,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class MainWindow : Window {
+public partial class MainWindow : ThemedWindow {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
 

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Resources;
@@ -11,7 +10,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class CharactersWindow : Window {
+public partial class CharactersWindow : ThemedWindow {
     private Plugin Plugin { get; }
 
     // Characters tab state

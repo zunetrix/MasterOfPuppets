@@ -10,7 +10,6 @@ using Dalamud.Interface.Components;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Extensions;
 using MasterOfPuppets.Extensions.Dalamud;
@@ -19,7 +18,7 @@ using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public partial class MacroEditorWindow : Window {
+public partial class MacroEditorWindow : ThemedWindow {
     private Plugin Plugin { get; }
     private PluginUi Ui { get; }
     private Macro MacroItem = new();
@@ -421,9 +420,7 @@ public partial class MacroEditorWindow : Window {
             bool isSelected = SelectedCommandIndex == commandIndex;
 
             string label = $"Command {commandIndex + 1}";
-            using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
-            .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, isSelected)
-            .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, isSelected)) {
+            using (ThemeManager.PushSelectionColors(isSelected)) {
                 if (ImGui.Selectable(label, isSelected)) {
                     SelectedCommandIndex = commandIndex;
                 }
@@ -609,7 +606,7 @@ public partial class MacroEditorWindow : Window {
     private void DrawCommandEditor(int commandIndex) {
         using (ImRaii.Group()) {
             using (ImRaii.Child("##CommandEditor", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()))) {
-                ImGuiUtil.DrawColoredBanner($"COMMAND {SelectedCommandIndex + 1}", Style.Components.ButtonBlueHovered);
+                ImGuiUtil.DrawColoredBanner($"COMMAND {SelectedCommandIndex + 1}", ThemeManager.Resolve(ImGuiCol.Header, Style.Components.ButtonBlueHovered));
                 ImGui.Spacing();
 
                 ImGui.Spacing();

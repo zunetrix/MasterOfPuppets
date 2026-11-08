@@ -206,14 +206,14 @@ public partial class CharactersWindow {
 
             // col 6: aetheryte overlay toggle
             ImGui.TableNextColumn();
-            bool overlayEnabled = allCharacters[i].ShowAetheryteOverlay;
+            bool overlayEnabled = allCharacters[i].ShowTeleportOverlay;
             CenterCheckboxInCell();
             if (ImGui.Checkbox($"##Overlay_{allCharacters[i].Cid}", ref overlayEnabled)) {
-                allCharacters[i].ShowAetheryteOverlay = overlayEnabled;
+                allCharacters[i].ShowTeleportOverlay = overlayEnabled;
                 Plugin.Config.Save();
                 Plugin.IpcProvider.SyncConfiguration();
             }
-            ImGuiUtil.ToolTip("Show the aetheryte travel overlay on this character (requires global toggle in Settings > Interface)");
+            ImGuiUtil.ToolTip("Show the aetheryte travel and housing overlays on this character (requires global toggles in Settings > Interface)");
 
             // col 7: action buttons (right-aligned by column sizing)
             ImGui.TableNextColumn();

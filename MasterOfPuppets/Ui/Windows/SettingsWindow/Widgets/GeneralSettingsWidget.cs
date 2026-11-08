@@ -62,21 +62,17 @@ public class GeneralSettingsWidget : Widget {
         ImGui.Spacing();
         ImGui.Spacing();
 
-        using (ImRaii.PushColor(ImGuiCol.Button, Style.Components.ButtonPurpleNormal)
-            .Push(ImGuiCol.ButtonHovered, Style.Components.ButtonPurpleHovered)
-            .Push(ImGuiCol.ButtonActive, Style.Components.ButtonPurpleActive)) {
-
-            if (ImGui.Button(Language.OpenPluginFolder)) {
-                WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
-            }
-
-            ImGui.SameLine();
-            ImGuiHelpers.ScaledDummy(0, 20);
-            ImGui.SameLine();
-
-            if (ImGui.Button(Language.OpenPluginConfigFile)) {
-                WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
-            }
+        if (ImGui.Button(Language.OpenPluginFolder)) {
+            WindowsApi.OpenFolder(DalamudApi.PluginInterface.ConfigDirectory.FullName);
         }
+
+        ImGui.SameLine();
+        ImGuiHelpers.ScaledDummy(0, 20);
+        ImGui.SameLine();
+
+        if (ImGui.Button(Language.OpenPluginConfigFile)) {
+            WindowsApi.OpenFile(DalamudApi.PluginInterface.ConfigFile.FullName);
+        }
+
     }
 }

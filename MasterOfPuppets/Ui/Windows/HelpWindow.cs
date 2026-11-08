@@ -8,14 +8,13 @@ using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
 
 using MasterOfPuppets.Resources;
 using MasterOfPuppets.Util.ImGuiExt;
 
 namespace MasterOfPuppets;
 
-public class HelpWindow : Window {
+public class HelpWindow : ThemedWindow {
     private Plugin Plugin { get; }
 
     private int SelectedItemIndex = 0;
@@ -98,9 +97,7 @@ public class HelpWindow : Window {
         int realIndex = MopCommandsHelper.Actions.IndexOf(action);
         bool isSelected = SelectedItemIndex == realIndex;
 
-        using (ImRaii.PushColor(ImGuiCol.Header, Style.Components.ButtonBlueHovered, isSelected)
-        .Push(ImGuiCol.HeaderHovered, Style.Components.ButtonBlueHovered, isSelected)
-        .Push(ImGuiCol.HeaderActive, Style.Components.ButtonBlueHovered, isSelected)) {
+        using (ThemeManager.PushSelectionColors(isSelected)) {
             if (ImGui.Selectable(action.SuggestionCommand, isSelected)) {
                 SelectedItemIndex = realIndex;
             }
@@ -112,7 +109,7 @@ public class HelpWindow : Window {
 
         ImGui.BeginGroup();
         ImGui.BeginChild("##MacroHelpContent", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()));
-        ImGuiUtil.DrawColoredBanner($"{MacroHelpData.SuggestionCommand}", Style.Components.ButtonBlueHovered);
+        ImGuiUtil.DrawColoredBanner($"{MacroHelpData.SuggestionCommand}", ThemeManager.Resolve(ImGuiCol.Header, Style.Components.ButtonBlueHovered));
         ImGui.Spacing();
         ImGui.Indent();
 

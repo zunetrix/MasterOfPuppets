@@ -103,7 +103,7 @@ public enum IpcMessageType {
     ExecuteUnequipGlasses,
     UpdateMacroVariables,
 
-    // teleport (appended to keep existing values stable)
+    // teleport
     TeleportToAethernet,
 
     // dalamud plugins / collections
