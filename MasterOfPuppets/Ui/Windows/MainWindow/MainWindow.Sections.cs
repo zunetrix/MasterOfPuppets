@@ -179,8 +179,12 @@ public partial class MainWindow : ThemedWindow {
 
         // JP = 1, NA = 2, EU = 3, OC = 4 - grouped by display DC
         var currentRegionId = currentWorld.Value.DataCenter.ValueNullable?.Region.RowId ?? 0;
-        var datacenters = WorldCatalog.GetDataCenterTravelGroups(currentRegionId);
-        if (datacenters.Count == 0) return;
+        // non merged datacenters
+        var datacenters = WorldCatalog.GetDataCenterTravelGroups(currentRegionId).Where(dc => !WorldCatalog.IsMergedGroup(dc)).ToList();
+        if (datacenters.Count == 0) {
+            ImGui.TextDisabled("No data centers to show");
+            return;
+        }
 
         var currentDisplayDc = WorldCatalog.GetDisplayDataCenterId(currentWorld.Value);
 

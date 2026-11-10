@@ -56,8 +56,9 @@ internal static class WorldCatalog {
     private static readonly Dictionary<uint, List<uint>> MergedTabsCache = new();
 
     /// <summary>
-    /// Display DCs of a logical DC in <c>WorldTravelSelect</c> tab order (display DC RowId ascending).
-    /// JP today: Elemental(1), Gaia(2), Mana(3), Meteor(10) → tabs 0..3
+    /// Display DCs of a logical DC in <c>WorldTravelSelect</c> tab order (display DC name, alphabetical).
+    /// JP: Elemental, Gaia, Mana, Meteor → tabs 0..3 (same as RowId order)
+    /// NA: Aether, Crystal, Dynamis, Primal → tabs 0..3 (RowId order Aether, Primal, Crystal, Dynamis)
     /// </summary>
     private static List<uint> GetWorldTravelTabs(uint logicalDcId) {
         if (MergedTabsCache.TryGetValue(logicalDcId, out var cached)) return cached;
@@ -65,8 +66,16 @@ internal static class WorldCatalog {
             .Where(w => GetLogicalDataCenterId(w) == logicalDcId)
             .Select(GetDisplayDataCenterId)
             .Distinct()
-            .Order()
+            .OrderBy(GetDataCenterName, StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    /// <summary>Number of <c>WorldTravelSelect</c> tabs of the current logical DC (0 when not merged).</summary>
+    public static int GetCurrentWorldTravelTabCount() {
+        var current = DalamudApi.PlayerState.IsLoaded ? DalamudApi.PlayerState.CurrentWorld.ValueNullable : null;
+        if (current == null) return 0;
+        var tabs = GetWorldTravelTabs(GetLogicalDataCenterId(current.Value));
+        return tabs.Count > 1 ? tabs.Count : 0;
     }
 
     /// <summary>
@@ -74,6 +83,10 @@ internal static class WorldCatalog {
     /// Region-agnostic: detected from the World sheet, so future NA/EU/OC merges work without code changes.
     /// </summary>
     public static bool IsMergedDataCenter(uint logicalDcId) => GetWorldTravelTabs(logicalDcId).Count > 1;
+
+    /// <summary>True when the group's display DC belongs to a merged logical DC (its worlds are reachable via World Visit).</summary>
+    public static bool IsMergedGroup(DataCenterGroup group) =>
+        group.Worlds.Count > 0 && IsMergedDataCenter(GetLogicalDataCenterId(group.Worlds[0]));
 
     public static bool IsCurrentDataCenterMerged() {
         var current = DalamudApi.PlayerState.IsLoaded ? DalamudApi.PlayerState.CurrentWorld.ValueNullable : null;

@@ -7,8 +7,6 @@ using System.Numerics;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 
-using Lumina.Excel.Sheets;
-
 using MasterOfPuppets.Extensions.Dalamud;
 using MasterOfPuppets.Util;
 
@@ -111,33 +109,40 @@ internal static class WorldTravelManager {
     //  Step 3
     //  Wait for WorldTravelSelect addon AND its world list to be populated, then fire selection.
     //  Addon becomes visible before worlds load - poll until list has entries.
-    //  Merged DCs (JP today) show one tab per original DC: when the world is not in the open tab, switch tab and poll again.
-    //  Ls 2.6: Callback.Fire(addon, true, 0, index + 2) / tab: Callback.Fire(addon, true, 1, tab)
+    //  Ls: Callback.Fire(addon, true, 0, index + 2) / tab: Callback.Fire(addon, true, 1, tab)
     private static void Step_WaitForWorldTravelSelect(string world) {
-        const long TabSwitchIntervalMs = 300;
+        const long TabSwitchIntervalMs = 400;
 
         var ok = false;
         var index = -1;
         long lastTabSwitch = 0;
         List<string> worlds = [];
-        var tab = WorldCatalog.IsCurrentDataCenterMerged() && WorldCatalog.TryResolve(world, out var row)
-            ? WorldCatalog.GetWorldTravelTab(row)
+        var tabCount = WorldCatalog.GetCurrentWorldTravelTabCount();
+        var tab = tabCount > 0 && WorldCatalog.TryResolve(world, out var row)
+            ? Math.Max(0, WorldCatalog.GetWorldTravelTab(row))
             : -1;
+        var tabsTried = 0;
 
         Coroutine.StartRunOnFramework(
             runFunction: () => {
-                if (worlds.Count == 0 || index != -1 || tab == -1) return;
+                if (worlds.Count == 0 || index != -1 || tab == -1 || tabsTried >= tabCount) return;
                 var now = Environment.TickCount64;
                 if (now - lastTabSwitch < TabSwitchIntervalMs) return;
+                // previous switch landed on a tab without the world: move on to the next one
+                if (lastTabSwitch != 0) tab = (tab + 1) % tabCount;
                 lastTabSwitch = now;
+                tabsTried++;
                 GameDialogManager.SelectWorldTravelTab(tab);
             },
             stopWhen: () => {
                 if (!GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.WorldTravelSelect)) return false;
                 worlds = GameDialogManager.GetAvailableWorldDestinations();
                 index = worlds.FindIndex(w => string.Equals(w, world, StringComparison.OrdinalIgnoreCase));
+                if (index != -1) return ok = true;
                 // without a tab to switch to, a loaded list that lacks the world is final
-                return ok = index != -1 || (tab == -1 && worlds.Count > 0);
+                if (tab == -1) return ok = worlds.Count > 0;
+                // every tab tried and the last one had time to load
+                return ok = tabsTried >= tabCount && Environment.TickCount64 - lastTabSwitch >= TabSwitchIntervalMs;
             },
             callback: () => {
                 if (!ok || index == -1) {
