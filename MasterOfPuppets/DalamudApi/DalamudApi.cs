@@ -25,6 +25,7 @@ public class DalamudApi {
     [PluginService] public static IObjectTable ObjectTable { get; private set; }
     [PluginService] public static ITargetManager TargetManager { get; private set; }
     [PluginService] public static ICondition Condition { get; private set; } = null;
+    [PluginService] public static IAetheryteList AetheryteList { get; private set; } = null;
     [PluginService] public static IDtrBar DtrBar { get; set; } = null;
     // [PluginService] public static IUnlockState UnlockState { get; private set; } = null;
     // [PluginService] public static IAddonLifecycle AddonLifecycle { get; private set; } = null;
