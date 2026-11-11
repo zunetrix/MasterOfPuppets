@@ -16,8 +16,12 @@ namespace MasterOfPuppets;
 /// </summary>
 internal static class WorldCatalog {
 
-    // JP = 1, NA = 2, EU = 3, OC = 4. Others (CN/KR/cloud test) are excluded.
-    private static bool IsTravelRegion(uint region) => region is >= 1 and <= 4;
+    // JP = 1, NA = 2, EU = 3, OC = 4 (global client). CN / KR / TW regions are their own clients and only see their own worlds.
+    private static bool IsGlobalRegion(uint region) => region is >= 1 and <= 4;
+
+    // World.UserType of CN / KR worlds
+    private const int UserTypeChina = 101;
+    private const int UserTypeKorea = 201;
 
     internal sealed record DataCenterGroup(uint Id, string Name, IReadOnlyList<World> Worlds);
 
@@ -31,9 +35,33 @@ internal static class WorldCatalog {
     public static string GetDataCenterName(uint dcId) =>
         DalamudApi.DataManager.GetExcelSheet<WorldDCGroupType>().GetRowOrDefault(dcId)?.Name.ExtractText() ?? $"DC {dcId}";
 
+    public static uint GetRegion(World world) => world.DataCenter.ValueNullable?.Region.RowId ?? 0;
+
+    /// <summary>
+    /// Public, playable worlds of every region (JP/NA/EU/OC, CN, KR, TW).
+    /// CN / KR / TW worlds are not flagged <c>IsPublic</c> in the sheet: CN / KR detected by UserType
+    /// <c>ExcelWorldHelper.IsPublic</c>, TW by InternalName.
+    /// Cloud / beta DCs are excluded.
+    /// </summary>
     public static IEnumerable<World> GetPublicWorlds() =>
-        DalamudApi.DataManager.GetExcelSheet<World>()
-            .Where(w => w.IsPublic && IsTravelRegion(w.DataCenter.ValueNullable?.Region.RowId ?? 0));
+        DalamudApi.DataManager.GetExcelSheet<World>().Where(IsPublicWorld);
+
+    private static bool IsPublicWorld(World w) {
+        if (w.DataCenter.ValueNullable is not { } dc || dc.RowId == 0 || dc.IsCloud) return false;
+        if (dc.Region.RowId == 0) return false; // Unknown / Beta
+        if (w.IsPublic) return true;
+        // CN
+        if (w.RowId > 1000 && w.UserType == UserTypeChina) return true;
+        var internalName = w.InternalName.ExtractText();
+        // KR (KrOmega is a test world)
+        if (w.RowId > 2000 && w.UserType == UserTypeKorea)
+            return internalName.StartsWith("Kr", StringComparison.Ordinal) && internalName != "KrOmega";
+        // TW (DC 151 陸行鳥, region 8): TcIfrit..TcTitan. TcTest*, t-*, td-* are test worlds.
+        // Matched by InternalName: TW UserType values are not reliable to tell public worlds apart.
+        if (w.RowId > 4000)
+            return internalName.StartsWith("Tc", StringComparison.Ordinal) && !internalName.StartsWith("TcTest", StringComparison.Ordinal);
+        return false;
+    }
 
     private static readonly Dictionary<uint, List<DataCenterGroup>> WorldVisitCache = new();
 
@@ -103,12 +131,13 @@ internal static class WorldCatalog {
 
     /// <summary>
     /// Worlds of <paramref name="region"/> plus Oceania (cross-DC travel targets), grouped by display DC.
-    /// Region DCs first, Oceania last. Cached per region.
+    /// Oceania is only added for global regions (CN / KR / TE clients cannot travel there). Region DCs first, Oceania last. Cached per region.
     /// </summary>
     public static List<DataCenterGroup> GetDataCenterTravelGroups(uint region) {
         if (RegionCache.TryGetValue(region, out var cached)) return cached;
+        var withOceania = IsGlobalRegion(region);
         return RegionCache[region] = GetPublicWorlds()
-            .Where(w => w.DataCenter.ValueNullable?.Region.RowId is var r && (r == region || r == RegionOceania))
+            .Where(w => GetRegion(w) is var r && (r == region || (withOceania && r == RegionOceania)))
             .GroupBy(GetDisplayDataCenterId)
             .Select(g => new DataCenterGroup(
                 g.Key,
