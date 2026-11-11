@@ -736,18 +736,52 @@ public static partial class MopCommandsHelper {
         new MopAction {
             Category = MopActionCategory.PluginCommand,
             SubCategory = MopActionSubCategory.Settings,
-            TextCommand = "/mop fixplugins",
-            SuggestionCommand = "/mop fixplugins",
+            TextCommand = "/mop plugin fixload",
+            SuggestionCommand = "/mop plugin fixload",
             Example = """
-            /mop fixplugins
+            /mop plugin fixload
 
             Broadcast:
-            /mopbr /mop fixplugins
+            /mopbr /mop plugin fixload
             """,
             Notes = """
             * This is a plugin command (works only on local clients)
             Resets Dalamud plugins stuck in a load error state (LoadError, UnloadError, DependencyResolutionFailed)
             so they can be enabled again without restarting the game.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            SubCategory = MopActionSubCategory.Settings,
+            TextCommand = "/mop plugin checkupdate",
+            SuggestionCommand = "/mop plugin checkupdate",
+            Example = """
+            /mop plugin checkupdate
+
+            Broadcast:
+            /mopbr /mop plugin checkupdate
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Reloads the Dalamud plugin repositories and checks for plugin updates,
+            same as opening the Dalamud plugin installer.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            SubCategory = MopActionSubCategory.Settings,
+            TextCommand = "/mop plugin update \"InternalName\"",
+            SuggestionCommand = "/mop plugin update ",
+            Example = """
+            /mop plugin update "MasterOfPuppets"
+
+            Broadcast:
+            /mopbr /mop plugin update "MasterOfPuppets"
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Updates a Dalamud plugin (matched by internal name or display name) if an update is available,
+            same as the update button in the Dalamud plugin installer. Dev plugins are not updated.
             """
         },
         new MopAction {

@@ -484,13 +484,8 @@ public class PluginCommandManager : IDisposable {
                         GameSettingsManager.SetDisplayObjectLimit(displayObjectLimitType);
                     }
                     break;
-                case "fixplugins": {
-                        var fixedCount = DalamudPluginHelper.FixPluginLoadError();
-                        DalamudApi.ShowNotification(
-                            fixedCount > 0 ? $"Fixed {fixedCount} plugin(s) with load error" : "No plugins with load error found",
-                            fixedCount > 0 ? NotificationType.Success : NotificationType.Info,
-                            5000);
-                    }
+                case "plugin":
+                    HandlePluginSubcommand(parsedArgs);
                     break;
                 case "sound": {
                         if (parsedArgs.Count < 2) {
@@ -662,6 +657,45 @@ public class PluginCommandManager : IDisposable {
         } else {
             Plugin.Ui.MainWindow.Toggle();
         }
+    }
+
+    private const string PluginSubcommandUsage = "Usage: /mop plugin <fixload|checkupdate|update \"InternalName\">";
+
+    /// <summary>
+    /// /mop plugin fixload | checkupdate | update "InternalName"
+    /// </summary>
+    private static void HandlePluginSubcommand(IReadOnlyList<string> parsedArgs) {
+        if (parsedArgs.Count < 2) {
+            DalamudApi.ChatGui.PrintError($"Invalid arguments. {PluginSubcommandUsage}");
+            return;
+        }
+
+        switch (parsedArgs[1].ToLowerInvariant()) {
+            case "fixload":
+                FixPluginLoadError();
+                break;
+            case "checkupdate":
+                DalamudPluginHelper.CheckForUpdates();
+                break;
+            case "update":
+                if (parsedArgs.Count < 3 || string.IsNullOrWhiteSpace(parsedArgs[2])) {
+                    DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop plugin update \"InternalName\"");
+                    return;
+                }
+                DalamudPluginHelper.UpdatePlugin(parsedArgs[2]);
+                break;
+            default:
+                DalamudApi.ChatGui.PrintError($"Unrecognized plugin subcommand: '{parsedArgs[1]}'. {PluginSubcommandUsage}");
+                break;
+        }
+    }
+
+    private static void FixPluginLoadError() {
+        var fixedCount = DalamudPluginHelper.FixPluginLoadError();
+        DalamudApi.ShowNotification(
+            fixedCount > 0 ? $"Fixed {fixedCount} plugin(s) with load error" : "No plugins with load error found",
+            fixedCount > 0 ? NotificationType.Success : NotificationType.Info,
+            5000);
     }
 
     private void OnBroadcastCommand(string command, string arguments) {
