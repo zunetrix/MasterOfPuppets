@@ -97,7 +97,8 @@ internal static unsafe partial class GameDialogManager {
                     return FireCallback(addonName, i);
         }
 
-        return count > fallbackIndex && FireCallback(addonName, fallbackIndex);
+        // fallbackIndex < 0: text match only
+        return fallbackIndex >= 0 && count > fallbackIndex && FireCallback(addonName, fallbackIndex);
     }
 
     /// <summary>Clicks the entry at zero-based <paramref name="index"/> in <paramref name="addonName"/>. Locale-independent.</summary>

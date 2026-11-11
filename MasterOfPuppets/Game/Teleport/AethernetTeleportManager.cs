@@ -29,9 +29,10 @@ internal static class AethernetTeleportManager {
 
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             // normalize to the sheet name when it resolves (e.g. partial input "arcan" -> "Arcanists' Guild")
-            var target = AethernetCatalog.TryResolve(destination, out var row) ? AethernetCatalog.GetName(row) : destination.Trim();
+            // residential shards of the current territory first, then city aethernet
+            AethernetCatalog.TryResolveDestination(destination, out var target, out var rowId);
 
-            if (AethernetCatalog.TryGetContext(out var ctx) && ctx.CurrentRowId != 0 && ctx.CurrentRowId == row.RowId) {
+            if (rowId != 0 && AethernetCatalog.TryGetContext(out var ctx) && ctx.CurrentRowId == rowId) {
                 DalamudApi.PluginLog.Debug($"[TeleportToAethernet] already at '{target}'");
                 return;
             }
@@ -39,10 +40,8 @@ internal static class AethernetTeleportManager {
             var player = DalamudApi.ObjectTable.LocalPlayer;
             if (player == null) return;
 
-            var aetheryte = DalamudApi.ObjectTable
-                .Where(x => x != null && x.ObjectKind == ObjectKind.Aetheryte)
-                .OrderBy(x => Vector3.DistanceSquared(player.Position, x.Position))
-                .FirstOrDefault();
+            // aetheryte or aethernet shard (residential shards may be event objects)
+            var aetheryte = AethernetCatalog.GetNearestAethernetObject();
 
             if (aetheryte != null && !AethernetCatalog.IsInInteractRange(player.Position, aetheryte)) {
                 plugin.MovementManager.MoveTo(aetheryte.GameObjectId);
@@ -79,7 +78,7 @@ internal static class AethernetTeleportManager {
         var ok = false;
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
-            stopWhen: () => ok = DalamudApi.TargetManager.Target?.ObjectKind == ObjectKind.Aetheryte,
+            stopWhen: () => ok = AethernetCatalog.IsAethernetObject(DalamudApi.TargetManager.Target),
             callback: () => {
                 if (!ok) { DalamudApi.PluginLog.Warning("[TeleportToAethernet] step1 timeout: no aetheryte targeted"); return; }
                 GameTargetManager.InteractWithTarget();
@@ -90,12 +89,14 @@ internal static class AethernetTeleportManager {
 
     //  Step 2
     //  Main aetheryte opens SelectString first ("Aethernet."), aethernet shards open TelepotTown directly.
+    //  Residential menus have other entries: match by text only
     private static void Step_WaitForAethernetMenu(string destination) {
         var ok = false;
+        var fallbackIndex = AethernetCatalog.IsInResidentialZone() ? -1 : AetheryteMenuText.IndexAethernet;
         Coroutine.StartRunOnFramework(
             runFunction: () => {
                 if (GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.SelectString))
-                    GameDialogManager.SelectStringByTextOrIndex(AetheryteMenuText.Aethernet, AetheryteMenuText.IndexAethernet);
+                    GameDialogManager.SelectStringByTextOrIndex(AetheryteMenuText.Aethernet, fallbackIndex);
             },
             stopWhen: () => ok = GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.TelepotTown),
             callback: () => {

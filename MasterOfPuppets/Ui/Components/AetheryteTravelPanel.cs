@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 using Dalamud.Bindings.ImGui;
@@ -46,20 +47,46 @@ internal static class AetheryteTravelPanel {
                 buttonWidth = Math.Max(buttonWidth, ImGui.CalcTextSize(GetAethernetLabel(entry)).X + padding);
         }
 
-        foreach (var entry in entries) {
-            // never disabled: the click is broadcast and other clients may be elsewhere;
-            // AethernetTeleportManager skips the travel on clients already at the destination
-            var isCurrent = ctx?.CurrentRowId == entry.RowId;
-            using (PushCurrentLocationColors(isCurrent)) {
-                var label = $"{GetAethernetLabel(entry)}##Aethernet{entry.RowId}";
-                if (ImGui.Button(label, new Vector2(buttonWidth, 0))) {
-                    plugin.IpcProvider.ExecuteTeleportToAethernet(entry.Name);
-                    MarkActionTriggered();
-                }
-            }
-            var command = $"/mop aethernet \"{entry.Name}\"";
-            ImGuiUtil.ToolTip(isCurrent ? $"Current location\n{command}" : command);
+        // residential: main district and subdivision
+        if (entries.Any(e => e.IsSubdivision)) {
+            var spacing = ImGui.GetStyle().ItemSpacing.X;
+            var columnWidth = buttonWidth > 0 ? buttonWidth : (ImGui.GetContentRegionAvail().X - spacing) / 2f;
+
+            ImGui.BeginGroup();
+            DrawAethernetColumn(plugin, ctx, entries.Where(e => !e.IsSubdivision), columnWidth, "Main");
+            ImGui.EndGroup();
+
+            ImGui.SameLine();
+
+            ImGui.BeginGroup();
+            DrawAethernetColumn(plugin, ctx, entries.Where(e => e.IsSubdivision), columnWidth, "Subdivision");
+            ImGui.EndGroup();
+            return;
         }
+
+        foreach (var entry in entries)
+            DrawAethernetButton(plugin, ctx, entry, buttonWidth);
+    }
+
+    private static void DrawAethernetColumn(Plugin plugin, AethernetCatalog.AetheryteContext? ctx, IEnumerable<AethernetCatalog.AethernetEntry> entries, float width, string header) {
+        ImGui.TextDisabled(header);
+        foreach (var entry in entries)
+            DrawAethernetButton(plugin, ctx, entry, width);
+    }
+
+    private static void DrawAethernetButton(Plugin plugin, AethernetCatalog.AetheryteContext? ctx, AethernetCatalog.AethernetEntry entry, float width) {
+        // never disabled: the click is broadcast and other clients may be elsewhere;
+        // AethernetTeleportManager skips the travel on clients already at the destination
+        var isCurrent = ctx?.CurrentRowId == entry.RowId && !entry.IsHousing;
+        using (PushCurrentLocationColors(isCurrent)) {
+            var label = $"{GetAethernetLabel(entry)}##Aethernet{(entry.IsHousing ? "H" : "")}{entry.RowId}";
+            if (ImGui.Button(label, new Vector2(width, 0))) {
+                plugin.IpcProvider.ExecuteTeleportToAethernet(entry.Name);
+                MarkActionTriggered();
+            }
+        }
+        var command = $"/mop aethernet \"{entry.Name}\"";
+        ImGuiUtil.ToolTip(isCurrent ? $"Current location\n{command}" : command);
     }
 
     private static string GetAethernetLabel(AethernetCatalog.AethernetEntry entry) =>

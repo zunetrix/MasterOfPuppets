@@ -40,7 +40,8 @@ public static class GameTargetManager {
     }
 
     public static void TargetNearestAetheryte() {
-        TargetNearestObjectInternal(actor => actor.ObjectKind == ObjectKind.Aetheryte);
+        // aetheryte or aethernet shard (residential shards may be event objects)
+        TargetNearestObjectInternal(AethernetCatalog.IsAethernetObject);
     }
 
     public static void TargetObject(string objectName) {
