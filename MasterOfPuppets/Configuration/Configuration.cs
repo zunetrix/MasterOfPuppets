@@ -260,6 +260,7 @@ internal class Configuration : IPluginConfiguration {
     public AetheryteOverlayDock AetheryteOverlayDock { get; set; } = AetheryteOverlayDock.Left;
     public float AetheryteOverlayOffsetY { get; set; } = 0f; // fraction of screen height from the middle (-0.5 .. 0.5)
     public bool AetheryteOverlayIconsOnly { get; set; } = true;
+    public bool AetheryteOverlayNativeMapPreview { get; set; } = false; // opens TelepotTown with the Aethernet submenu, hover moves its map
 
     // Housing entrance overlay
     public bool ShowHousingOverlay { get; set; } = true;

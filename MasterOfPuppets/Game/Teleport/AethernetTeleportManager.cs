@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
+using System.Threading;
 
-using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 
 using MasterOfPuppets.Util;
@@ -34,6 +33,16 @@ internal static class AethernetTeleportManager {
 
             if (rowId != 0 && AethernetCatalog.TryGetContext(out var ctx) && ctx.CurrentRowId == rowId) {
                 DalamudApi.PluginLog.Debug($"[TeleportToAethernet] already at '{target}'");
+                // window may have been opened by the overlay map preview
+                AethernetMapPreview.HandOff();
+                GameDialogManager.CloseAddon(GameDialogManager.AddonName.TelepotTown);
+                return;
+            }
+
+            // window already open (overlay map preview): select directly
+            if (GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.TelepotTown)) {
+                AethernetMapPreview.HandOff();
+                Step_SelectDestination(target);
                 return;
             }
 
@@ -48,8 +57,24 @@ internal static class AethernetTeleportManager {
                 Step_WaitUntilCloseAndTargetAetheryte(target, aetheryte, plugin);
             } else {
                 GameTargetManager.TargetNearestAetheryte();
-                Step_WaitForAetheryteTarget(target);
+                Step_WaitForAetheryteTarget(() => Step_SelectDestination(target));
             }
+        });
+    }
+
+    /// <summary>
+    /// Opens the native <c>TelepotTown</c> window of the aetheryte in range without selecting a destination
+    /// (target > interact > "Aethernet."). <paramref name="onOpened"/> runs once the window is visible.
+    /// </summary>
+    public static void OpenAethernetWindow(Action? onOpened = null, CancellationToken cancellationToken = default) {
+        DalamudApi.Framework.RunOnFrameworkThread(() => {
+            if (cancellationToken.IsCancellationRequested) return;
+            if (GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.TelepotTown)) {
+                onOpened?.Invoke();
+                return;
+            }
+            GameTargetManager.TargetNearestAetheryte();
+            Step_WaitForAetheryteTarget(() => onOpened?.Invoke(), cancellationToken);
         });
     }
 
@@ -67,30 +92,32 @@ internal static class AethernetTeleportManager {
                 plugin.MovementManager.StopMove();
                 if (!ok) { DalamudApi.PluginLog.Warning("[TeleportToAethernet] move timeout: aetheryte still out of interact range"); return; }
                 GameTargetManager.TargetNearestAetheryte();
-                Step_WaitForAetheryteTarget(destination);
+                Step_WaitForAetheryteTarget(() => Step_SelectDestination(destination));
             },
             timeoutMs: 30000);
     }
 
     //  Step 1
     //  Wait until the nearest aetheryte is targeted, then interact.
-    private static void Step_WaitForAetheryteTarget(string destination) {
+    private static void Step_WaitForAetheryteTarget(Action onWindowOpen, CancellationToken cancellationToken = default) {
         var ok = false;
         Coroutine.StartRunOnFramework(
             runFunction: () => { },
             stopWhen: () => ok = AethernetCatalog.IsAethernetObject(DalamudApi.TargetManager.Target),
             callback: () => {
+                if (cancellationToken.IsCancellationRequested) return;
                 if (!ok) { DalamudApi.PluginLog.Warning("[TeleportToAethernet] step1 timeout: no aetheryte targeted"); return; }
                 GameTargetManager.InteractWithTarget();
-                Step_WaitForAethernetMenu(destination);
+                Step_WaitForAethernetMenu(onWindowOpen, cancellationToken);
             },
-            timeoutMs: 3000);
+            timeoutMs: 3000,
+            cancellationToken: cancellationToken);
     }
 
     //  Step 2
     //  Main aetheryte opens SelectString first ("Aethernet."), aethernet shards open TelepotTown directly.
     //  Residential menus have other entries: match by text only
-    private static void Step_WaitForAethernetMenu(string destination) {
+    private static void Step_WaitForAethernetMenu(Action onWindowOpen, CancellationToken cancellationToken = default) {
         var ok = false;
         var fallbackIndex = AethernetCatalog.IsInResidentialZone() ? -1 : AetheryteMenuText.IndexAethernet;
         Coroutine.StartRunOnFramework(
@@ -100,10 +127,12 @@ internal static class AethernetTeleportManager {
             },
             stopWhen: () => ok = GameDialogManager.IsAddonVisible(GameDialogManager.AddonName.TelepotTown),
             callback: () => {
+                if (cancellationToken.IsCancellationRequested) return;
                 if (!ok) { DalamudApi.PluginLog.Warning("[TeleportToAethernet] step2 timeout: TelepotTown not visible"); return; }
-                Step_SelectDestination(destination);
+                onWindowOpen();
             },
-            timeoutMs: 7000);
+            timeoutMs: 7000,
+            cancellationToken: cancellationToken);
     }
 
     //  Step 3

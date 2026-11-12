@@ -91,7 +91,20 @@ public class AetheryteOverlayWindow : ThemedWindow {
 
     private bool CloseSubmenu() {
         _openCategory = Category.None;
+        UpdateNativeMapPreview();
         return false;
+    }
+
+    // native TelepotTown window follows the Aethernet submenu (local only)
+    private void UpdateNativeMapPreview() {
+        var active = _openCategory == Category.Aethernet && Plugin.Config.AetheryteOverlayNativeMapPreview;
+        if (!active) {
+            if (AethernetMapPreview.IsActive) AethernetMapPreview.Close();
+            return;
+        }
+
+        AethernetMapPreview.Open();
+        AethernetMapPreview.Update(AetheryteTravelPanel.HoveredAethernet?.Name);
     }
 
     public override void PreDraw() {
@@ -126,7 +139,10 @@ public class AetheryteOverlayWindow : ThemedWindow {
 
     // submenu
     private void DrawSubmenu(AethernetCatalog.AetheryteContext ctx, long now) {
-        if (_openCategory == Category.None) return;
+        if (_openCategory == Category.None) {
+            UpdateNativeMapPreview();
+            return;
+        }
 
         var barPos = ImGui.GetWindowPos();
         var barSize = ImGui.GetWindowSize();
@@ -170,8 +186,14 @@ public class AetheryteOverlayWindow : ThemedWindow {
         }
         ImGui.End();
 
+        // a destination was clicked: the travel flow reuses the open native window
+        if (AetheryteTravelPanel.ActionTriggeredThisFrame && _openCategory == Category.Aethernet)
+            AethernetMapPreview.HandOff();
+
         if (AetheryteTravelPanel.ActionTriggeredThisFrame || now - _lastHoverMs > SubmenuCloseDelayMs)
             _openCategory = Category.None;
+
+        UpdateNativeMapPreview();
     }
 
     //  helpers

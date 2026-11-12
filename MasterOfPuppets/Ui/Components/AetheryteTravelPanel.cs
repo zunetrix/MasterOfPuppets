@@ -28,6 +28,9 @@ internal static class AetheryteTravelPanel {
 
     private static void MarkActionTriggered() => LastActionFrame = ImGui.GetFrameCount();
 
+    /// <summary>Aethernet destination hovered during the last <see cref="DrawAethernet"/> call (null = none).</summary>
+    public static AethernetCatalog.AethernetEntry? HoveredAethernet { get; private set; }
+
     //  Aethernet
 
     /// <summary>
@@ -35,6 +38,7 @@ internal static class AetheryteTravelPanel {
     /// without it, the current territory's city aethernet is listed.
     /// </summary>
     public static void DrawAethernet(Plugin plugin, AethernetCatalog.AetheryteContext? ctx, float buttonWidth = FillWidth) {
+        HoveredAethernet = null;
         var entries = ctx?.Aethernet ?? AethernetCatalog.GetGroupForCurrentTerritory();
         if (entries.Count == 0) {
             ImGui.TextDisabled("No aethernet in this zone");
@@ -85,6 +89,7 @@ internal static class AetheryteTravelPanel {
                 MarkActionTriggered();
             }
         }
+        if (ImGui.IsItemHovered()) HoveredAethernet = entry;
         var command = $"/mop aethernet \"{entry.Name}\"";
         ImGuiUtil.ToolTip(isCurrent ? $"Current location\n{command}" : command);
     }

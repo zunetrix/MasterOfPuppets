@@ -167,6 +167,17 @@ public class InterfaceSettingsWidget : Widget {
                     Plugin.IpcProvider.SyncConfiguration();
                 }
 
+                using (ImRaii.Disabled(!showAethernet)) {
+                    ImGui.Indent();
+                    var nativeMap = Plugin.Config.AetheryteOverlayNativeMapPreview;
+                    if (ImGui.Checkbox("Show destination on native aethernet map##OverlayNativeMap", ref nativeMap)) {
+                        Plugin.Config.AetheryteOverlayNativeMapPreview = nativeMap;
+                        Plugin.IpcProvider.SyncConfiguration();
+                    }
+                    ImGuiUtil.ToolTip("Opening the Aethernet submenu interacts with the aetheryte to open the game's aethernet window.\nHovering a destination in the overlay moves the native map to it.");
+                    ImGui.Unindent();
+                }
+
                 var showResidential = Plugin.Config.AetheryteOverlayShowResidential;
                 if (ImGui.Checkbox("Residential Travel##OverlayResidential", ref showResidential)) {
                     Plugin.Config.AetheryteOverlayShowResidential = showResidential;
