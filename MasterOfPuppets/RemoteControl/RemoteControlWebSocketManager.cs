@@ -8,13 +8,19 @@ using System.Threading.Tasks;
 
 namespace MasterOfPuppets.RemoteControl;
 
-internal sealed record WsClientInfo(Guid Id, WebSocket Socket, DateTime ConnectedAt, string IpAddress, string UserAgent);
+internal sealed record WsClientInfo(Guid Id, WebSocket Socket, DateTime ConnectedAt, string IpAddress, string UserAgent) {
+    // Serializes writes to Socket: WebSocket forbids concurrent SendAsync calls,
+    // and replies can otherwise overlap with broadcasts.
+    public SemaphoreSlim SendLock { get; } = new(1, 1);
+}
 
 /// <summary>
 /// Tracks all active WebSocket connections, fans out events to all clients,
 /// and reads inbound messages dispatching them via <see cref="RemoteCommandDispatcher"/>.
 /// </summary>
 internal sealed class RemoteControlWebSocketManager : IDisposable {
+    private const int MaxMessageBytes = 1 * 1024 * 1024;
+
     private readonly ConcurrentDictionary<Guid, WsClientInfo> _clients = new();
     private readonly RemoteCommandDispatcher _dispatcher;
     private readonly CancellationTokenSource _cts = new();
@@ -43,6 +49,7 @@ internal sealed class RemoteControlWebSocketManager : IDisposable {
 
         try {
             var buffer = new byte[4096];
+            using var messageBuffer = new System.IO.MemoryStream();
             while (ws.State == WebSocketState.Open && !_cts.Token.IsCancellationRequested) {
                 WebSocketReceiveResult result;
                 try {
@@ -58,36 +65,51 @@ internal sealed class RemoteControlWebSocketManager : IDisposable {
                     break;
                 }
 
-                if (result.MessageType == WebSocketMessageType.Text) {
-                    var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    await ProcessIncomingAsync(ws, json);
+                messageBuffer.Write(buffer, 0, result.Count);
+                if (messageBuffer.Length > MaxMessageBytes) {
+                    try {
+                        await ws.CloseAsync(WebSocketCloseStatus.MessageTooBig, "message too big", CancellationToken.None);
+                    } catch { /* ignore */ }
+                    break;
                 }
+
+                if (!result.EndOfMessage)
+                    continue;
+
+                if (result.MessageType == WebSocketMessageType.Text) {
+                    var json = Encoding.UTF8.GetString(messageBuffer.GetBuffer(), 0, (int)messageBuffer.Length);
+                    await ProcessIncomingAsync(clientInfo, json);
+                }
+
+                messageBuffer.SetLength(0);
             }
         } finally {
             _clients.TryRemove(id, out _);
+            // SendLock is intentionally not disposed: a broadcast may still hold it,
+            // and SemaphoreSlim without AvailableWaitHandle has no unmanaged state.
             DalamudApi.PluginLog.Debug($"[WS] Client disconnected: {id}  (total: {_clients.Count})");
         }
     }
 
-    private async Task ProcessIncomingAsync(WebSocket ws, string json) {
+    private async Task ProcessIncomingAsync(WsClientInfo client, string json) {
         WsIncoming? msg;
         try {
             msg = JsonSerializer.Deserialize<WsIncoming>(json, JsonOptions);
         } catch {
-            await SendToAsync(ws, new WsEvent { Name = "error", Data = new { error = "Invalid JSON." } });
+            await SendToAsync(client, new WsEvent { Name = "error", Data = new { error = "Invalid JSON." } });
             return;
         }
 
         if (msg == null) return;
 
         if (msg.Type.Equals("ping", StringComparison.OrdinalIgnoreCase)) {
-            await SendToAsync(ws, new WsEvent { Name = "pong" });
+            await SendToAsync(client, new WsEvent { Name = "pong" });
             return;
         }
 
         if (msg.Type.Equals("command", StringComparison.OrdinalIgnoreCase)) {
             if (string.IsNullOrWhiteSpace(msg.Payload)) {
-                await SendToAsync(ws, new WsEvent { Name = "commandResult", Data = CommandResult.Fail("Empty payload.") });
+                await SendToAsync(client, new WsEvent { Name = "commandResult", Data = CommandResult.Fail("Empty payload.") });
                 return;
             }
 
@@ -101,7 +123,7 @@ internal sealed class RemoteControlWebSocketManager : IDisposable {
                 BroadcastPluginCommand(msg.Payload!);
             }
 
-            await SendToAsync(ws, new WsEvent { Name = "commandResult", Data = cmdResult });
+            await SendToAsync(client, new WsEvent { Name = "commandResult", Data = cmdResult });
             return;
         }
 
@@ -109,7 +131,7 @@ internal sealed class RemoteControlWebSocketManager : IDisposable {
         // "/clap" → emote, "/p hello" → party, plain text → say, etc.
         if (msg.Type.Equals("chat", StringComparison.OrdinalIgnoreCase)) {
             if (string.IsNullOrWhiteSpace(msg.Payload)) {
-                await SendToAsync(ws, new WsEvent { Name = "chatResult", Data = CommandResult.Fail("Empty payload.") });
+                await SendToAsync(client, new WsEvent { Name = "chatResult", Data = CommandResult.Fail("Empty payload.") });
                 return;
             }
 
@@ -118,7 +140,7 @@ internal sealed class RemoteControlWebSocketManager : IDisposable {
                 try { ChatBox.SendMessage(msg.Payload!); } catch (Exception e) { chatEx = e; }
             });
             var chatResult = chatEx == null ? CommandResult.Success() : CommandResult.Fail(chatEx.Message);
-            await SendToAsync(ws, new WsEvent { Name = "chatResult", Data = chatResult });
+            await SendToAsync(client, new WsEvent { Name = "chatResult", Data = chatResult });
         }
     }
 
@@ -155,7 +177,15 @@ internal sealed class RemoteControlWebSocketManager : IDisposable {
                 continue;
             }
             try {
-                await client.Socket.SendAsync(payload, WebSocketMessageType.Text, true, _cts.Token);
+                await client.SendLock.WaitAsync(_cts.Token);
+                try {
+                    await client.Socket.SendAsync(payload, WebSocketMessageType.Text, true, _cts.Token);
+                } finally {
+                    client.SendLock.Release();
+                }
+            } catch (ObjectDisposedException) {
+                // Client disconnected and its SendLock was disposed mid-broadcast.
+                _clients.TryRemove(id, out _);
             } catch (Exception ex) {
                 DalamudApi.PluginLog.Warning(ex, $"[WS] Error sending to client {id}");
                 _clients.TryRemove(id, out _);
@@ -163,10 +193,17 @@ internal sealed class RemoteControlWebSocketManager : IDisposable {
         }
     }
 
-    private static async Task SendToAsync(WebSocket ws, WsEvent ev) {
-        if (ws.State != WebSocketState.Open) return;
+    private static async Task SendToAsync(WsClientInfo client, WsEvent ev) {
+        if (client.Socket.State != WebSocketState.Open) return;
         try {
-            await ws.SendAsync(SerializeObject(ev), WebSocketMessageType.Text, true, CancellationToken.None);
+            await client.SendLock.WaitAsync();
+            try {
+                await client.Socket.SendAsync(SerializeObject(ev), WebSocketMessageType.Text, true, CancellationToken.None);
+            } finally {
+                client.SendLock.Release();
+            }
+        } catch (ObjectDisposedException) {
+            // Client disconnected and its SendLock was disposed; nothing to send.
         } catch (Exception ex) {
             DalamudApi.PluginLog.Warning(ex, "[WS] Error sending to client.");
         }

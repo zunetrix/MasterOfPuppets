@@ -19,6 +19,9 @@ namespace MasterOfPuppets.RemoteControl;
 internal sealed class RemoteControlClient : IDisposable {
     private readonly RemoteCommandDispatcher _dispatcher;
     private readonly Plugin _plugin;
+    // Guards _ws and _disposed: the connect loop swaps _ws on a background
+    // thread while Dispose() may abort it from another thread.
+    private readonly object _wsGate = new();
     private ClientWebSocket? _ws;
     private CancellationTokenSource _cts = new();
     private Task? _loopTask;
@@ -50,22 +53,29 @@ internal sealed class RemoteControlClient : IDisposable {
 
     private async Task ConnectLoopAsync(string wsUrl, CancellationToken ct) {
         while (!ct.IsCancellationRequested) {
-            _ws?.Dispose();
-            _ws = new ClientWebSocket();
+            var ws = new ClientWebSocket();
+            lock (_wsGate) {
+                if (_disposed) {
+                    ws.Dispose();
+                    break;
+                }
+                _ws?.Dispose();
+                _ws = ws;
+            }
 
             string charName = "Unknown Character";
             await DalamudApi.Framework.Run(() => {
                 charName = DalamudApi.ObjectTable.LocalPlayer?.Name.ToString() ?? "Unknown Character";
             });
-            _ws.Options.SetRequestHeader("User-Agent", $"MasterOfPuppets / {charName}");
+            ws.Options.SetRequestHeader("User-Agent", $"MasterOfPuppets / {charName}");
 
             StatusMessage = "Connecting...";
 
             try {
-                await _ws.ConnectAsync(new Uri(wsUrl), ct);
+                await ws.ConnectAsync(new Uri(wsUrl), ct);
                 StatusMessage = "Connected";
                 DalamudApi.PluginLog.Information($"[RemoteClient] Connected to {wsUrl.Split('?')[0]}");
-                await ReceiveLoopAsync(_ws, ct);
+                await ReceiveLoopAsync(ws, ct);
             } catch (OperationCanceledException) {
                 break;
             } catch (Exception ex) {
@@ -149,11 +159,14 @@ internal sealed class RemoteControlClient : IDisposable {
     }
 
     public void Dispose() {
-        if (_disposed) return;
-        _disposed = true;
-        _cts.Cancel();
-        try { _ws?.Abort(); } catch { /* ignore */ }
-        _ws?.Dispose();
+        lock (_wsGate) {
+            if (_disposed) return;
+            _disposed = true;
+            _cts.Cancel();
+            try { _ws?.Abort(); } catch { /* ignore */ }
+            _ws?.Dispose();
+            _ws = null;
+        }
         _cts.Dispose();
         StatusMessage = "Stopped";
     }
