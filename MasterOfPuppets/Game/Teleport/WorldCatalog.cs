@@ -116,11 +116,6 @@ internal static class WorldCatalog {
     public static bool IsMergedGroup(DataCenterGroup group) =>
         group.Worlds.Count > 0 && IsMergedDataCenter(GetLogicalDataCenterId(group.Worlds[0]));
 
-    public static bool IsCurrentDataCenterMerged() {
-        var current = DalamudApi.PlayerState.IsLoaded ? DalamudApi.PlayerState.CurrentWorld.ValueNullable : null;
-        return current != null && IsMergedDataCenter(GetLogicalDataCenterId(current.Value));
-    }
-
     /// <summary>WorldTravelSelect tab index of <paramref name="world"/> in a merged DC, or -1 when the DC has no tabs.</summary>
     public static int GetWorldTravelTab(World world) {
         var tabs = GetWorldTravelTabs(GetLogicalDataCenterId(world));

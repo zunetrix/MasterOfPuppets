@@ -22,16 +22,21 @@ internal static unsafe partial class GameDialogManager {
         return list;
     }
 
-    // WorldTranslate string array: world names start at 3, or at 6 on a tabbed merged DC (JP today). Ls 2.6
+    // WorldTranslate string array: world names start at 3 when there are no tabs,
+    // or at (2 + tabCount) when tabs are present (JP/NA have 4 tabs -> offset 6; EU has 2 tabs -> offset 4).
     private const int WorldNamesOffset = 3;
-    private const int WorldNamesOffsetMerged = 6;
     private const int WorldNamesCount = 8;
+
+    private static int GetWorldNamesOffset() {
+        var tabCount = WorldCatalog.GetCurrentWorldTravelTabCount();
+        return tabCount > 1 ? 2 + tabCount : WorldNamesOffset;
+    }
 
     internal static List<string> GetAvailableWorldDestinations() {
         var ret = new List<string>();
         var stringArray = RaptureAtkModule.Instance()->AtkArrayDataHolder.StringArrays[(int)StringArrayType.WorldTranslate];
         if (stringArray != null) {
-            var start = WorldCatalog.IsCurrentDataCenterMerged() ? WorldNamesOffsetMerged : WorldNamesOffset;
+            var start = GetWorldNamesOffset();
             for (var i = start; i < start + WorldNamesCount; i++) {
                 var str = stringArray->StringArray[i];
                 if (str.HasValue) {
