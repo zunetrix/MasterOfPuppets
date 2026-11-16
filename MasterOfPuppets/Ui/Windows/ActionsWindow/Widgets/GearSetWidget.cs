@@ -102,7 +102,7 @@ public unsafe partial class GearSetWidget : Widget {
     // Filter slots when moving gearset items
     private bool _moveIgnoreWeapons = true;
     private bool _moveIgnoreAccessories = true;
-    private bool _moveIgnoreSoulCrystal = true;
+    private readonly bool _moveIgnoreSoulCrystal = true;
 
     public GearSetWidget(WidgetContext ctx) : base(ctx) { }
 
@@ -159,29 +159,40 @@ public unsafe partial class GearSetWidget : Widget {
 
     // Header
     private void DrawHeader() {
-        ImGui.SetNextItemWidth(300 * ImGuiHelpers.GlobalScale);
+        ImGui.SetNextItemWidth((Context.Plugin.Config.ShowGearsetItemColumns ? 300 : 200) * ImGuiHelpers.GlobalScale);
         ImGui.InputTextWithHint("##GearGridSearch", "Search...", ref _searchText, 128, ImGuiInputTextFlags.AutoSelectAll);
 
-        // Try-On on hover toggle
+        // Show item columns toggle (persisted in config)
         ImGui.SameLine();
-        if (ImGui.Checkbox("Try On Hover", ref _tryOnOnHover)) {
-            _lastTryOnItemId = 0;
-            _lastTryOnGsIdx = -1;
+        var showItemColumns = Context.Plugin.Config.ShowGearsetItemColumns;
+        if (ImGui.Checkbox("Show Gearset Items", ref showItemColumns)) {
+            Context.Plugin.Config.ShowGearsetItemColumns = showItemColumns;
+            Context.Plugin.IpcProvider.SyncConfiguration();
         }
-        ImGuiUtil.ToolTip("When enabled, hovering over an item icon will preview it (Try On)");
+        ImGuiUtil.ToolTip("Toggle display of equipment item columns.\nDisable to compact the table, showing only gearset name and action buttons.");
 
-        // Keep outfit: controls AgentTryon.SaveDeleteOutfit so each new
-        // Try-On doesn't replace the previous previewed pieces.
-        if (_tryOnOnHover) {
+        if (showItemColumns) {
+            // Try-On on hover toggle
             ImGui.SameLine();
-            ImGui.Checkbox("Keep Outfit", ref _tryOnKeepOutfit);
-            ImGuiUtil.ToolTip("When enabled, trying on a new item keeps previously previewed items visible");
-        }
+            if (ImGui.Checkbox("Try On Hover", ref _tryOnOnHover)) {
+                _lastTryOnItemId = 0;
+                _lastTryOnGsIdx = -1;
+            }
+            ImGuiUtil.ToolTip("When enabled, hovering over an item icon will preview it (Try On)");
 
-        // Glamour icon toggle
-        ImGui.SameLine();
-        ImGui.Checkbox("Glamour Icons", ref _showGlamourIcons);
-        ImGuiUtil.ToolTip("When enabled, displays glamour item icons instead of base equipment icons when available.");
+            // Keep outfit: controls AgentTryon.SaveDeleteOutfit so each new
+            // Try-On doesn't replace the previous previewed pieces.
+            if (_tryOnOnHover) {
+                ImGui.SameLine();
+                ImGui.Checkbox("Keep Outfit", ref _tryOnKeepOutfit);
+                ImGuiUtil.ToolTip("When enabled, trying on a new item keeps previously previewed items visible");
+            }
+
+            // Glamour icon toggle
+            ImGui.SameLine();
+            ImGui.Checkbox("Glamour Icons", ref _showGlamourIcons);
+            ImGuiUtil.ToolTip("When enabled, displays glamour item icons instead of base equipment icons when available.");
+        }
 
         // Broadcast mode toggle
         ImGui.SameLine();
@@ -336,17 +347,25 @@ public unsafe partial class GearSetWidget : Widget {
         // ImGuiUtil.ToolTip("When moving whole gearsets, skip the Soul Crystal.");
     }
 
+    private float GetRowHeight() {
+        return Context.Plugin.Config.ShowGearsetItemColumns
+            ? IconSize.Y * ImGuiHelpers.GlobalScale + ImGui.GetFrameHeight()
+            : 36f * ImGuiHelpers.GlobalScale;
+    }
+
     // Table
     private void DrawTable() {
         var slotIndices = Enum.GetValues<GearsetItemIndex>();
+        bool showItemColumns = Context.Plugin.Config.ShowGearsetItemColumns;
 
         using var padding = ImRaii.PushStyle(ImGuiStyleVar.CellPadding, Vector2.Zero)
                                   .Push(ImGuiStyleVar.FramePadding, Vector2.Zero);
 
         // Columns: [num] [icon] [name] [slot x N] [actions]
+        int columnCount = showItemColumns ? (3 + slotIndices.Length) : 4;
         using var table = ImRaii.Table(
             "##TableGearsets",
-            3 + slotIndices.Length,
+            columnCount,
             ImGuiTableFlags.ScrollY | ImGuiTableFlags.NoSavedSettings);
 
         if (!table) return;
@@ -365,12 +384,16 @@ public unsafe partial class GearSetWidget : Widget {
         ImGui.TableSetupColumn("##Icon", ImGuiTableColumnFlags.WidthFixed, iconColW * ImGuiHelpers.GlobalScale);
 
         // Col 2: gearset name
-        ImGui.TableSetupColumn("##Name", ImGuiTableColumnFlags.WidthFixed, 130 * ImGuiHelpers.GlobalScale);
+        if (showItemColumns) {
+            ImGui.TableSetupColumn("##Name", ImGuiTableColumnFlags.WidthFixed, 130 * ImGuiHelpers.GlobalScale);
 
-        // Item slot columns
-        foreach (var slot in slotIndices) {
-            if (slot == GearsetItemIndex.Belt) continue;
-            ImGui.TableSetupColumn($"##Slot{(int)slot}", ImGuiTableColumnFlags.WidthFixed, IconSize.X * ImGuiHelpers.GlobalScale);
+            // Item slot columns
+            foreach (var slot in slotIndices) {
+                if (slot == GearsetItemIndex.Belt) continue;
+                ImGui.TableSetupColumn($"##Slot{(int)slot}", ImGuiTableColumnFlags.WidthFixed, IconSize.X * ImGuiHelpers.GlobalScale);
+            }
+        } else {
+            ImGui.TableSetupColumn("##Name", ImGuiTableColumnFlags.WidthStretch);
         }
 
         // Last col: action buttons
@@ -405,34 +428,36 @@ public unsafe partial class GearSetWidget : Widget {
             DrawGearsetNameColumn(gearset, gearsetIndex);
 
             // Item slot columns
-            foreach (var slotIndex in slotIndices) {
-                if (slotIndex == GearsetItemIndex.Belt) continue;
+            if (showItemColumns) {
+                foreach (var slotIndex in slotIndices) {
+                    if (slotIndex == GearsetItemIndex.Belt) continue;
 
-                using var slotId = ImRaii.PushId($"Slot{slotIndex}");
+                    using var slotId = ImRaii.PushId($"Slot{slotIndex}");
 
-                var slotItem = gearset->GetItem(slotIndex);
-                ImGui.TableNextColumn();
+                    var slotItem = gearset->GetItem(slotIndex);
+                    ImGui.TableNextColumn();
 
-                var itemId = ItemUtil.GetBaseId(slotItem.ItemId).ItemId;
-                if (itemId == 0) {
-                    DrawEmptySlotPlaceholder(slotIndex);
-                    continue;
+                    var itemId = ItemUtil.GetBaseId(slotItem.ItemId).ItemId;
+                    if (itemId == 0) {
+                        DrawEmptySlotPlaceholder(slotIndex);
+                        continue;
+                    }
+
+                    if (!ExcelService.TryGetRow<Item>(itemId, out var item))
+                        continue;
+
+                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 2f * ImGuiHelpers.GlobalScale);
+                    DrawItemIcon(gearset, gearsetIndex, slotIndex, slotItem, item);
+
+                    if (slotIndex == GearsetItemIndex.SoulStone) continue;
+
+                    var itemLevelText = $"{item.LevelItem.RowId}";
+                    ImGui.SetCursorPosX(
+                        ImGui.GetCursorPosX()
+                        + IconSize.X * ImGuiHelpers.GlobalScale / 2f
+                        - ImGui.CalcTextSize(itemLevelText).X / 2f);
+                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 2f * ImGuiHelpers.GlobalScale);
                 }
-
-                if (!ExcelService.TryGetRow<Item>(itemId, out var item))
-                    continue;
-
-                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 2f * ImGuiHelpers.GlobalScale);
-                DrawItemIcon(gearset, gearsetIndex, slotIndex, slotItem, item);
-
-                if (slotIndex == GearsetItemIndex.SoulStone) continue;
-
-                var itemLevelText = $"{item.LevelItem.RowId}";
-                ImGui.SetCursorPosX(
-                    ImGui.GetCursorPosX()
-                    + IconSize.X * ImGuiHelpers.GlobalScale / 2f
-                    - ImGui.CalcTextSize(itemLevelText).X / 2f);
-                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 2f * ImGuiHelpers.GlobalScale);
             }
 
             // Last col: action buttons
@@ -445,7 +470,7 @@ public unsafe partial class GearSetWidget : Widget {
     private void DrawGearsetNumberColumn(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex[] slotIndices) {
         var startPos = ImGui.GetCursorPos();
         var region = ImGui.GetContentRegionAvail();
-        var rowHeight = IconSize.Y * ImGuiHelpers.GlobalScale + ImGui.GetFrameHeight();
+        var rowHeight = GetRowHeight();
 
         // Draw gearset number centred (plain text, no selectable)
         var text = $"{gearsetIndex + 1}";
@@ -460,7 +485,7 @@ public unsafe partial class GearSetWidget : Widget {
     private void DrawGearsetIconColumn(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex[] slotIndices) {
         var startPos = ImGui.GetCursorPos();
         var region = ImGui.GetContentRegionAvail();
-        var rowHeight = IconSize.Y * ImGuiHelpers.GlobalScale + ImGui.GetFrameHeight();
+        var rowHeight = GetRowHeight();
         var iconSize = 28 * ImGuiHelpers.GlobalScale;
 
         // Selectable covering the icon cell - clicking equips the gearset (as it was before)
@@ -527,7 +552,7 @@ public unsafe partial class GearSetWidget : Widget {
     private void DrawGearsetNameColumn(GearsetEntry* gearset, int gearsetIndex) {
         var name = gearset->NameString;
         var availWidth = ImGui.GetContentRegionAvail().X;
-        var rowHeight = IconSize.Y * ImGuiHelpers.GlobalScale + ImGui.GetFrameHeight();
+        var rowHeight = GetRowHeight();
 
         // Centre vertically
         var cursorY = ImGui.GetCursorPosY() + (rowHeight - ImGui.GetTextLineHeight()) * 0.5f;
@@ -603,7 +628,7 @@ public unsafe partial class GearSetWidget : Widget {
 
     // Gearset Action Buttons (last col)
     private void DrawGearsetActionButtons(GearsetEntry* gearset, int gearsetIndex, GearsetItemIndex[] slotIndices) {
-        var rowHeight = IconSize.Y * ImGuiHelpers.GlobalScale + ImGui.GetFrameHeight();
+        var rowHeight = GetRowHeight();
 
         // Small space between item icons columns and action buttons
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 8f * ImGuiHelpers.GlobalScale);

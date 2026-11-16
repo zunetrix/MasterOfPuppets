@@ -237,11 +237,10 @@ internal class Configuration : IPluginConfiguration {
     public string LoginMacro { get; set; } = string.Empty;
     // public bool ApplyGameSettingsProfileOnLogin { get; set; } = false;
     public string LoginGameSettingsProfile { get; set; } = string.Empty;
+
     // Interface
     public List<MainMenuItemConfig> MainMenuItems { get; set; } = new();
     public bool OpenOnStartup { get; set; } = false;
-
-    // public Vector4 ThemeColour { get; set; } = new(0f, 1f, 0f, 1f);
     public bool OpenOnLogin { get; set; } = false;
     public bool AllowMovement { get; set; } = true;
     public bool AllowResize { get; set; } = true;
@@ -251,6 +250,7 @@ internal class Configuration : IPluginConfiguration {
     public bool ShowPanelMacroTags { get; set; } = true;
     public float ActionIconSize { get; set; } = 48;
     public uint PreferredMultiRiderMountId { get; set; } = 0;
+    public bool ShowGearsetItemColumns { get; set; } = true;
 
     // Aetheryte travel overlay
     public bool ShowAetheryteOverlay { get; set; } = true;
