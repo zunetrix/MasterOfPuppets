@@ -269,6 +269,10 @@ internal class Configuration : IPluginConfiguration {
     public bool HousingOverlayIconsOnly { get; set; } = true;
     public float HousingOverlayRange { get; set; } = 5f; // max 5 from the door
     public bool HousingOverlayShowAnywhereInside { get; set; } = false;
+    public bool HousingOverlayShowInnExit { get; set; } = true;
+
+    // VFX block list
+    public List<string> BlockedVfxPaths { get; set; } = new();
 
     // Theme
     public string SelectedThemeId { get; set; } = ThemeManager.DefaultThemeId;

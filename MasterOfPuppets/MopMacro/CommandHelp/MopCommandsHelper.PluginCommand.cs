@@ -523,6 +523,22 @@ public static partial class MopCommandsHelper {
         new MopAction {
             Category = MopActionCategory.PluginCommand,
             SubCategory = MopActionSubCategory.HousingAndTravel,
+            TextCommand = "/mop exitinn",
+            SuggestionCommand = "/mop exitinn",
+            Example = """
+            /mop exitinn
+
+            Broadcast:
+            /mopbr /mop exitinn
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Walks to the Inn Room exit door (Limsa, Gridania, Ul'dah), interacts and confirms.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            SubCategory = MopActionSubCategory.HousingAndTravel,
             TextCommand = "/mop movefrontdoor",
             SuggestionCommand = "/mop movefrontdoor",
             Example = """
@@ -812,6 +828,41 @@ public static partial class MopCommandsHelper {
             Notes = """
             * This is a plugin command (works only on local clients)
             Enables or disables game render to save computer resources.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            SubCategory = MopActionSubCategory.RenderAndCamera,
+            TextCommand = "/mop vfxhack on|off|toggle",
+            SuggestionCommand = "/mop vfxhack ",
+            Example = """
+            /mop vfxhack on
+            /mop vfxhack off
+            /mop vfxhack toggle
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Blocks all new game VFX (spells, abilities, environment effects) to save GPU resources.
+            Effects already playing are not removed.
+            """
+        },
+        new MopAction {
+            Category = MopActionCategory.PluginCommand,
+            SubCategory = MopActionSubCategory.RenderAndCamera,
+            TextCommand = "/mop vfxlist on|off|toggle",
+            SuggestionCommand = "/mop vfxlist ",
+            Example = """
+            /mop vfxlist on
+            /mop vfxlist off
+            /mop vfxlist toggle
+
+            Single character:
+            /mopbrc "Character Name" /mop vfxlist on
+            """,
+            Notes = """
+            * This is a plugin command (works only on local clients)
+            Blocks only the VFX paths configured in Settings > Multibox > VFX block list.
+            The list is shared between clients, each client chooses whether to apply it.
             """
         },
         new MopAction {

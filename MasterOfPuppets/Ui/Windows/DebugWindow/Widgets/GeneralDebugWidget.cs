@@ -44,6 +44,8 @@ public sealed class GeneralDebugWidget : Widget {
             GameSettingsManager.SetDisplayObjectLimit(SettingsDisplayObjectLimitType.Minimum);
         }
 
+        ImGui.Text($"TerritoryType: {DalamudApi.ClientState.TerritoryType}");
+
         if (ImGui.Button("Print Game Chat Error")) {
             DalamudApi.ChatGui.PrintError($"Test error message");
         }

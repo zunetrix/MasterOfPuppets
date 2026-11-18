@@ -17,20 +17,27 @@ using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace MasterOfPuppets;
 
-public enum HousingDoorKind {
+public enum DoorKind {
     HouseEntrance,
     HouseExit,
+    InnExit,
 }
 
 /// <summary>
-/// House entrance and exit interactions, plus the proximity sensor used by <see cref="HousingOverlayWindow"/>.
+/// Door interactions (house entrance / exit, inn room exit), plus the proximity sensor used by <see cref="HousingOverlayWindow"/>.
 /// Flow: find door → dismount → walk into range → target → interact (retried) → confirm the
-/// expected dialog only (house entrance Yesno / exit Yesno).
+/// expected dialog only (house entrance Yesno / exit Yesno / inn exit Yesno).
 /// </summary>
-public static class GameHousingManager {
+public static class GameDoorManager {
     private const uint HouseEntranceBaseId = 2002737;
     private const uint HouseEntranceAltBaseId = 2002739; // also named Entrance
     private const uint HouseExitBaseId = 2002738;
+    private const uint InnExitGridaniaBaseId = 2000087;
+    private const uint InnExitLimsaBaseId = 2001010;
+    private const uint InnExitUldahBaseId = 2001011;
+
+    // inn room territories: Limsa (Mizzenmast), Ul'dah (Hourglass), Gridania (Roost)
+    private static readonly uint[] InnTerritories = [177, 178, 179];
 
     private const uint TerritoryUseHousingOutdoor = 13;
     private const uint TerritoryUseHousingIndoor = 14;
@@ -54,11 +61,16 @@ public static class GameHousingManager {
 
     private static CancellationTokenSource? _flowCts;
 
-    public static void InteractWithNearestHouseEntrance(Plugin plugin) => StartDoorFlow(plugin, HousingDoorKind.HouseEntrance);
+    public static void InteractWithNearestHouseEntrance(Plugin plugin) => StartDoorFlow(plugin, DoorKind.HouseEntrance);
+
+    public static void InteractWithNearestInnExit(Plugin plugin) {
+        if (!IsInnTerritory()) return;
+        StartDoorFlow(plugin, DoorKind.InnExit);
+    }
 
     public static unsafe void InteractWithNearestHouseExit(Plugin plugin) {
         if (!HousingManager.Instance()->IsInside()) return;
-        StartDoorFlow(plugin, HousingDoorKind.HouseExit);
+        StartDoorFlow(plugin, DoorKind.HouseExit);
     }
 
     public static unsafe void MoveToFrontDoor() {
@@ -79,8 +91,10 @@ public static class GameHousingManager {
 
     public static unsafe bool IsInsideHouse() => HousingManager.Instance()->IsInside();
 
+    public static bool IsInnTerritory() => InnTerritories.Contains(DalamudApi.ClientState.TerritoryType);
+
     /// <summary>Nearest door of the given kinds within <paramref name="maxDistance"/> (2D, doors sit at ground level).</summary>
-    public static IGameObject? FindNearestDoor(float maxDistance, out HousingDoorKind kind, out float distance, params HousingDoorKind[] kinds) {
+    public static IGameObject? FindNearestDoor(float maxDistance, out DoorKind kind, out float distance, params DoorKind[] kinds) {
         kind = default;
         distance = float.MaxValue;
         var player = DalamudApi.ObjectTable.LocalPlayer;
@@ -101,9 +115,10 @@ public static class GameHousingManager {
         return nearest;
     }
 
-    private static HousingDoorKind? GetDoorKind(uint baseId) => baseId switch {
-        HouseEntranceBaseId or HouseEntranceAltBaseId => HousingDoorKind.HouseEntrance,
-        HouseExitBaseId => HousingDoorKind.HouseExit,
+    private static DoorKind? GetDoorKind(uint baseId) => baseId switch {
+        HouseEntranceBaseId or HouseEntranceAltBaseId => DoorKind.HouseEntrance,
+        HouseExitBaseId => DoorKind.HouseExit,
+        InnExitGridaniaBaseId or InnExitLimsaBaseId or InnExitUldahBaseId => DoorKind.InnExit,
         _ => null,
     };
 
@@ -112,15 +127,15 @@ public static class GameHousingManager {
     // flow
     private enum Phase { FrontDoor, Dismount, Approach, Target, Interact, Confirm }
 
-    private static void StartDoorFlow(Plugin plugin, HousingDoorKind kind) {
+    private static void StartDoorFlow(Plugin plugin, DoorKind kind) {
         DalamudApi.Framework.RunOnFrameworkThread(() => {
             _flowCts?.Cancel();
             var cts = _flowCts = new CancellationTokenSource();
-            var tag = $"[Housing:{kind}]";
+            var tag = $"[Door:{kind}]";
 
             var door = FindNearestDoor(SearchDistance, out _, out var distance, kind);
             var phase = Phase.Dismount;
-            if (kind == HousingDoorKind.HouseExit && (door == null || distance > InteractDistance)) {
+            if (kind == DoorKind.HouseExit && (door == null || distance > InteractDistance)) {
                 // inside a house the exit can be far away (or not loaded): use "move to front door" first
                 MoveToFrontDoor();
                 phase = Phase.FrontDoor;
@@ -212,12 +227,12 @@ public static class GameHousingManager {
         });
     }
 
-    private static bool IsExpectedDialogOpen(HousingDoorKind kind) =>
+    private static bool IsExpectedDialogOpen(DoorKind kind) =>
         GameDialogManager.IsAddonReady(GameDialogManager.AddonName.SelectYesno);
 
-    private static bool TryConfirm(HousingDoorKind kind) {
+    private static bool TryConfirm(DoorKind kind) {
         switch (kind) {
-            case HousingDoorKind.HouseEntrance:
+            case DoorKind.HouseEntrance:
                 // only accept the entrance question
                 var expected = TextConfirmHouseEntrance;
                 if (!string.IsNullOrEmpty(expected)

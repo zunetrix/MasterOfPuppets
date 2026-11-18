@@ -20,7 +20,7 @@ public class InterfaceSettingsWidget : Widget {
     public override void Draw() {
         var Plugin = Context.Plugin;
 
-        if (ImGui.CollapsingHeader("Main Window Menu Options##MainWindowMenuOptions", ImGuiTreeNodeFlags.DefaultOpen)) {
+        if (ImGui.CollapsingHeader("Main Window Menu Options##MainWindowMenuOptions")) {
             ImGui.TextDisabled("Drag items to reorder the sidebar menu. Check or uncheck to display or hide options.");
             ImGui.Spacing();
 
@@ -224,11 +224,11 @@ public class InterfaceSettingsWidget : Widget {
 
         using (ImGuiGroupPanel.BeginGroupPanel("Housing Overlay")) {
             var showOverlay = Plugin.Config.ShowHousingOverlay;
-            if (ImGui.Checkbox("Show overlay when standing near a house entrance or exit", ref showOverlay)) {
+            if (ImGui.Checkbox("Show overlay when standing near a house entrance / exit or inn room exit", ref showOverlay)) {
                 Plugin.Config.ShowHousingOverlay = showOverlay;
                 Plugin.IpcProvider.SyncConfiguration();
             }
-            ImGuiUtil.ToolTip("Only in residential districts and house interiors. Uses the same per-character overlay toggle as the aetheryte overlay");
+            ImGuiUtil.ToolTip("Only in residential districts, house interiors and inn rooms. Uses the same per-character overlay toggle as the aetheryte overlay");
 
             using (ImRaii.Disabled(!showOverlay)) {
                 ImGui.Indent();
@@ -247,10 +247,16 @@ public class InterfaceSettingsWidget : Widget {
                     Plugin.IpcProvider.SyncConfiguration();
                 }
 
+                var innExit = Plugin.Config.HousingOverlayShowInnExit;
+                if (ImGui.Checkbox("Show Inn Room exit##HousingOverlayInnExit", ref innExit)) {
+                    Plugin.Config.HousingOverlayShowInnExit = innExit;
+                    Plugin.IpcProvider.SyncConfiguration();
+                }
+
                 ImGui.Spacing();
 
                 var iconsOnly = Plugin.Config.HousingOverlayIconsOnly;
-                if (ImGui.Checkbox("Show icons only (no text)##HousingOverlayIconsOnly", ref iconsOnly)) {
+                if (ImGui.Checkbox("Show icons only##HousingOverlayIconsOnly", ref iconsOnly)) {
                     Plugin.Config.HousingOverlayIconsOnly = iconsOnly;
                     Plugin.IpcProvider.SyncConfiguration();
                 }

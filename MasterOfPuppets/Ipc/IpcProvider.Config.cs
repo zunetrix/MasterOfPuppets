@@ -15,6 +15,7 @@ internal partial class IpcProvider {
         var configString = message.StringData[0];
         bool saveConfigAfterSync = bool.TryParse(message.StringData[1], out var parsed) && parsed;
         Plugin.Config.UpdateFromJson(configString);
+        Plugin.GameVfxManager?.RefreshBlockList(); // may arrive before the manager is created
         if (!AutoLoginPlanner.HasEnabledCandidates(Plugin.Config.Characters))
             Plugin.AutoLoginManager.Stop();
 

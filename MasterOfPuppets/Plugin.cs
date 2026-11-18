@@ -37,6 +37,7 @@ public class Plugin : IDalamudPlugin {
     internal FormationTrackingSession FormationTrackingSession { get; }
     internal MultiboxManager MultiboxManager { get; }
     internal GameRenderManager GameRenderManager { get; }
+    internal GameVfxManager GameVfxManager { get; }
     internal GameWindowManager GameWindowManager { get; }
     internal KeyboardBroadcastManager KeyboardBroadcastManager { get; }
     internal AutoLoginManager AutoLoginManager { get; }
@@ -88,6 +89,7 @@ public class Plugin : IDalamudPlugin {
         FormationTrackingSession = new FormationTrackingSession(this);
         MultiboxManager = new MultiboxManager(this);
         GameRenderManager = new GameRenderManager(this);
+        GameVfxManager = new GameVfxManager(this);
         GameWindowManager = new GameWindowManager(this);
         KeyboardBroadcastManager = new KeyboardBroadcastManager(this);
         AutoLoginManager = new AutoLoginManager(this);
@@ -275,6 +277,7 @@ public class Plugin : IDalamudPlugin {
         XivLauncherManager.Cancel();
         GameWindowManager.Dispose();
         GameRenderManager.Dispose();
+        GameVfxManager.Dispose();
         ServerBarProvider.Dispose();
         GameSettingsManager.Dispose();
         TunnelService?.Dispose();

@@ -80,6 +80,8 @@ public partial class MainWindow : ThemedWindow {
         DrawCmdSection("RENDER & CAMERA", cols, btnW, [
             new(FontAwesomeIcon.Desktop, "Enable RenderHack",  "/mop renderhack on",  Style.Components.ButtonSuccessNormal, () => Plugin.IpcProvider.EnableRenderHack()),
             new(FontAwesomeIcon.Desktop, "Disable RenderHack", "/mop renderhack off", Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.DisableRenderHack()),
+            new(FontAwesomeIcon.Magic,   "Enable VfxHack",     "/mop vfxhack on",     Style.Components.ButtonSuccessNormal, () => Plugin.IpcProvider.EnableVfxHack()),
+            new(FontAwesomeIcon.Magic,   "Disable VfxHack",    "/mop vfxhack off",    Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.DisableVfxHack()),
             new(FontAwesomeIcon.Tv,      "Enable CamHack",     "/mop camhack on",     Style.Components.ButtonSuccessNormal, () => Plugin.IpcProvider.EnableCamHack()),
             new(FontAwesomeIcon.Tv,      "Disable CamHack",    "/mop camhack off",    Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.DisableCamHack()),
         ]);
@@ -130,6 +132,7 @@ public partial class MainWindow : ThemedWindow {
             new(FontAwesomeIcon.HouseCircleCheck, "Enter House", "/mop enterhouse",     Style.Components.ButtonSuccessNormal, () => Plugin.IpcProvider.ExecuteEnterHouse()),
             new(FontAwesomeIcon.HouseCircleXmark, "Exit House", "/mop exithouse", Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.ExecuteExitHouse()),
             new(FontAwesomeIcon.DoorClosed, "Move To Front Door", "/mop movefrontdoor", Style.Components.ButtonBlueNormal,  () => Plugin.IpcProvider.ExecuteMoveToFrontDoor()),
+            new(FontAwesomeIcon.DoorOpen, "Exit Inn Room", "/mop exitinn", Style.Components.ButtonDangerNormal,  () => Plugin.IpcProvider.ExecuteExitInn()),
         ]);
 
         DrawCmdSection("ESTATE", cols, btnW, [

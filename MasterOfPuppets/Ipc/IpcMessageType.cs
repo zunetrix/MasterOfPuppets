@@ -111,4 +111,11 @@ public enum IpcMessageType {
 
     // peers
     PeerDisconnected,
+
+    // vfx
+    EnableVfx,
+    DisableVfx,
+
+    // inn
+    ExitInn,
 }

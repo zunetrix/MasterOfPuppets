@@ -424,10 +424,13 @@ public class PluginCommandManager : IDisposable {
                     Plugin.IpcProvider.RequestDisbandParty();
                     break;
                 case "enterhouse":
-                    Plugin.IpcProvider.ExecuteEnterHouse();
+                    GameDoorManager.InteractWithNearestHouseEntrance(Plugin);
                     break;
                 case "exithouse":
-                    Plugin.IpcProvider.ExecuteExitHouse();
+                    GameDoorManager.InteractWithNearestHouseExit(Plugin);
+                    break;
+                case "exitinn":
+                    GameDoorManager.InteractWithNearestInnExit(Plugin);
                     break;
                 case "estate":
                     if (parsedArgs.Count < 3) {
@@ -437,7 +440,7 @@ public class PluginCommandManager : IDisposable {
                     EstateTeleportManager.TeleportToEstate(parsedArgs[1], parsedArgs[2]);
                     break;
                 case "movefrontdoor":
-                    Plugin.IpcProvider.ExecuteMoveToFrontDoor();
+                    GameDoorManager.MoveToFrontDoor();
                     break;
                 case "ward":
                 case "residentialtravel":
@@ -553,6 +556,30 @@ public class PluginCommandManager : IDisposable {
                         Plugin.GameRenderManager.DisableRendering(false);
                     else if (parsedArgs[1].Equals("toggle", StringComparison.OrdinalIgnoreCase))
                         Plugin.GameRenderManager.DisableRendering(!Plugin.GameRenderManager.Enabled);
+                    break;
+                case "vfxhack":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop vfxhack <on|off|toggle>");
+                        return;
+                    }
+                    if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
+                        Plugin.GameVfxManager.SetBlocking(true);
+                    else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
+                        Plugin.GameVfxManager.SetBlocking(false);
+                    else if (parsedArgs[1].Equals("toggle", StringComparison.OrdinalIgnoreCase))
+                        Plugin.GameVfxManager.SetBlocking(!Plugin.GameVfxManager.Enabled);
+                    break;
+                case "vfxlist":
+                    if (parsedArgs.Count < 2) {
+                        DalamudApi.ChatGui.PrintError("Invalid arguments. Usage: /mop vfxlist <on|off|toggle>");
+                        return;
+                    }
+                    if (parsedArgs[1].Equals("on", StringComparison.OrdinalIgnoreCase))
+                        Plugin.GameVfxManager.SetListBlocking(true);
+                    else if (parsedArgs[1].Equals("off", StringComparison.OrdinalIgnoreCase))
+                        Plugin.GameVfxManager.SetListBlocking(false);
+                    else if (parsedArgs[1].Equals("toggle", StringComparison.OrdinalIgnoreCase))
+                        Plugin.GameVfxManager.SetListBlocking(!Plugin.GameVfxManager.ListEnabled);
                     break;
                 case "keybroadcast":
                 case "kb":

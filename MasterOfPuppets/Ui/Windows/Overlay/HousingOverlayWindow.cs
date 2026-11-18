@@ -10,7 +10,7 @@ namespace MasterOfPuppets;
 
 /// <summary>
 /// Action bar docked to the screen side while standing near a house entrance (residential districts)
-/// or near the exit inside a house. Every button broadcasts, so all clients enter / leave through their nearest door.
+/// near the exit inside a house, or near the inn room exit. Every button broadcasts, so all clients enter / leave through their nearest door.
 /// </summary>
 public class HousingOverlayWindow : ThemedWindow {
     private sealed record ActionDef(string Id, FontAwesomeIcon Icon, string Label, string Command, Action<Plugin> Execute);
@@ -21,6 +21,8 @@ public class HousingOverlayWindow : ThemedWindow {
         new("exitHouse", FontAwesomeIcon.HouseCircleXmark, "Exit House", "/mop exithouse", p => p.IpcProvider.ExecuteExitHouse());
     private static readonly ActionDef FrontDoor =
         new("frontDoor", FontAwesomeIcon.DoorClosed, "Front Door", "/mop movefrontdoor", p => p.IpcProvider.ExecuteMoveToFrontDoor());
+    private static readonly ActionDef ExitInn =
+        new("exitInn", FontAwesomeIcon.DoorOpen, "Exit Inn Room", "/mop exitinn", p => p.IpcProvider.ExecuteExitInn());
 
     private Plugin Plugin { get; }
     private readonly List<ActionDef> _actions = new(2);
@@ -46,16 +48,24 @@ public class HousingOverlayWindow : ThemedWindow {
             || condition[ConditionFlag.OccupiedInCutSceneEvent]
             || condition[ConditionFlag.WatchingCutscene]) return false;
 
-        // doors only exist in housing territories: skip the object scan everywhere else
-        if (!GameHousingManager.IsHousingTerritory(out var indoor)) return false;
-
         var range = Math.Max(1f, config.HousingOverlayRange);
+
+        if (GameDoorManager.IsInnTerritory()) {
+            if (config.HousingOverlayShowInnExit
+                && GameDoorManager.FindNearestDoor(range, out _, out _, DoorKind.InnExit) != null)
+                _actions.Add(ExitInn);
+            return _actions.Count > 0;
+        }
+
+        // doors only exist in housing / inn territories: skip the object scan everywhere else
+        if (!GameDoorManager.IsHousingTerritory(out var indoor)) return false;
+
         if (!indoor) {
-            var door = GameHousingManager.FindNearestDoor(range, out _, out _, HousingDoorKind.HouseEntrance);
+            var door = GameDoorManager.FindNearestDoor(range, out _, out _, DoorKind.HouseEntrance);
             if (door != null)
                 _actions.Add(EnterHouse);
-        } else if (GameHousingManager.IsInsideHouse()) {
-            var exit = GameHousingManager.FindNearestDoor(range, out _, out _, HousingDoorKind.HouseExit);
+        } else if (GameDoorManager.IsInsideHouse()) {
+            var exit = GameDoorManager.FindNearestDoor(range, out _, out _, DoorKind.HouseExit);
             if (exit != null) {
                 _actions.Add(ExitHouse);
             } else if (config.HousingOverlayShowAnywhereInside) {

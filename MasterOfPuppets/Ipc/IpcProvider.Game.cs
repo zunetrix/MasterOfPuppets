@@ -51,6 +51,24 @@ internal partial class IpcProvider {
         Plugin.GameRenderManager.DisableRendering(false);
     }
 
+    public void EnableVfxHack() {
+        BroadCast(IpcMessage.Create(IpcMessageType.EnableVfx).Serialize(), includeSelf: false);
+    }
+
+    [IpcHandle(IpcMessageType.EnableVfx)]
+    private void HandleEnableVfxHack(IpcMessage message) {
+        Plugin.GameVfxManager.SetBlocking(true);
+    }
+
+    public void DisableVfxHack() {
+        BroadCast(IpcMessage.Create(IpcMessageType.DisableVfx).Serialize(), includeSelf: false);
+    }
+
+    [IpcHandle(IpcMessageType.DisableVfx)]
+    private void HandleDisableVfxHack(IpcMessage message) {
+        Plugin.GameVfxManager.SetBlocking(false);
+    }
+
     public void BroadcastMyFlagMapMarker() {
         var flagPos = GameMapManager.GetFlagPosition();
         if (flagPos == null) return;
