@@ -49,11 +49,15 @@ public sealed unsafe class GameVfxManager : IDisposable {
 
     /// <summary>Music notes shown above characters while using Performance.</summary>
     public static readonly string[] PerformanceNotesPreset = [
+        "vfx/common/eff/emt_played0f.avfx",
+        "vfx/common/eff/emt_played2bf.avfx",
         "vfx/common/eff/emt_played2f.avfx",
         "vfx/common/eff/emt_played3af.avfx",
         "vfx/common/eff/emt_played3bf.avfx",
         "vfx/common/eff/emt_played4af.avfx",
         "vfx/common/eff/emt_played4bf.avfx",
+        "vfx/common/eff/emt_played5at.avfx",
+        "vfx/common/eff/emt_played5bt.avfx",
         "vfx/common/eff/emt_played6at.avfx",
         "vfx/common/eff/emt_played6bt.avfx",
         "vfx/common/eff/emt_played6ct.avfx",
